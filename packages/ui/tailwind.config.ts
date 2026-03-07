@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-// @ts-ignore: package has no type declarations
+// @ts-expect-error: package has no type declarations
 import tailwindcssRtl from "tailwindcss-rtl";
 
 const config: Config = {
