@@ -17,7 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button, Badge, Input } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
-import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings } from "../../actions/units";
+import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit } from "../../actions/units";
 
 export default function AdvancedUnitMatrixPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
@@ -27,6 +27,8 @@ export default function AdvancedUnitMatrixPage() {
   const [updating, setUpdating] = React.useState(false);
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [buildings, setBuildings] = React.useState<any[]>([]);
+  const [showPriceModal, setShowPriceModal] = React.useState(false);
+  const [bulkPrice, setBulkPrice] = React.useState("");
   const [newUnit, setNewUnit] = React.useState({
     number: "",
     type: "APARTMENT",
@@ -110,6 +112,43 @@ export default function AdvancedUnitMatrixPage() {
     }
   };
 
+  const handleBulkPriceUpdate = async () => {
+    if (!bulkPrice) return;
+    setUpdating(true);
+    try {
+      const updates = selectedUnits.map(id => ({ id, price: parseFloat(bulkPrice) }));
+      await massUpdateUnits(updates);
+      setUnits(units.map(u => selectedUnits.includes(u.id) ? { ...u, price: parseFloat(bulkPrice) } : u));
+      setSelectedUnits([]);
+      setShowPriceModal(false);
+      setBulkPrice("");
+    } catch (err) {
+      alert("Failed to update price");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const count = selectedUnits.length;
+    const msg = lang === "ar"
+      ? `هل أنت متأكد من حذف ${count} وحدة؟ لا يمكن التراجع عن هذا الإجراء.`
+      : `Are you sure you want to delete ${count} unit(s)? This action cannot be undone.`;
+    if (!confirm(msg)) return;
+    setUpdating(true);
+    try {
+      for (const id of selectedUnits) {
+        await deleteUnit(id);
+      }
+      setUnits(units.filter(u => !selectedUnits.includes(u.id)));
+      setSelectedUnits([]);
+    } catch (err) {
+      alert(lang === "ar" ? "فشل حذف بعض الوحدات" : "Failed to delete some units");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -164,11 +203,11 @@ export default function AdvancedUnitMatrixPage() {
                  <option value="MAINTENANCE">Maintenance</option>
               </select>
               
-              <Button size="sm" variant="secondary" className="gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20">
+              <Button size="sm" variant="secondary" className="gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => setShowPriceModal(true)} disabled={updating}>
                  <CurrencyCircleDollar size={16} />
                  {lang === "ar" ? "تغيير السعر" : "Change Price"}
               </Button>
-              <Button size="sm" variant="danger" className="gap-2 bg-red-500/80 hover:bg-red-500 whitespace-nowrap">
+              <Button size="sm" variant="danger" className="gap-2 bg-red-500/80 hover:bg-red-500 whitespace-nowrap" onClick={handleBulkDelete} disabled={updating}>
                  <Trash size={16} />
                  {lang === "ar" ? "حذف" : "Delete"}
               </Button>
@@ -278,6 +317,39 @@ export default function AdvancedUnitMatrixPage() {
            </div>
         </div>
       </div>
+
+      {/* Change Price Modal */}
+      {showPriceModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-sm rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300" dir={lang === "ar" ? "rtl" : "ltr"}>
+              <h2 className="text-xl font-bold text-primary mb-2 font-primary">
+                 {lang === "ar" ? "تغيير السعر" : "Change Price"}
+              </h2>
+              <p className="text-sm text-neutral mb-6">
+                 {lang === "ar" ? `تحديث سعر ${selectedUnits.length} وحدة مختارة` : `Update price for ${selectedUnits.length} selected unit(s)`}
+              </p>
+              <div className="space-y-1 mb-6">
+                 <label className="text-xs font-bold text-neutral">{lang === "ar" ? "السعر الجديد (ريال)" : "New Price (SAR)"}</label>
+                 <Input
+                   type="number"
+                   value={bulkPrice}
+                   onChange={(e) => setBulkPrice(e.target.value)}
+                   placeholder="0.00"
+                   autoFocus
+                 />
+              </div>
+              <div className="flex items-center justify-end gap-3">
+                 <Button variant="secondary" onClick={() => { setShowPriceModal(false); setBulkPrice(""); }} disabled={updating}>
+                    {lang === "ar" ? "إلغاء" : "Cancel"}
+                 </Button>
+                 <Button onClick={handleBulkPriceUpdate} disabled={updating || !bulkPrice} className="gap-2">
+                    {updating && <Spinner className="h-4 w-4 animate-spin" />}
+                    {lang === "ar" ? "تحديث السعر" : "Update Price"}
+                 </Button>
+              </div>
+           </div>
+        </div>
+      )}
 
       {/* Add Unit Modal */}
       {showAddModal && (
