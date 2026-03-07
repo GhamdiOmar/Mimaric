@@ -96,7 +96,7 @@ export default function ProjectsPage() {
             const type = typeLabels[project.type] ?? { ar: "سكني", en: "Residential" };
 
             return (
-              <div key={project.id} className="bg-white rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group">
+              <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="bg-white rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group cursor-pointer block">
                 <div className="flex items-start justify-between mb-4">
                   <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary group-hover:bg-secondary/10 group-hover:text-secondary transition-colors">
                     <Buildings size={28} weight="duotone" />
@@ -129,7 +129,7 @@ export default function ProjectsPage() {
                   </div>
                   <p className="text-[10px] text-neutral mt-3 font-latin">{totalUnits} {lang === "ar" ? "وحدة" : "units"}</p>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
