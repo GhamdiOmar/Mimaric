@@ -28,6 +28,8 @@ import {
   registerProjectDocument,
   deleteProjectDocument,
 } from "../../../actions/projects";
+import { getMaintenanceForProject } from "../../../actions/maintenance";
+import { Wrench } from "@phosphor-icons/react";
 import { formatDualDate } from "../../../../lib/hijri";
 import MapPicker from "../../../../components/MapPicker";
 import { UploadButton } from "../../../../lib/uploadthing";
@@ -75,7 +77,9 @@ export default function ProjectDetailPage() {
   const [lang] = React.useState<"ar" | "en">("ar");
   const [project, setProject] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<"overview" | "buildings" | "documents">("overview");
+  const [activeTab, setActiveTab] = React.useState<"overview" | "buildings" | "documents" | "maintenance">("overview");
+  const [maintenanceRequests, setMaintenanceRequests] = React.useState<any[]>([]);
+  const [loadingMaintenance, setLoadingMaintenance] = React.useState(false);
 
   // Building form state
   const [showBuildingForm, setShowBuildingForm] = React.useState(false);
@@ -168,10 +172,43 @@ export default function ProjectDetailPage() {
   const totalUnits = project.buildings?.reduce((sum: number, b: any) => sum + (b.units?.length ?? 0), 0) ?? 0;
   const inputClass = "w-full h-10 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
+  const maintenanceStatusLabels: Record<string, { ar: string; en: string; variant: string }> = {
+    OPEN: { ar: "مفتوح", en: "Open", variant: "draft" },
+    ASSIGNED: { ar: "معيّن", en: "Assigned", variant: "reserved" },
+    IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress", variant: "reserved" },
+    ON_HOLD: { ar: "معلّق", en: "On Hold", variant: "maintenance" },
+    RESOLVED: { ar: "تم الحل", en: "Resolved", variant: "available" },
+    CLOSED: { ar: "مغلق", en: "Closed", variant: "sold" },
+  };
+
+  const maintenancePriorityLabels: Record<string, { ar: string; en: string; color: string }> = {
+    LOW: { ar: "منخفض", en: "Low", color: "text-neutral" },
+    MEDIUM: { ar: "متوسط", en: "Medium", color: "text-primary" },
+    HIGH: { ar: "عالي", en: "High", color: "text-accent" },
+    URGENT: { ar: "عاجل", en: "Urgent", color: "text-red-600" },
+  };
+
+  async function loadMaintenance() {
+    setLoadingMaintenance(true);
+    try {
+      const data = await getMaintenanceForProject(id as string);
+      setMaintenanceRequests(data);
+    } catch (e) { console.error(e); }
+    finally { setLoadingMaintenance(false); }
+  }
+
+  function handleTabChange(tabId: typeof activeTab) {
+    setActiveTab(tabId);
+    if (tabId === "maintenance" && maintenanceRequests.length === 0) {
+      loadMaintenance();
+    }
+  }
+
   const tabs = [
     { id: "overview" as const, label: { ar: "نظرة عامة", en: "Overview" } },
     { id: "buildings" as const, label: { ar: "المباني", en: "Buildings" } },
     { id: "documents" as const, label: { ar: "الوثائق", en: "Documents" } },
+    { id: "maintenance" as const, label: { ar: "الصيانة", en: "Maintenance" } },
   ];
 
   return (
@@ -235,7 +272,7 @@ export default function ProjectDetailPage() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabChange(tab.id)}
             className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors ${
               activeTab === tab.id
                 ? "border-primary text-primary"
@@ -440,6 +477,91 @@ export default function ProjectDetailPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ─── Maintenance Tab ─── */}
+      {activeTab === "maintenance" && (
+        <div className="space-y-6">
+          {/* KPI Summary */}
+          {!loadingMaintenance && maintenanceRequests.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: lang === "ar" ? "مفتوحة" : "Open", value: maintenanceRequests.filter((m: any) => m.status === "OPEN").length, color: "text-accent" },
+                { label: lang === "ar" ? "قيد التنفيذ" : "In Progress", value: maintenanceRequests.filter((m: any) => ["IN_PROGRESS", "ASSIGNED"].includes(m.status)).length, color: "text-primary" },
+                { label: lang === "ar" ? "تم الحل" : "Resolved", value: maintenanceRequests.filter((m: any) => ["RESOLVED", "CLOSED"].includes(m.status)).length, color: "text-secondary" },
+                { label: lang === "ar" ? "الإجمالي" : "Total", value: maintenanceRequests.length, color: "text-neutral" },
+              ].map((kpi, i) => (
+                <div key={i} className="bg-white rounded-md shadow-card border border-border p-4">
+                  <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                  <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-neutral">
+              {maintenanceRequests.length} {lang === "ar" ? "طلب صيانة" : "maintenance requests"}
+            </p>
+            <Link href="/dashboard/maintenance">
+              <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+                <Wrench size={14} />
+                {lang === "ar" ? "إدارة الصيانة" : "Manage Maintenance"}
+              </Button>
+            </Link>
+          </div>
+
+          {loadingMaintenance ? (
+            <div className="flex justify-center py-12">
+              <Spinner className="animate-spin text-primary" size={24} />
+            </div>
+          ) : maintenanceRequests.length === 0 ? (
+            <div className="bg-white rounded-md shadow-card border border-border p-12 text-center">
+              <Wrench size={48} className="text-neutral/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد طلبات صيانة" : "No Maintenance Requests"}</h3>
+              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "لا توجد طلبات صيانة مرتبطة بهذا المشروع" : "No maintenance requests linked to this project"}</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/30 border-b border-border">
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "العنوان" : "Title"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الوحدة" : "Unit"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الأولوية" : "Priority"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المُعيَّن" : "Assigned"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {maintenanceRequests.map((m: any) => {
+                    const mStatus = maintenanceStatusLabels[m.status] ?? { ar: m.status, en: m.status, variant: "draft" };
+                    const mPriority = maintenancePriorityLabels[m.priority] ?? { ar: m.priority, en: m.priority, color: "text-neutral" };
+                    return (
+                      <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/10">
+                        <td className="px-4 py-3">
+                          <Link href={`/dashboard/maintenance/${m.id}`} className="font-medium text-primary hover:text-secondary transition-colors">
+                            {m.title}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-neutral">{m.unit?.number} — {m.unit?.building?.name}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-bold ${mPriority.color}`}>{mPriority[lang]}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge variant={mStatus.variant as any} className="text-[10px]">{mStatus[lang]}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-neutral">{m.assignedTo?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-xs text-neutral">{new Date(m.createdAt).toLocaleDateString("en-SA")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

@@ -18,6 +18,26 @@ import {
 import { Button, Badge, Input, RiyalIcon } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit } from "../../actions/units";
+import { getMaintenanceForUnit } from "../../actions/maintenance";
+import { Wrench, X, Eye } from "@phosphor-icons/react";
+import Link from "next/link";
+
+const unitTypeLabels: Record<string, { ar: string; en: string }> = {
+  APARTMENT: { ar: "شقة", en: "Apartment" },
+  VILLA: { ar: "فيلا", en: "Villa" },
+  OFFICE: { ar: "مكتب", en: "Office" },
+  RETAIL: { ar: "محل تجاري", en: "Retail" },
+  WAREHOUSE: { ar: "مستودع", en: "Warehouse" },
+  PARKING: { ar: "موقف", en: "Parking" },
+};
+
+const unitStatusLabels: Record<string, { ar: string; en: string }> = {
+  AVAILABLE: { ar: "متاح", en: "Available" },
+  RESERVED: { ar: "محجوز", en: "Reserved" },
+  SOLD: { ar: "مباع", en: "Sold" },
+  RENTED: { ar: "مؤجر", en: "Rented" },
+  MAINTENANCE: { ar: "صيانة", en: "Maintenance" },
+};
 
 export default function AdvancedUnitMatrixPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
@@ -37,6 +57,34 @@ export default function AdvancedUnitMatrixPage() {
     price: "",
     status: "AVAILABLE"
   });
+
+  // Unit detail modal
+  const [detailUnit, setDetailUnit] = React.useState<any>(null);
+  const [detailMaintenance, setDetailMaintenance] = React.useState<any[]>([]);
+  const [loadingDetail, setLoadingDetail] = React.useState(false);
+
+  const maintenanceStatusLabels: Record<string, { ar: string; en: string; variant: string }> = {
+    OPEN: { ar: "مفتوح", en: "Open", variant: "draft" },
+    ASSIGNED: { ar: "معيّن", en: "Assigned", variant: "reserved" },
+    IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress", variant: "reserved" },
+    ON_HOLD: { ar: "معلّق", en: "On Hold", variant: "maintenance" },
+    RESOLVED: { ar: "تم الحل", en: "Resolved", variant: "available" },
+    CLOSED: { ar: "مغلق", en: "Closed", variant: "sold" },
+  };
+
+  async function openUnitDetail(unit: any) {
+    setDetailUnit(unit);
+    setLoadingDetail(true);
+    try {
+      const maint = await getMaintenanceForUnit(unit.id);
+      setDetailMaintenance(maint);
+    } catch (e) {
+      console.error(e);
+      setDetailMaintenance([]);
+    } finally {
+      setLoadingDetail(false);
+    }
+  }
 
   React.useEffect(() => {
     async function loadUnits() {
@@ -197,10 +245,9 @@ export default function AdvancedUnitMatrixPage() {
                 className="bg-secondary/80 hover:bg-secondary text-white text-xs font-bold rounded-md px-3 py-2 outline-none border-none cursor-pointer"
               >
                  <option value="">{lang === "ar" ? "تحديث الحالة" : "Update Status"}</option>
-                 <option value="AVAILABLE">Available</option>
-                 <option value="RESERVED">Reserved</option>
-                 <option value="SOLD">Sold</option>
-                 <option value="MAINTENANCE">Maintenance</option>
+                 {Object.entries(unitStatusLabels).map(([value, label]) => (
+                   <option key={value} value={value}>{label[lang]}</option>
+                 ))}
               </select>
               
               <Button size="sm" variant="secondary" className="gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20" onClick={() => setShowPriceModal(true)} disabled={updating}>
@@ -239,13 +286,13 @@ export default function AdvancedUnitMatrixPage() {
            </div>
            <div className="flex items-center gap-2">
               <Badge variant="available" className="bg-secondary/5 border-secondary/20 text-secondary">
-                {units.filter(u => u.status === "AVAILABLE").length} Available
+                {units.filter(u => u.status === "AVAILABLE").length} {unitStatusLabels["AVAILABLE"]![lang]}
               </Badge>
               <Badge variant="sold" className="bg-primary/5 border-primary/20 text-primary">
-                {units.filter(u => u.status === "SOLD").length} Sold
+                {units.filter(u => u.status === "SOLD").length} {unitStatusLabels["SOLD"]![lang]}
               </Badge>
               <Badge variant="reserved" className="bg-accent/5 border-accent/20 text-accent">
-                {units.filter(u => u.status === "RESERVED").length} Reserved
+                {units.filter(u => u.status === "RESERVED").length} {unitStatusLabels["RESERVED"]![lang]}
               </Badge>
            </div>
         </div>
@@ -287,20 +334,20 @@ export default function AdvancedUnitMatrixPage() {
 
                 <div className="space-y-2">
                    <div className="flex justify-between items-center text-[10px] text-neutral font-primary">
-                      <span>{unit.type}</span>
+                      <span>{unitTypeLabels[unit.type]?.[lang] ?? unit.type}</span>
                       <span>{unit.area}m²</span>
                    </div>
                    <Badge variant={unit.status.toLowerCase() as any} className="w-full justify-center text-[9px] py-0.5">
-                      {unit.status}
+                      {unitStatusLabels[unit.status]?.[lang] ?? unit.status}
                    </Badge>
                 </div>
 
                 {/* Hover Quick Actions */}
                 <div className="absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                   <button className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center hover:scale-110 transition-transform">
+                   <button className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center hover:scale-110 transition-transform" onClick={(e) => { e.stopPropagation(); }}>
                       <NotePencil size={18} />
                    </button>
-                   <button className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center hover:scale-110 transition-transform">
+                   <button className="h-8 w-8 rounded-full bg-white text-primary flex items-center justify-center hover:scale-110 transition-transform" onClick={(e) => { e.stopPropagation(); openUnitDetail(unit); }}>
                       <ArrowSquareOut size={18} />
                    </button>
                 </div>
@@ -351,6 +398,101 @@ export default function AdvancedUnitMatrixPage() {
         </div>
       )}
 
+      {/* Unit Detail Modal */}
+      {detailUnit && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-xl rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[85vh] overflow-y-auto" dir={lang === "ar" ? "rtl" : "ltr"}>
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div>
+                <h2 className="text-lg font-bold text-primary">{lang === "ar" ? "تفاصيل الوحدة" : "Unit Details"} — {detailUnit.number}</h2>
+                <p className="text-xs text-neutral mt-0.5">{detailUnit.building?.name}</p>
+              </div>
+              <button onClick={() => setDetailUnit(null)} className="text-neutral hover:text-primary">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              {/* Unit Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Type"}</span>
+                  <p className="text-sm font-bold text-primary">{unitTypeLabels[detailUnit.type]?.[lang] ?? detailUnit.type}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</span>
+                  <p className="text-sm"><Badge variant={detailUnit.status?.toLowerCase() as any} className="text-[10px]">{unitStatusLabels[detailUnit.status]?.[lang] ?? detailUnit.status}</Badge></p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المساحة" : "Area"}</span>
+                  <p className="text-sm font-bold text-primary">{detailUnit.area ? `${detailUnit.area} م²` : "—"}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "السعر" : "Price"}</span>
+                  <p className="text-sm font-bold text-primary flex items-center gap-1">
+                    {detailUnit.price ? <><RiyalIcon size={12} />{new Intl.NumberFormat("en-SA").format(detailUnit.price)}</> : "—"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Maintenance Section */}
+              <div className="border-t border-border pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
+                    <Wrench size={14} />
+                    {lang === "ar" ? "طلبات الصيانة" : "Maintenance Requests"}
+                    {detailMaintenance.filter((m: any) => !["RESOLVED", "CLOSED"].includes(m.status)).length > 0 && (
+                      <Badge variant="overdue" className="text-[9px]">
+                        {detailMaintenance.filter((m: any) => !["RESOLVED", "CLOSED"].includes(m.status)).length}
+                      </Badge>
+                    )}
+                  </h3>
+                  <Link href={`/dashboard/maintenance`}>
+                    <Button variant="secondary" size="sm" className="gap-1 text-[10px]" style={{ display: "inline-flex" }}>
+                      <Plus size={12} />
+                      {lang === "ar" ? "طلب جديد" : "New Request"}
+                    </Button>
+                  </Link>
+                </div>
+
+                {loadingDetail ? (
+                  <div className="flex justify-center py-6">
+                    <Spinner size={20} className="animate-spin text-primary" />
+                  </div>
+                ) : detailMaintenance.length === 0 ? (
+                  <p className="text-xs text-neutral text-center py-4">{lang === "ar" ? "لا توجد طلبات صيانة لهذه الوحدة" : "No maintenance requests for this unit"}</p>
+                ) : (
+                  <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                    {detailMaintenance.map((m: any) => {
+                      const mStatus = maintenanceStatusLabels[m.status] ?? { ar: m.status, en: m.status, variant: "draft" };
+                      return (
+                        <div key={m.id} className="flex items-center justify-between p-3 rounded-md border border-border hover:bg-muted/10 transition-colors">
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-primary">{m.title}</p>
+                            <p className="text-[10px] text-neutral mt-0.5">
+                              {new Date(m.createdAt).toLocaleDateString("en-SA")}
+                              {m.assignedTo?.name && ` • ${m.assignedTo.name}`}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={mStatus.variant as any} className="text-[9px]">{mStatus[lang]}</Badge>
+                            <Link href={`/dashboard/maintenance/${m.id}`}>
+                              <Button variant="ghost" size="sm" style={{ display: "inline-flex" }}>
+                                <Eye size={12} />
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Unit Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
@@ -389,11 +531,9 @@ export default function AdvancedUnitMatrixPage() {
                          onChange={(e) => setNewUnit({...newUnit, type: e.target.value})}
                          className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                        >
-                          <option value="APARTMENT">Apartment</option>
-                          <option value="VILLA">Villa</option>
-                          <option value="OFFICE">Office</option>
-                          <option value="RETAIL">Retail</option>
-                          <option value="WAREHOUSE">Warehouse</option>
+                          {Object.entries(unitTypeLabels).map(([value, label]) => (
+                            <option key={value} value={value}>{label[lang]}</option>
+                          ))}
                        </select>
                     </div>
                  </div>

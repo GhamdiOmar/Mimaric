@@ -1,5 +1,33 @@
 # Changelog — Mimaric PropTech
 
+## [0.6.0] — 2026-03-07
+
+### Added — Comprehensive Maintenance Module (CMMS)
+- **Full CRUD** — Create, read, update, and delete maintenance requests with modal forms
+- **Status Workflow** — Enforced transitions (OPEN → ASSIGNED → IN_PROGRESS → ON_HOLD → RESOLVED → CLOSED) with validation
+- **SLA Tracking** — Auto-computed due dates by priority (URGENT: 2h, HIGH: 24h, MEDIUM: 72h, LOW: 168h)
+- **10 Maintenance Categories** — HVAC, Plumbing, Electrical, Structural, Fire Safety, Elevator, Cleaning, Landscaping, Pest Control, General (bilingual AR/EN)
+- **5 KPI Dashboard Cards** — Open, Assigned, In Progress, Overdue, Completed This Month
+- **Filter Toolbar** — Search by title, filter by status/priority/category
+- **Detail Page** — Full work order view with status transition buttons, cost tracking, labor hours, assignment management
+- **Preventive Maintenance Plans** — CRUD for recurring schedules (Daily to Annual), auto-generate work orders, toggle active/paused
+- **Unit-Maintenance Linking** — Unit detail modal shows maintenance requests with status badges
+- **Project-Maintenance Linking** — New "الصيانة" tab on project detail page with KPI summary
+- **Assignable Users** — Assign to TECHNICIAN/PROPERTY_MANAGER/PROJECT_MANAGER roles
+
+### Added — Land & Project Enhancements
+- **Land Map Integration** — Interactive Leaflet map picker on creation, read-only map on detail page
+- **Import Acquired Land into Projects** — Auto-fill project form from acquired land parcels
+- **Arabic Unit Labels** — Types (شقة, فيلا, مكتب, etc.) and statuses (متاح, محجوز, مباع, etc.)
+- **Unit Detail Modal** — Expand unit card to see info + maintenance requests
+- **5 Arabic Sample Lands** — Seed data with real Riyadh coordinates
+
+### Schema Changes
+- Added `MaintenanceCategory` enum (10 categories), `RecurrenceType` enum (7 types)
+- Added `ASSIGNED`, `ON_HOLD` to `MaintenanceStatus`
+- Enhanced `MaintenanceRequest` with category, scheduledDate, dueDate, completedAt, costs, laborHours, notes, preventive link
+- New `PreventiveMaintenancePlan` model with recurrence scheduling, scope, cost estimation
+
 ## [0.4.0] — 2026-03-07
 
 ### Added — PDPL & NCA Compliance

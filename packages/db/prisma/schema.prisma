@@ -40,6 +40,7 @@ model Organization {
   customers           Customer[]
   documents           Document[]
   maintenanceRequests MaintenanceRequest[]
+  preventivePlans     PreventiveMaintenancePlan[]
 }
 
 enum OrgType {
@@ -234,6 +235,7 @@ model Unit {
   contracts           Contract[]
   leases              Lease[]
   maintenanceRequests MaintenanceRequest[]
+  preventivePlans     PreventiveMaintenancePlan[]
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -478,30 +480,102 @@ enum DocCategory {
 // ─── Maintenance Request ──────────────────────────────────────────────────────
 
 model MaintenanceRequest {
-  id             String              @id @default(cuid())
+  id             String               @id @default(cuid())
   title          String
   description    String?
-  type           String              // electrical, plumbing, hvac, structural, general
-  status         MaintenanceStatus   @default(OPEN)
-  priority       MaintenancePriority @default(MEDIUM)
+  type           String?              // Legacy field (electrical, plumbing, etc.)
+  category       MaintenanceCategory  @default(GENERAL)
+  status         MaintenanceStatus    @default(OPEN)
+  priority       MaintenancePriority  @default(MEDIUM)
   unitId         String
-  unit           Unit                @relation(fields: [unitId], references: [id])
+  unit           Unit                 @relation(fields: [unitId], references: [id])
   assignedToId   String?
-  assignedTo     User?               @relation("AssignedMaintenance", fields: [assignedToId], references: [id])
+  assignedTo     User?                @relation("AssignedMaintenance", fields: [assignedToId], references: [id])
+
+  // Scheduling & deadlines
+  scheduledDate  DateTime?
+  dueDate        DateTime?
+  completedAt    DateTime?
+
+  // Cost tracking
+  estimatedCost  Decimal?
+  actualCost     Decimal?
+  laborHours     Float?
+
+  // Work order notes
+  notes          String?
+
+  // Preventive maintenance link
+  isPreventive       Boolean           @default(false)
+  preventivePlanId   String?
+  preventivePlan     PreventiveMaintenancePlan? @relation(fields: [preventivePlanId], references: [id])
+
   organizationId String
-  organization   Organization        @relation(fields: [organizationId], references: [id])
+  organization   Organization         @relation(fields: [organizationId], references: [id])
   resolvedAt     DateTime?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([organizationId])
   @@index([unitId])
   @@index([assignedToId])
+  @@index([preventivePlanId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([category])
+}
+
+// ─── Preventive Maintenance Plan ──────────────────────────────────────────────
+
+model PreventiveMaintenancePlan {
+  id                 String              @id @default(cuid())
+  title              String
+  description        String?
+  category           MaintenanceCategory @default(GENERAL)
+  priority           MaintenancePriority @default(MEDIUM)
+
+  // Scope
+  unitId             String?
+  unit               Unit?               @relation(fields: [unitId], references: [id])
+  buildingId         String?
+
+  // Recurrence
+  recurrenceType     RecurrenceType
+  recurrenceInterval Int                 @default(1)
+  startDate          DateTime
+  endDate            DateTime?
+  nextRunDate        DateTime
+
+  // Cost estimation
+  estimatedCost      Decimal?
+  estimatedHours     Float?
+
+  // Assignment
+  assignToId         String?
+
+  // Status
+  isActive           Boolean             @default(true)
+
+  // Organization
+  organizationId     String
+  organization       Organization        @relation(fields: [organizationId], references: [id])
+
+  // Generated work orders
+  workOrders         MaintenanceRequest[]
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([nextRunDate])
+  @@index([isActive])
 }
 
 enum MaintenanceStatus {
   OPEN
+  ASSIGNED
   IN_PROGRESS
+  ON_HOLD
   RESOLVED
   CLOSED
 }
@@ -511,6 +585,29 @@ enum MaintenancePriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+enum MaintenanceCategory {
+  HVAC
+  PLUMBING
+  ELECTRICAL
+  STRUCTURAL
+  FIRE_SAFETY
+  ELEVATOR
+  CLEANING
+  LANDSCAPING
+  PEST_CONTROL
+  GENERAL
+}
+
+enum RecurrenceType {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
 }
 
 // ─── Password Reset Token (NIST SP 800-63B) ─────────────────────────────────

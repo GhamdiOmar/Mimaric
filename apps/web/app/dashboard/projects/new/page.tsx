@@ -13,10 +13,12 @@ import {
   PencilSimple,
   FileText,
   CloudArrowUp,
+  MapTrifold,
 } from "@phosphor-icons/react";
 import { Button } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { createProject, registerProjectDocument } from "../../../actions/projects";
+import { getAcquiredLands, updateLandStatus } from "../../../actions/land";
 import { useRouter } from "next/navigation";
 import MapPicker from "../../../../components/MapPicker";
 import { UploadButton } from "../../../../lib/uploadthing";
@@ -69,6 +71,39 @@ export default function NewProjectPage() {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
+
+  // Land import
+  const [availableLands, setAvailableLands] = React.useState<any[]>([]);
+  const [importLandId, setImportLandId] = React.useState("");
+
+  React.useEffect(() => {
+    getAcquiredLands().then(setAvailableLands).catch(console.error);
+  }, []);
+
+  function handleLandImport(landId: string) {
+    setImportLandId(landId);
+    if (!landId) return;
+    const land = availableLands.find((l: any) => l.id === landId);
+    if (!land) return;
+    setFormData((prev) => ({
+      ...prev,
+      name: land.name || prev.name,
+      region: land.region || "",
+      city: land.city || "",
+      district: land.district || "",
+      streetName: land.streetName || "",
+      postalCode: land.postalCode || "",
+      parcelNumber: land.parcelNumber || "",
+      deedNumber: land.deedNumber || "",
+      plotNumber: land.plotNumber || "",
+      blockNumber: land.blockNumber || "",
+      landUse: land.landUse || "",
+      totalAreaSqm: land.totalAreaSqm ? String(land.totalAreaSqm) : "",
+      latitude: land.latitude ?? null,
+      longitude: land.longitude ?? null,
+      estimatedValueSar: land.estimatedValueSar ? String(land.estimatedValueSar) : "",
+    }));
+  }
 
   // Step 1: Project data
   const [formData, setFormData] = React.useState({
@@ -188,6 +223,24 @@ export default function NewProjectPage() {
   const handleCreateProject = async () => {
     setLoading(true);
     try {
+      // If importing from a land, transition the land to PLANNING
+      if (importLandId) {
+        await updateLandStatus(importLandId, "PLANNING");
+        // Register documents for the existing land-turned-project
+        for (const doc of documents) {
+          await registerProjectDocument({
+            projectId: importLandId,
+            name: doc.name,
+            url: doc.url,
+            type: doc.type,
+            size: doc.size,
+            category: doc.category as any,
+          });
+        }
+        router.push(`/dashboard/projects/${importLandId}`);
+        return;
+      }
+
       const project = await createProject({
         name: formData.name,
         description: formData.description || undefined,
@@ -294,6 +347,35 @@ export default function NewProjectPage() {
           {/* ─── Step 1: Project Details ─── */}
           {currentStep === 0 && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+              {/* Import from Land */}
+              {availableLands.length > 0 && (
+                <div className="border border-secondary/30 bg-secondary/5 rounded-md p-5 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MapTrifold size={18} className="text-secondary" />
+                    <h4 className="text-xs font-bold text-secondary">
+                      {lang === "ar" ? "استيراد من أرض مُستحوذ عليها" : "Import from Acquired Land"}
+                    </h4>
+                  </div>
+                  <p className="text-[10px] text-neutral">
+                    {lang === "ar"
+                      ? "اختر أرضًا لتعبئة بيانات المشروع تلقائيًا من بيانات الأرض."
+                      : "Select a land to auto-fill project data from the land record."}
+                  </p>
+                  <select
+                    value={importLandId}
+                    onChange={(e) => handleLandImport(e.target.value)}
+                    className={inputClass}
+                  >
+                    <option value="">{lang === "ar" ? "— اختر أرضًا (اختياري) —" : "— Select a land (optional) —"}</option>
+                    {availableLands.map((land: any) => (
+                      <option key={land.id} value={land.id}>
+                        {land.name} {land.deedNumber ? `(${land.deedNumber})` : ""} {land.city ? `- ${land.city}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <h3 className="text-sm font-bold text-primary mb-4">
                 {lang === "ar" ? "المعلومات الأساسية" : "Basic Information"}
               </h3>

@@ -32,6 +32,8 @@ export async function createLandParcel(data: {
   estimatedValueSar?: number;
   landOwner?: string;
   landOwnerType?: string;
+  latitude?: number;
+  longitude?: number;
 }) {
   const session = await requirePermission("land:write");
   const orgId = session.organizationId;
@@ -52,6 +54,8 @@ export async function createLandParcel(data: {
       estimatedValueSar: data.estimatedValueSar,
       landOwner: data.landOwner,
       landOwnerType: data.landOwnerType,
+      latitude: data.latitude,
+      longitude: data.longitude,
     },
   });
 
@@ -97,6 +101,8 @@ export async function updateLandFields(projectId: string, data: {
   landOwnerType?: string;
   acquisitionPrice?: number;
   landLegalNotes?: string;
+  latitude?: number;
+  longitude?: number;
 }) {
   const session = await requirePermission("land:write");
   const orgId = session.organizationId;
@@ -113,6 +119,8 @@ export async function updateLandFields(projectId: string, data: {
       landOwnerType: data.landOwnerType,
       acquisitionPrice: data.acquisitionPrice,
       landLegalNotes: data.landLegalNotes,
+      latitude: data.latitude,
+      longitude: data.longitude,
     },
   });
 
@@ -193,4 +201,19 @@ export async function updateDueDiligenceItems(id: string, items: any[]) {
       completedAt: allChecked ? new Date() : null,
     },
   });
+}
+
+export async function getAcquiredLands() {
+  const session = await requirePermission("land:read");
+  const orgId = session.organizationId;
+
+  const lands = await db.project.findMany({
+    where: {
+      organizationId: orgId,
+      status: "LAND_ACQUIRED" as any,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(lands));
 }

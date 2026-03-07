@@ -213,6 +213,133 @@ async function main() {
     },
   });
 
+  // 4b. Land Parcels (Projects with LAND_* statuses)
+  await prisma.project.create({
+    data: {
+      name: "أرض حي الياسمين",
+      description: "أرض سكنية في حي الياسمين شمال الرياض بمساحة كبيرة مناسبة لمجمع سكني",
+      type: "RESIDENTIAL",
+      status: "LAND_ACQUIRED",
+      organizationId: org.id,
+      parcelNumber: "P-5520-03",
+      plotNumber: "42",
+      blockNumber: "B7",
+      deedNumber: "DEED-1446-554433",
+      landUse: "RESIDENTIAL_LAND",
+      totalAreaSqm: 6200,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "الياسمين",
+      streetName: "شارع الأمير محمد بن سلمان",
+      postalCode: "13325",
+      latitude: 24.8231,
+      longitude: 46.6018,
+      estimatedValueSar: 31000000,
+      landOwner: "صالح بن عبدالله العتيبي",
+      landOwnerType: "INDIVIDUAL",
+      acquisitionPrice: 28500000,
+      acquisitionDate: new Date("2025-11-20"),
+    },
+  });
+
+  await prisma.project.create({
+    data: {
+      name: "أرض طريق الملك سلمان التجارية",
+      description: "أرض تجارية على طريق الملك سلمان مناسبة لمجمع مكاتب أو مركز تجاري",
+      type: "COMMERCIAL",
+      status: "LAND_UNDER_REVIEW",
+      organizationId: org.id,
+      parcelNumber: "P-7801-15",
+      deedNumber: "DEED-1447-887766",
+      landUse: "COMMERCIAL_LAND",
+      totalAreaSqm: 12500,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "العارض",
+      streetName: "طريق الملك سلمان",
+      postalCode: "13336",
+      latitude: 24.8456,
+      longitude: 46.6342,
+      estimatedValueSar: 95000000,
+      landOwner: "شركة الوطنية للاستثمار العقاري",
+      landOwnerType: "COMPANY",
+    },
+  });
+
+  await prisma.project.create({
+    data: {
+      name: "أرض حي النرجس",
+      description: "أرض سكنية في حي النرجس مناسبة لبناء فلل",
+      type: "VILLA_COMPOUND",
+      status: "LAND_IDENTIFIED",
+      organizationId: org.id,
+      parcelNumber: "P-9102-22",
+      deedNumber: "DEED-1447-223344",
+      landUse: "RESIDENTIAL_LAND",
+      totalAreaSqm: 8700,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "النرجس",
+      latitude: 24.8102,
+      longitude: 46.6189,
+      estimatedValueSar: 52000000,
+      landOwner: "عبدالرحمن بن محمد الشمري",
+      landOwnerType: "INDIVIDUAL",
+    },
+  });
+
+  await prisma.project.create({
+    data: {
+      name: "أرض مخطط الخير",
+      description: "أرض متعددة الاستخدام في مخطط الخير شمال الرياض",
+      type: "MIXED_USE",
+      status: "LAND_ACQUIRED",
+      organizationId: org.id,
+      parcelNumber: "P-6340-09",
+      plotNumber: "88",
+      blockNumber: "B15",
+      deedNumber: "DEED-1446-667788",
+      landUse: "MIXED_USE_LAND",
+      totalAreaSqm: 15000,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "الخير",
+      streetName: "طريق الأمير فيصل بن بندر",
+      postalCode: "13341",
+      latitude: 24.8675,
+      longitude: 46.5890,
+      estimatedValueSar: 75000000,
+      landOwner: "مؤسسة الراجحي الخيرية",
+      landOwnerType: "COMPANY",
+      acquisitionPrice: 70000000,
+      acquisitionDate: new Date("2025-09-10"),
+    },
+  });
+
+  await prisma.project.create({
+    data: {
+      name: "أرض حي الرمال",
+      description: "أرض صناعية في حي الرمال شرق الرياض قرب المنطقة الصناعية",
+      type: "COMMERCIAL",
+      status: "LAND_UNDER_REVIEW",
+      organizationId: org.id,
+      parcelNumber: "P-4210-31",
+      deedNumber: "DEED-1447-112299",
+      landUse: "INDUSTRIAL_LAND",
+      totalAreaSqm: 22000,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "الرمال",
+      latitude: 24.7340,
+      longitude: 46.8120,
+      estimatedValueSar: 44000000,
+      landOwner: "شركة المدار للتطوير",
+      landOwnerType: "COMPANY",
+    },
+  });
+
+  console.log("Created 5 land parcels");
+
   // 5. Buildings (Balady building details)
   const building1 = await prisma.building.create({
     data: {

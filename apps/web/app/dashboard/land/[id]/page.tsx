@@ -6,6 +6,7 @@ import { ArrowLeft, Spinner, CheckCircle, Circle, MapPin, ArrowRight } from "@ph
 import { Button, Badge } from "@repo/ui";
 import { RiyalIcon } from "@repo/ui";
 import { getLandDetail, updateLandStatus, getDueDiligence, updateDueDiligenceItems, updateLandFields } from "../../../actions/land";
+import MapPicker from "../../../../components/MapPicker";
 
 const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
 
@@ -149,6 +150,26 @@ export default function LandDetailPage() {
             <p className="text-lg font-bold text-primary mt-1">{item.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Location Map */}
+      <div className="bg-white rounded-md shadow-card border border-border p-6">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">
+          {lang === "ar" ? "الموقع على الخريطة" : "Location on Map"}
+        </h3>
+        {land.latitude && land.longitude ? (
+          <div>
+            <MapPicker latitude={land.latitude} longitude={land.longitude} readonly height="250px" zoom={14} />
+            <p className="text-[10px] text-neutral mt-2" dir="ltr">
+              {land.latitude.toFixed(6)}, {land.longitude.toFixed(6)}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8 text-neutral">
+            <MapPin size={32} className="mb-2 opacity-30" />
+            <p className="text-sm">{lang === "ar" ? "لم يتم تحديد الموقع بعد" : "No location set"}</p>
+          </div>
+        )}
       </div>
 
       {/* Due Diligence Checklists */}

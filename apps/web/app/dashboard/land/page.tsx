@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { MapPin, Plus, Spinner, MagnifyingGlass, Eye } from "@phosphor-icons/react";
+import { MapPin, Plus, Spinner, MagnifyingGlass, Eye, NavigationArrow } from "@phosphor-icons/react";
 import { Button, Badge } from "@repo/ui";
 import Link from "next/link";
 import { getLandParcels, createLandParcel } from "../../actions/land";
 import { formatDualDate } from "../../../lib/hijri";
+import MapPicker from "../../../components/MapPicker";
 
 const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string }> = {
   LAND_IDENTIFIED: { label: { ar: "تم التحديد", en: "Identified" }, variant: "reserved" },
@@ -129,6 +130,8 @@ export default function LandPage() {
 function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose: () => void; onSuccess: () => void }) {
   const [saving, setSaving] = React.useState(false);
   const [form, setForm] = React.useState({ name: "", parcelNumber: "", deedNumber: "", landUse: "", totalAreaSqm: "", region: "", city: "", district: "", estimatedValueSar: "", landOwner: "", landOwnerType: "" });
+  const [latitude, setLatitude] = React.useState<number | null>(null);
+  const [longitude, setLongitude] = React.useState<number | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,6 +141,8 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
         ...form,
         totalAreaSqm: form.totalAreaSqm ? parseFloat(form.totalAreaSqm) : undefined,
         estimatedValueSar: form.estimatedValueSar ? parseFloat(form.estimatedValueSar) : undefined,
+        latitude: latitude ?? undefined,
+        longitude: longitude ?? undefined,
       });
       onSuccess();
     } catch (err) { console.error(err); }
@@ -187,6 +192,24 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
             <div><label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المنطقة" : "Region"}</label><input value={form.region} onChange={set("region")} className="w-full border border-border rounded-md px-3 py-2 text-sm" /></div>
             <div><label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المدينة" : "City"}</label><input value={form.city} onChange={set("city")} className="w-full border border-border rounded-md px-3 py-2 text-sm" /></div>
             <div><label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الحي" : "District"}</label><input value={form.district} onChange={set("district")} className="w-full border border-border rounded-md px-3 py-2 text-sm" /></div>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-neutral mb-1 flex items-center gap-1">
+              <NavigationArrow size={12} />
+              {lang === "ar" ? "حدد الموقع على الخريطة" : "Select Location on Map"}
+            </label>
+            <MapPicker
+              latitude={latitude}
+              longitude={longitude}
+              onLocationSelect={(lat, lng) => { setLatitude(lat); setLongitude(lng); }}
+              height="200px"
+              zoom={6}
+            />
+            {latitude && longitude && (
+              <p className="text-[10px] text-neutral mt-1" dir="ltr">
+                {latitude.toFixed(6)}, {longitude.toFixed(6)}
+              </p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
