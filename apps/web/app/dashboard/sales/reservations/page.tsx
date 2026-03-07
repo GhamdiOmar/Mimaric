@@ -16,6 +16,7 @@ import { RiyalIcon } from "@repo/ui";
 import { Button, Badge } from "@repo/ui";
 import Link from "next/link";
 import { getReservations, updateReservationStatus } from "../../../actions/reservations";
+import { formatDualDate } from "../../../../lib/hijri";
 
 const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string; icon: any }> = {
   PENDING: { label: { ar: "قيد الانتظار", en: "Pending" }, variant: "reserved", icon: Clock },
@@ -155,7 +156,7 @@ export default function ReservationsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">
-                      {new Date(res.expiresAt).toLocaleDateString("ar-SA")}
+                      {formatDualDate(res.expiresAt, lang)}
                       {isExpired && (
                         <span className="block text-red-500 text-[10px] font-bold mt-0.5">
                           {lang === "ar" ? "منتهي الصلاحية" : "Expired"}

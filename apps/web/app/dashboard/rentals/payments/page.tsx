@@ -15,6 +15,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Button, Badge } from "@repo/ui";
 import { RiyalIcon } from "@repo/ui";
 import { getInstallments, recordPayment, markOverdueInstallments } from "../../../actions/installments";
+import { formatDualDate } from "../../../../lib/hijri";
 
 type Installment = {
   id: string;
@@ -156,7 +157,7 @@ export default function RentCollectionPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-xs text-neutral font-dm-sans">
                         <Clock size={14} />
-                        {new Date(p.dueDate).toLocaleDateString("en-SA")}
+                        {formatDualDate(p.dueDate, lang)}
                       </div>
                     </td>
                     <td className="px-6 py-4">

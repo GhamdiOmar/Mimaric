@@ -6,6 +6,7 @@ import { Button } from "@repo/ui";
 import { RiyalIcon } from "@repo/ui";
 import Link from "next/link";
 import { getLeases } from "../../actions/leases";
+import { formatDualDate } from "../../../lib/hijri";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
@@ -112,7 +113,7 @@ export default function RentalsPage() {
                     <td className="px-6 py-3 text-sm text-primary">{l.unit.number}</td>
                     <td className="px-6 py-3 text-sm font-bold text-primary flex items-center gap-1"><RiyalIcon size={12} />{fmt(Number(l.totalAmount))}</td>
                     <td className="px-6 py-3 text-xs text-neutral font-latin">
-                      {new Date(l.startDate).toLocaleDateString("en-SA")} — {new Date(l.endDate).toLocaleDateString("en-SA")}
+                      {formatDualDate(l.startDate, lang)} — {formatDualDate(l.endDate, lang)}
                     </td>
                   </tr>
                 ))}

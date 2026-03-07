@@ -23,6 +23,7 @@ import { getCustomers, updateCustomerStatus, createCustomer } from "../../../act
 import { exportToExcel, exportToPDF } from "../../../../lib/export";
 import { usePermissions } from "../../../../hooks/usePermissions";
 import { maskNationalId, maskPhone, maskEmail } from "../../../../lib/pii-masking";
+import { formatDualDate } from "../../../../lib/hijri";
 
 const customerStatuses = [
   { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-blue-500" },
@@ -104,7 +105,7 @@ export default function CustomersPage() {
       { header: lang === "ar" ? "البريد الإلكتروني" : "Email", key: "email", width: 30 },
       { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 15, render: (s: any) => customerStatuses.find(st => st.id === s)?.label[lang] || s },
       { header: lang === "ar" ? "المصدر" : "Source", key: "source", width: 15 },
-      { header: lang === "ar" ? "تاريخ الإضافة" : "Date Added", key: "createdAt", width: 20, render: (d: any) => new Date(d).toLocaleDateString() },
+      { header: lang === "ar" ? "تاريخ الإضافة" : "Date Added", key: "createdAt", width: 20, render: (d: any) => formatDualDate(d, lang) },
     ];
     await exportToExcel({
       data: customers,
@@ -284,7 +285,7 @@ export default function CustomersPage() {
                       <div className="mt-2 pt-3 border-t border-muted flex items-center justify-between">
                         <div className="flex items-center gap-1.5 text-[10px] text-neutral/60">
                           <Calendar size={12} />
-                          <span>{new Date(customer.createdAt).toLocaleDateString()}</span>
+                          <span>{formatDualDate(customer.createdAt, lang)}</span>
                         </div>
                         {/* Selector for status change in lieu of real dnd library to show backend works */}
                         <select 
@@ -372,7 +373,7 @@ export default function CustomersPage() {
                     {customer.source || "Direct"}
                   </td>
                   <td className="px-6 py-4 text-xs text-neutral border-b border-border font-dm-sans">
-                    {new Date(customer.createdAt).toLocaleDateString()}
+                    {formatDualDate(customer.createdAt, lang)}
                   </td>
                   <td className="px-6 py-4 text-end border-b border-border">
                     <button className="p-1 text-neutral hover:text-primary transition-colors">

@@ -20,16 +20,24 @@ import {
   CaretLeft,
   Question,
   SignOut,
-  Users
+  Users,
+  MapPin,
+  CheckCircle,
+  Warning,
+  CurrencyCircleDollar,
+  Wrench as WrenchIcon2,
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import { hasPermission, type Permission } from "../../lib/permissions";
+import { getUnreadCount, getMyNotifications, markAsRead, markAllAsRead } from "../actions/notifications";
+import { globalSearch } from "../actions/search";
 
 const navItems: { label: { ar: string; en: string }; icon: any; href: string; section: string; permission?: Permission }[] = [
   { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main", permission: "dashboard:read" },
+  { label: { ar: "الأراضي", en: "Land" }, icon: MapPin, href: "/dashboard/land", section: "main", permission: "land:read" },
   { label: { ar: "المشاريع", en: "Projects" }, icon: HouseLine, href: "/dashboard/projects", section: "main", permission: "projects:read" },
   { label: { ar: "الوحدات", en: "Units" }, icon: Buildings, href: "/dashboard/units", section: "main", permission: "units:read" },
   { label: { ar: "العملاء", en: "Customers" }, icon: Users, href: "/dashboard/sales/customers", section: "main", permission: "customers:read" },
@@ -61,6 +69,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const [notifications, setNotifications] = React.useState<any[]>([]);
+  const [showNotifs, setShowNotifs] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchResults, setSearchResults] = React.useState<any>(null);
+  const [showSearch, setShowSearch] = React.useState(false);
+  const searchTimeout = React.useRef<any>(null);
 
   const userName = session?.user?.name ?? "مستخدم";
   const userRole = (session?.user as any)?.role ?? "USER";
@@ -70,6 +85,50 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     if (!item.permission) return true; // Settings always visible
     return hasPermission(userRole, item.permission);
   });
+
+  // Fetch unread notification count
+  React.useEffect(() => {
+    getUnreadCount().then(setUnreadCount).catch(() => {});
+  }, [pathname]);
+
+  async function toggleNotifications() {
+    if (!showNotifs) {
+      const notifs = await getMyNotifications(10);
+      setNotifications(notifs);
+    }
+    setShowNotifs(!showNotifs);
+    setShowSearch(false);
+  }
+
+  async function handleMarkAllRead() {
+    await markAllAsRead();
+    setUnreadCount(0);
+    setNotifications((n) => n.map((x) => ({ ...x, read: true })));
+  }
+
+  async function handleNotifClick(notif: any) {
+    if (!notif.read) {
+      await markAsRead(notif.id);
+      setUnreadCount((c) => Math.max(0, c - 1));
+      setNotifications((n) => n.map((x) => x.id === notif.id ? { ...x, read: true } : x));
+    }
+    setShowNotifs(false);
+    if (notif.link) router.push(notif.link);
+  }
+
+  function handleSearchInput(value: string) {
+    setSearchQuery(value);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!value.trim()) { setSearchResults(null); setShowSearch(false); return; }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const results = await globalSearch(value.trim());
+        setSearchResults(results);
+        setShowSearch(true);
+        setShowNotifs(false);
+      } catch { setSearchResults(null); }
+    }, 300);
+  }
 
   return (
     <div className="flex min-h-screen bg-background" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -182,20 +241,89 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {/* Global Search */}
             <div className="hidden md:flex relative w-64 xl:w-96 group">
               <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral transition-colors group-focus-within:text-primary" />
-              <input 
-                type="text" 
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onFocus={() => searchResults && setShowSearch(true)}
+                onBlur={() => setTimeout(() => setShowSearch(false), 200)}
                 placeholder={lang === "ar" ? "بحث شامل في المشاريع، الوحدات، العقود..." : "Global search..."}
-                className="w-full bg-muted/50 border-transparent rounded-md py-2 pr-10 pl-4 text-sm focus:bg-white focus:border-primary/20 focus:ring-0 transition-all outline-none" 
+                className="w-full bg-muted/50 border-transparent rounded-md py-2 pr-10 pl-4 text-sm focus:bg-white focus:border-primary/20 focus:ring-0 transition-all outline-none"
               />
+              {showSearch && searchResults && (
+                <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-raised border border-border z-50 max-h-80 overflow-y-auto">
+                  {[
+                    { key: "customers", label: lang === "ar" ? "العملاء" : "Customers", prefix: "/dashboard/sales/customers" },
+                    { key: "projects", label: lang === "ar" ? "المشاريع" : "Projects", prefix: "/dashboard/projects" },
+                    { key: "units", label: lang === "ar" ? "الوحدات" : "Units", prefix: "/dashboard/units" },
+                    { key: "contracts", label: lang === "ar" ? "العقود" : "Contracts", prefix: "/dashboard/sales/contracts" },
+                  ].map(({ key, label, prefix }) => {
+                    const items = searchResults[key] ?? [];
+                    if (!items.length) return null;
+                    return (
+                      <div key={key}>
+                        <div className="px-3 py-1.5 text-[10px] font-bold uppercase text-neutral bg-muted/30">{label}</div>
+                        {items.map((item: any) => (
+                          <Link
+                            key={item.id}
+                            href={`${prefix}/${item.id}`}
+                            className="block px-3 py-2 text-sm text-primary hover:bg-muted/20 transition-colors"
+                            onClick={() => { setShowSearch(false); setSearchQuery(""); }}
+                          >
+                            {item.name || item.unitNumber || item.number || item.id}
+                          </Link>
+                        ))}
+                      </div>
+                    );
+                  })}
+                  {Object.values(searchResults).every((arr: any) => !arr?.length) && (
+                    <div className="px-3 py-4 text-sm text-neutral text-center">{lang === "ar" ? "لا توجد نتائج" : "No results"}</div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Notification Bell */}
-            <button className="relative p-2 text-neutral hover:text-primary transition-colors">
-              <Bell size={22} />
-              <span className="absolute top-2 left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary ring-2 ring-white">
-                3
-              </span>
-            </button>
+            <div className="relative">
+              <button onClick={toggleNotifications} className="relative p-2 text-neutral hover:text-primary transition-colors">
+                <Bell size={22} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-2 left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary ring-2 ring-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+              {showNotifs && (
+                <div className="absolute top-full mt-1 left-0 w-80 bg-white rounded-md shadow-raised border border-border z-50 max-h-96 overflow-y-auto">
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                    <span className="text-xs font-bold text-primary">{lang === "ar" ? "الإشعارات" : "Notifications"}</span>
+                    {unreadCount > 0 && (
+                      <button onClick={handleMarkAllRead} className="text-[10px] text-secondary hover:underline">
+                        {lang === "ar" ? "تحديد الكل كمقروء" : "Mark all read"}
+                      </button>
+                    )}
+                  </div>
+                  {notifications.length === 0 ? (
+                    <div className="px-3 py-6 text-sm text-neutral text-center">{lang === "ar" ? "لا توجد إشعارات" : "No notifications"}</div>
+                  ) : (
+                    notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => handleNotifClick(n)}
+                        className={cn(
+                          "w-full text-start px-3 py-2.5 hover:bg-muted/20 transition-colors border-b border-border last:border-0",
+                          !n.read && "bg-secondary/5"
+                        )}
+                      >
+                        <p className="text-xs font-bold text-primary">{lang === "ar" ? n.title : (n.titleEn || n.title)}</p>
+                        <p className="text-[10px] text-neutral mt-0.5 line-clamp-2">{lang === "ar" ? n.message : (n.messageEn || n.message)}</p>
+                        <p className="text-[9px] text-neutral/60 mt-1">{new Date(n.createdAt).toLocaleDateString("en-CA")}</p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Language Toggle icon in topbar */}
             <button 

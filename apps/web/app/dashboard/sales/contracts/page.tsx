@@ -16,6 +16,7 @@ import { RiyalIcon } from "@repo/ui";
 import { Button, Badge } from "@repo/ui";
 import Link from "next/link";
 import { getContracts } from "../../../actions/contracts";
+import { formatDualDate } from "../../../../lib/hijri";
 
 const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string; icon: any }> = {
   DRAFT: { label: { ar: "مسودة", en: "Draft" }, variant: "reserved", icon: Clock },
@@ -173,7 +174,7 @@ export default function ContractsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">
-                      {new Date(contract.createdAt).toLocaleDateString("ar-SA")}
+                      {formatDualDate(contract.createdAt, lang)}
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={config!.variant as any} className="gap-1 text-xs">

@@ -12,6 +12,8 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { getDashboardStats } from "../actions/dashboard";
+import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
+import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
 
 type DashboardStats = {
   totalUnits: number;
@@ -89,19 +91,15 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Charts placeholder */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
           <h3 className="text-lg font-bold text-primary mb-6">تحليل الإيرادات (آخر 6 أشهر)</h3>
-          <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted rounded-lg text-neutral/40 text-sm">
-            [Revenue Trend Line Chart Placeholder]
-          </div>
+          <RevenueTrendChart />
         </div>
         <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
           <h3 className="text-lg font-bold text-primary mb-6">توزيع الإشغال حسب المشروع</h3>
-          <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted rounded-lg text-neutral/40 text-sm">
-            [Occupancy Donut Chart Placeholder]
-          </div>
+          <OccupancyDonutChart />
         </div>
       </div>
     </div>

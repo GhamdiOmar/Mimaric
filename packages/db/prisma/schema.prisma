@@ -93,6 +93,7 @@ model User {
   assignedMaintenance   MaintenanceRequest[] @relation("AssignedMaintenance")
   preferences           Json?
   resetTokens           PasswordResetToken[]
+  notifications         Notification[]
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
@@ -142,8 +143,17 @@ model Project {
   boundaries     Json?         // {north, south, east, west} descriptions
   utilities      Json?         // {electricityConnected, waterConnected, sewageConnected, roadAccess}
   estimatedValueSar Decimal?   // Property valuation in SAR
+  // Land acquisition fields (FR-01, FR-02)
+  landOwner         String?    // Current owner name
+  landOwnerType     String?    // INDIVIDUAL, COMPANY, GOVERNMENT
+  acquisitionPrice  Decimal?   // Purchase price in SAR
+  acquisitionDate   DateTime?  // Date of acquisition
+  landLegalNotes    String?    // Legal notes / encumbrances
   buildings      Building[]
   documents      Document[]
+  dueDiligence   DueDiligence[]
+  siteLogs       SiteLog[]
+  phases         Phase[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -158,6 +168,9 @@ enum ProjectType {
 }
 
 enum ProjectStatus {
+  LAND_IDENTIFIED
+  LAND_UNDER_REVIEW
+  LAND_ACQUIRED
   PLANNING
   UNDER_CONSTRUCTION
   READY
@@ -182,6 +195,8 @@ model Building {
   name              String
   projectId         String
   project           Project  @relation(fields: [projectId], references: [id])
+  phaseId           String?
+  phase             Phase?   @relation(fields: [phaseId], references: [id])
   // Balady building detail fields
   numberOfFloors    Int?     // Total floors
   buildingAreaSqm   Float?   // Built-up area in sqm
@@ -191,10 +206,12 @@ model Building {
   electricityConnected Boolean? // Utility: electricity
   waterConnected    Boolean? // Utility: water
   units             Unit[]
+  documents         Document[]
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   @@index([projectId])
+  @@index([phaseId])
 }
 
 // ─── Unit ─────────────────────────────────────────────────────────────────────
@@ -211,7 +228,9 @@ model Unit {
   floor        Int?          // Floor number
   bedrooms     Int?          // Number of bedrooms
   bathrooms    Int?          // Number of bathrooms
+  commercialStrategy CommercialStrategy? // FR-08/21: SELL, LEASE, HOLD, etc.
   reservations        Reservation[]
+  documents           Document[]
   contracts           Contract[]
   leases              Lease[]
   maintenanceRequests MaintenanceRequest[]
@@ -430,6 +449,10 @@ model Document {
   project        Project?     @relation(fields: [projectId], references: [id])
   customerId     String?
   customer       Customer?    @relation(fields: [customerId], references: [id])
+  unitId         String?
+  unit           Unit?        @relation(fields: [unitId], references: [id])
+  buildingId     String?
+  building       Building?    @relation(fields: [buildingId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   userId         String?
@@ -438,6 +461,8 @@ model Document {
 
   @@index([projectId])
   @@index([customerId])
+  @@index([unitId])
+  @@index([buildingId])
   @@index([organizationId])
 }
 
@@ -521,4 +546,95 @@ model AuditLog {
   @@index([organizationId, createdAt])
   @@index([userId])
   @@index([resource, action])
+}
+
+// ─── Commercial Strategy (FR-08/21) ─────────────────────────────────────────
+
+enum CommercialStrategy {
+  SELL
+  LEASE
+  HOLD
+  TRANSFER
+  COMMUNITY
+}
+
+// ─── Notification (FR-45) ───────────────────────────────────────────────────
+
+model Notification {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  type           String   // PAYMENT_DUE, PAYMENT_OVERDUE, LEASE_EXPIRY, MAINTENANCE_UPDATE
+  title          String
+  titleEn        String?
+  message        String
+  messageEn      String?
+  link           String?
+  read           Boolean  @default(false)
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([organizationId])
+}
+
+// ─── Due Diligence (FR-03) ──────────────────────────────────────────────────
+
+model DueDiligence {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id])
+  category       String    // LEGAL, ZONING, VALUATION, ENVIRONMENTAL, UTILITY
+  items          Json      // Array of { label: string, checked: boolean, notes?: string }
+  completedAt    DateTime?
+  organizationId String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([projectId])
+}
+
+// ─── Site Log (FR-17) ───────────────────────────────────────────────────────
+
+model SiteLog {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id])
+  date           DateTime
+  type           String    // DAILY_LOG, INSPECTION, SNAG, SAFETY, WEATHER
+  description    String
+  severity       String?   // LOW, MEDIUM, HIGH, CRITICAL
+  photos         Json?     // Array of URLs
+  resolvedAt     DateTime?
+  reportedBy     String?
+  organizationId String
+  createdAt      DateTime  @default(now())
+
+  @@index([projectId, date])
+}
+
+// ─── Phase (FR-07) ──────────────────────────────────────────────────────────
+
+model Phase {
+  id             String      @id @default(cuid())
+  projectId      String
+  project        Project     @relation(fields: [projectId], references: [id])
+  name           String
+  description    String?
+  status         PhaseStatus @default(PLANNING)
+  startDate      DateTime?
+  endDate        DateTime?
+  budgetSar      Decimal?
+  buildings      Building[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([projectId])
+}
+
+enum PhaseStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
 }

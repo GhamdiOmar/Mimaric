@@ -96,3 +96,101 @@ export async function getDashboardStats() {
     openMaintenanceCount,
   };
 }
+
+export async function getRevenueTimeline() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+
+  const now = new Date();
+  const months: { month: string; rent: number; sales: number }[] = [];
+
+  for (let i = 5; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    const monthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+
+    const [rentAgg, salesAgg] = await Promise.all([
+      db.rentInstallment.aggregate({
+        where: {
+          status: "PAID",
+          paidAt: { gte: start, lt: end },
+          lease: { customer: { organizationId: orgId } },
+        },
+        _sum: { amount: true },
+      }),
+      db.contract.aggregate({
+        where: {
+          status: "SIGNED",
+          type: "SALE",
+          signedAt: { gte: start, lt: end },
+          customer: { organizationId: orgId },
+        },
+        _sum: { amount: true },
+      }),
+    ]);
+
+    months.push({
+      month: monthKey,
+      rent: Number(rentAgg._sum.amount ?? 0),
+      sales: Number(salesAgg._sum.amount ?? 0),
+    });
+  }
+
+  return months;
+}
+
+export async function getOccupancyByProject() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+
+  const projects = await db.project.findMany({
+    where: { organizationId: orgId },
+    select: {
+      id: true,
+      name: true,
+      buildings: {
+        select: {
+          units: {
+            select: { status: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const results = projects.map((p) => {
+    const allUnits = p.buildings.flatMap((b) => b.units);
+    const total = allUnits.length;
+    const occupied = allUnits.filter((u) =>
+      ["RENTED", "SOLD"].includes(u.status)
+    ).length;
+    return {
+      name: p.name,
+      total,
+      occupied,
+      vacant: total - occupied,
+      rate: total > 0 ? Math.round((occupied / total) * 100) : 0,
+    };
+  });
+
+  // Top 6 projects by total units, rest aggregated
+  if (results.length > 6) {
+    const top = results.slice(0, 6);
+    const rest = results.slice(6);
+    const other = rest.reduce(
+      (acc, r) => ({
+        name: "أخرى",
+        total: acc.total + r.total,
+        occupied: acc.occupied + r.occupied,
+        vacant: acc.vacant + r.vacant,
+        rate: 0,
+      }),
+      { name: "أخرى", total: 0, occupied: 0, vacant: 0, rate: 0 }
+    );
+    other.rate = other.total > 0 ? Math.round((other.occupied / other.total) * 100) : 0;
+    return [...top, other];
+  }
+
+  return results;
+}
