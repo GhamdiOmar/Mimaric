@@ -85,7 +85,7 @@ export default function RegisterPage() {
              <button 
                 onClick={() => setUserType("individual")}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium transition-all",
+                  "flex flex-nowrap flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium whitespace-nowrap transition-all",
                   userType === "individual" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
                 )}
              >
@@ -95,7 +95,7 @@ export default function RegisterPage() {
              <button 
                 onClick={() => setUserType("company")}
                 className={cn(
-                  "flex flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium transition-all",
+                  "flex flex-nowrap flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium whitespace-nowrap transition-all",
                   userType === "company" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
                 )}
              >

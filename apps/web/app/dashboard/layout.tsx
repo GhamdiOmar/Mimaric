@@ -123,7 +123,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="border-t border-white/10 p-3 space-y-1">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all"
+            className="flex flex-nowrap w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium whitespace-nowrap text-white/70 hover:bg-white/5 hover:text-white transition-all"
           >
             {isCollapsed 
               ? (lang === "ar" ? <CaretLeft size={20} /> : <CaretRight size={20} />) 
