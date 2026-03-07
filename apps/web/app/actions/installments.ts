@@ -67,7 +67,7 @@ export async function recordPayment(
 
   revalidatePath("/dashboard/rentals/payments");
   revalidatePath("/dashboard/finance");
-  return updated;
+  return JSON.parse(JSON.stringify(updated));
 }
 
 export async function markOverdueInstallments() {

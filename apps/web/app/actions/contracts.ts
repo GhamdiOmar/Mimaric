@@ -32,7 +32,7 @@ export async function createContract(data: {
   });
 
   revalidatePath("/dashboard/sales/contracts");
-  return contract;
+  return JSON.parse(JSON.stringify(contract));
 }
 
 export async function getContract(contractId: string) {
@@ -50,7 +50,7 @@ export async function getContract(contractId: string) {
     throw new Error("Contract not found");
   }
 
-  return contract;
+  return JSON.parse(JSON.stringify(contract));
 }
 
 export async function getContracts(filters?: { status?: string; type?: string }) {
@@ -63,7 +63,7 @@ export async function getContracts(filters?: { status?: string; type?: string })
   if (filters?.status) where.status = filters.status;
   if (filters?.type) where.type = filters.type;
 
-  return db.contract.findMany({
+  const contracts = await db.contract.findMany({
     where,
     include: {
       customer: true,
@@ -71,6 +71,7 @@ export async function getContracts(filters?: { status?: string; type?: string })
     },
     orderBy: { createdAt: "desc" },
   });
+  return JSON.parse(JSON.stringify(contracts));
 }
 
 export async function updateContractStatus(
@@ -111,5 +112,5 @@ export async function updateContractStatus(
 
   revalidatePath("/dashboard/sales/contracts");
   revalidatePath("/dashboard/units");
-  return updated;
+  return JSON.parse(JSON.stringify(updated));
 }

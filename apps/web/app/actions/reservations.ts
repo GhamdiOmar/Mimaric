@@ -40,13 +40,13 @@ export async function createReservation(data: {
 
   revalidatePath("/dashboard/units");
   revalidatePath("/dashboard/sales/reservations");
-  return reservation;
+  return JSON.parse(JSON.stringify(reservation));
 }
 
 export async function getReservations() {
   const session = await getSessionOrThrow();
 
-  return db.reservation.findMany({
+  const reservations = await db.reservation.findMany({
     where: {
       customer: { organizationId: session.organizationId },
     },
@@ -56,6 +56,7 @@ export async function getReservations() {
     },
     orderBy: { createdAt: "desc" },
   });
+  return JSON.parse(JSON.stringify(reservations));
 }
 
 export async function updateReservationStatus(
@@ -99,5 +100,5 @@ export async function updateReservationStatus(
 
   revalidatePath("/dashboard/units");
   revalidatePath("/dashboard/sales/reservations");
-  return updated;
+  return JSON.parse(JSON.stringify(updated));
 }

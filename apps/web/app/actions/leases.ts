@@ -79,7 +79,7 @@ export async function createLease(data: {
 
   revalidatePath("/dashboard/rentals");
   revalidatePath("/dashboard/units");
-  return lease;
+  return JSON.parse(JSON.stringify(lease));
 }
 
 export async function getLeases(filters?: { status?: string }) {

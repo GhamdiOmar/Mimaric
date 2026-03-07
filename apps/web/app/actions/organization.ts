@@ -7,9 +7,10 @@ import { getSessionOrThrow } from "../../lib/auth-helpers";
 export async function getOrganization() {
   const session = await getSessionOrThrow();
 
-  return db.organization.findUnique({
+  const org = await db.organization.findUnique({
     where: { id: session.organizationId },
   });
+  return JSON.parse(JSON.stringify(org));
 }
 
 export async function updateOrganization(data: {
@@ -49,5 +50,5 @@ export async function updateOrganization(data: {
   });
 
   revalidatePath("/dashboard/settings");
-  return org;
+  return JSON.parse(JSON.stringify(org));
 }

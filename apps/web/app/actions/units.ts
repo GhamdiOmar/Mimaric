@@ -22,7 +22,7 @@ export async function updateUnit(unitId: string, data: any) {
   });
 
   revalidatePath("/dashboard/units");
-  return updated;
+  return JSON.parse(JSON.stringify(updated));
 }
 
 export async function massUpdateUnits(
@@ -55,13 +55,13 @@ export async function massUpdateUnits(
   );
 
   revalidatePath("/dashboard/units");
-  return results;
+  return JSON.parse(JSON.stringify(results));
 }
 
 export async function getUnitsWithBuildings() {
   const session = await getSessionOrThrow();
 
-  return await db.unit.findMany({
+  const units = await db.unit.findMany({
     where: {
       building: {
         project: { organizationId: session.organizationId },
@@ -76,6 +76,7 @@ export async function getUnitsWithBuildings() {
     },
     orderBy: { number: "asc" },
   });
+  return JSON.parse(JSON.stringify(units));
 }
 
 export async function createUnit(data: {
@@ -105,7 +106,7 @@ export async function createUnit(data: {
   });
 
   revalidatePath("/dashboard/units");
-  return unit;
+  return JSON.parse(JSON.stringify(unit));
 }
 
 export async function deleteUnit(unitId: string) {
@@ -126,11 +127,12 @@ export async function deleteUnit(unitId: string) {
 export async function getBuildings() {
   const session = await getSessionOrThrow();
 
-  return await db.building.findMany({
+  const buildings = await db.building.findMany({
     where: {
       project: { organizationId: session.organizationId },
     },
     include: { project: true },
     orderBy: { name: "asc" },
   });
+  return JSON.parse(JSON.stringify(buildings));
 }

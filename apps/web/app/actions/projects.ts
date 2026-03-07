@@ -65,13 +65,13 @@ export async function createProject(data: {
   });
 
   revalidatePath("/dashboard/projects");
-  return project;
+  return JSON.parse(JSON.stringify(project));
 }
 
 export async function getProjects() {
   const session = await getSessionOrThrow();
 
-  return await db.project.findMany({
+  const projects = await db.project.findMany({
     where: { organizationId: session.organizationId },
     include: {
       buildings: {
@@ -82,6 +82,7 @@ export async function getProjects() {
     },
     orderBy: { createdAt: "desc" },
   });
+  return JSON.parse(JSON.stringify(projects));
 }
 
 export async function updateProject(
@@ -117,7 +118,7 @@ export async function updateProject(
   });
 
   revalidatePath("/dashboard/projects");
-  return project;
+  return JSON.parse(JSON.stringify(project));
 }
 
 export async function deleteProject(projectId: string) {
@@ -157,5 +158,5 @@ export async function createBuilding(data: {
   });
 
   revalidatePath("/dashboard/projects");
-  return building;
+  return JSON.parse(JSON.stringify(building));
 }

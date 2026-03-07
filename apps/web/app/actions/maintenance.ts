@@ -38,7 +38,7 @@ export async function getMaintenanceRequests(filters?: {
   if (filters?.status) where.status = filters.status;
   if (filters?.priority) where.priority = filters.priority;
 
-  return db.maintenanceRequest.findMany({
+  const results = await db.maintenanceRequest.findMany({
     where,
     include: {
       unit: { include: { building: true } },
@@ -46,6 +46,7 @@ export async function getMaintenanceRequests(filters?: {
     },
     orderBy: { createdAt: "desc" },
   });
+  return JSON.parse(JSON.stringify(results));
 }
 
 export async function updateMaintenanceRequest(

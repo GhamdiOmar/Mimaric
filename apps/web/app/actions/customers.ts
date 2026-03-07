@@ -65,7 +65,7 @@ export async function createCustomer(data: {
 export async function getCustomer(customerId: string) {
   const session = await getSessionOrThrow();
 
-  return await db.customer.findFirst({
+  const customer = await db.customer.findFirst({
     where: { id: customerId, organizationId: session.organizationId },
     include: {
       agent: { select: { id: true, name: true, email: true } },
@@ -74,6 +74,7 @@ export async function getCustomer(customerId: string) {
       reservations: { include: { unit: true }, orderBy: { createdAt: "desc" } },
     },
   });
+  return JSON.parse(JSON.stringify(customer));
 }
 
 export async function updateCustomer(
