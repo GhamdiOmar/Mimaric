@@ -113,6 +113,16 @@ Unify the data model to treat prospective leads and finalized buyers/tenants as 
 
 ---
 
+## Data Export & Reporting [UPCOMING]
+### Universal Export Functionality
+Implement a fully localized system to export application data while strictly adhering to Mimaric's brand identity.
+- **Excel Export**: Export data tables (customers, units, properties, finance) as structured `.xlsx` files.
+- **PDF Reports**: Generate highly polished PDF reports containing the Mimaric logo, brand colors, and typography.
+- **Bilingual Support**: Fully support both Arabic (RTL) and English (LTR) generation.
+- **RTL Compliance**: Ensure layout, text alignment, and tables correctly mirror for Arabic in generated PDFs.
+
+---
+
 ## Technical Debt & Maintenance [FIXED]
 - **Tailwind v4 Migration**: Successfully migrated to Tailwind CSS v4 with `@theme` variables.
 - **Monorepo Resolution**: Optimized `@repo/ui` exports to prevent subpath resolution errors.
