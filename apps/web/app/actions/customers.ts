@@ -2,15 +2,21 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission, getSessionWithPermissions } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
+import { encryptCustomerData, decryptCustomerData, decryptCustomerList } from "../../lib/pii-crypto";
+import { maskCustomerPii } from "../../lib/pii-masking";
+import { hashForSearch } from "../../lib/encryption";
 
 export async function updateCustomerStatus(customerId: string, status: any) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("customers:write");
 
   const customer = await db.customer.update({
     where: { id: customerId, organizationId: session.organizationId },
     data: { status },
   });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { field: "status", newStatus: status }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/sales/customers");
   return customer;
@@ -34,16 +40,26 @@ export async function createCustomer(data: {
   address?: any;
   documentInfo?: any;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("customers:write");
+
+  // Encrypt PII fields before saving
+  const encryptedData = encryptCustomerData({
+    nationalId: data.nationalId,
+    phone: data.phone,
+    email: data.email,
+  });
 
   const customer = await db.customer.create({
     data: {
       name: data.name,
-      phone: data.phone,
-      email: data.email,
+      phone: encryptedData.phone,
+      email: encryptedData.email,
       source: data.source,
       status: data.status,
-      nationalId: data.nationalId,
+      nationalId: encryptedData.nationalId,
+      nationalIdHash: encryptedData.nationalIdHash,
+      phoneHash: encryptedData.phoneHash,
+      emailHash: encryptedData.emailHash,
       nameArabic: data.nameArabic,
       personType: data.personType,
       gender: data.gender,
@@ -58,12 +74,15 @@ export async function createCustomer(data: {
     },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Customer", resourceId: customer.id, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/sales/customers");
   return customer;
 }
 
 export async function getCustomer(customerId: string) {
-  const session = await getSessionOrThrow();
+  const session = await getSessionWithPermissions();
+  const hasPiiAccess = session.can("customers:read_pii");
 
   const customer = await db.customer.findFirst({
     where: { id: customerId, organizationId: session.organizationId },
@@ -74,7 +93,16 @@ export async function getCustomer(customerId: string) {
       reservations: { include: { unit: true }, orderBy: { createdAt: "desc" } },
     },
   });
-  return JSON.parse(JSON.stringify(customer));
+
+  if (!customer) return null;
+
+  // Decrypt then mask based on permissions
+  const decrypted = decryptCustomerData(customer);
+  const masked = maskCustomerPii(decrypted, hasPiiAccess);
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: hasPiiAccess ? "READ_PII" : "READ", resource: "Customer", resourceId: customerId, organizationId: session.organizationId });
+
+  return JSON.parse(JSON.stringify(masked));
 }
 
 export async function updateCustomer(
@@ -97,15 +125,34 @@ export async function updateCustomer(
     source?: string;
   }
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("customers:write");
 
   const updateData: any = { ...data };
   if (data.dateOfBirth) updateData.dateOfBirth = new Date(data.dateOfBirth);
+
+  // Encrypt PII fields if being updated
+  if (data.nationalId) {
+    const enc = encryptCustomerData({ nationalId: data.nationalId });
+    updateData.nationalId = enc.nationalId;
+    updateData.nationalIdHash = enc.nationalIdHash;
+  }
+  if (data.phone) {
+    const enc = encryptCustomerData({ phone: data.phone });
+    updateData.phone = enc.phone;
+    updateData.phoneHash = enc.phoneHash;
+  }
+  if (data.email) {
+    const enc = encryptCustomerData({ email: data.email });
+    updateData.email = enc.email;
+    updateData.emailHash = enc.emailHash;
+  }
 
   const customer = await db.customer.update({
     where: { id: customerId, organizationId: session.organizationId },
     data: updateData,
   });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { fields: Object.keys(data) }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/sales/customers");
   return customer;
@@ -115,7 +162,8 @@ export async function getCustomers(filters?: {
   status?: string;
   search?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await getSessionWithPermissions();
+  const hasPiiAccess = session.can("customers:read_pii");
 
   const where: any = { organizationId: session.organizationId };
 
@@ -124,30 +172,42 @@ export async function getCustomers(filters?: {
   }
 
   if (filters?.search) {
+    const searchHash = hashForSearch(filters.search);
     where.OR = [
       { name: { contains: filters.search, mode: "insensitive" } },
       { nameArabic: { contains: filters.search, mode: "insensitive" } },
-      { phone: { contains: filters.search } },
-      { email: { contains: filters.search, mode: "insensitive" } },
-      { nationalId: { contains: filters.search } },
+      // Exact match via hash for encrypted fields
+      { phoneHash: searchHash },
+      { emailHash: searchHash },
+      { nationalIdHash: searchHash },
     ];
   }
 
-  return await db.customer.findMany({
+  const results = await db.customer.findMany({
     where,
     include: {
       agent: { select: { id: true, name: true, email: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
+
+  // Decrypt then mask based on permissions
+  const decrypted = decryptCustomerList(results);
+  const masked = decrypted.map((c) => maskCustomerPii(c, hasPiiAccess));
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: hasPiiAccess ? "READ_PII" : "READ", resource: "Customer", metadata: { filters, count: results.length }, organizationId: session.organizationId });
+
+  return masked;
 }
 
 export async function deleteCustomer(customerId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("customers:delete");
 
   await db.customer.delete({
     where: { id: customerId, organizationId: session.organizationId },
   });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "DELETE", resource: "Customer", resourceId: customerId, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/sales/customers");
 }

@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function createReservation(data: {
   customerId: string;
@@ -10,7 +11,7 @@ export async function createReservation(data: {
   amount: number;
   expiresAt: Date;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("reservations:write");
 
   // Verify customer belongs to org
   const customer = await db.customer.findFirst({
@@ -38,13 +39,15 @@ export async function createReservation(data: {
     data: { status: "RESERVED" },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Reservation", resourceId: reservation.id, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/units");
   revalidatePath("/dashboard/sales/reservations");
   return JSON.parse(JSON.stringify(reservation));
 }
 
 export async function getReservations() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("reservations:read");
 
   const reservations = await db.reservation.findMany({
     where: {
@@ -63,7 +66,7 @@ export async function updateReservationStatus(
   reservationId: string,
   status: "CONFIRMED" | "CANCELLED" | "EXPIRED"
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("reservations:write");
 
   const reservation = await db.reservation.findFirst({
     where: { id: reservationId },
@@ -97,6 +100,8 @@ export async function updateReservationStatus(
       data: { status: "CONVERTED" },
     });
   }
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Reservation", resourceId: reservationId, metadata: { newStatus: status }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/units");
   revalidatePath("/dashboard/sales/reservations");

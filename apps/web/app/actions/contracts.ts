@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function createContract(data: {
   customerId: string;
@@ -11,7 +12,7 @@ export async function createContract(data: {
   amount: number;
   fileUrl?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("contracts:write");
 
   // Verify customer belongs to org
   const customer = await db.customer.findFirst({
@@ -31,12 +32,14 @@ export async function createContract(data: {
     },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Contract", resourceId: contract.id, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/sales/contracts");
   return JSON.parse(JSON.stringify(contract));
 }
 
 export async function getContract(contractId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("contracts:read");
 
   const contract = await db.contract.findFirst({
     where: { id: contractId },
@@ -54,7 +57,7 @@ export async function getContract(contractId: string) {
 }
 
 export async function getContracts(filters?: { status?: string; type?: string }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("contracts:read");
 
   const where: any = {
     customer: { organizationId: session.organizationId },
@@ -78,7 +81,7 @@ export async function updateContractStatus(
   contractId: string,
   status: "SENT" | "SIGNED" | "CANCELLED" | "VOID"
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("contracts:write");
 
   const contract = await db.contract.findFirst({
     where: { id: contractId },
@@ -109,6 +112,8 @@ export async function updateContractStatus(
       data: { status: "CONVERTED" },
     });
   }
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Contract", resourceId: contractId, metadata: { newStatus: status }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/sales/contracts");
   revalidatePath("/dashboard/units");

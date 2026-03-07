@@ -2,6 +2,7 @@
 
 import { auth } from "../auth";
 import { db } from "@repo/db";
+import { hasPermission, type Permission } from "./permissions";
 
 export type AuthSession = {
   userId: string;
@@ -49,5 +50,27 @@ export async function getSessionOrThrow(): Promise<AuthSession> {
     name: user.name ?? session.user.name ?? null,
     role: user.role,
     organizationId: user.organizationId,
+  };
+}
+
+/**
+ * Get session and require a specific permission, or throw Forbidden.
+ */
+export async function requirePermission(permission: Permission): Promise<AuthSession> {
+  const session = await getSessionOrThrow();
+  if (!hasPermission(session.role, permission)) {
+    throw new Error(`Forbidden: missing permission '${permission}'`);
+  }
+  return session;
+}
+
+/**
+ * Get session with a convenience `can()` method for checking permissions inline.
+ */
+export async function getSessionWithPermissions(): Promise<AuthSession & { can: (p: Permission) => boolean }> {
+  const session = await getSessionOrThrow();
+  return {
+    ...session,
+    can: (p: Permission) => hasPermission(session.role, p),
   };
 }

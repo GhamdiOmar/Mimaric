@@ -14,9 +14,21 @@ export default function LoginPage() {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [rateLimitSeconds, setRateLimitSeconds] = React.useState(0);
   const router = useRouter();
 
-  const errorMessages = {
+  React.useEffect(() => {
+    if (rateLimitSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setRateLimitSeconds((s) => {
+        if (s <= 1) { setError(null); return 0; }
+        return s - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [rateLimitSeconds]);
+
+  const errorMessages: Record<string, { ar: string; en: string }> = {
     USER_NOT_FOUND: {
       ar: "البريد الإلكتروني المدخل غير مسجل لدينا.",
       en: "This email is not registered in our system."
@@ -54,13 +66,23 @@ export default function LoginPage() {
     try {
       const result = await loginAction(formData);
       if (result?.error) {
-        const msg = errorMessages[result.error as keyof typeof errorMessages] || 
+        // Handle rate limiting
+        if (result.error.startsWith("RATE_LIMITED")) {
+          const seconds = parseInt(result.error.split(":")[1] ?? "30", 10);
+          setRateLimitSeconds(seconds);
+          setError(lang === "ar"
+            ? `محاولات كثيرة جدًا. حاول مرة أخرى بعد ${seconds} ثانية.`
+            : `Too many attempts. Try again in ${seconds} seconds.`);
+          setLoading(false);
+          return;
+        }
+        const msg = errorMessages[result.error] ||
                    (lang === "ar" ? "حدث خطأ ما." : "Something went wrong.");
         setError(typeof msg === 'string' ? msg : msg[lang]);
         setLoading(false);
       } else {
         // Successful login will redirect via server action
-        router.push("/dashboard/units");
+        router.push("/dashboard");
       }
     } catch (err: any) {
       // Catch next-auth redirect "errors"
@@ -183,7 +205,7 @@ export default function LoginPage() {
             <Button 
               className="w-full cursor-pointer hover:bg-primary-deep transition-all active:scale-[0.98] disabled:opacity-50" 
               onClick={handleLogin}
-              disabled={loading || !email || !password}
+              disabled={loading || !email || !password || rateLimitSeconds > 0}
             >
               {loading ? (
                 <Spinner className="animate-spin" />

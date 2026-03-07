@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@repo/db";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
 
 export async function getFinanceStats() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("finance:read");
   const orgId = session.organizationId;
 
   // Get all installments for this org

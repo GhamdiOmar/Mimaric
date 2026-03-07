@@ -124,7 +124,7 @@ export default function ReservationsPage() {
             </thead>
             <tbody>
               {reservations.map((res: any) => {
-                const config = statusConfig[res.status] || statusConfig.PENDING;
+                const config = (statusConfig as any)[res.status] || statusConfig.PENDING;
                 const StatusIcon = config.icon;
                 const isExpired = new Date(res.expiresAt) < new Date() && res.status === "PENDING";
 

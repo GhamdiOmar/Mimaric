@@ -84,7 +84,7 @@ export default function ContractsPage() {
           <Button
             key={f.value}
             size="sm"
-            variant={filter === f.value ? "default" : "secondary"}
+            variant={filter === f.value ? "primary" : "secondary"}
             className="text-xs"
             onClick={() => setFilter(f.value)}
           >
@@ -137,7 +137,7 @@ export default function ContractsPage() {
             </thead>
             <tbody>
               {contracts.map((contract: any) => {
-                const config = statusConfig[contract.status] || statusConfig.DRAFT;
+                const config = (statusConfig as any)[contract.status] || statusConfig.DRAFT;
                 const StatusIcon = config.icon;
                 const typeLabel = typeLabels[contract.type] || { ar: contract.type, en: contract.type };
 
@@ -162,7 +162,7 @@ export default function ContractsPage() {
                       <p className="text-xs text-neutral">{contract.unit?.building?.name}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant={"draft" as any} className="text-xs">
                         {typeLabel[lang]}
                       </Badge>
                     </td>
@@ -176,7 +176,7 @@ export default function ContractsPage() {
                       {new Date(contract.createdAt).toLocaleDateString("ar-SA")}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={config.variant as any} className="gap-1 text-xs">
+                      <Badge variant={config!.variant as any} className="gap-1 text-xs">
                         <StatusIcon size={12} />
                         {config.label[lang]}
                       </Badge>

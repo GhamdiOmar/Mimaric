@@ -2,10 +2,11 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function getOrganization() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("organization:read");
 
   const org = await db.organization.findUnique({
     where: { id: session.organizationId },
@@ -34,11 +35,7 @@ export async function updateOrganization(data: {
   nationalAddress?: any;
   managerInfo?: any;
 }) {
-  const session = await getSessionOrThrow();
-
-  if (!["SUPER_ADMIN", "DEV_ADMIN"].includes(session.role)) {
-    throw new Error("Only administrators can update organization settings");
-  }
+  const session = await requirePermission("organization:write");
 
   const updateData: any = { ...data };
   if (data.registrationDate) updateData.registrationDate = new Date(data.registrationDate);
@@ -48,6 +45,8 @@ export async function updateOrganization(data: {
     where: { id: session.organizationId },
     data: updateData,
   });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Organization", resourceId: session.organizationId, metadata: { fields: Object.keys(data) }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/settings");
   return JSON.parse(JSON.stringify(org));

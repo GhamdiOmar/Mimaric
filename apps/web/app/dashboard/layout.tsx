@@ -26,17 +26,18 @@ import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
+import { hasPermission, type Permission } from "../../lib/permissions";
 
-const navItems = [
-  { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main" },
-  { label: { ar: "المشاريع", en: "Projects" }, icon: HouseLine, href: "/dashboard/projects", section: "main" },
-  { label: { ar: "الوحدات", en: "Units" }, icon: Buildings, href: "/dashboard/units", section: "main" },
-  { label: { ar: "العملاء", en: "Customers" }, icon: Users, href: "/dashboard/sales/customers", section: "main" },
-  { label: { ar: "المبيعات", en: "Sales" }, icon: ChartLineUp, href: "/dashboard/sales", section: "main" },
-  { label: { ar: "الإيجارات", en: "Rentals" }, icon: Tag, href: "/dashboard/rentals", section: "main" },
-  { label: { ar: "المالية", en: "Finance" }, icon: Receipt, href: "/dashboard/finance", section: "main" },
-  { label: { ar: "الصيانة", en: "Maintenance" }, icon: Wrench, href: "/dashboard/maintenance", section: "main" },
-  { label: { ar: "التقارير", en: "Reports" }, icon: FileText, href: "/dashboard/reports", section: "secondary" },
+const navItems: { label: { ar: string; en: string }; icon: any; href: string; section: string; permission?: Permission }[] = [
+  { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main", permission: "dashboard:read" },
+  { label: { ar: "المشاريع", en: "Projects" }, icon: HouseLine, href: "/dashboard/projects", section: "main", permission: "projects:read" },
+  { label: { ar: "الوحدات", en: "Units" }, icon: Buildings, href: "/dashboard/units", section: "main", permission: "units:read" },
+  { label: { ar: "العملاء", en: "Customers" }, icon: Users, href: "/dashboard/sales/customers", section: "main", permission: "customers:read" },
+  { label: { ar: "المبيعات", en: "Sales" }, icon: ChartLineUp, href: "/dashboard/sales", section: "main", permission: "contracts:read" },
+  { label: { ar: "الإيجارات", en: "Rentals" }, icon: Tag, href: "/dashboard/rentals", section: "main", permission: "leases:read" },
+  { label: { ar: "المالية", en: "Finance" }, icon: Receipt, href: "/dashboard/finance", section: "main", permission: "finance:read" },
+  { label: { ar: "الصيانة", en: "Maintenance" }, icon: Wrench, href: "/dashboard/maintenance", section: "main", permission: "maintenance:read" },
+  { label: { ar: "التقارير", en: "Reports" }, icon: FileText, href: "/dashboard/reports", section: "secondary", permission: "reports:read" },
   { label: { ar: "الإعدادات", en: "Settings" }, icon: Gear, href: "/dashboard/settings", section: "secondary" },
 ];
 
@@ -62,8 +63,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
 
   const userName = session?.user?.name ?? "مستخدم";
-  const userRole = session?.user?.role ?? "USER";
+  const userRole = (session?.user as any)?.role ?? "USER";
   const roleLabel = roleLabels[userRole] ?? { ar: "مستخدم", en: "User" };
+
+  const filteredNavItems = navItems.filter((item) => {
+    if (!item.permission) return true; // Settings always visible
+    return hasPermission(userRole, item.permission);
+  });
 
   return (
     <div className="flex min-h-screen bg-background" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -89,7 +95,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
         {/* Navigation Items */}
         <nav className="flex-1 overflow-y-auto pt-4 px-3 space-y-1 custom-scrollbar">
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;
             

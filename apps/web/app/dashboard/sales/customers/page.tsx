@@ -2,23 +2,27 @@
 
 import * as React from "react";
 import { 
-  Plus, 
-  DotsThreeVertical, 
-  User, 
-  Phone, 
-  Envelope, 
+  Plus,
+  DotsThreeVertical,
+  User,
+  Phone,
+  Envelope,
   Calendar,
   Funnel,
   ArrowsDownUp,
   MagnifyingGlass,
   Spinner,
   DownloadSimple,
-  FilePdf
+  FilePdf,
+  Eye,
+  EyeSlash
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Badge, Button, Input } from "@repo/ui";
 import { getCustomers, updateCustomerStatus, createCustomer } from "../../../actions/customers";
 import { exportToExcel, exportToPDF } from "../../../../lib/export";
+import { usePermissions } from "../../../../hooks/usePermissions";
+import { maskNationalId, maskPhone, maskEmail } from "../../../../lib/pii-masking";
 
 const customerStatuses = [
   { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-blue-500" },
@@ -47,6 +51,9 @@ export default function CustomersPage() {
     status: "NEW"
   });
   const [showOptionalFields, setShowOptionalFields] = React.useState(false);
+  const [showPii, setShowPii] = React.useState(false);
+  const { can } = usePermissions();
+  const hasPiiAccess = can("customers:read_pii");
 
   React.useEffect(() => {
     async function loadCustomers() {
@@ -146,18 +153,34 @@ export default function CustomersPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportExcel}>
-            <DownloadSimple size={18} />
-            {lang === "ar" ? "Excel تصدير" : "Export Excel"}
-          </Button>
-          <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportPDF}>
-            <FilePdf size={18} />
-            {lang === "ar" ? "PDF تصدير" : "Export PDF"}
-          </Button>
+          {can("customers:export") && (
+            <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportExcel}>
+              <DownloadSimple size={18} />
+              {lang === "ar" ? "Excel تصدير" : "Export Excel"}
+            </Button>
+          )}
+          {can("customers:export") && (
+            <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportPDF}>
+              <FilePdf size={18} />
+              {lang === "ar" ? "PDF تصدير" : "Export PDF"}
+            </Button>
+          )}
+          {hasPiiAccess && (
+            <Button
+              variant="ghost"
+              size="md"
+              className={cn("gap-2 text-neutral border border-border", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+              onClick={() => setShowPii(!showPii)}
+            >
+              {showPii ? <EyeSlash size={18} /> : <Eye size={18} />}
+              {showPii ? (lang === "ar" ? "إخفاء البيانات" : "Hide PII") : (lang === "ar" ? "كشف البيانات" : "Show PII")}
+            </Button>
+          )}
           <Button variant="secondary" size="md" className="gap-2 ml-2">
             <Funnel size={18} />
             {lang === "ar" ? "تصفية" : "Filter"}
           </Button>
+          {can("customers:write") && (
           <Button size="md" className="gap-2 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-5 h-10" onClick={() => {
             setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
             setShowOptionalFields(false);
@@ -166,6 +189,7 @@ export default function CustomersPage() {
             <Plus size={18} weight="bold" />
             {lang === "ar" ? "إضافة عميل" : "Add Customer"}
           </Button>
+          )}
         </div>
       </div>
 
@@ -239,20 +263,20 @@ export default function CustomersPage() {
                       </div>
                       
                       <div className="space-y-1.5">
-                        {customer.nationalId && (
+                        {customer.nationalId && hasPiiAccess && (
                           <div className="flex items-center gap-2 text-xs text-neutral">
                             <User size={14} className="text-neutral/60" />
-                            <span className="font-dm-sans" dir="ltr">{customer.nationalId}</span>
+                            <span className="font-dm-sans" dir="ltr">{showPii ? customer.nationalId : maskNationalId(customer.nationalId)}</span>
                           </div>
                         )}
                         <div className="flex items-center gap-2 text-xs text-neutral">
                           <Phone size={14} className="text-neutral/60" />
-                          <span className="font-dm-sans" dir="ltr">{customer.phone}</span>
+                          <span className="font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
                         </div>
                         {customer.email && (
                           <div className="flex items-center gap-2 text-xs text-neutral">
                             <Envelope size={14} className="text-neutral/60" />
-                            <span className="truncate max-w-[180px] font-dm-sans">{customer.email}</span>
+                            <span className="truncate max-w-[180px] font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
                           </div>
                         )}
                       </div>
@@ -299,9 +323,11 @@ export default function CustomersPage() {
                 <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
                   {lang === "ar" ? "الاسم" : "Name"}
                 </th>
+                {hasPiiAccess && (
                 <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
                   {lang === "ar" ? "رقم الهوية" : "National ID"}
                 </th>
+                )}
                 <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
                   {lang === "ar" ? "البيانات" : "Contact"}
                 </th>
@@ -326,13 +352,15 @@ export default function CustomersPage() {
                       <div className="text-[10px] text-neutral/60">{customer.nameArabic}</div>
                     )}
                   </td>
+                  {hasPiiAccess && (
                   <td className="px-6 py-4 text-xs text-neutral font-dm-sans border-b border-border" dir="ltr">
-                    {customer.nationalId || "—"}
+                    {customer.nationalId ? (showPii ? customer.nationalId : maskNationalId(customer.nationalId)) : "—"}
                   </td>
+                  )}
                   <td className="px-6 py-4 border-b border-border">
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-neutral font-dm-sans" dir="ltr">{customer.phone}</span>
-                      <span className="text-xs text-neutral/60 font-dm-sans">{customer.email}</span>
+                      <span className="text-xs text-neutral font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
+                      <span className="text-xs text-neutral/60 font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 border-b border-border">

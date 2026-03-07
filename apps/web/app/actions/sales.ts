@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@repo/db";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
 
 export async function getSalesStats() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("dashboard:read");
   const orgId = session.organizationId;
 
   const [customerCount, reservationCount, contractCount] = await Promise.all([

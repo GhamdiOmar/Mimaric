@@ -1,7 +1,7 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["DATABASE_URL", "AUTH_SECRET", "AUTH_TRUST_HOST", "AUTH_URL"],
+  "globalEnv": ["DATABASE_URL", "AUTH_SECRET", "AUTH_TRUST_HOST", "AUTH_URL", "PII_ENCRYPTION_KEY"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

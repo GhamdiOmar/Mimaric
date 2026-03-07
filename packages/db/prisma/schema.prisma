@@ -91,6 +91,8 @@ model User {
   organization          Organization         @relation(fields: [organizationId], references: [id])
   customers             Customer[]           @relation("AssignedCustomers")
   assignedMaintenance   MaintenanceRequest[] @relation("AssignedMaintenance")
+  preferences           Json?
+  resetTokens           PasswordResetToken[]
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
@@ -237,6 +239,9 @@ model Customer {
   maritalStatus  String?       // single, married, divorced, widowed
   address        Json?         // National address {region, city, district, streetName, buildingNumber, postalCode, additionalNumber, shortAddress}
   documentInfo   Json?         // ID document {documentType, documentNumber, issueDate, expiryDate, issuingAuthority}
+  nationalIdHash String?       // SHA-256 hash for exact search on encrypted nationalId
+  phoneHash      String?       // SHA-256 hash for exact search on encrypted phone
+  emailHash      String?       // SHA-256 hash for exact search on encrypted email
   status         CustomerStatus @default(NEW)
   source         String?
   organizationId String
@@ -481,4 +486,39 @@ enum MaintenancePriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+// ─── Password Reset Token (NIST SP 800-63B) ─────────────────────────────────
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+// ─── Audit Log (PDPL Article 32 compliance) ────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  userId         String
+  userEmail      String
+  userRole       String
+  action         String   // CREATE, READ, UPDATE, DELETE, READ_PII, EXPORT, LOGIN, LOGOUT
+  resource       String   // Customer, Contract, Unit, etc.
+  resourceId     String?
+  metadata       Json?
+  ipAddress      String?
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([userId])
+  @@index([resource, action])
 }

@@ -16,6 +16,7 @@ import {
 import { Button, Input, Badge } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getTeamMembers, inviteTeamMember, removeTeamMember } from "../../../actions/team";
+import { hasPermission } from "../../../../lib/permissions";
 
 type TeamMember = {
   id: string;
@@ -159,9 +160,25 @@ export default function TeamManagementPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <UserGear size={16} className="text-neutral" />
-                      <span className="text-xs font-semibold text-primary font-latin">{roleLabels[member.role] ?? member.role}</span>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2">
+                        <UserGear size={16} className="text-neutral" />
+                        <span className="text-xs font-semibold text-primary font-latin">{roleLabels[member.role] ?? member.role}</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {hasPermission(member.role, "customers:read_pii") && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-700">{lang === "ar" ? "بيانات شخصية" : "PII Access"}</span>
+                        )}
+                        {hasPermission(member.role, "customers:export") && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-700">{lang === "ar" ? "تصدير" : "Export"}</span>
+                        )}
+                        {hasPermission(member.role, "finance:read") && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-700">{lang === "ar" ? "مالية" : "Finance"}</span>
+                        )}
+                        {hasPermission(member.role, "audit:read") && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-700">{lang === "ar" ? "مراجعة" : "Audit"}</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">

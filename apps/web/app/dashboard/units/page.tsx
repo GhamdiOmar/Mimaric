@@ -15,7 +15,7 @@ import {
   Plus,
   Spinner
 } from "@phosphor-icons/react";
-import { Button, Badge, Input } from "@repo/ui";
+import { Button, Badge, Input, RiyalIcon } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit } from "../../actions/units";
 
@@ -329,7 +329,7 @@ export default function AdvancedUnitMatrixPage() {
                  {lang === "ar" ? `تحديث سعر ${selectedUnits.length} وحدة مختارة` : `Update price for ${selectedUnits.length} selected unit(s)`}
               </p>
               <div className="space-y-1 mb-6">
-                 <label className="text-xs font-bold text-neutral">{lang === "ar" ? "السعر الجديد (ريال)" : "New Price (SAR)"}</label>
+                 <label className="text-xs font-bold text-neutral flex items-center gap-1">{lang === "ar" ? "السعر الجديد" : "New Price"} (<RiyalIcon size={12} />)</label>
                  <Input
                    type="number"
                    value={bulkPrice}

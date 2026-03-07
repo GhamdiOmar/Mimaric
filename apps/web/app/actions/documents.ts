@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function registerFileInDb(data: {
   name: string;
@@ -13,7 +14,7 @@ export async function registerFileInDb(data: {
   customerId?: string;
   category?: any;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("documents:write");
 
   const document = await db.document.create({
     data: {
@@ -37,7 +38,7 @@ export async function getDocuments(filters?: {
   category?: string;
   search?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("documents:read");
 
   const where: any = { organizationId: session.organizationId };
 
@@ -55,7 +56,7 @@ export async function getDocuments(filters?: {
 }
 
 export async function deleteDocument(documentId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("documents:delete");
 
   await db.document.delete({
     where: { id: documentId, organizationId: session.organizationId },

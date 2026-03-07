@@ -11,14 +11,23 @@ import {
   MapPin,
   Phone as PhoneIcon,
   Globe,
-  CaretDown
+  CaretDown,
+  CaretRight,
+  ClipboardText,
+  LockKey,
+  Users,
+  House
 } from "@phosphor-icons/react";
 import { Button, Input } from "@repo/ui";
+import Link from "next/link";
 import { getOrganization, updateOrganization } from "../../actions/organization";
+import { usePermissions } from "../../../hooks/usePermissions";
+import { getUserPreferences, updateLandingPage } from "../../actions/preferences";
 
 const selectClass = "w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 export default function OrgSettingsPage() {
+  const { can } = usePermissions();
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
   const [org, setOrg] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -26,6 +35,8 @@ export default function OrgSettingsPage() {
   const [showMocFields, setShowMocFields] = React.useState(false);
   const [showContactFields, setShowContactFields] = React.useState(false);
   const [showAddressFields, setShowAddressFields] = React.useState(false);
+  const [landingPage, setLandingPage] = React.useState("/dashboard");
+  const [savingLanding, setSavingLanding] = React.useState(false);
 
   // Form state
   const [form, setForm] = React.useState({
@@ -62,6 +73,9 @@ export default function OrgSettingsPage() {
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }));
 
   React.useEffect(() => {
+    getUserPreferences().then((prefs) => {
+      if (prefs.landingPage) setLandingPage(prefs.landingPage);
+    }).catch(() => {});
     getOrganization()
       .then((data: any) => {
         if (data) {
@@ -440,6 +454,71 @@ export default function OrgSettingsPage() {
                   : "Your verified profile grants access to Ejar integration and ZATCA e-Invoicing."}
               </p>
             </div>
+          </div>
+
+          {/* Settings Navigation */}
+          <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الإعدادات" : "Settings"}</h3>
+            <Link href="/dashboard/settings/team" className="flex items-center gap-3 p-3 rounded-md hover:bg-muted/30 transition-colors group">
+              <div className="p-2 bg-primary/5 rounded text-primary group-hover:bg-primary/10 transition-colors">
+                <Users size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-primary font-primary">{lang === "ar" ? "فريق العمل" : "Team"}</p>
+                <p className="text-[10px] text-neutral font-primary">{lang === "ar" ? "إدارة الأعضاء والأدوار" : "Manage members & roles"}</p>
+              </div>
+            </Link>
+            {can("audit:read") && (
+              <Link href="/dashboard/settings/audit" className="flex items-center gap-3 p-3 rounded-md hover:bg-muted/30 transition-colors group">
+                <div className="p-2 bg-secondary/10 rounded text-secondary group-hover:bg-secondary/15 transition-colors">
+                  <ClipboardText size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-primary font-primary">{lang === "ar" ? "سجل المراجعة" : "Audit Trail"}</p>
+                  <p className="text-[10px] text-neutral font-primary">{lang === "ar" ? "تتبع الوصول والتعديلات" : "Track access & changes"}</p>
+                </div>
+              </Link>
+            )}
+            <Link href="/dashboard/settings/security" className="flex items-center gap-3 p-3 rounded-md hover:bg-muted/30 transition-colors group">
+              <div className="p-2 bg-amber-500/10 rounded text-amber-600 group-hover:bg-amber-500/15 transition-colors">
+                <LockKey size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-primary font-primary">{lang === "ar" ? "الأمان" : "Security"}</p>
+                <p className="text-[10px] text-neutral font-primary">{lang === "ar" ? "تغيير كلمة المرور" : "Change password"}</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* Landing Page Preference */}
+          <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-4">
+            <div className="flex items-center gap-2">
+              <House size={18} className="text-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الصفحة الرئيسية" : "Landing Page"}</h3>
+            </div>
+            <p className="text-[10px] text-neutral font-primary">{lang === "ar" ? "اختر الصفحة التي تفتح بعد تسجيل الدخول." : "Choose which page opens after login."}</p>
+            <select
+              value={landingPage}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setLandingPage(value);
+                setSavingLanding(true);
+                try { await updateLandingPage(value); } catch {} finally { setSavingLanding(false); }
+              }}
+              className={`${selectClass} text-sm`}
+            >
+              <option value="/dashboard">{lang === "ar" ? "نظرة عامة" : "Overview"}</option>
+              <option value="/dashboard/projects">{lang === "ar" ? "المشاريع" : "Projects"}</option>
+              <option value="/dashboard/units">{lang === "ar" ? "الوحدات" : "Units"}</option>
+              <option value="/dashboard/sales/customers">{lang === "ar" ? "العملاء" : "Customers"}</option>
+              <option value="/dashboard/sales/contracts">{lang === "ar" ? "المبيعات" : "Sales"}</option>
+              <option value="/dashboard/leases">{lang === "ar" ? "الإيجارات" : "Leases"}</option>
+              <option value="/dashboard/finance">{lang === "ar" ? "المالية" : "Finance"}</option>
+              <option value="/dashboard/maintenance">{lang === "ar" ? "الصيانة" : "Maintenance"}</option>
+              <option value="/dashboard/reports">{lang === "ar" ? "التقارير" : "Reports"}</option>
+              <option value="/dashboard/settings">{lang === "ar" ? "الإعدادات" : "Settings"}</option>
+            </select>
+            {savingLanding && <p className="text-[10px] text-secondary">{lang === "ar" ? "جاري الحفظ..." : "Saving..."}</p>}
           </div>
 
           {/* Quick Info Card */}

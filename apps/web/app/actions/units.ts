@@ -2,10 +2,11 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function updateUnit(unitId: string, data: any) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:write");
 
   // Verify unit belongs to user's org through building → project
   const unit = await db.unit.findFirst({
@@ -28,7 +29,7 @@ export async function updateUnit(unitId: string, data: any) {
 export async function massUpdateUnits(
   units: { id: string; price?: number; status?: any }[]
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:write");
 
   // Verify all units belong to org
   const unitIds = units.map((u) => u.id);
@@ -59,7 +60,7 @@ export async function massUpdateUnits(
 }
 
 export async function getUnitsWithBuildings() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:read");
 
   const units = await db.unit.findMany({
     where: {
@@ -87,7 +88,7 @@ export async function createUnit(data: {
   price?: number;
   status?: any;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:write");
 
   // Verify building belongs to org
   const building = await db.building.findFirst({
@@ -110,7 +111,7 @@ export async function createUnit(data: {
 }
 
 export async function deleteUnit(unitId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:delete");
 
   const unit = await db.unit.findFirst({
     where: { id: unitId },
@@ -125,7 +126,7 @@ export async function deleteUnit(unitId: string) {
 }
 
 export async function getBuildings() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("units:read");
 
   const buildings = await db.building.findMany({
     where: {

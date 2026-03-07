@@ -3,10 +3,12 @@
 import { db } from "@repo/db";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
+import { validatePassword } from "../../lib/password-policy";
 
 export async function getTeamMembers() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("team:read");
 
   return db.user.findMany({
     where: { organizationId: session.organizationId },
@@ -28,11 +30,12 @@ export async function inviteTeamMember(data: {
   role: any;
   password: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("team:write");
 
-  // Only admins can invite
-  if (!["SUPER_ADMIN", "DEV_ADMIN"].includes(session.role)) {
-    throw new Error("Only administrators can invite team members");
+  // Validate password strength
+  const validation = validatePassword(data.password, { name: data.name, email: data.email });
+  if (!validation.valid) {
+    throw new Error(validation.errors.map((e) => e.en).join(" "));
   }
 
   // Check if email already exists
@@ -51,17 +54,14 @@ export async function inviteTeamMember(data: {
     },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "User", resourceId: user.id, metadata: { role: data.role }, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/settings/team");
   return { id: user.id, name: user.name, email: user.email, role: user.role };
 }
 
 export async function updateTeamMember(userId: string, data: { role?: any; name?: string }) {
-  const session = await getSessionOrThrow();
-
-  // Only admins can update roles
-  if (!["SUPER_ADMIN", "DEV_ADMIN"].includes(session.role)) {
-    throw new Error("Only administrators can update team members");
-  }
+  const session = await requirePermission("team:write");
 
   // Verify user belongs to same org
   const user = await db.user.findFirst({
@@ -75,16 +75,14 @@ export async function updateTeamMember(userId: string, data: { role?: any; name?
     select: { id: true, name: true, email: true, role: true },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "User", resourceId: userId, metadata: { fields: Object.keys(data) }, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/settings/team");
   return updated;
 }
 
 export async function removeTeamMember(userId: string) {
-  const session = await getSessionOrThrow();
-
-  if (!["SUPER_ADMIN", "DEV_ADMIN"].includes(session.role)) {
-    throw new Error("Only administrators can remove team members");
-  }
+  const session = await requirePermission("team:delete");
 
   // Can't remove yourself
   if (userId === session.userId) {
@@ -97,5 +95,8 @@ export async function removeTeamMember(userId: string) {
   if (!user) throw new Error("User not found");
 
   await db.user.delete({ where: { id: userId } });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "DELETE", resource: "User", resourceId: userId, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/settings/team");
 }

@@ -2,13 +2,14 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function getInstallments(filters?: {
   status?: string;
   leaseId?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("finance:read");
 
   const where: any = {
     lease: { customer: { organizationId: session.organizationId } },
@@ -45,7 +46,7 @@ export async function recordPayment(
     amount?: number; // For partial payments
   }
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("finance:write");
 
   // Verify installment belongs to org
   const installment = await db.rentInstallment.findFirst({
@@ -65,13 +66,15 @@ export async function recordPayment(
     },
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "RentInstallment", resourceId: installmentId, metadata: { action: "recordPayment", paymentMethod: data.paymentMethod }, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/rentals/payments");
   revalidatePath("/dashboard/finance");
   return JSON.parse(JSON.stringify(updated));
 }
 
 export async function markOverdueInstallments() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("finance:write");
 
   const result = await db.rentInstallment.updateMany({
     where: {

@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function createLease(data: {
   unitId: string;
@@ -12,7 +13,7 @@ export async function createLease(data: {
   totalAmount: number;
   installmentCount: number; // e.g., 12 for monthly, 4 for quarterly
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("leases:write");
 
   // Verify customer belongs to org
   const customer = await db.customer.findFirst({
@@ -77,13 +78,15 @@ export async function createLease(data: {
     return newLease;
   });
 
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Lease", resourceId: lease.id, organizationId: session.organizationId });
+
   revalidatePath("/dashboard/rentals");
   revalidatePath("/dashboard/units");
   return JSON.parse(JSON.stringify(lease));
 }
 
 export async function getLeases(filters?: { status?: string }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("leases:read");
 
   const where: any = {
     customer: { organizationId: session.organizationId },
@@ -108,7 +111,7 @@ export async function getLeases(filters?: { status?: string }) {
 }
 
 export async function terminateLease(leaseId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("leases:write");
 
   const lease = await db.lease.findFirst({
     where: { id: leaseId },
@@ -136,6 +139,8 @@ export async function terminateLease(leaseId: string) {
       data: { status: "PAST_TENANT" },
     });
   });
+
+  logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Lease", resourceId: leaseId, metadata: { newStatus: "TERMINATED" }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/rentals");
   revalidatePath("/dashboard/units");

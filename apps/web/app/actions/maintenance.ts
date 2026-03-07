@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function createMaintenanceRequest(data: {
   title: string;
@@ -11,7 +12,7 @@ export async function createMaintenanceRequest(data: {
   priority?: string;
   unitId: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("maintenance:write");
 
   const request = await db.maintenanceRequest.create({
     data: {
@@ -32,7 +33,7 @@ export async function getMaintenanceRequests(filters?: {
   status?: string;
   priority?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("maintenance:read");
 
   const where: any = { organizationId: session.organizationId };
   if (filters?.status) where.status = filters.status;
@@ -57,7 +58,7 @@ export async function updateMaintenanceRequest(
     resolvedAt?: Date;
   }
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("maintenance:write");
 
   const request = await db.maintenanceRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId },

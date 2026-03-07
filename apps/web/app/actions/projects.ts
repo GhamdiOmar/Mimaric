@@ -2,7 +2,8 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { getSessionOrThrow } from "../../lib/auth-helpers";
+import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 export async function createProject(data: {
   name: string;
@@ -27,7 +28,7 @@ export async function createProject(data: {
   utilities?: any;
   estimatedValueSar?: number;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("projects:write");
 
   const project = await db.project.create({
     data: {
@@ -69,7 +70,7 @@ export async function createProject(data: {
 }
 
 export async function getProjects() {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("projects:read");
 
   const projects = await db.project.findMany({
     where: { organizationId: session.organizationId },
@@ -110,7 +111,7 @@ export async function updateProject(
     estimatedValueSar?: number;
   }
 ) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("projects:write");
 
   const project = await db.project.update({
     where: { id: projectId, organizationId: session.organizationId },
@@ -122,7 +123,7 @@ export async function updateProject(
 }
 
 export async function deleteProject(projectId: string) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("projects:delete");
 
   await db.project.delete({
     where: { id: projectId, organizationId: session.organizationId },
@@ -139,7 +140,7 @@ export async function createBuilding(data: {
   constructionYear?: number;
   buildingType?: string;
 }) {
-  const session = await getSessionOrThrow();
+  const session = await requirePermission("projects:write");
 
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: session.organizationId },

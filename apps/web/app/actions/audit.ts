@@ -1,0 +1,49 @@
+"use server";
+
+import { db } from "@repo/db";
+import { requirePermission } from "../../lib/auth-helpers";
+
+export async function getAuditLogs(filters?: {
+  userId?: string;
+  action?: string;
+  resource?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+}) {
+  const session = await requirePermission("audit:read");
+
+  const page = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 50;
+  const skip = (page - 1) * pageSize;
+
+  const where: any = { organizationId: session.organizationId };
+
+  if (filters?.userId) where.userId = filters.userId;
+  if (filters?.action) where.action = filters.action;
+  if (filters?.resource) where.resource = filters.resource;
+  if (filters?.from || filters?.to) {
+    where.createdAt = {};
+    if (filters.from) where.createdAt.gte = new Date(filters.from);
+    if (filters.to) where.createdAt.lte = new Date(filters.to);
+  }
+
+  const [logs, total] = await Promise.all([
+    db.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    db.auditLog.count({ where }),
+  ]);
+
+  return {
+    logs: JSON.parse(JSON.stringify(logs)),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}

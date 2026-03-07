@@ -1,5 +1,37 @@
 # Changelog — Mimaric PropTech
 
+## [0.4.0] — 2026-03-07
+
+### Added — PDPL & NCA Compliance
+- **Role-Based Permission System** — Centralized `permissions.ts` with 30+ granular permissions (`customers:read`, `customers:read_pii`, `customers:export`, `audit:read`, etc.) mapped to 8 user roles
+- **PII Encryption at Rest** — AES-256-GCM encryption for national IDs, phone numbers, and emails in the Customer model; SHA-256 hash columns for exact-match search on encrypted fields
+- **PII Masking UI** — Customer page masks sensitive data by default; authorized users can toggle visibility with Show/Hide PII button
+- **Audit Trail** — `AuditLog` model tracking all data access, PII reads, exports, logins, and modifications with user, IP, and timestamp; dedicated audit log viewer at `/dashboard/settings/audit`
+- **NIST SP 800-63B Password Policy** — Minimum 15 characters, 10K common password blocklist, contextual checks (no username/email in password), real-time bilingual strength hints
+- **Login Rate Limiting** — Progressive throttling: 30s after 5 failures, 5min after 10, 15min after 20
+- **Self-Registration** — `/auth/register` page with password policy enforcement and automatic org creation
+- **Password Recovery** — `/auth/forgot-password` and `/auth/reset-password` pages with time-limited tokens
+- **Change Password** — `/dashboard/settings/security` page for authenticated password changes
+- **Password Strength Hint Component** — Reusable bilingual `PasswordStrengthHint` component used across registration, reset, invite, and change password flows
+- **User Preferences** — `preferences` JSON field on User model; configurable default landing page via Settings dropdown
+- **Landing Page Selector** — Settings page dropdown to choose default post-login destination from 10 allowed pages
+- **Navigation Filtering** — Sidebar links filtered by role permissions (e.g., Technicians only see Maintenance and Units)
+- **Permission Badges** — Team page shows visual role capability badges (PII Access, Export, Finance)
+
+### Changed
+- Default post-login redirect changed from `/dashboard/units` to `/dashboard`
+- Login action reads user's preferred landing page from preferences before redirect
+- All server actions now use centralized `requirePermission()` instead of manual role checks
+- Customer server actions encrypt PII on write, decrypt on read, mask based on caller's permissions
+- Organization actions encrypt/decrypt manager national ID
+- CI workflow updated with `PII_ENCRYPTION_KEY` env var for build compatibility
+
+### Security
+- Server-side PII masking as defense-in-depth (non-PII roles receive pre-masked data)
+- Audit logging for all `READ_PII` and `EXPORT` events per PDPL Article 32
+- `PasswordResetToken` model with 1-hour expiry and single-use enforcement
+- bcrypt cost factor 12 for all password hashing
+
 ## [0.3.0] — 2026-03-07
 
 ### Added
