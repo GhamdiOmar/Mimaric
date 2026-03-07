@@ -1,15 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { 
-  SquaresFour, 
-  Buildings, 
-  HouseLine, 
-  Tag, 
-  ChartLineUp, 
-  Receipt, 
-  Wrench, 
-  FileText, 
+import {
+  SquaresFour,
+  Buildings,
+  HouseLine,
+  Tag,
+  ChartLineUp,
+  Receipt,
+  Wrench,
+  FileText,
   Gear,
   List,
   Bell,
@@ -24,7 +24,8 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
 
 const navItems = [
   { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main" },
@@ -41,10 +42,28 @@ const navItems = [
 
 import { MimaricLogo } from "../../components/brand/MimaricLogo";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const roleLabels: Record<string, { ar: string; en: string }> = {
+  SUPER_ADMIN: { ar: "مدير النظام", en: "Super Admin" },
+  DEV_ADMIN: { ar: "مدير التطوير", en: "Dev Admin" },
+  PROJECT_MANAGER: { ar: "مدير المشاريع", en: "Project Manager" },
+  SALES_MANAGER: { ar: "مدير المبيعات", en: "Sales Manager" },
+  SALES_AGENT: { ar: "وكيل مبيعات", en: "Sales Agent" },
+  PROPERTY_MANAGER: { ar: "مدير العقارات", en: "Property Manager" },
+  FINANCE_OFFICER: { ar: "مسؤول مالي", en: "Finance Officer" },
+  TECHNICIAN: { ar: "فني صيانة", en: "Technician" },
+  USER: { ar: "مستخدم", en: "User" },
+};
+
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
+
+  const userName = session?.user?.name ?? "مستخدم";
+  const userRole = session?.user?.role ?? "USER";
+  const roleLabel = roleLabels[userRole] ?? roleLabels.USER;
 
   return (
     <div className="flex min-h-screen bg-background" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -126,11 +145,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate leading-none">عمر الغامدي</p>
-                <p className="text-xs text-white/50 truncate mt-1">مدير النظام</p>
+                <p className="text-sm font-semibold truncate leading-none">{userName}</p>
+                <p className="text-xs text-white/50 truncate mt-1">{roleLabel[lang]}</p>
               </div>
             )}
-            {!isCollapsed && <SignOut size={16} className="text-white/30 hover:text-white transition-colors cursor-pointer" />}
+            {!isCollapsed && (
+              <SignOut
+                size={16}
+                className="text-white/30 hover:text-white transition-colors cursor-pointer"
+                onClick={() => nextAuthSignOut({ callbackUrl: "/auth/login" })}
+              />
+            )}
           </div>
         </div>
       </aside>
@@ -191,5 +216,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </SessionProvider>
   );
 }

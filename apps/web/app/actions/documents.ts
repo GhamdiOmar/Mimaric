@@ -1,38 +1,31 @@
 "use server";
 
 import { db } from "@repo/db";
-import { auth } from "../../auth";
 import { revalidatePath } from "next/cache";
+import { getSessionOrThrow } from "../../lib/auth-helpers";
 
 export async function registerFileInDb(data: {
   name: string;
   url: string;
   type: string;
+  size?: number;
   projectId?: string;
   customerId?: string;
   category?: any;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-
-  // We need the organizationId from the user's session
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { organizationId: true }
-  });
-
-  if (!user) throw new Error("User organization not found");
+  const session = await getSessionOrThrow();
 
   const document = await db.document.create({
     data: {
       name: data.name,
       url: data.url,
       type: data.type,
+      size: data.size,
       projectId: data.projectId,
       customerId: data.customerId,
       category: data.category || "GENERAL",
-      organizationId: user.organizationId,
-      userId: session.user.id,
+      organizationId: session.organizationId,
+      userId: session.userId,
     },
   });
 
@@ -40,23 +33,33 @@ export async function registerFileInDb(data: {
   return document;
 }
 
-export async function getDocuments() {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
+export async function getDocuments(filters?: {
+  category?: string;
+  search?: string;
+}) {
+  const session = await getSessionOrThrow();
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { organizationId: true }
-  });
+  const where: any = { organizationId: session.organizationId };
 
-  if (!user) return [];
+  if (filters?.category) {
+    where.category = filters.category;
+  }
+  if (filters?.search) {
+    where.name = { contains: filters.search, mode: "insensitive" };
+  }
 
   return db.document.findMany({
-    where: {
-      organizationId: user.organizationId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    where,
+    orderBy: { createdAt: "desc" },
   });
+}
+
+export async function deleteDocument(documentId: string) {
+  const session = await getSessionOrThrow();
+
+  await db.document.delete({
+    where: { id: documentId, organizationId: session.organizationId },
+  });
+
+  revalidatePath("/dashboard/documents");
 }

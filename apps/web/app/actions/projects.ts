@@ -1,24 +1,28 @@
 "use server";
 
 import { db } from "@repo/db";
-import { auth } from "../../auth";
 import { revalidatePath } from "next/cache";
+import { getSessionOrThrow } from "../../lib/auth-helpers";
 
 export async function createProject(data: {
   name: string;
   description?: string;
   type: any;
-  organizationId: string;
+  buildings?: { name: string }[];
 }) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
-
-  // TODO: Verify if user belongs to the organization
+  const session = await getSessionOrThrow();
 
   const project = await db.project.create({
     data: {
-      ...data,
+      name: data.name,
+      description: data.description,
+      type: data.type,
+      organizationId: session.organizationId,
+      buildings: data.buildings
+        ? { create: data.buildings.map((b) => ({ name: b.name })) }
+        : undefined,
     },
+    include: { buildings: true },
   });
 
   revalidatePath("/dashboard/projects");
@@ -26,16 +30,10 @@ export async function createProject(data: {
 }
 
 export async function getProjects() {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await getSessionOrThrow();
 
-  // Since RLS is not fully configured in Prisma yet, we manually filter by org for now
-  // In a real Supabase setup, RLS would handle this at the DB layer
-  
-  // For the sake of demonstration, we'll assume the user has an organizationId in their session
-  // or we just fetch all if it's the admin
-  
   return await db.project.findMany({
+    where: { organizationId: session.organizationId },
     include: {
       buildings: {
         include: {
@@ -43,5 +41,51 @@ export async function getProjects() {
         },
       },
     },
+    orderBy: { createdAt: "desc" },
   });
+}
+
+export async function updateProject(
+  projectId: string,
+  data: { name?: string; description?: string; type?: any; status?: any }
+) {
+  const session = await getSessionOrThrow();
+
+  const project = await db.project.update({
+    where: { id: projectId, organizationId: session.organizationId },
+    data,
+  });
+
+  revalidatePath("/dashboard/projects");
+  return project;
+}
+
+export async function deleteProject(projectId: string) {
+  const session = await getSessionOrThrow();
+
+  await db.project.delete({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+
+  revalidatePath("/dashboard/projects");
+}
+
+export async function createBuilding(data: {
+  name: string;
+  projectId: string;
+}) {
+  const session = await getSessionOrThrow();
+
+  // Verify project belongs to org
+  const project = await db.project.findFirst({
+    where: { id: data.projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const building = await db.building.create({
+    data: { name: data.name, projectId: data.projectId },
+  });
+
+  revalidatePath("/dashboard/projects");
+  return building;
 }

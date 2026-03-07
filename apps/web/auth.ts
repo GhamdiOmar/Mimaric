@@ -1,10 +1,16 @@
-import NextAuth, { type NextAuthConfig } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@repo/db";
 import bcrypt from "bcryptjs";
+import { authConfig } from "./auth.config";
 
-const authConfig: NextAuthConfig = {
+/**
+ * Full auth config — extends edge-safe authConfig with Node.js-only features:
+ * PrismaAdapter, bcrypt password verification, Credentials provider.
+ */
+const result = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
   providers: [
@@ -26,16 +32,7 @@ const authConfig: NextAuthConfig = {
           }
 
           if (!user.password) {
-             throw new Error("INVALID_PASSWORD");
-          }
-
-          // For the hardcoded user, we check directly if it's the seed password
-          if (user.email === "admin@mimaric.sa" && user.password === "mimaric2026") {
-             return {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-            };
+            throw new Error("INVALID_PASSWORD");
           }
 
           const isValid = await bcrypt.compare(credentials.password as string, user.password);
@@ -47,6 +44,8 @@ const authConfig: NextAuthConfig = {
             id: user.id,
             name: user.name,
             email: user.email,
+            role: user.role,
+            organizationId: user.organizationId,
           };
         } catch (error: any) {
           if (error.message === "USER_NOT_FOUND" || error.message === "INVALID_PASSWORD") {
@@ -58,21 +57,7 @@ const authConfig: NextAuthConfig = {
       },
     }),
   ],
-  pages: {
-    signIn: "/auth/login",
-  },
-  callbacks: {
-    async session({ session, token }) {
-      if (token.sub && session.user) {
-        session.user.id = token.sub;
-      }
-      return session;
-    },
-  },
-} satisfies NextAuthConfig;
-
-// Explicitly cast to bypass TypeScript inference portability issue (TS2742) in NextAuth v5 beta
-const result = NextAuth(authConfig);
+});
 
 export const handlers = result.handlers;
 export const auth: any = result.auth;

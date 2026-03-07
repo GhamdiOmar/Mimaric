@@ -1,0 +1,115 @@
+"use server";
+
+import { db } from "@repo/db";
+import { revalidatePath } from "next/cache";
+import { getSessionOrThrow } from "../../lib/auth-helpers";
+
+export async function createContract(data: {
+  customerId: string;
+  unitId: string;
+  type: "SALE" | "LEASE";
+  amount: number;
+  fileUrl?: string;
+}) {
+  const session = await getSessionOrThrow();
+
+  // Verify customer belongs to org
+  const customer = await db.customer.findFirst({
+    where: { id: data.customerId, organizationId: session.organizationId },
+  });
+  if (!customer) throw new Error("Customer not found");
+
+  const contract = await db.contract.create({
+    data: {
+      customerId: data.customerId,
+      unitId: data.unitId,
+      type: data.type,
+      amount: data.amount,
+      fileUrl: data.fileUrl,
+      userId: session.userId,
+      status: "DRAFT",
+    },
+  });
+
+  revalidatePath("/dashboard/sales/contracts");
+  return contract;
+}
+
+export async function getContract(contractId: string) {
+  const session = await getSessionOrThrow();
+
+  const contract = await db.contract.findFirst({
+    where: { id: contractId },
+    include: {
+      customer: true,
+      unit: { include: { building: { include: { project: true } } } },
+    },
+  });
+
+  if (!contract || contract.customer.organizationId !== session.organizationId) {
+    throw new Error("Contract not found");
+  }
+
+  return contract;
+}
+
+export async function getContracts(filters?: { status?: string; type?: string }) {
+  const session = await getSessionOrThrow();
+
+  const where: any = {
+    customer: { organizationId: session.organizationId },
+  };
+
+  if (filters?.status) where.status = filters.status;
+  if (filters?.type) where.type = filters.type;
+
+  return db.contract.findMany({
+    where,
+    include: {
+      customer: true,
+      unit: { include: { building: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function updateContractStatus(
+  contractId: string,
+  status: "SENT" | "SIGNED" | "CANCELLED" | "VOID"
+) {
+  const session = await getSessionOrThrow();
+
+  const contract = await db.contract.findFirst({
+    where: { id: contractId },
+    include: { customer: true },
+  });
+  if (!contract || contract.customer.organizationId !== session.organizationId) {
+    throw new Error("Contract not found");
+  }
+
+  const data: any = { status };
+  if (status === "SIGNED") {
+    data.signedAt = new Date();
+  }
+
+  const updated = await db.contract.update({
+    where: { id: contractId },
+    data,
+  });
+
+  // If sale contract is signed, mark unit as SOLD
+  if (status === "SIGNED" && contract.type === "SALE") {
+    await db.unit.update({
+      where: { id: contract.unitId },
+      data: { status: "SOLD" },
+    });
+    await db.customer.update({
+      where: { id: contract.customerId },
+      data: { status: "CONVERTED" },
+    });
+  }
+
+  revalidatePath("/dashboard/sales/contracts");
+  revalidatePath("/dashboard/units");
+  return updated;
+}

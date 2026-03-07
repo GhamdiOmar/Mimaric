@@ -1,34 +1,90 @@
 "use client";
 
 import * as React from "react";
-import { 
-  UserPlus, 
-  Envelope, 
-  ShieldCheck, 
-  DotsThreeVertical, 
-  CheckCircle,
+import {
+  UserPlus,
+  Envelope,
+  ShieldCheck,
+  DotsThreeVertical,
   Clock,
   Trash,
   UserGear,
   Funnel,
-  MagnifyingGlass
+  MagnifyingGlass,
+  X
 } from "@phosphor-icons/react";
 import { Button, Input, Badge } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
+import { getTeamMembers, inviteTeamMember, removeTeamMember } from "../../../actions/team";
 
-const mockTeam = [
-  { id: "1", name: "أحمد الشهري", email: "a.shehri@mimaric.sa", role: "Manager", status: "active", lastActive: "Just now" },
-  { id: "2", name: "نورة القحطاني", email: "n.qahtani@mimaric.sa", role: "Sales Agent", status: "active", lastActive: "2h ago" },
-  { id: "3", name: "بندر بن خالد", email: "b.khaled@mimaric.sa", role: "Finance Officer", status: "invited", lastActive: "Pending" },
-  { id: "4", name: "فيصل العتيبي", email: "f.otaibi@mimaric.sa", role: "Technician", status: "active", lastActive: "1d ago" },
-];
+type TeamMember = {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const roleLabels: Record<string, string> = {
+  SUPER_ADMIN: "Super Admin",
+  DEV_ADMIN: "Dev Admin",
+  PROJECT_MANAGER: "Project Manager",
+  SALES_MANAGER: "Sales Manager",
+  SALES_AGENT: "Sales Agent",
+  PROPERTY_MANAGER: "Property Manager",
+  FINANCE_OFFICER: "Finance Officer",
+  TECHNICIAN: "Technician",
+  USER: "User",
+};
 
 export default function TeamManagementPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const [members, setMembers] = React.useState<TeamMember[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [showInvite, setShowInvite] = React.useState(false);
+  const [inviteName, setInviteName] = React.useState("");
+  const [inviteEmail, setInviteEmail] = React.useState("");
+  const [inviteRole, setInviteRole] = React.useState("SALES_AGENT");
+  const [invitePassword, setInvitePassword] = React.useState("");
+  const [inviting, setInviting] = React.useState(false);
+
+  const fetchTeam = React.useCallback(() => {
+    getTeamMembers()
+      .then((data) => setMembers(data as TeamMember[]))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  React.useEffect(() => { fetchTeam(); }, [fetchTeam]);
+
+  const handleInvite = async () => {
+    if (!inviteName || !inviteEmail || !invitePassword) return;
+    setInviting(true);
+    try {
+      await inviteTeamMember({ name: inviteName, email: inviteEmail, role: inviteRole, password: invitePassword });
+      setShowInvite(false);
+      setInviteName(""); setInviteEmail(""); setInvitePassword(""); setInviteRole("SALES_AGENT");
+      fetchTeam();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleRemove = async (userId: string, name: string | null) => {
+    if (!confirm(`${lang === "ar" ? "هل أنت متأكد من حذف" : "Remove"} ${name}?`)) return;
+    try {
+      await removeTeamMember(userId);
+      fetchTeam();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
         <div>
           <h1 className="text-2xl font-bold text-primary font-primary">
@@ -40,93 +96,85 @@ export default function TeamManagementPage() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-             {lang === "ar" ? "English" : "العربية"}
+            {lang === "ar" ? "English" : "العربية"}
           </Button>
-          <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors">
+          <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors" onClick={() => setShowInvite(true)}>
             <UserPlus size={18} weight="fill" />
             {lang === "ar" ? "دعوة عضو جديد" : "Invite Member"}
           </Button>
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
-        {/* Filter Bar */}
-        <div className="p-4 border-b border-border bg-muted/10 flex flex-col md:flex-row gap-4 items-center justify-between">
-           <div className="relative w-full md:w-80 group">
-              <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-secondary transition-colors" />
-              <input 
-                type="text" 
-                placeholder={lang === "ar" ? "بحث في الفريق..." : "Search team..."}
-                className="w-full bg-white border-border rounded py-2 pr-10 pl-4 text-sm focus:border-secondary/40 outline-none transition-all font-primary"
-              />
-           </div>
-           <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" className="gap-2">
-                 <Funnel size={16} />
-                 {lang === "ar" ? "تصفية" : "Filter"}
-              </Button>
-              <Button variant="secondary" size="sm" className="gap-2">
-                 <ShieldCheck size={16} />
-                 {lang === "ar" ? "إعدادات الأدوار" : "Role Settings"}
-              </Button>
-           </div>
+      {/* Invite Modal */}
+      {showInvite && (
+        <div className="bg-white rounded-md shadow-card border border-secondary/30 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "دعوة عضو جديد" : "Invite New Member"}</h3>
+            <button onClick={() => setShowInvite(false)}><X size={18} className="text-neutral" /></button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input placeholder={lang === "ar" ? "الاسم" : "Name"} value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
+            <Input type="email" placeholder={lang === "ar" ? "البريد الإلكتروني" : "Email"} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+            <Input type="password" placeholder={lang === "ar" ? "كلمة المرور" : "Password"} value={invitePassword} onChange={(e) => setInvitePassword(e.target.value)} />
+            <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="rounded border border-border px-3 py-2 text-sm">
+              {Object.entries(roleLabels).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </select>
+          </div>
+          <Button className="bg-secondary" onClick={handleInvite} disabled={inviting}>
+            {inviting ? "..." : (lang === "ar" ? "إضافة" : "Add Member")}
+          </Button>
         </div>
+      )}
 
-        {/* Members Table */}
+      {/* Table */}
+      <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-start">
             <thead>
               <tr className="bg-muted/30 border-b border-border">
                 <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start font-latin">{lang === "ar" ? "العضو" : "Member"}</th>
                 <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start font-latin">{lang === "ar" ? "الدور" : "Role"}</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start font-latin">{lang === "ar" ? "الحالة" : "Status"}</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start font-latin">{lang === "ar" ? "النشاط الأخير" : "Last Active"}</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start font-latin">{lang === "ar" ? "تاريخ الانضمام" : "Joined"}</th>
                 <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-center font-latin">{lang === "ar" ? "إجراءات" : "Actions"}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {mockTeam.map((member) => (
-                <tr key={member.id} className="hover:bg-muted/5 transition-colors group group-hover:cursor-default">
+              {loading ? (
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-neutral text-sm animate-pulse">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</td></tr>
+              ) : members.length === 0 ? (
+                <tr><td colSpan={4} className="px-6 py-12 text-center text-neutral text-sm">{lang === "ar" ? "لا يوجد أعضاء" : "No team members"}</td></tr>
+              ) : members.map((member) => (
+                <tr key={member.id} className="hover:bg-muted/5 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                       <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
-                          <span className="text-xs font-bold uppercase font-latin">{member.name.split(' ').map(n => n[0]).join('')}</span>
-                       </div>
-                       <div>
-                          <p className="text-sm font-bold text-primary font-primary">{member.name}</p>
-                          <p className="text-[10px] text-neutral font-latin">{member.email}</p>
-                       </div>
+                      <div className="h-10 w-10 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
+                        <span className="text-xs font-bold uppercase font-latin">{(member.name ?? "?").split(' ').map(n => n[0]).join('')}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-primary font-primary">{member.name}</p>
+                        <p className="text-[10px] text-neutral font-latin">{member.email}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                       <UserGear size={16} className="text-neutral" />
-                       <span className="text-xs font-semibold text-primary font-primary">{member.role}</span>
+                      <UserGear size={16} className="text-neutral" />
+                      <span className="text-xs font-semibold text-primary font-latin">{roleLabels[member.role] ?? member.role}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant={member.status === "active" ? "available" : "draft"} className="text-[10px]">
-                       {member.status === "active" ? (lang === "ar" ? "نشط" : "Active") : (lang === "ar" ? "مدعو" : "Invited")}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4">
                     <div className="flex items-center gap-2 text-[10px] text-neutral font-latin">
-                       <Clock size={14} />
-                       {member.lastActive}
+                      <Clock size={14} />
+                      {new Date(member.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <Button variant="secondary" size="icon" className="h-8 w-8 rounded shadow-sm hover:text-secondary">
-                          <ShieldCheck size={18} />
-                       </Button>
-                       <Button variant="secondary" size="icon" className="h-8 w-8 rounded shadow-sm hover:text-destructive">
-                          <Trash size={18} />
-                       </Button>
-                       <Button variant="secondary" size="icon" className="h-8 w-8 rounded shadow-sm">
-                          <DotsThreeVertical size={18} />
-                       </Button>
+                      <Button variant="secondary" size="icon" className="h-8 w-8 rounded shadow-sm hover:text-destructive" onClick={() => handleRemove(member.id, member.name)}>
+                        <Trash size={18} />
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -136,23 +184,23 @@ export default function TeamManagementPage() {
         </div>
       </div>
 
-      {/* Role Help Section */}
+      {/* Help Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-         {[
-           { title: "الأدوار والصلاحيات", ar: "إدارة من يمكنه رؤية البيانات الحساسة أو تعديل الأسعار.", en: "Manage who can see sensitive data or modify prices.", icon: ShieldCheck },
-           { title: "تقارير النشاط", ar: "تتبع نشاط الفريق والمهام المنجزة في النظام.", en: "Track team activity and completed tasks.", icon: UserGear },
-           { title: "نظام الدعوات", ar: "دعوة آمنة عبر البريد الإلكتروني مع انتهاء تلقائي.", en: "Secure email invitations with auto-expiry.", icon: Envelope },
-         ].map((item, i) => (
-           <div key={i} className="p-6 bg-white rounded-md border border-border flex items-start gap-4 hover:border-secondary/20 transition-all">
-              <div className="p-3 bg-secondary/10 rounded text-secondary">
-                 <item.icon size={24} />
-              </div>
-              <div>
-                 <h4 className="text-sm font-bold text-primary font-primary">{lang === "ar" ? item.title : item.title}</h4>
-                 <p className="text-[10px] text-neutral mt-1 font-primary leading-relaxed">{lang === "ar" ? item.ar : item.en}</p>
-              </div>
-           </div>
-         ))}
+        {[
+          { title: { ar: "الأدوار والصلاحيات", en: "Roles & Permissions" }, desc: { ar: "إدارة من يمكنه رؤية البيانات الحساسة أو تعديل الأسعار.", en: "Manage who can see sensitive data or modify prices." }, icon: ShieldCheck },
+          { title: { ar: "تقارير النشاط", en: "Activity Reports" }, desc: { ar: "تتبع نشاط الفريق والمهام المنجزة في النظام.", en: "Track team activity and completed tasks." }, icon: UserGear },
+          { title: { ar: "نظام الدعوات", en: "Invitation System" }, desc: { ar: "دعوة آمنة عبر البريد الإلكتروني مع انتهاء تلقائي.", en: "Secure email invitations with auto-expiry." }, icon: Envelope },
+        ].map((item, i) => (
+          <div key={i} className="p-6 bg-white rounded-md border border-border flex items-start gap-4 hover:border-secondary/20 transition-all">
+            <div className="p-3 bg-secondary/10 rounded text-secondary">
+              <item.icon size={24} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-primary font-primary">{item.title[lang]}</h4>
+              <p className="text-[10px] text-neutral mt-1 font-primary leading-relaxed">{item.desc[lang]}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

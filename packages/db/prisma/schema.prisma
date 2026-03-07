@@ -9,18 +9,37 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─── Organization (MOC Commercial Registration aligned) ───────────────────────
+
 model Organization {
-  id          String   @id @default(cuid())
-  name        String
-  crNumber    String?  @unique // Commercial Registration Number
-  vatNumber   String?  @unique
-  type        OrgType  @default(DEVELOPER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  users       User[]
-  projects    Project[]
-  customers   Customer[]
-  documents   Document[]
+  id                  String               @id @default(cuid())
+  name                String
+  nameArabic          String?              // Official entity name in Arabic
+  nameEnglish         String?              // Official entity name in English
+  tradeNameArabic     String?              // Trade name in Arabic
+  tradeNameEnglish    String?              // Trade name in English
+  crNumber            String?              @unique // Commercial Registration Number (10 digits)
+  unifiedNumber       String?              @unique // Unified entity number (10 digits)
+  vatNumber           String?              @unique // VAT number (15 digits, starts/ends with 3)
+  type                OrgType              @default(DEVELOPER)
+  entityType          EntityType?          // MOC: establishment, company, branch, etc.
+  legalForm           LegalForm?           // MOC: LLC, JSC, sole proprietorship, etc.
+  registrationStatus  RegistrationStatus?  // MOC: active, expired, suspended, etc.
+  registrationDate    DateTime?            // CR registration date
+  expiryDate          DateTime?            // CR expiry date
+  capitalAmountSar    Decimal?             // Declared capital in SAR
+  mainActivityCode    String?              // ISIC activity code
+  mainActivityNameAr  String?              // Primary activity name (Arabic)
+  contactInfo         Json?                // {mobileNumber, phoneNumber, email, websiteUrl}
+  nationalAddress     Json?                // Saudi national address object
+  managerInfo         Json?                // {managerName, managerId, managerRole}
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  users               User[]
+  projects            Project[]
+  customers           Customer[]
+  documents           Document[]
+  maintenanceRequests MaintenanceRequest[]
 }
 
 enum OrgType {
@@ -28,17 +47,52 @@ enum OrgType {
   COMMERCIAL
 }
 
+enum EntityType {
+  ESTABLISHMENT
+  COMPANY
+  BRANCH
+  PROFESSIONAL_ENTITY
+  FOREIGN_COMPANY_BRANCH
+  OTHER_ENTITY
+}
+
+enum LegalForm {
+  SOLE_PROPRIETORSHIP
+  LIMITED_LIABILITY_COMPANY
+  JOINT_STOCK_COMPANY
+  SIMPLIFIED_JOINT_STOCK_COMPANY
+  GENERAL_PARTNERSHIP
+  LIMITED_PARTNERSHIP
+  PROFESSIONAL_COMPANY
+  BRANCH_OF_COMPANY
+  FOREIGN_BRANCH
+  NON_PROFIT_ENTITY
+  OTHER_LEGAL_FORM
+}
+
+enum RegistrationStatus {
+  ACTIVE_REG
+  EXPIRED_REG
+  SUSPENDED_REG
+  CANCELLED_REG
+  UNDER_LIQUIDATION
+  CLOSED_REG
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
 model User {
-  id             String       @id @default(cuid())
-  email          String       @unique
-  name           String?
-  password       String
-  role           UserRole     @default(USER)
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  customers      Customer[]   @relation("AssignedCustomers")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id                    String               @id @default(cuid())
+  email                 String               @unique
+  name                  String?
+  password              String
+  role                  UserRole             @default(USER)
+  organizationId        String
+  organization          Organization         @relation(fields: [organizationId], references: [id])
+  customers             Customer[]           @relation("AssignedCustomers")
+  assignedMaintenance   MaintenanceRequest[] @relation("AssignedMaintenance")
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
   @@index([organizationId])
 }
@@ -57,18 +111,39 @@ enum UserRole {
   USER
 }
 
+// ─── Project (Balady property/land aligned) ───────────────────────────────────
+
 model Project {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String
   description    String?
   type           ProjectType
   status         ProjectStatus @default(PLANNING)
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  // Balady property fields
+  parcelNumber   String?       // Official parcel number
+  plotNumber     String?       // Plot in subdivision
+  blockNumber    String?       // Block in district
+  deedNumber     String?       // Title deed number
+  landUse        LandUse?      // Zoning classification
+  totalAreaSqm   Float?        // Total land area in sqm
+  // Location
+  region         String?       // Saudi region (e.g. Riyadh Region)
+  city           String?       // City name
+  district       String?       // District/neighborhood
+  streetName     String?       // Street name
+  postalCode     String?       // 5-digit postal code
+  latitude       Float?        // GPS latitude
+  longitude      Float?        // GPS longitude
+  // Optional nested data as JSON
+  boundaries     Json?         // {north, south, east, west} descriptions
+  utilities      Json?         // {electricityConnected, waterConnected, sewageConnected, roadAccess}
+  estimatedValueSar Decimal?   // Property valuation in SAR
   buildings      Building[]
   documents      Document[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@index([organizationId])
 }
@@ -87,17 +162,40 @@ enum ProjectStatus {
   HANDED_OVER
 }
 
+enum LandUse {
+  RESIDENTIAL_LAND
+  COMMERCIAL_LAND
+  INDUSTRIAL_LAND
+  AGRICULTURAL_LAND
+  ADMINISTRATIVE_LAND
+  PUBLIC_FACILITY
+  MIXED_USE_LAND
+  OTHER_LAND_USE
+}
+
+// ─── Building (Balady building details aligned) ───────────────────────────────
+
 model Building {
-  id        String   @id @default(cuid())
-  name      String
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  units     Unit[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String
+  projectId         String
+  project           Project  @relation(fields: [projectId], references: [id])
+  // Balady building detail fields
+  numberOfFloors    Int?     // Total floors
+  buildingAreaSqm   Float?   // Built-up area in sqm
+  constructionYear  Int?     // Year of construction
+  buildingType      String?  // residential, commercial, etc.
+  occupancyStatus   String?  // vacant, occupied, under_construction, etc.
+  electricityConnected Boolean? // Utility: electricity
+  waterConnected    Boolean? // Utility: water
+  units             Unit[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([projectId])
 }
+
+// ─── Unit ─────────────────────────────────────────────────────────────────────
 
 model Unit {
   id         String     @id @default(cuid())
@@ -108,20 +206,37 @@ model Unit {
   building     Building      @relation(fields: [buildingId], references: [id])
   area         Float?        // sqm
   price        Decimal?
-  reservations Reservation[]
-  contracts    Contract[]
-  leases       Lease[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  floor        Int?          // Floor number
+  bedrooms     Int?          // Number of bedrooms
+  bathrooms    Int?          // Number of bathrooms
+  reservations        Reservation[]
+  contracts           Contract[]
+  leases              Lease[]
+  maintenanceRequests MaintenanceRequest[]
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@index([buildingId])
 }
 
+// ─── Customer (Absher individual data aligned) ────────────────────────────────
+
 model Customer {
   id             String        @id @default(cuid())
   name           String
+  nameArabic     String?       // Full name in Arabic
   email          String?
   phone          String
+  nationalId     String?       // Saudi ID / Iqama (10 digits, starts with 1 or 2)
+  personType     PersonType?   // saudi_citizen, resident, gcc_citizen, etc.
+  gender         Gender?
+  dateOfBirth    DateTime?     // Gregorian DOB
+  dateOfBirthHijri String?    // Hijri date as text (e.g. 1410-10-19)
+  nationality    String?       // e.g. "Saudi Arabian"
+  nationalityCode String?     // ISO code e.g. "SA"
+  maritalStatus  String?       // single, married, divorced, widowed
+  address        Json?         // National address {region, city, district, streetName, buildingNumber, postalCode, additionalNumber, shortAddress}
+  documentInfo   Json?         // ID document {documentType, documentNumber, issueDate, expiryDate, issuingAuthority}
   status         CustomerStatus @default(NEW)
   source         String?
   organizationId String
@@ -137,6 +252,20 @@ model Customer {
 
   @@index([organizationId])
   @@index([agentId])
+  @@index([nationalId])
+}
+
+enum PersonType {
+  SAUDI_CITIZEN
+  RESIDENT
+  GCC_CITIZEN
+  VISITOR
+  OTHER_PERSON
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }
 
 enum CustomerStatus {
@@ -150,6 +279,8 @@ enum CustomerStatus {
   ACTIVE_TENANT
   PAST_TENANT
 }
+
+// ─── Reservation ──────────────────────────────────────────────────────────────
 
 model Reservation {
   id         String            @id @default(cuid())
@@ -175,6 +306,8 @@ enum ReservationStatus {
   EXPIRED
   CANCELLED
 }
+
+// ─── Contract ─────────────────────────────────────────────────────────────────
 
 model Contract {
   id         String         @id @default(cuid())
@@ -226,6 +359,8 @@ enum UnitStatus {
   MAINTENANCE
 }
 
+// ─── Lease ────────────────────────────────────────────────────────────────────
+
 model Lease {
   id             String          @id @default(cuid())
   unitId         String
@@ -253,6 +388,8 @@ enum LeaseStatus {
   TERMINATED
 }
 
+// ─── Rent Installment ─────────────────────────────────────────────────────────
+
 model RentInstallment {
   id          String            @id @default(cuid())
   leaseId     String
@@ -274,6 +411,8 @@ enum PaymentStatus {
   PAID
   OVERDUE
 }
+
+// ─── Document ─────────────────────────────────────────────────────────────────
 
 model Document {
   id             String       @id @default(cuid())
@@ -304,4 +443,42 @@ enum DocCategory {
   CONTRACT
   MARKETING
   FINANCE
+}
+
+// ─── Maintenance Request ──────────────────────────────────────────────────────
+
+model MaintenanceRequest {
+  id             String              @id @default(cuid())
+  title          String
+  description    String?
+  type           String              // electrical, plumbing, hvac, structural, general
+  status         MaintenanceStatus   @default(OPEN)
+  priority       MaintenancePriority @default(MEDIUM)
+  unitId         String
+  unit           Unit                @relation(fields: [unitId], references: [id])
+  assignedToId   String?
+  assignedTo     User?               @relation("AssignedMaintenance", fields: [assignedToId], references: [id])
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id])
+  resolvedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([unitId])
+  @@index([assignedToId])
+}
+
+enum MaintenanceStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum MaintenancePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
