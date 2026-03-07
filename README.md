@@ -1,6 +1,6 @@
-# Mimaric — Real Estate & Facility Management Platform
+# Mimaric — Property Management Platform for Saudi Arabia
 
-**Mimaric** is an integrated digital platform purpose-built for Saudi real estate developers and property management companies. It streamlines the full lifecycle of residential and commercial properties — from project inception to contract execution, tenant management, and financial reporting.
+**Mimaric** is an integrated digital platform purpose-built for Saudi real estate developers and property management companies. It digitalizes the full lifecycle of residential and commercial properties — from project inception to contract execution, tenant management, and financial reporting — in full compliance with Saudi regulatory requirements (RERA, ZATCA, Ejar).
 
 ---
 
@@ -99,4 +99,4 @@ Visit `http://localhost:3000` for the management dashboard.
 
 ---
 
-> Built for the Saudi real estate market. Compliant with RERA, ZATCA, and Ejar standards.
+> Built for the Saudi property management market. Compliant with RERA, ZATCA, and Ejar standards.
