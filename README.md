@@ -1,159 +1,102 @@
-# Turborepo starter
+# Mimaric — Real Estate & Facility Management Platform
 
-This Turborepo starter is maintained by the Turborepo core team.
+**Mimaric** is an integrated digital platform purpose-built for Saudi real estate developers and property management companies. It streamlines the full lifecycle of residential and commercial properties — from project inception to contract execution, tenant management, and financial reporting.
 
-## Using this example
+---
 
-Run the following command:
+## 🎯 Business Goals
 
-```sh
-npx create-turbo@latest
+### 1. Accelerate the Sales Cycle
+Mimaric gives sales teams a real-time CRM view of every prospective customer — from first inquiry to signed contract. Leads are tracked through a visual Kanban pipeline (New → Interested → Reserved → Converted), reducing missed opportunities and manual follow-up overhead.
+
+### 2. Centralize Property Inventory
+All units across every project and building are managed in a single **Unit Matrix** — with live status tracking (Available, Reserved, Sold, Rented). Decision-makers get instant visibility into inventory without relying on spreadsheets or disconnected systems.
+
+### 3. Automate Contract & Lease Workflows
+The platform guides agents through a structured wizard to create sale contracts and tenancy agreements (RERA-compliant), generate installment schedules, and track signature status — eliminating paper-based processes and reducing legal risk.
+
+### 4. Unify Customer Data Across the Business
+A single **Customer record** serves all departments: sales teams see the CRM journey, finance teams see payment history, and property managers see lease status — all for the same person, with no data duplication.
+
+### 5. Improve Financial Visibility
+Rent installment tracking, VAT calculation (ZATCA-compliant), and payment status dashboards give finance officers a live view of receivables — replacing manual Excel tracking.
+
+### 6. Support Multi-Project Organizations
+Mimaric is built for organizations managing multiple projects simultaneously. Each project has its own buildings, units, and teams, while leadership sees consolidated analytics across the entire portfolio.
+
+---
+
+## 🏗️ What the System Does
+
+| Module | Capability |
+|--------|-----------|
+| **Projects** | Create and manage real estate development projects with type, status, and location |
+| **Units** | Track individual units across buildings — area, price, type, and availability |
+| **Customers (CRM)** | Unified customer database used across sales, contracts, and rentals |
+| **Sales Pipeline** | Kanban board to manage the customer journey from inquiry to conversion |
+| **Reservations** | Temporary unit holds linked to customers with expiry management |
+| **Contracts** | Sale and lease contract generation with status tracking and file uploads |
+| **Rentals** | Full tenancy lifecycle — contract creation, installments, and Ejar integration readiness |
+| **Finance** | Payment tracking, installment schedules, VAT application |
+| **Maintenance** | Work order management for facilities teams |
+| **Documents** | Centralized document storage per project and customer |
+| **Settings** | Organization setup, team roles, and permissions |
+
+---
+
+## 🔐 Roles & Access
+
+The platform supports granular role-based access:
+
+- **Dev Admin** — Full system access
+- **Project Manager** — Manages projects and units
+- **Sales Manager / Agent** — CRM, reservations, and contracts
+- **Property Manager** — Rentals and maintenance
+- **Finance Officer** — Payments and reporting
+- **Buyer / Tenant** — Customer portal access (Owner Portal app)
+
+---
+
+## 🧱 Technical Architecture
+
+Built as a modern monorepo for speed, scalability, and maintainability:
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 15, React, Tailwind CSS, RTL-first (Arabic/English) |
+| **Backend** | Next.js Server Actions, Prisma ORM |
+| **Database** | Supabase (PostgreSQL) with Row-Level Security |
+| **Auth** | NextAuth.js with Supabase adapter |
+| **File Storage** | Uploadthing |
+| **Monorepo** | Turborepo with shared `@repo/ui`, `@repo/db`, and config packages |
+| **Deployment** | Vercel-ready |
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example apps/web/.env
+
+# Generate Prisma client
+cd packages/db && npx prisma generate
+
+# Start the development server
+npm run dev
 ```
 
-## What's inside?
+Visit `http://localhost:3000` for the management dashboard.
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## 📌 Status
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+**Active Development** — Core modules are operational. Advanced analytics, Ejar integration, and the Buyer/Tenant portal are in progress.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+---
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo build
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo build --filter=docs
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo dev
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo dev
-yarn exec turbo dev
-pnpm exec turbo dev
-```
-
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo dev --filter=web
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo dev --filter=web
-yarn exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-```
-
-### Remote Caching
-
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
-
-```sh
-cd my-turborepo
-turbo login
-```
-
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-yarn exec turbo login
-pnpm exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-yarn exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+> Built for the Saudi real estate market. Compliant with RERA, ZATCA, and Ejar standards.
