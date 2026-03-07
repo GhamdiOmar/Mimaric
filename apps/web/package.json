@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint --max-warnings 0",
-    "check-types": "next typegen && tsc --noEmit"
+    "check-types": "next typegen && tsc --noEmit",
+    "test": "playwright test"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
@@ -28,6 +29,7 @@
     "uploadthing": "^7.7.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@repo/eslint-config": "*",
     "@repo/typescript-config": "*",
     "@tailwindcss/postcss": "^4.2.1",

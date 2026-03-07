@@ -39,6 +39,10 @@ jobs:
       - name: Build Project
         run: npm run build
         env:
-          # Assuming build might need environmental variables mocking.
-          # Here we can provide empty/mock env vars if needed during build
           NEXT_PUBLIC_API_URL: ""
+
+      - name: Install Playwright Browsers
+        run: cd apps/web && npx playwright install --with-deps
+
+      - name: Run Playwright Tests
+        run: cd apps/web && npx playwright test
