@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { RiyalIcon } from "@repo/ui";
 import { 
   Plus, 
   User, 
@@ -13,15 +14,45 @@ import {
   FileText,
   Clock,
   Buildings,
-  Info
+  Info,
+  Spinner
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button, Input, Badge } from "@repo/ui";
 import Link from "next/link";
+import { createCustomer } from "../../../actions/customers";
 
 export default function NewLeasePage() {
   const [step, setStep] = React.useState(1);
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
+
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [newCustomer, setNewCustomer] = React.useState({
+    name: "",
+    phone: "",
+    email: "",
+    status: "NEW"
+  });
+
+  const handleAddCustomer = async () => {
+    if (!newCustomer.name || !newCustomer.phone) {
+      alert("Name and phone are required");
+      return;
+    }
+    setSaving(true);
+    try {
+      const customer = await createCustomer(newCustomer);
+      // Here you could automatically select the newly created customer
+      setShowAddModal(false);
+      setNewCustomer({ name: "", phone: "", email: "", status: "NEW" });
+      alert("Customer created successfully!");
+    } catch (err) {
+      alert("Failed to create customer");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 4));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
@@ -100,7 +131,10 @@ export default function NewLeasePage() {
                           <p className="text-[10px] text-neutral">ID: 1092XXXXXX</p>
                        </div>
                     </div>
-                    <div className="p-4 border border-border border-dashed rounded-md flex items-center justify-center hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div 
+                      className="p-4 border border-border border-dashed rounded-md flex items-center justify-center hover:bg-muted/50 transition-colors cursor-pointer group"
+                      onClick={() => setShowAddModal(true)}
+                    >
                        <Plus size={20} className="text-neutral group-hover:text-primary mr-2" />
                        <span className="text-sm font-medium text-neutral group-hover:text-primary">{lang === "ar" ? "إضافة عميل جديد" : "Add New Customer"}</span>
                     </div>
@@ -131,7 +165,7 @@ export default function NewLeasePage() {
 
                 <div className="p-4 bg-muted/30 border border-border rounded flex items-start gap-4">
                   <Info size={24} className="text-primary mt-1" />
-                  <div className="text-xs customering-relaxed text-neutral">
+                  <div className="text-xs leading-relaxed text-neutral">
                     {lang === "ar" 
                       ? "مدة العقد المقترحة هي سنة واحدة (12 شهر). سيتم احتساب قيمة الإيجار بناءً على السعر السنوي المعتمد للوحدة." 
                       : "The calculated period is 1 year (12 months). Rent will be calculated based on the unit's approved annual rate."}
@@ -170,7 +204,7 @@ export default function NewLeasePage() {
                       <div key={i} className="flex items-center justify-between p-4 bg-muted/20 border border-border rounded-md">
                         <div className="flex items-center gap-3">
                            <div className="h-8 w-8 rounded bg-white border border-border flex items-center justify-center text-[10px] font-bold text-neutral">#{i}</div>
-                           <div className="text-xs font-bold text-primary">SAR 11,250</div>
+                           <div className="text-xs font-bold text-primary flex items-center gap-1"><RiyalIcon size={12}/> 11,250</div>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-neutral font-dm-sans">
                            <Calendar size={14} />
@@ -207,16 +241,16 @@ export default function NewLeasePage() {
               </div>
               <div className="flex justify-between items-start">
                 <span className="text-xs text-neutral">{lang === "ar" ? "الإيجار السنوي" : "Annual Rent"}</span>
-                <span className="text-xs font-bold text-secondary">SAR 45,000</span>
+                <span className="text-xs font-bold text-secondary flex items-center gap-1"><RiyalIcon size={12}/> 45,000</span>
               </div>
               <div className="flex justify-between items-start">
                 <span className="text-xs text-neutral">{lang === "ar" ? "رسوم الخدمات" : "Service Charges"}</span>
-                <span className="text-xs font-bold text-primary">SAR 2,500</span>
+                <span className="text-xs font-bold text-primary flex items-center gap-1"><RiyalIcon size={12}/> 2,500</span>
               </div>
               <div className="h-px bg-border my-2" />
               <div className="flex justify-between items-start">
                 <span className="text-xs font-bold text-primary">{lang === "ar" ? "الإجمالي" : "Total Amount"}</span>
-                <span className="text-sm font-bold text-primary">SAR 47,500</span>
+                <span className="text-sm font-bold text-primary flex items-center gap-1"><RiyalIcon size={14}/> 47,500</span>
               </div>
             </div>
 
@@ -225,7 +259,7 @@ export default function NewLeasePage() {
                   <Receipt size={18} className="text-accent" />
                   <span className="text-[10px] font-bold text-accent uppercase tracking-wider">{lang === "ar" ? "ضريبة القيمة المضافة" : "VAT Applied"}</span>
                </div>
-               <p className="text-[10px] text-accent/80 customering-relaxed font-dm-sans">
+               <p className="text-[10px] text-accent/80 leading-relaxed font-dm-sans">
                   {lang === "ar" 
                     ? "تطبق ضريبة القيمة المضافة (15%) على الوحدات التجارية فقط وفقاً لأنظمة هيئة الزكاة والضريبة والجمارك." 
                     : "VAT (15%) applies to commercial units only as per ZATCA regulations."}
@@ -234,6 +268,56 @@ export default function NewLeasePage() {
           </div>
         </div>
       </div>
+
+      {/* Add Customer Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300" dir={lang === "ar" ? "rtl" : "ltr"}>
+              <h2 className="text-xl font-bold text-primary mb-6">
+                 {lang === "ar" ? "إضافة عميل جديد" : "Add New Customer"}
+              </h2>
+              
+              <div className="space-y-4">
+                 <div className="space-y-1">
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم الكامل" : "Full Name"}</label>
+                    <Input 
+                      value={newCustomer.name}
+                      onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
+                      placeholder={lang === "ar" ? "اسم العميل..." : "Customer name..."}
+                    />
+                 </div>
+                 
+                 <div className="space-y-1">
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الجوال" : "Phone Number"}</label>
+                    <Input 
+                      value={newCustomer.phone}
+                      onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
+                      placeholder="e.g. +966..."
+                    />
+                 </div>
+
+                 <div className="space-y-1">
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "البريد الإلكتروني" : "Email (Optional)"}</label>
+                    <Input 
+                      value={newCustomer.email}
+                      onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
+                      placeholder="example@mail.com"
+                    />
+                 </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-8">
+                 <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving}>
+                    {lang === "ar" ? "إلغاء" : "Cancel"}
+                 </Button>
+                 <Button onClick={handleAddCustomer} disabled={saving} className="gap-2">
+                    {saving && <Spinner className="h-4 w-4 animate-spin text-white" />}
+                    {lang === "ar" ? "حفظ البيانات" : "Save Customer"}
+                 </Button>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }

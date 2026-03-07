@@ -14,6 +14,8 @@
 - All sidebar navigation items now route to working pages (was 404 for 6 routes)
 
 ### Fixed
+- Stabilized `NextAuth` beta type inference portability issues (TS2742).
+- Addressed `useSearchParams` un-suspended bailout issue in reservation creation prerendering phase.
 - **Build Error**: Register page syntax error in `backgroundImage` SVG data URL (line 23)
 - **Build Error**: Stray markdown ` ```typescript ` tag at top of `register/page.tsx`
 - **Build Error**: NextAuth v5 TS inference issue in `auth.ts` suppressed and strictly typed

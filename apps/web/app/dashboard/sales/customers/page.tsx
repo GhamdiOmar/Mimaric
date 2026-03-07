@@ -11,11 +11,14 @@ import {
   Funnel,
   ArrowsDownUp,
   MagnifyingGlass,
-  Spinner
+  Spinner,
+  DownloadSimple,
+  FilePdf
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Badge, Button, Input } from "@repo/ui";
 import { getCustomers, updateCustomerStatus, createCustomer } from "../../../actions/customers";
+import { exportToExcel, exportToPDF } from "../../../../lib/export";
 
 const customerStatuses = [
   { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-blue-500" },
@@ -80,6 +83,41 @@ export default function CustomersPage() {
     }
   };
 
+  const handleExportExcel = async () => {
+    const columns = [
+      { header: lang === "ar" ? "الاسم" : "Name", key: "name", width: 25 },
+      { header: lang === "ar" ? "رقم الجوال" : "Phone", key: "phone", width: 20 },
+      { header: lang === "ar" ? "البريد الإلكتروني" : "Email", key: "email", width: 30 },
+      { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 15, render: (s: any) => customerStatuses.find(st => st.id === s)?.label[lang] || s },
+      { header: lang === "ar" ? "المصدر" : "Source", key: "source", width: 15 },
+      { header: lang === "ar" ? "تاريخ الإضافة" : "Date Added", key: "createdAt", width: 20, render: (d: any) => new Date(d).toLocaleDateString() },
+    ];
+    await exportToExcel({
+      data: customers,
+      columns,
+      filename: "Mimaric_Customers_" + new Date().toISOString().split('T')[0],
+      lang,
+      title: lang === "ar" ? "قائمة العملاء" : "Customers List"
+    });
+  };
+
+  const handleExportPDF = async () => {
+    // If we're in Kanban mode, switch to List mode first so the table renders
+    const doExport = () => exportToPDF({
+      elementId: "customers-table",
+      filename: "Mimaric_Customers_" + new Date().toISOString().split('T')[0],
+      title: lang === "ar" ? "قائمة العملاء" : "Customers List",
+      lang
+    });
+
+    if (viewMode !== "list") {
+      setViewMode("list");
+      setTimeout(doExport, 500); // give React time to render the table DOM
+    } else {
+      await doExport();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -100,8 +138,16 @@ export default function CustomersPage() {
             {lang === "ar" ? "تتبع وتحويل العملاء المحتملين إلى مبيعات ناجحة" : "Track and convert potential customers into successful sales"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="md" className="gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportExcel}>
+            <DownloadSimple size={18} />
+            {lang === "ar" ? "Excel تصدير" : "Export Excel"}
+          </Button>
+          <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportPDF}>
+            <FilePdf size={18} />
+            {lang === "ar" ? "PDF تصدير" : "Export PDF"}
+          </Button>
+          <Button variant="secondary" size="md" className="gap-2 ml-2">
             <Funnel size={18} />
             {lang === "ar" ? "تصفية" : "Filter"}
           </Button>
@@ -232,7 +278,7 @@ export default function CustomersPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border bg-white overflow-hidden">
+        <div className="rounded-md border border-border bg-white overflow-hidden" id="customers-table">
           <table className="w-full text-start border-collapse">
             <thead className="bg-muted capitalize">
               <tr>

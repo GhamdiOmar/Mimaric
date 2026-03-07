@@ -19,7 +19,8 @@ import {
   CaretRight,
   CaretLeft,
   Question,
-  SignOut
+  SignOut,
+  Users
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
@@ -29,6 +30,7 @@ const navItems = [
   { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main" },
   { label: { ar: "المشاريع", en: "Projects" }, icon: HouseLine, href: "/dashboard/projects", section: "main" },
   { label: { ar: "الوحدات", en: "Units" }, icon: Buildings, href: "/dashboard/units", section: "main" },
+  { label: { ar: "العملاء", en: "Customers" }, icon: Users, href: "/dashboard/sales/customers", section: "main" },
   { label: { ar: "المبيعات", en: "Sales" }, icon: ChartLineUp, href: "/dashboard/sales", section: "main" },
   { label: { ar: "الإيجارات", en: "Rentals" }, icon: Tag, href: "/dashboard/rentals", section: "main" },
   { label: { ar: "المالية", en: "Finance" }, icon: Receipt, href: "/dashboard/finance", section: "main" },
@@ -124,7 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate customering-none">عمر الغامدي</p>
+                <p className="text-sm font-semibold truncate leading-none">عمر الغامدي</p>
                 <p className="text-xs text-white/50 truncate mt-1">مدير النظام</p>
               </div>
             )}

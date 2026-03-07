@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { RiyalIcon } from "@repo/ui";
 import { 
   FilePdf, 
   Printer, 
@@ -62,7 +63,7 @@ export default function ContractPage() {
                 <MimaricLogo width={120} />
                 <div>
                   <h1 className="text-xl font-bold text-primary tracking-tight">Mimaric PropTech</h1>
-                  <p className="text-[10px] text-neutral font-dm-sans customering-none uppercase mt-1">Real Estate Development & Solution</p>
+                  <p className="text-[10px] text-neutral font-dm-sans leading-none uppercase mt-1">Real Estate Development & Solution</p>
                 </div>
               </div>
               <div className="text-end">
@@ -72,7 +73,7 @@ export default function ContractPage() {
             </div>
 
             {/* Contract Body */}
-            <div className="space-y-10 text-sm customering-relaxed text-primary">
+            <div className="space-y-10 text-sm leading-relaxed text-primary">
               <section>
                 <h3 className="font-bold border-b-2 border-primary/10 pb-2 mb-4 w-fit">{lang === "ar" ? "1. أطراف العقد" : "1. Parties to the Agreement"}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-start">
@@ -103,7 +104,7 @@ export default function ContractPage() {
                 <p className="mb-4">
                   {lang === "ar" 
                     ? "تم الاتفاق على أن السعر الإجمالي للوحدة هو (950,000) ريال سعودي شاملاً ضريبة التصرفات العقارية..." 
-                    : "It has been agreed that the total price of the unit is SAR 950,000, including Real Estate Transaction Tax..."}
+                    : "It has been agreed that the total price of the unit is "}<RiyalIcon size={14} className="inline mr-1"/>{lang === "ar" ? "٩٥٠,٠٠٠ شامل ضريبة التصرفات العقارية..." : "950,000, including Real Estate Transaction Tax..."}
                 </p>
                 <div className="bg-muted capitalize overflow-hidden border border-border">
                   <table className="w-full text-xs text-start">
@@ -118,12 +119,12 @@ export default function ContractPage() {
                       <tr>
                         <td className="px-4 py-3">{lang === "ar" ? "دفعة مقدمة" : "Downpayment"}</td>
                         <td className="px-4 py-3">10%</td>
-                        <td className="px-4 py-3 font-bold">SAR 95,000</td>
+                        <td className="px-4 py-3 font-bold flex items-center gap-1"><RiyalIcon size={14} /> 95,000</td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3">{lang === "ar" ? "عند الهيكل الإنشائي" : "Structure Completion"}</td>
                         <td className="px-4 py-3">30%</td>
-                        <td className="px-4 py-3 font-bold">SAR 285,000</td>
+                        <td className="px-4 py-3 font-bold flex items-center gap-1"><RiyalIcon size={14} /> 285,000</td>
                       </tr>
                     </tbody>
                   </table>

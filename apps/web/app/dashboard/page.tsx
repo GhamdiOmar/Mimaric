@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Badge } from "@repo/ui";
+import { RiyalIcon } from "@repo/ui";
 import { 
   Buildings, 
   TrendUp, 
@@ -15,7 +16,7 @@ import { cn } from "@repo/ui/lib/utils";
 const kpiData = [
   { label: { ar: "إجمالي الوحدات", en: "Total Units" }, value: "1,248", icon: Buildings, color: "primary" },
   { label: { ar: "نسبة الإشغال", en: "Occupancy Rate" }, value: "92%", icon: TrendUp, color: "secondary" },
-  { label: { ar: "الإيجارات المحصلة", en: "Rent Collected" }, value: "SAR 450K", icon: CurrencyCircleDollar, color: "secondary" },
+  { label: { ar: "الإيجارات المحصلة", en: "Rent Collected" }, value: <span className="flex items-center gap-1 justify-center"><RiyalIcon size={18} /> 450K</span>, icon: CurrencyCircleDollar, color: "secondary" },
   { label: { ar: "عقود نشطة", en: "Active Leases" }, value: "842", icon: Handshake, color: "accent" },
   { label: { ar: "طلبات صيانة", en: "Maintenance Requests" }, value: "24", icon: Clock, color: "warning" },
   { label: { ar: "العملاء المحتملون", en: "Customers This Month" }, value: "+156", icon: Users, color: "secondary" },

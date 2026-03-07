@@ -149,7 +149,7 @@ export default function TeamManagementPage() {
               </div>
               <div>
                  <h4 className="text-sm font-bold text-primary font-primary">{lang === "ar" ? item.title : item.title}</h4>
-                 <p className="text-[10px] text-neutral mt-1 font-primary customering-relaxed">{lang === "ar" ? item.ar : item.en}</p>
+                 <p className="text-[10px] text-neutral mt-1 font-primary leading-relaxed">{lang === "ar" ? item.ar : item.en}</p>
               </div>
            </div>
          ))}

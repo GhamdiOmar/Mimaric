@@ -16,13 +16,14 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Button, Input, Badge } from "@repo/ui";
+import { RiyalIcon } from "@repo/ui";
 
 const mockPayments = [
-  { id: "PAY-1001", tenant: "سعود العرفج", unit: "شقة 104", amount: "SAR 11,250", dueDate: "2026-03-01", status: "paid", method: "Mada" },
-  { id: "PAY-1002", tenant: "شركة الحلول المتقدمة", unit: "مكتب 201", amount: "SAR 22,500", dueDate: "2026-03-15", status: "unpaid", method: null },
-  { id: "PAY-1003", tenant: "عبدالرحمن الراجحي", unit: "فيلا 09", amount: "SAR 35,000", dueDate: "2026-02-28", status: "overdue", method: null },
-  { id: "PAY-1004", tenant: "نورة القحطاني", unit: "شقة 402", amount: "SAR 8,750", dueDate: "2026-04-01", status: "unpaid", method: null },
-  { id: "PAY-1005", tenant: "بندر بن خالد", unit: "شقة 105", amount: "SAR 11,250", dueDate: "2026-03-05", status: "partially_paid", method: "Bank Transfer" },
+  { id: "PAY-1001", tenant: "سعود العرفج", unit: "شقة 104", amount: <span className="flex items-center gap-1"><RiyalIcon size={12}/> 11,250</span>, dueDate: "2026-03-01", status: "paid", method: "Mada" },
+  { id: "PAY-1002", tenant: "شركة الحلول المتقدمة", unit: "مكتب 201", amount: <span className="flex items-center gap-1"><RiyalIcon size={12}/> 22,500</span>, dueDate: "2026-03-15", status: "unpaid", method: null },
+  { id: "PAY-1003", tenant: "عبدالرحمن الراجحي", unit: "فيلا 09", amount: <span className="flex items-center gap-1"><RiyalIcon size={12}/> 35,000</span>, dueDate: "2026-02-28", status: "overdue", method: null },
+  { id: "PAY-1004", tenant: "نورة القحطاني", unit: "شقة 402", amount: <span className="flex items-center gap-1"><RiyalIcon size={12}/> 8,750</span>, dueDate: "2026-04-01", status: "unpaid", method: null },
+  { id: "PAY-1005", tenant: "بندر بن خالد", unit: "شقة 105", amount: <span className="flex items-center gap-1"><RiyalIcon size={12}/> 11,250</span>, dueDate: "2026-03-05", status: "partially_paid", method: "Bank Transfer" },
 ];
 
 export default function RentCollectionPage() {
@@ -54,10 +55,10 @@ export default function RentCollectionPage() {
       {/* Financial KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: "إجمالي المستحق", en: "Total Due", value: "SAR 248,500", icon: CurrencyCircleDollar, color: "primary" },
-          { label: "تم تحصيله", en: "Collected", value: "SAR 182,000", icon: CheckCircle, color: "secondary" },
-          { label: "متأخرات", en: "Overdue", value: "SAR 42,500", icon: Warning, color: "destructive" },
-          { label: "قيد التحصيل", en: "Pending", value: "SAR 24,000", icon: Clock, color: "accent" },
+          { label: "إجمالي المستحق", en: "Total Due", value: <span className="flex items-center gap-1"><RiyalIcon size={24}/> 248,500</span>, icon: CurrencyCircleDollar, color: "primary" },
+          { label: "تم تحصيله", en: "Collected", value: <span className="flex items-center gap-1"><RiyalIcon size={24}/> 182,000</span>, icon: CheckCircle, color: "secondary" },
+          { label: "متأخرات", en: "Overdue", value: <span className="flex items-center gap-1"><RiyalIcon size={24}/> 42,500</span>, icon: Warning, color: "destructive" },
+          { label: "قيد التحصيل", en: "Pending", value: <span className="flex items-center gap-1"><RiyalIcon size={24}/> 24,000</span>, icon: Clock, color: "accent" },
         ].map((kpi, idx) => (
           <div key={idx} className="bg-white p-6 rounded-md shadow-card border border-border group hover:shadow-raised transition-all">
              <div className="flex items-center justify-between mb-2">

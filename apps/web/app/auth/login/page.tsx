@@ -90,7 +90,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold customering-tight xl:text-5xl text-white font-primary mb-2">
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white font-primary mb-2">
               {lang === "ar" ? "أهلاً بك في ميماريك" : "Welcome to Mimaric"}
             </h1>
             <p className="text-lg text-white/80 max-w-md font-primary">

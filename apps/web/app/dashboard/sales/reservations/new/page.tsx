@@ -15,6 +15,7 @@ import {
   Spinner,
   MagnifyingGlass
 } from "@phosphor-icons/react";
+import { RiyalIcon } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { Button, Input, Badge } from "@repo/ui";
 import Link from "next/link";
@@ -29,7 +30,7 @@ const steps = [
   { id: 4, label: { ar: "ملخص الحجز", en: "Summary" }, icon: Check },
 ];
 
-export default function NewReservationPage() {
+function InnerNewReservationPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
   const [customers, setCustomers] = React.useState<any[]>([]);
@@ -178,7 +179,7 @@ export default function NewReservationPage() {
               </div>
               <div className="mr-auto text-end">
                 <p className="text-xs text-neutral uppercase font-bold">{lang === "ar" ? "المبلغ المقدر" : "Estimated Price"}</p>
-                <p className="text-lg font-bold text-secondary">SAR 950,000</p>
+                <p className="text-lg font-bold text-secondary flex items-center gap-1 justify-end"><RiyalIcon size={16} /> 950,000</p>
               </div>
             </div>
 
@@ -198,7 +199,7 @@ export default function NewReservationPage() {
 
             <div className="p-4 rounded-md bg-accent/5 border border-accent/20 flex gap-3">
               <Info size={20} className="text-accent shrink-0 mt-0.5" />
-              <p className="text-xs text-primary customering-relaxed">
+              <p className="text-xs text-primary leading-relaxed">
                 {lang === "ar" 
                   ? "سيتم قفل الوحدة في النظام ومنع حجزها من قبل وكلاء آخرين حتى انتهاء المدة المحددة." 
                   : "The unit will be locked in the system and prevented from being reserved by other agents until the specified period expires."}
@@ -224,7 +225,7 @@ export default function NewReservationPage() {
             <div className="max-w-xs mx-auto space-y-4 pt-4">
               <div className="flex justify-between items-center py-3 border-b border-border">
                 <span className="text-sm text-neutral">{lang === "ar" ? "الإجمالي المستحق" : "Total Due"}</span>
-                <span className="text-lg font-bold text-primary">SAR 10,000</span>
+                <span className="text-lg font-bold text-primary flex items-center gap-1.5"><RiyalIcon size={16} /> 10,000</span>
               </div>
               
               <div className="p-4 rounded-md border-2 border-primary/20 bg-primary/5 text-start flex items-center gap-3">
@@ -265,7 +266,7 @@ export default function NewReservationPage() {
               </div>
               <div className="pt-4 border-t border-border flex justify-between items-center">
                 <span className="font-bold text-primary">{lang === "ar" ? "إجمالي مبلغ الحجز" : "Total Deposit"}</span>
-                <span className="text-xl font-bold text-secondary">SAR 10,000</span>
+                <span className="text-xl font-bold text-secondary flex items-center gap-1.5"><RiyalIcon size={20} /> 10,000</span>
               </div>
             </div>
 
@@ -309,5 +310,13 @@ export default function NewReservationPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function NewReservationPage() {
+  return (
+    <React.Suspense fallback={<div className="flex justify-center py-10"><Spinner className="animate-spin text-primary" size={32} /></div>}>
+      <InnerNewReservationPage />
+    </React.Suspense>
   );
 }

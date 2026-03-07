@@ -29,7 +29,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold customering-tight xl:text-5xl text-white font-primary">
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white font-primary">
               {lang === "ar" ? "ارتقِ بإدارة عقاراتك إلى آفاق جديدة" : "Elevate Your Real Estate Management"}
             </h1>
             <p className="text-lg text-white/80 max-w-md font-primary">
@@ -168,7 +168,7 @@ export default function RegisterPage() {
 
             <div className="flex items-start gap-3 py-2">
               <input type="checkbox" id="terms" className="mt-1 accent-secondary" />
-              <label htmlFor="terms" className="text-xs text-neutral customering-relaxed font-dm-sans">
+              <label htmlFor="terms" className="text-xs text-neutral leading-relaxed font-dm-sans">
                 {lang === "ar" 
                   ? "أوافق على شروط الخدمة وسياسة الخصوصية الخاصة بـ Mimaric" 
                   : "I agree to Mimaric's Terms of Service and Privacy Policy"}

@@ -119,7 +119,7 @@ export default function OrgSettingsPage() {
               </div>
 
               <div className="space-y-4 pt-4 border-t border-white/10">
-                 <p className="text-xs customering-relaxed text-white/70 font-primary">
+                 <p className="text-xs leading-relaxed text-white/70 font-primary">
                     {lang === "ar" 
                       ? "ملفك الموثق يمنحك صلاحية الوصول إلى الربط مع منصة إيجار ونظام الفوترة الإلكترونية فاتورة." 
                       : "Your verified profile grants access to Ejar integration and ZATCA e-Invoicing."}

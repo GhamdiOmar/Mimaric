@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Receipt, CurrencyCircleDollar, ChartBar, TrendUp } from "@phosphor-icons/react";
 import { Badge } from "@repo/ui";
+import { RiyalIcon } from "@repo/ui";
 
 export default function FinancePage() {
   return (
@@ -14,8 +15,8 @@ export default function FinancePage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
-          { label: "إجمالي الإيرادات", value: "SAR 2.4M", icon: CurrencyCircleDollar, color: "secondary" },
-          { label: "الفواتير المعلقة", value: "SAR 180K", icon: Receipt, color: "accent" },
+          { label: "إجمالي الإيرادات", value: <span className="flex items-center gap-1"><RiyalIcon size={24} /> 2.4M</span>, icon: CurrencyCircleDollar, color: "secondary" },
+          { label: "الفواتير المعلقة", value: <span className="flex items-center gap-1 text-2xl font-bold"><RiyalIcon size={20} /> 180K</span>, icon: Receipt, color: "accent" },
           { label: "نمو ربعي", value: "+12.5%", icon: TrendUp, color: "secondary" },
         ].map((kpi, i) => (
           <div key={i} className="bg-white p-6 rounded-md shadow-card border border-border">

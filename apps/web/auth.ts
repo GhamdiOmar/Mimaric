@@ -1,10 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@repo/db";
 import bcrypt from "bcryptjs";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(db),
   session: { strategy: "jwt" },
   providers: [
@@ -69,4 +69,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-});
+} satisfies NextAuthConfig;
+
+// Explicitly cast to bypass TypeScript inference portability issue (TS2742) in NextAuth v5 beta
+const result = NextAuth(authConfig);
+
+export const handlers = result.handlers;
+export const auth: any = result.auth;
+export const signIn: any = result.signIn;
+export const signOut: any = result.signOut;
