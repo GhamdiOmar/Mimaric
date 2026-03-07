@@ -14,15 +14,83 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
-  // 1. Organization
+  // 1. Organization (MOC-aligned)
   const org = await prisma.organization.upsert({
     where: { crNumber: "1010342981" },
-    update: {},
+    update: {
+      nameArabic: "شركة معماري للتطوير العقاري",
+      nameEnglish: "Mimaric Real Estate Development Co.",
+      tradeNameArabic: "معماري",
+      tradeNameEnglish: "Mimaric",
+      entityType: "COMPANY",
+      legalForm: "LIMITED_LIABILITY_COMPANY",
+      registrationStatus: "ACTIVE_REG",
+      registrationDate: new Date("2020-03-15"),
+      expiryDate: new Date("2028-03-14"),
+      capitalAmountSar: 5000000,
+      mainActivityCode: "411001",
+      mainActivityNameAr: "التطوير العقاري",
+      contactInfo: {
+        mobileNumber: "0551234567",
+        phoneNumber: "0112345678",
+        email: "info@mimaric.sa",
+        websiteUrl: "https://mimaric.sa",
+      },
+      nationalAddress: {
+        region: "منطقة الرياض",
+        city: "الرياض",
+        district: "العليا",
+        streetName: "طريق الملك فهد",
+        buildingNumber: "2345",
+        postalCode: "12211",
+        additionalNumber: "8765",
+        shortAddress: "RRAA2345",
+      },
+      managerInfo: {
+        managerName: "عمر الغامدي",
+        managerId: "1098765432",
+        managerRole: "المدير العام",
+      },
+    },
     create: {
       name: "Mimaric Development",
+      nameArabic: "شركة معماري للتطوير العقاري",
+      nameEnglish: "Mimaric Real Estate Development Co.",
+      tradeNameArabic: "معماري",
+      tradeNameEnglish: "Mimaric",
       crNumber: "1010342981",
+      unifiedNumber: "7001234567",
       vatNumber: "310452938100003",
       type: "DEVELOPER",
+      entityType: "COMPANY",
+      legalForm: "LIMITED_LIABILITY_COMPANY",
+      registrationStatus: "ACTIVE_REG",
+      registrationDate: new Date("2020-03-15"),
+      expiryDate: new Date("2028-03-14"),
+      capitalAmountSar: 5000000,
+      mainActivityCode: "411001",
+      mainActivityNameAr: "التطوير العقاري",
+      contactInfo: {
+        mobileNumber: "0551234567",
+        phoneNumber: "0112345678",
+        email: "info@mimaric.sa",
+        websiteUrl: "https://mimaric.sa",
+      },
+      nationalAddress: {
+        region: "منطقة الرياض",
+        city: "الرياض",
+        district: "العليا",
+        streetName: "طريق الملك فهد",
+        buildingNumber: "2345",
+        postalCode: "12211",
+        additionalNumber: "8765",
+        shortAddress: "RRAA2345",
+      },
+      managerInfo: {
+        managerName: "عمر الغامدي",
+        managerId: "1098765432",
+        managerRole: "المدير العام",
+      },
     },
   });
   console.log("Organization:", org.name);
@@ -82,59 +150,135 @@ async function main() {
     },
   });
 
-  // 4. Projects
+  // 4. Projects (Balady-aligned)
   const project1 = await prisma.project.create({
     data: {
       name: "Al Arjuan Towers",
-      description: "Premium residential towers in North Riyadh",
+      description: "أبراج سكنية فاخرة في شمال الرياض",
       type: "RESIDENTIAL",
       status: "UNDER_CONSTRUCTION",
       organizationId: org.id,
+      parcelNumber: "P-2458-17",
+      plotNumber: "117",
+      blockNumber: "B12",
+      deedNumber: "DEED-1445-998877",
+      landUse: "RESIDENTIAL_LAND",
+      totalAreaSqm: 4500,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "الملقا",
+      streetName: "طريق أنس بن مالك",
+      postalCode: "13521",
+      latitude: 24.7942,
+      longitude: 46.6265,
+      boundaries: {
+        north: "شارع 12 متر",
+        south: "قطعة مجاورة 2459",
+        east: "ممر خدمي",
+        west: "قطعة مجاورة 2457",
+      },
+      utilities: {
+        electricityConnected: true,
+        waterConnected: true,
+        sewageConnected: true,
+        roadAccess: true,
+      },
+      estimatedValueSar: 45000000,
     },
   });
 
   const project2 = await prisma.project.create({
     data: {
       name: "Horizon Business Park",
-      description: "Modern commercial complex in KAFD area",
+      description: "مجمع تجاري حديث في منطقة كافد",
       type: "COMMERCIAL",
       status: "PLANNING",
       organizationId: org.id,
+      parcelNumber: "P-3102-08",
+      deedNumber: "DEED-1446-112233",
+      landUse: "COMMERCIAL_LAND",
+      totalAreaSqm: 8200,
+      region: "منطقة الرياض",
+      city: "الرياض",
+      district: "حطين",
+      latitude: 24.7636,
+      longitude: 46.6534,
+      utilities: {
+        electricityConnected: true,
+        waterConnected: true,
+        sewageConnected: false,
+        roadAccess: true,
+      },
+      estimatedValueSar: 82000000,
     },
   });
 
-  // 5. Buildings
+  // 5. Buildings (Balady building details)
   const building1 = await prisma.building.create({
-    data: { name: "Tower A", projectId: project1.id },
+    data: {
+      name: "Tower A",
+      projectId: project1.id,
+      numberOfFloors: 15,
+      buildingAreaSqm: 1800,
+      constructionYear: 1445,
+      buildingType: "residential",
+      occupancyStatus: "partially_occupied",
+      electricityConnected: true,
+      waterConnected: true,
+    },
   });
   const building2 = await prisma.building.create({
-    data: { name: "Tower B", projectId: project1.id },
+    data: {
+      name: "Tower B",
+      projectId: project1.id,
+      numberOfFloors: 12,
+      buildingAreaSqm: 1500,
+      constructionYear: 1445,
+      buildingType: "residential",
+      occupancyStatus: "under_construction",
+      electricityConnected: true,
+      waterConnected: true,
+    },
   });
   const building3 = await prisma.building.create({
-    data: { name: "Block 1", projectId: project2.id },
+    data: {
+      name: "Block 1",
+      projectId: project2.id,
+      numberOfFloors: 5,
+      buildingAreaSqm: 2200,
+      buildingType: "commercial",
+      occupancyStatus: "vacant",
+    },
   });
   const building4 = await prisma.building.create({
-    data: { name: "Block 2", projectId: project2.id },
+    data: {
+      name: "Block 2",
+      projectId: project2.id,
+      numberOfFloors: 3,
+      buildingAreaSqm: 3000,
+      buildingType: "commercial",
+      occupancyStatus: "vacant",
+    },
   });
 
-  // 6. Units — 12 total across buildings
+  // 6. Units — with floor, bedrooms, bathrooms
   const unitData = [
     // Tower A — apartments
-    { number: "A-101", type: "APARTMENT" as const, buildingId: building1.id, area: 120, price: 850000, status: "AVAILABLE" as const },
-    { number: "A-102", type: "APARTMENT" as const, buildingId: building1.id, area: 95, price: 720000, status: "SOLD" as const },
-    { number: "A-201", type: "APARTMENT" as const, buildingId: building1.id, area: 140, price: 980000, status: "RESERVED" as const },
+    { number: "A-101", type: "APARTMENT" as const, buildingId: building1.id, area: 120, price: 850000, status: "AVAILABLE" as const, floor: 1, bedrooms: 3, bathrooms: 2 },
+    { number: "A-102", type: "APARTMENT" as const, buildingId: building1.id, area: 95, price: 720000, status: "SOLD" as const, floor: 1, bedrooms: 2, bathrooms: 2 },
+    { number: "A-201", type: "APARTMENT" as const, buildingId: building1.id, area: 140, price: 980000, status: "RESERVED" as const, floor: 2, bedrooms: 3, bathrooms: 3 },
     // Tower B — apartments + villa
-    { number: "B-101", type: "APARTMENT" as const, buildingId: building2.id, area: 110, price: 800000, status: "AVAILABLE" as const },
-    { number: "B-102", type: "APARTMENT" as const, buildingId: building2.id, area: 160, price: 1100000, status: "RENTED" as const },
-    { number: "B-201", type: "VILLA" as const, buildingId: building2.id, area: 320, price: 2500000, status: "AVAILABLE" as const },
+    { number: "B-101", type: "APARTMENT" as const, buildingId: building2.id, area: 110, price: 800000, status: "AVAILABLE" as const, floor: 1, bedrooms: 2, bathrooms: 2 },
+    { number: "B-102", type: "APARTMENT" as const, buildingId: building2.id, area: 160, price: 1100000, status: "RENTED" as const, floor: 1, bedrooms: 4, bathrooms: 3 },
+    { number: "B-201", type: "VILLA" as const, buildingId: building2.id, area: 320, price: 2500000, status: "AVAILABLE" as const, floor: 1, bedrooms: 5, bathrooms: 4 },
     // Block 1 — offices
-    { number: "C1-01", type: "OFFICE" as const, buildingId: building3.id, area: 80, price: 450000, status: "AVAILABLE" as const },
-    { number: "C1-02", type: "OFFICE" as const, buildingId: building3.id, area: 120, price: 680000, status: "RESERVED" as const },
-    { number: "C1-03", type: "RETAIL" as const, buildingId: building3.id, area: 200, price: 1200000, status: "AVAILABLE" as const },
+    { number: "C1-01", type: "OFFICE" as const, buildingId: building3.id, area: 80, price: 450000, status: "AVAILABLE" as const, floor: 1 },
+    { number: "C1-02", type: "OFFICE" as const, buildingId: building3.id, area: 120, price: 680000, status: "RESERVED" as const, floor: 2 },
+    { number: "C1-03", type: "RETAIL" as const, buildingId: building3.id, area: 200, price: 1200000, status: "AVAILABLE" as const, floor: 0 },
     // Block 2 — retail + warehouse
-    { number: "C2-01", type: "RETAIL" as const, buildingId: building4.id, area: 150, price: 900000, status: "AVAILABLE" as const },
-    { number: "C2-02", type: "WAREHOUSE" as const, buildingId: building4.id, area: 500, price: 1800000, status: "SOLD" as const },
-    { number: "C2-03", type: "OFFICE" as const, buildingId: building4.id, area: 90, price: 520000, status: "RENTED" as const },
+    { number: "C2-01", type: "RETAIL" as const, buildingId: building4.id, area: 150, price: 900000, status: "AVAILABLE" as const, floor: 0 },
+    { number: "C2-02", type: "WAREHOUSE" as const, buildingId: building4.id, area: 500, price: 1800000, status: "SOLD" as const, floor: 0 },
+    { number: "C2-03", type: "OFFICE" as const, buildingId: building4.id, area: 90, price: 520000, status: "RENTED" as const, floor: 1 },
   ];
 
   for (const unit of unitData) {
@@ -142,25 +286,119 @@ async function main() {
   }
   console.log("Created 12 units across 4 buildings");
 
-  // 7. Customers
+  // 7. Customers (Absher-aligned)
   const customers = await Promise.all([
     prisma.customer.create({
-      data: { name: "Mohammed Al-Qahtani", phone: "+966501234567", email: "m.qahtani@gmail.com", status: "QUALIFIED", source: "Website", organizationId: org.id },
+      data: {
+        name: "Mohammed Al-Qahtani",
+        nameArabic: "محمد عبدالله القحطاني",
+        phone: "0501234567",
+        email: "m.qahtani@gmail.com",
+        nationalId: "1023456789",
+        personType: "SAUDI_CITIZEN",
+        gender: "MALE",
+        dateOfBirth: new Date("1985-03-14"),
+        nationality: "سعودي",
+        nationalityCode: "SA",
+        address: {
+          region: "منطقة الرياض",
+          city: "الرياض",
+          district: "النرجس",
+          streetName: "شارع الأمير سلطان",
+          buildingNumber: "4567",
+          postalCode: "13434",
+        },
+        documentInfo: {
+          documentType: "national_id",
+          documentNumber: "1023456789",
+          issueDate: "2020-01-10",
+          expiryDate: "2030-01-09",
+          issuingAuthority: "الأحوال المدنية",
+        },
+        status: "QUALIFIED",
+        source: "Website",
+        organizationId: org.id,
+      },
     }),
     prisma.customer.create({
-      data: { name: "Noura Al-Dosari", phone: "+966559876543", email: "noura.d@outlook.com", status: "VIEWING", source: "Referral", organizationId: org.id },
+      data: {
+        name: "Noura Al-Dosari",
+        nameArabic: "نورة سعد الدوسري",
+        phone: "0559876543",
+        email: "noura.d@outlook.com",
+        nationalId: "1034567890",
+        personType: "SAUDI_CITIZEN",
+        gender: "FEMALE",
+        dateOfBirth: new Date("1992-07-22"),
+        nationality: "سعودية",
+        nationalityCode: "SA",
+        status: "VIEWING",
+        source: "Referral",
+        organizationId: org.id,
+      },
     }),
     prisma.customer.create({
-      data: { name: "Abdullah Al-Shehri", phone: "+966541112233", email: "a.shehri@yahoo.com", status: "NEW", source: "Exhibition", organizationId: org.id },
+      data: {
+        name: "Abdullah Al-Shehri",
+        nameArabic: "عبدالله محمد الشهري",
+        phone: "0541112233",
+        email: "a.shehri@yahoo.com",
+        nationalId: "1045678901",
+        personType: "SAUDI_CITIZEN",
+        gender: "MALE",
+        nationality: "سعودي",
+        nationalityCode: "SA",
+        status: "NEW",
+        source: "Exhibition",
+        organizationId: org.id,
+      },
     }),
     prisma.customer.create({
-      data: { name: "Sara Al-Mutairi", phone: "+966567778899", status: "INTERESTED", source: "Social Media", organizationId: org.id },
+      data: {
+        name: "Sara Al-Mutairi",
+        nameArabic: "سارة خالد المطيري",
+        phone: "0567778899",
+        nationalId: "1056789012",
+        personType: "SAUDI_CITIZEN",
+        gender: "FEMALE",
+        status: "INTERESTED",
+        source: "Social Media",
+        organizationId: org.id,
+      },
     }),
     prisma.customer.create({
-      data: { name: "Fahad Al-Tamimi", phone: "+966523334455", email: "f.tamimi@gmail.com", status: "ACTIVE_TENANT", source: "Walk-in", organizationId: org.id },
+      data: {
+        name: "Fahad Al-Tamimi",
+        nameArabic: "فهد عبدالرحمن التميمي",
+        phone: "0523334455",
+        email: "f.tamimi@gmail.com",
+        nationalId: "2087654321",
+        personType: "RESIDENT",
+        gender: "MALE",
+        dateOfBirth: new Date("1988-11-05"),
+        nationality: "أردني",
+        nationalityCode: "JO",
+        address: {
+          region: "منطقة الرياض",
+          city: "الرياض",
+          district: "الملقا",
+          buildingNumber: "1234",
+          postalCode: "13521",
+        },
+        documentInfo: {
+          documentType: "iqama",
+          documentNumber: "2087654321",
+          issueDate: "2023-06-15",
+          expiryDate: "2026-06-14",
+          issuingAuthority: "الجوازات",
+        },
+        status: "ACTIVE_TENANT",
+        source: "Walk-in",
+        organizationId: org.id,
+      },
     }),
   ]);
-  console.log("Created 5 customers");
+  console.log("Created 5 customers with Absher-aligned data");
 
   // 8. A sample lease with installments (Fahad as active tenant)
   const rentedUnit = await prisma.unit.findFirst({ where: { number: "B-102" } });
@@ -168,7 +406,7 @@ async function main() {
     const lease = await prisma.lease.create({
       data: {
         unitId: rentedUnit.id,
-        customerId: customers[4]!.id, // Fahad
+        customerId: customers[4]!.id,
         startDate: new Date("2025-01-01"),
         endDate: new Date("2025-12-31"),
         totalAmount: 48000,
@@ -176,7 +414,6 @@ async function main() {
       },
     });
 
-    // Monthly installments
     for (let i = 0; i < 12; i++) {
       const dueDate = new Date(2025, i, 1);
       const isPast = dueDate < new Date();
@@ -192,6 +429,46 @@ async function main() {
       });
     }
     console.log("Created lease with 12 installments for Fahad");
+  }
+
+  // 9. Sample maintenance requests
+  const units = await prisma.unit.findMany({ take: 3 });
+  if (units.length >= 3) {
+    await prisma.maintenanceRequest.create({
+      data: {
+        title: "تسريب مياه في الحمام",
+        description: "يوجد تسريب مياه من السقف في الحمام الرئيسي",
+        type: "plumbing",
+        status: "OPEN",
+        priority: "HIGH",
+        unitId: units[0]!.id,
+        organizationId: org.id,
+      },
+    });
+    await prisma.maintenanceRequest.create({
+      data: {
+        title: "عطل في التكييف",
+        description: "التكييف لا يعمل في غرفة المعيشة",
+        type: "hvac",
+        status: "IN_PROGRESS",
+        priority: "MEDIUM",
+        unitId: units[1]!.id,
+        organizationId: org.id,
+      },
+    });
+    await prisma.maintenanceRequest.create({
+      data: {
+        title: "مشكلة كهربائية",
+        description: "انقطاع متكرر للكهرباء في المطبخ",
+        type: "electrical",
+        status: "RESOLVED",
+        priority: "URGENT",
+        unitId: units[2]!.id,
+        organizationId: org.id,
+        resolvedAt: new Date("2025-02-15"),
+      },
+    });
+    console.log("Created 3 maintenance requests");
   }
 
   console.log("Seed complete!");

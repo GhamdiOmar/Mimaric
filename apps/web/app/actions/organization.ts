@@ -14,19 +14,38 @@ export async function getOrganization() {
 
 export async function updateOrganization(data: {
   name?: string;
+  nameArabic?: string;
+  nameEnglish?: string;
+  tradeNameArabic?: string;
+  tradeNameEnglish?: string;
   crNumber?: string;
+  unifiedNumber?: string;
   vatNumber?: string;
+  entityType?: any;
+  legalForm?: any;
+  registrationStatus?: any;
+  registrationDate?: string;
+  expiryDate?: string;
+  capitalAmountSar?: number;
+  mainActivityCode?: string;
+  mainActivityNameAr?: string;
+  contactInfo?: any;
+  nationalAddress?: any;
+  managerInfo?: any;
 }) {
   const session = await getSessionOrThrow();
 
-  // Only admins can update org settings
   if (!["SUPER_ADMIN", "DEV_ADMIN"].includes(session.role)) {
     throw new Error("Only administrators can update organization settings");
   }
 
+  const updateData: any = { ...data };
+  if (data.registrationDate) updateData.registrationDate = new Date(data.registrationDate);
+  if (data.expiryDate) updateData.expiryDate = new Date(data.expiryDate);
+
   const org = await db.organization.update({
     where: { id: session.organizationId },
-    data,
+    data: updateData,
   });
 
   revalidatePath("/dashboard/settings");

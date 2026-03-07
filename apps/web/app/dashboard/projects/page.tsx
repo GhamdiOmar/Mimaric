@@ -12,6 +12,11 @@ type Project = {
   description: string | null;
   type: string;
   status: string;
+  city: string | null;
+  district: string | null;
+  totalAreaSqm: number | null;
+  deedNumber: string | null;
+  parcelNumber: string | null;
   buildings: { id: string; units: { id: string; status: string }[] }[];
 };
 
@@ -87,8 +92,8 @@ export default function ProjectsPage() {
             const totalUnits = project.buildings.reduce((sum, b) => sum + b.units.length, 0);
             const soldUnits = project.buildings.reduce((sum, b) => sum + b.units.filter(u => u.status === "SOLD" || u.status === "RENTED").length, 0);
             const progress = totalUnits > 0 ? Math.round((soldUnits / totalUnits) * 100) : 0;
-            const status = statusMap[project.status] ?? statusMap.PLANNING;
-            const type = typeLabels[project.type] ?? typeLabels.RESIDENTIAL;
+            const status = statusMap[project.status] ?? { ar: "تخطيط", en: "Planning", variant: "draft" as const };
+            const type = typeLabels[project.type] ?? { ar: "سكني", en: "Residential" };
 
             return (
               <div key={project.id} className="bg-white rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group">
@@ -102,6 +107,15 @@ export default function ProjectsPage() {
                 </div>
                 <h3 className="text-lg font-bold text-primary font-primary">{project.name}</h3>
                 <p className="text-xs text-neutral mt-1">{type[lang]} • {project.buildings.length} {lang === "ar" ? "مبنى" : "buildings"}</p>
+                {(project.city || project.district) && (
+                  <div className="flex items-center gap-1 mt-1 text-[10px] text-neutral/60">
+                    <MapPin size={12} />
+                    <span>{[project.district, project.city].filter(Boolean).join("، ")}</span>
+                  </div>
+                )}
+                {project.totalAreaSqm && (
+                  <p className="text-[10px] text-neutral/60 mt-0.5">{project.totalAreaSqm.toLocaleString()} {lang === "ar" ? "م²" : "sqm"}</p>
+                )}
                 {project.description && (
                   <p className="text-xs text-neutral/70 mt-2 line-clamp-2">{project.description}</p>
                 )}

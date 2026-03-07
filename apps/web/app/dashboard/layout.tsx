@@ -63,7 +63,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   const userName = session?.user?.name ?? "مستخدم";
   const userRole = session?.user?.role ?? "USER";
-  const roleLabel = roleLabels[userRole] ?? roleLabels.USER;
+  const roleLabel = roleLabels[userRole] ?? { ar: "مستخدم", en: "User" };
 
   return (
     <div className="flex min-h-screen bg-background" dir={lang === "ar" ? "rtl" : "ltr"}>

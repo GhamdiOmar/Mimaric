@@ -93,8 +93,8 @@ export default function MaintenancePage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {requests.map((r) => {
-                  const status = statusLabels[r.status] ?? statusLabels.OPEN;
-                  const priority = priorityLabels[r.priority] ?? priorityLabels.MEDIUM;
+                  const status = statusLabels[r.status] ?? { ar: "مفتوح", en: "Open", variant: "available" };
+                  const priority = priorityLabels[r.priority] ?? { ar: "متوسط", en: "Medium", color: "text-amber-500" };
                   return (
                     <tr key={r.id} className="hover:bg-muted/5 transition-colors">
                       <td className="px-6 py-4 text-sm font-bold text-primary font-primary">{r.title}</td>

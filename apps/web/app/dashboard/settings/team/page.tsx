@@ -22,8 +22,8 @@ type TeamMember = {
   name: string | null;
   email: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 };
 
 const roleLabels: Record<string, string> = {

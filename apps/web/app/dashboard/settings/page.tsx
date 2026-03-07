@@ -7,36 +7,101 @@ import {
   CheckCircle,
   IdentificationCard,
   Briefcase,
-  ShieldCheck
+  ShieldCheck,
+  MapPin,
+  Phone as PhoneIcon,
+  Globe,
+  CaretDown
 } from "@phosphor-icons/react";
 import { Button, Input } from "@repo/ui";
 import { getOrganization, updateOrganization } from "../../actions/organization";
 
-type Organization = {
-  id: string;
-  name: string;
-  crNumber: string | null;
-  vatNumber: string | null;
-  type: string;
-};
+const selectClass = "w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 export default function OrgSettingsPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
-  const [org, setOrg] = React.useState<Organization | null>(null);
+  const [org, setOrg] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
-  const [name, setName] = React.useState("");
-  const [crNumber, setCrNumber] = React.useState("");
-  const [vatNumber, setVatNumber] = React.useState("");
+  const [showMocFields, setShowMocFields] = React.useState(false);
+  const [showContactFields, setShowContactFields] = React.useState(false);
+  const [showAddressFields, setShowAddressFields] = React.useState(false);
+
+  // Form state
+  const [form, setForm] = React.useState({
+    name: "",
+    nameArabic: "",
+    nameEnglish: "",
+    tradeNameArabic: "",
+    tradeNameEnglish: "",
+    crNumber: "",
+    unifiedNumber: "",
+    vatNumber: "",
+    entityType: "",
+    legalForm: "",
+    registrationStatus: "",
+    registrationDate: "",
+    expiryDate: "",
+    capitalAmountSar: "",
+    mainActivityCode: "",
+    mainActivityNameAr: "",
+    contactMobile: "",
+    contactPhone: "",
+    contactEmail: "",
+    contactWebsite: "",
+    addrRegion: "",
+    addrCity: "",
+    addrDistrict: "",
+    addrStreet: "",
+    addrBuilding: "",
+    addrPostal: "",
+    addrAdditional: "",
+    addrShort: "",
+  });
+
+  const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }));
 
   React.useEffect(() => {
     getOrganization()
-      .then((data) => {
+      .then((data: any) => {
         if (data) {
-          setOrg(data as Organization);
-          setName(data.name);
-          setCrNumber(data.crNumber ?? "");
-          setVatNumber(data.vatNumber ?? "");
+          setOrg(data);
+          const ci = data.contactInfo || {};
+          const na = data.nationalAddress || {};
+          setForm({
+            name: data.name || "",
+            nameArabic: data.nameArabic || "",
+            nameEnglish: data.nameEnglish || "",
+            tradeNameArabic: data.tradeNameArabic || "",
+            tradeNameEnglish: data.tradeNameEnglish || "",
+            crNumber: data.crNumber || "",
+            unifiedNumber: data.unifiedNumber || "",
+            vatNumber: data.vatNumber || "",
+            entityType: data.entityType || "",
+            legalForm: data.legalForm || "",
+            registrationStatus: data.registrationStatus || "",
+            registrationDate: data.registrationDate ? data.registrationDate.split("T")[0] : "",
+            expiryDate: data.expiryDate ? data.expiryDate.split("T")[0] : "",
+            capitalAmountSar: data.capitalAmountSar ? String(Number(data.capitalAmountSar)) : "",
+            mainActivityCode: data.mainActivityCode || "",
+            mainActivityNameAr: data.mainActivityNameAr || "",
+            contactMobile: ci.mobileNumber || "",
+            contactPhone: ci.phoneNumber || "",
+            contactEmail: ci.email || "",
+            contactWebsite: ci.websiteUrl || "",
+            addrRegion: na.region || "",
+            addrCity: na.city || "",
+            addrDistrict: na.district || "",
+            addrStreet: na.streetName || "",
+            addrBuilding: na.buildingNumber || "",
+            addrPostal: na.postalCode || "",
+            addrAdditional: na.additionalNumber || "",
+            addrShort: na.shortAddress || "",
+          });
+          // Show optional sections if they have data
+          if (data.entityType || data.legalForm) setShowMocFields(true);
+          if (ci.mobileNumber || ci.email) setShowContactFields(true);
+          if (na.region || na.city) setShowAddressFields(true);
         }
       })
       .catch(console.error)
@@ -46,8 +111,41 @@ export default function OrgSettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const updated = await updateOrganization({ name, crNumber, vatNumber });
-      setOrg(updated as Organization);
+      const updated = await updateOrganization({
+        name: form.name,
+        nameArabic: form.nameArabic || undefined,
+        nameEnglish: form.nameEnglish || undefined,
+        tradeNameArabic: form.tradeNameArabic || undefined,
+        tradeNameEnglish: form.tradeNameEnglish || undefined,
+        crNumber: form.crNumber || undefined,
+        unifiedNumber: form.unifiedNumber || undefined,
+        vatNumber: form.vatNumber || undefined,
+        entityType: form.entityType || undefined,
+        legalForm: form.legalForm || undefined,
+        registrationStatus: form.registrationStatus || undefined,
+        registrationDate: form.registrationDate || undefined,
+        expiryDate: form.expiryDate || undefined,
+        capitalAmountSar: form.capitalAmountSar ? Number(form.capitalAmountSar) : undefined,
+        mainActivityCode: form.mainActivityCode || undefined,
+        mainActivityNameAr: form.mainActivityNameAr || undefined,
+        contactInfo: {
+          mobileNumber: form.contactMobile,
+          phoneNumber: form.contactPhone,
+          email: form.contactEmail,
+          websiteUrl: form.contactWebsite,
+        },
+        nationalAddress: {
+          region: form.addrRegion,
+          city: form.addrCity,
+          district: form.addrDistrict,
+          streetName: form.addrStreet,
+          buildingNumber: form.addrBuilding,
+          postalCode: form.addrPostal,
+          additionalNumber: form.addrAdditional,
+          shortAddress: form.addrShort,
+        },
+      });
+      setOrg(updated);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -74,6 +172,7 @@ export default function OrgSettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className={`bg-white rounded-md shadow-card border border-border overflow-hidden ${loading ? "animate-pulse" : ""}`}>
+            {/* Header with logo */}
             <div className="p-8 border-b border-border bg-muted/5">
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 rounded-md bg-primary-deep flex items-center justify-center text-secondary relative group cursor-pointer border-2 border-primary/5">
@@ -83,33 +182,233 @@ export default function OrgSettingsPage() {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-primary font-primary">{name || "—"}</h2>
-                  <p className="text-xs text-neutral mt-1 uppercase tracking-widest font-latin">Mimaric Partner • {org?.type ?? "Developer"}</p>
+                  <h2 className="text-xl font-bold text-primary font-primary">{form.name || "—"}</h2>
+                  <p className="text-xs text-neutral mt-1 uppercase tracking-widest font-latin">
+                    {form.tradeNameEnglish || "Mimaric"} • {org?.type ?? "Developer"}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="p-8 space-y-8 font-primary">
+              {/* Core fields */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "اسم المنظمة" : "Organization Name"}</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
+                <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الاسم الرسمي بالعربي" : "Official Arabic Name"}</label>
+                  <Input value={form.nameArabic} onChange={(e) => set("nameArabic", e.target.value)} dir="rtl" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الاسم الرسمي بالإنجليزي" : "Official English Name"}</label>
+                  <Input value={form.nameEnglish} onChange={(e) => set("nameEnglish", e.target.value)} dir="ltr" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رقم السجل التجاري (CR)" : "Commercial Registration"}</label>
                   <div className="relative">
                     <IdentificationCard size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
-                    <Input placeholder="1010XXXXXX" className="pr-10 font-latin text-sm" value={crNumber} onChange={(e) => setCrNumber(e.target.value)} />
+                    <Input placeholder="1010XXXXXX" className="pr-10 font-latin text-sm" value={form.crNumber} onChange={(e) => set("crNumber", e.target.value)} dir="ltr" />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الرقم الضريبي (VAT)" : "VAT Number"}</label>
                   <div className="relative">
                     <Briefcase size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
-                    <Input placeholder="3000XXXXXX00003" className="pr-10 font-latin text-sm" value={vatNumber} onChange={(e) => setVatNumber(e.target.value)} />
+                    <Input placeholder="3000XXXXXX00003" className="pr-10 font-latin text-sm" value={form.vatNumber} onChange={(e) => set("vatNumber", e.target.value)} dir="ltr" />
                   </div>
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الرقم الموحد" : "Unified Number"}</label>
+                <Input placeholder="70XXXXXXXX" className="font-latin text-sm" value={form.unifiedNumber} onChange={(e) => set("unifiedNumber", e.target.value)} dir="ltr" />
+              </div>
+
+              {/* MOC Section */}
+              <button
+                type="button"
+                onClick={() => setShowMocFields(!showMocFields)}
+                className="flex items-center gap-2 text-xs font-bold text-secondary hover:text-secondary/80 transition-colors w-full pt-2"
+              >
+                <CaretDown size={14} className={`transition-transform ${showMocFields ? "rotate-180" : ""}`} />
+                {lang === "ar" ? "بيانات وزارة التجارة (MOC)" : "Ministry of Commerce Data (MOC)"}
+              </button>
+
+              {showMocFields && (
+                <div className="space-y-6 p-6 bg-muted/10 rounded-md border border-border animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "نوع المنشأة" : "Entity Type"}</label>
+                      <select value={form.entityType} onChange={(e) => set("entityType", e.target.value)} className={selectClass}>
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="ESTABLISHMENT">{lang === "ar" ? "مؤسسة" : "Establishment"}</option>
+                        <option value="COMPANY">{lang === "ar" ? "شركة" : "Company"}</option>
+                        <option value="BRANCH">{lang === "ar" ? "فرع" : "Branch"}</option>
+                        <option value="PROFESSIONAL_ENTITY">{lang === "ar" ? "كيان مهني" : "Professional Entity"}</option>
+                        <option value="FOREIGN_COMPANY_BRANCH">{lang === "ar" ? "فرع شركة أجنبية" : "Foreign Company Branch"}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الشكل القانوني" : "Legal Form"}</label>
+                      <select value={form.legalForm} onChange={(e) => set("legalForm", e.target.value)} className={selectClass}>
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="SOLE_PROPRIETORSHIP">{lang === "ar" ? "مؤسسة فردية" : "Sole Proprietorship"}</option>
+                        <option value="LIMITED_LIABILITY_COMPANY">{lang === "ar" ? "شركة ذات مسؤولية محدودة" : "LLC"}</option>
+                        <option value="JOINT_STOCK_COMPANY">{lang === "ar" ? "شركة مساهمة" : "Joint Stock Company"}</option>
+                        <option value="SIMPLIFIED_JOINT_STOCK_COMPANY">{lang === "ar" ? "شركة مساهمة مبسطة" : "Simplified JSC"}</option>
+                        <option value="GENERAL_PARTNERSHIP">{lang === "ar" ? "شركة تضامنية" : "General Partnership"}</option>
+                        <option value="LIMITED_PARTNERSHIP">{lang === "ar" ? "شركة توصية" : "Limited Partnership"}</option>
+                        <option value="PROFESSIONAL_COMPANY">{lang === "ar" ? "شركة مهنية" : "Professional Company"}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "حالة التسجيل" : "Registration Status"}</label>
+                      <select value={form.registrationStatus} onChange={(e) => set("registrationStatus", e.target.value)} className={selectClass}>
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="ACTIVE_REG">{lang === "ar" ? "نشط" : "Active"}</option>
+                        <option value="EXPIRED_REG">{lang === "ar" ? "منتهي" : "Expired"}</option>
+                        <option value="SUSPENDED_REG">{lang === "ar" ? "موقوف" : "Suspended"}</option>
+                        <option value="CANCELLED_REG">{lang === "ar" ? "ملغي" : "Cancelled"}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رأس المال (ر.س)" : "Capital (SAR)"}</label>
+                      <Input type="number" value={form.capitalAmountSar} onChange={(e) => set("capitalAmountSar", e.target.value)} placeholder="500000" dir="ltr" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "تاريخ التسجيل" : "Registration Date"}</label>
+                      <Input type="date" value={form.registrationDate} onChange={(e) => set("registrationDate", e.target.value)} className="font-dm-sans" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "تاريخ الانتهاء" : "Expiry Date"}</label>
+                      <Input type="date" value={form.expiryDate} onChange={(e) => set("expiryDate", e.target.value)} className="font-dm-sans" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رمز النشاط" : "Activity Code"}</label>
+                      <Input value={form.mainActivityCode} onChange={(e) => set("mainActivityCode", e.target.value)} placeholder="411001" dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "اسم النشاط" : "Activity Name"}</label>
+                      <Input value={form.mainActivityNameAr} onChange={(e) => set("mainActivityNameAr", e.target.value)} placeholder={lang === "ar" ? "التطوير العقاري" : "Real Estate Development"} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الاسم التجاري بالعربي" : "Trade Name (Arabic)"}</label>
+                      <Input value={form.tradeNameArabic} onChange={(e) => set("tradeNameArabic", e.target.value)} dir="rtl" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الاسم التجاري بالإنجليزي" : "Trade Name (English)"}</label>
+                      <Input value={form.tradeNameEnglish} onChange={(e) => set("tradeNameEnglish", e.target.value)} dir="ltr" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Info Section */}
+              <button
+                type="button"
+                onClick={() => setShowContactFields(!showContactFields)}
+                className="flex items-center gap-2 text-xs font-bold text-secondary hover:text-secondary/80 transition-colors w-full pt-2"
+              >
+                <CaretDown size={14} className={`transition-transform ${showContactFields ? "rotate-180" : ""}`} />
+                {lang === "ar" ? "بيانات التواصل" : "Contact Information"}
+              </button>
+
+              {showContactFields && (
+                <div className="space-y-6 p-6 bg-muted/10 rounded-md border border-border animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رقم الجوال" : "Mobile"}</label>
+                      <Input value={form.contactMobile} onChange={(e) => set("contactMobile", e.target.value)} placeholder="05XXXXXXXX" dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الهاتف الثابت" : "Phone"}</label>
+                      <Input value={form.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} placeholder="011XXXXXXX" dir="ltr" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "البريد الإلكتروني" : "Email"}</label>
+                      <Input value={form.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} placeholder="info@company.sa" dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الموقع الإلكتروني" : "Website"}</label>
+                      <Input value={form.contactWebsite} onChange={(e) => set("contactWebsite", e.target.value)} placeholder="https://company.sa" dir="ltr" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* National Address Section */}
+              <button
+                type="button"
+                onClick={() => setShowAddressFields(!showAddressFields)}
+                className="flex items-center gap-2 text-xs font-bold text-secondary hover:text-secondary/80 transition-colors w-full pt-2"
+              >
+                <CaretDown size={14} className={`transition-transform ${showAddressFields ? "rotate-180" : ""}`} />
+                {lang === "ar" ? "العنوان الوطني" : "National Address"}
+              </button>
+
+              {showAddressFields && (
+                <div className="space-y-6 p-6 bg-muted/10 rounded-md border border-border animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "المنطقة" : "Region"}</label>
+                      <Input value={form.addrRegion} onChange={(e) => set("addrRegion", e.target.value)} placeholder={lang === "ar" ? "منطقة الرياض" : "Riyadh Region"} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "المدينة" : "City"}</label>
+                      <Input value={form.addrCity} onChange={(e) => set("addrCity", e.target.value)} placeholder={lang === "ar" ? "الرياض" : "Riyadh"} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الحي" : "District"}</label>
+                      <Input value={form.addrDistrict} onChange={(e) => set("addrDistrict", e.target.value)} placeholder={lang === "ar" ? "العليا" : "Al Olaya"} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "اسم الشارع" : "Street"}</label>
+                      <Input value={form.addrStreet} onChange={(e) => set("addrStreet", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رقم المبنى" : "Building No."}</label>
+                      <Input value={form.addrBuilding} onChange={(e) => set("addrBuilding", e.target.value)} placeholder="1234" dir="ltr" maxLength={4} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الرمز البريدي" : "Postal Code"}</label>
+                      <Input value={form.addrPostal} onChange={(e) => set("addrPostal", e.target.value)} placeholder="12211" dir="ltr" maxLength={5} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الرقم الإضافي" : "Additional No."}</label>
+                      <Input value={form.addrAdditional} onChange={(e) => set("addrAdditional", e.target.value)} placeholder="5678" dir="ltr" maxLength={4} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "العنوان المختصر" : "Short Address"}</label>
+                      <Input value={form.addrShort} onChange={(e) => set("addrShort", e.target.value)} placeholder="ABCD1234" dir="ltr" maxLength={8} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="pt-4 flex justify-end">
                 <Button className="gap-2" onClick={handleSave} disabled={saving}>
                   <CheckCircle size={18} />
@@ -120,6 +419,7 @@ export default function OrgSettingsPage() {
           </div>
         </div>
 
+        {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-primary-deep p-8 rounded-md text-white space-y-6 shadow-xl relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L10 40 L40 40' stroke='white' fill='none'/%3E%3Ccircle cx='40' cy='40' r='2' fill='white'/%3E%3C/svg%3E")` }} />
@@ -141,6 +441,37 @@ export default function OrgSettingsPage() {
               </p>
             </div>
           </div>
+
+          {/* Quick Info Card */}
+          {org && (
+            <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "معلومات سريعة" : "Quick Info"}</h3>
+              {form.crNumber && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-neutral">{lang === "ar" ? "سجل تجاري" : "CR"}</span>
+                  <span className="font-bold text-primary font-dm-sans">{form.crNumber}</span>
+                </div>
+              )}
+              {form.vatNumber && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-neutral">{lang === "ar" ? "رقم ضريبي" : "VAT"}</span>
+                  <span className="font-bold text-primary font-dm-sans">{form.vatNumber}</span>
+                </div>
+              )}
+              {form.entityType && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-neutral">{lang === "ar" ? "نوع المنشأة" : "Entity"}</span>
+                  <span className="font-bold text-primary">{form.entityType.replace(/_/g, " ")}</span>
+                </div>
+              )}
+              {form.registrationStatus && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-neutral">{lang === "ar" ? "حالة السجل" : "Status"}</span>
+                  <span className="font-bold text-secondary">{form.registrationStatus === "ACTIVE_REG" ? (lang === "ar" ? "نشط" : "Active") : form.registrationStatus.replace(/_/g, " ")}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

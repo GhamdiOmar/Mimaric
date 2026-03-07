@@ -1,11 +1,15 @@
 import NextAuth from "next-auth";
+import type { NextRequest } from "next/server";
+import type { NextResponse } from "next/server";
 import { authConfig } from "./auth.config";
 
 /**
  * Middleware uses edge-safe authConfig (no bcrypt/prisma adapter).
  * Only validates the JWT and checks the `authorized` callback.
  */
-export default NextAuth(authConfig).auth;
+const { auth } = NextAuth(authConfig);
+
+export default auth as (req: NextRequest) => Promise<NextResponse | Response | undefined | null | void>;
 
 export const config = {
   matcher: [

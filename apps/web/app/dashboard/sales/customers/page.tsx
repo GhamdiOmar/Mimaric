@@ -39,8 +39,14 @@ export default function CustomersPage() {
     name: "",
     phone: "",
     email: "",
+    nationalId: "",
+    nameArabic: "",
+    personType: "",
+    gender: "",
+    nationality: "",
     status: "NEW"
   });
+  const [showOptionalFields, setShowOptionalFields] = React.useState(false);
 
   React.useEffect(() => {
     async function loadCustomers() {
@@ -75,7 +81,8 @@ export default function CustomersPage() {
       const customer = await createCustomer(newCustomer);
       setCustomers(prev => [customer, ...prev]);
       setShowAddModal(false);
-      setNewCustomer({ name: "", phone: "", email: "", status: "NEW" });
+      setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
+      setShowOptionalFields(false);
     } catch (err) {
       alert("Failed to create customer");
     } finally {
@@ -152,7 +159,8 @@ export default function CustomersPage() {
             {lang === "ar" ? "تصفية" : "Filter"}
           </Button>
           <Button size="md" className="gap-2 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-5 h-10" onClick={() => {
-            setNewCustomer({ name: "", phone: "", email: "", status: "NEW" });
+            setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
+            setShowOptionalFields(false);
             setShowAddModal(true);
           }}>
             <Plus size={18} weight="bold" />
@@ -231,6 +239,12 @@ export default function CustomersPage() {
                       </div>
                       
                       <div className="space-y-1.5">
+                        {customer.nationalId && (
+                          <div className="flex items-center gap-2 text-xs text-neutral">
+                            <User size={14} className="text-neutral/60" />
+                            <span className="font-dm-sans" dir="ltr">{customer.nationalId}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-xs text-neutral">
                           <Phone size={14} className="text-neutral/60" />
                           <span className="font-dm-sans" dir="ltr">{customer.phone}</span>
@@ -265,7 +279,7 @@ export default function CustomersPage() {
                 {/* Add Customer in Column */}
                 <button 
                   onClick={() => {
-                    setNewCustomer({ name: "", phone: "", email: "", status: status.id });
+                    setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: status.id });
                     setShowAddModal(true);
                   }}
                   className="flex items-center justify-center gap-2 rounded-md border border-dashed border-muted py-3 text-xs text-neutral hover:bg-white hover:text-primary hover:border-primary/20 transition-all"
@@ -286,6 +300,9 @@ export default function CustomersPage() {
                   {lang === "ar" ? "الاسم" : "Name"}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                  {lang === "ar" ? "رقم الهوية" : "National ID"}
+                </th>
+                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
                   {lang === "ar" ? "البيانات" : "Contact"}
                 </th>
                 <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
@@ -303,8 +320,14 @@ export default function CustomersPage() {
             <tbody>
               {customers.map((customer) => (
                 <tr key={customer.id} className="group hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4 text-sm font-bold text-primary border-b border-border">
-                    {customer.name}
+                  <td className="px-6 py-4 border-b border-border">
+                    <div className="text-sm font-bold text-primary">{customer.name}</div>
+                    {customer.nameArabic && customer.nameArabic !== customer.name && (
+                      <div className="text-[10px] text-neutral/60">{customer.nameArabic}</div>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-xs text-neutral font-dm-sans border-b border-border" dir="ltr">
+                    {customer.nationalId || "—"}
                   </td>
                   <td className="px-6 py-4 border-b border-border">
                     <div className="flex flex-col gap-1">
@@ -338,58 +361,137 @@ export default function CustomersPage() {
       {/* Add Customer Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300" dir={lang === "ar" ? "rtl" : "ltr"}>
+           <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto" dir={lang === "ar" ? "rtl" : "ltr"}>
               <h2 className="text-xl font-bold text-primary mb-6">
                  {lang === "ar" ? "إضافة عميل محتمل جديد" : "Add New Customer"}
               </h2>
-              
+
               <div className="space-y-4">
+                 {/* Required Fields */}
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم الكامل" : "Full Name"}</label>
-                    <Input 
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم الكامل" : "Full Name"} <span className="text-red-500">*</span></label>
+                    <Input
                       value={newCustomer.name}
                       onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
                       placeholder={lang === "ar" ? "اسم العميل..." : "Customer name..."}
                     />
                  </div>
-                 
+
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الجوال" : "Phone Number"}</label>
-                    <Input 
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الجوال" : "Phone Number"} <span className="text-red-500">*</span></label>
+                    <Input
                       value={newCustomer.phone}
                       onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-                      placeholder="e.g. +966..."
+                      placeholder="05XXXXXXXX"
+                      dir="ltr"
                     />
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "البريد الإلكتروني" : "Email (Optional)"}</label>
-                    <Input 
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الهوية / الإقامة" : "National ID / Iqama"} <span className="text-red-500">*</span></label>
+                    <Input
+                      value={newCustomer.nationalId}
+                      onChange={(e) => setNewCustomer({...newCustomer, nationalId: e.target.value})}
+                      placeholder="10XXXXXXXX"
+                      dir="ltr"
+                      maxLength={10}
+                    />
+                    <p className="text-[10px] text-neutral/60">{lang === "ar" ? "١٠ أرقام، يبدأ بـ 1 أو 2" : "10 digits, starts with 1 or 2"}</p>
+                 </div>
+
+                 <div className="space-y-1">
+                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "البريد الإلكتروني" : "Email"}</label>
+                    <Input
                       value={newCustomer.email}
                       onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
                       placeholder="example@mail.com"
+                      dir="ltr"
                     />
                  </div>
 
                  <div className="space-y-1">
                     <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الحالة" : "Status"}</label>
-                    <select 
+                    <select
                       value={newCustomer.status}
                       onChange={(e) => setNewCustomer({...newCustomer, status: e.target.value})}
-                      className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                        {customerStatuses.map(s => (
                          <option key={s.id} value={s.id}>{s.label[lang]}</option>
                        ))}
                     </select>
                  </div>
+
+                 {/* Optional Absher-aligned Fields */}
+                 <button
+                   type="button"
+                   onClick={() => setShowOptionalFields(!showOptionalFields)}
+                   className="flex items-center gap-2 text-xs font-bold text-secondary hover:text-secondary/80 transition-colors pt-2"
+                 >
+                   <span>{showOptionalFields ? "−" : "+"}</span>
+                   {lang === "ar" ? "بيانات إضافية (أبشر)" : "Additional Info (Absher)"}
+                 </button>
+
+                 {showOptionalFields && (
+                   <div className="space-y-4 p-4 bg-muted/20 rounded-md border border-border animate-in fade-in duration-200">
+                     <div className="space-y-1">
+                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم بالعربي" : "Name in Arabic"}</label>
+                       <Input
+                         value={newCustomer.nameArabic}
+                         onChange={(e) => setNewCustomer({...newCustomer, nameArabic: e.target.value})}
+                         placeholder={lang === "ar" ? "الاسم الكامل بالعربي..." : "Full name in Arabic..."}
+                         dir="rtl"
+                       />
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-3">
+                       <div className="space-y-1">
+                         <label className="text-xs font-bold text-neutral">{lang === "ar" ? "نوع الشخص" : "Person Type"}</label>
+                         <select
+                           value={newCustomer.personType}
+                           onChange={(e) => setNewCustomer({...newCustomer, personType: e.target.value})}
+                           className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm"
+                         >
+                           <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                           <option value="SAUDI_CITIZEN">{lang === "ar" ? "مواطن سعودي" : "Saudi Citizen"}</option>
+                           <option value="RESIDENT">{lang === "ar" ? "مقيم" : "Resident"}</option>
+                           <option value="GCC_CITIZEN">{lang === "ar" ? "مواطن خليجي" : "GCC Citizen"}</option>
+                           <option value="VISITOR">{lang === "ar" ? "زائر" : "Visitor"}</option>
+                           <option value="OTHER_PERSON">{lang === "ar" ? "أخرى" : "Other"}</option>
+                         </select>
+                       </div>
+
+                       <div className="space-y-1">
+                         <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الجنس" : "Gender"}</label>
+                         <select
+                           value={newCustomer.gender}
+                           onChange={(e) => setNewCustomer({...newCustomer, gender: e.target.value})}
+                           className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm"
+                         >
+                           <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                           <option value="MALE">{lang === "ar" ? "ذكر" : "Male"}</option>
+                           <option value="FEMALE">{lang === "ar" ? "أنثى" : "Female"}</option>
+                         </select>
+                       </div>
+                     </div>
+
+                     <div className="space-y-1">
+                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الجنسية" : "Nationality"}</label>
+                       <Input
+                         value={newCustomer.nationality}
+                         onChange={(e) => setNewCustomer({...newCustomer, nationality: e.target.value})}
+                         placeholder={lang === "ar" ? "مثال: سعودي" : "e.g. Saudi Arabian"}
+                       />
+                     </div>
+                   </div>
+                 )}
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-8">
                  <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving}>
                     {lang === "ar" ? "إلغاء" : "Cancel"}
                  </Button>
-                 <Button onClick={handleAddCustomer} disabled={saving} className="gap-2">
+                 <Button onClick={handleAddCustomer} disabled={saving || !newCustomer.name || !newCustomer.phone || !newCustomer.nationalId} className="gap-2">
                     {saving && <Spinner className="h-4 w-4 animate-spin text-white" />}
                     {lang === "ar" ? "حفظ البيانات" : "Save Customer"}
                  </Button>
