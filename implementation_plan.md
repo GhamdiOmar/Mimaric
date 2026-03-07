@@ -1,6 +1,6 @@
-# Implementation Plan -# Mimaric PropTech SaaS Implementation Plan
+# Mimaric PropTech SaaS Implementation Plan
 
-This plan outlines the transition to the **Mimaric** brand and the continued development of the Saudi-first PropTech platform. in Saudi Arabia. Phase 1 focuses on setting up the monorepo, authentication, multi-tenancy, and core project management features.
+This plan outlines the transition to the **Mimaric** brand and the continued development of the Saudi-first PropTech platform. Phase 1 focuses on setting up the monorepo, authentication, multi-tenancy, and core project management features.
 
 ## Proposed Changes
 
@@ -78,7 +78,7 @@ Build the essential modules and high-polish screens.
 
 ---
 
-## Phase 3: Rental & Leasing [UPCOMING]
+## Phase 3: Rental & Leasing [DONE]
 
 ### Tenancy Agreement Builder
 Implement a compliant leasing module for residential and commercial units.
@@ -101,6 +101,15 @@ Manage the financial lifecycle of a lease.
 Start building the experience for the end-user (Portal App).
 - **Lease Overview**: View active contracts and payment history.
 - **Service Requests**: Integrated maintenance ticketing for tenants.
+
+---
+
+## Recent Major Updates [DONE]
+### Lead & Customer Unification
+Unify the data model to treat prospective leads and finalized buyers/tenants as a single entity.
+- Rename `Lead` to `Customer` in Prisma schema.
+- Update sidebar navigation from Sales > Leads to Sales > Customers.
+- Implement "Add Customer" modal functionality in the Rentals flow.
 
 ---
 

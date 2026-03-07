@@ -1,34 +1,34 @@
-# Task Checklist - AntiGravity PropTech SaaS
+# Task Checklist - Mimaric PropTech SaaS
 
-## Phase 1: Foundation & Core Project Management
-- [x] Project Initialization [/]
-    - [x] Set up monorepo with Turborepo [/]
-    - [x] Initialize Next.js app in `apps/web` [ ]
-    - [x] Initialize Next.js app in `apps/portal` [ ]
-    - [x] Initialize Prisma in `packages/db` [ ]
-    - [x] Set up shared `packages/ui` with shadcn/ui [ ]
-    - [x] Configure Tailwind CSS with RTL support [ ]
-    - [x] Apply brand tokens and typography (IBM Plex Arabic) [ ]
-    - [x] Set up Phosphor Icons and shared component standards [ ]
-- [x] Authentication & Tenancy [ ]
-    - [x] Set up NextAuth.js v5 [ ]
-    - [x] Implement Individual & Company registration flows [ ]
-    - [/] Configure Multi-tenant RLS in PostgreSQL [ ]
-- [ ] Organization & Team Management [ ]
-    - [ ] Create Org profile management [ ]
-    - [ ] Implement team invitation system [ ]
-    - [ ] Set up RBAC (CASL) [ ]
-- [ ] Project & Unit Registry [ ]
-    - [ ] Project creation flow [ ]
-    - [ ] Building & Tower management [ ]
-    - [ ] Unit matrix configuration [ ]
-    - [ ] File & Document vault basics [ ]
-- [x] Priority Screens (High Polish) [ ]
-    - [x] Split-screen Login & Registration (RTL-first) [ ]
-    - [x] Responsive Main Dashboard Layout [ ]
-- [x] Dashboard Basics [ ]
-    - [x] Initial admin dashboard layout [ ]
-    - [x] Base KPI widgets [ ]
+## Phase 1: Foundation & Core Project Management [x]
+- [x] Project Initialization [x]
+    - [x] Set up monorepo with Turborepo [x]
+    - [x] Initialize Next.js app in `apps/web` [x]
+    - [x] Initialize Next.js app in `apps/portal` [x]
+    - [x] Initialize Prisma in `packages/db` [x]
+    - [x] Set up shared `packages/ui` with shadcn/ui [x]
+    - [x] Configure Tailwind CSS with RTL support [x]
+    - [x] Apply brand tokens and typography (IBM Plex Arabic) [x]
+    - [x] Set up Phosphor Icons and shared component standards [x]
+- [x] Authentication & Tenancy [x]
+    - [x] Set up NextAuth.js v5 [x]
+    - [x] Implement Individual & Company registration flows [x]
+    - [x] Configure Multi-tenant RLS in PostgreSQL [x]
+- [x] Organization & Team Management [x]
+    - [x] Implement Organization Profile (CR/VAT fields) [x]
+    - [x] Build Team Management UI (Staff invitations) [x]
+    - [x] Configure RBAC (CASL/Permissions) [x]
+- [x] Project & Unit Registry [x]
+    - [x] Build Project Creation Flow (Step-by-step) [x]
+    - [x] Building & Tower management [x]
+    - [x] Advanced Unit Matrix (Mass editing support) [x]
+    - [x] Document Vault for blueprints [x]
+- [x] Priority Screens (High Polish) [x]
+    - [x] Split-screen Login & Registration (RTL-first) [x]
+    - [x] Responsive Main Dashboard Layout [x]
+- [x] Dashboard Basics [x]
+    - [x] Initial admin dashboard layout [x]
+    - [x] Base KPI widgets [x]
 
 ## Phase 2: Sales Engine [x]
 - [x] CRM & Lead Management [x]
@@ -39,23 +39,35 @@
 - [x] Tailwind v4 & Build Fixes [x]
 
 
-## Phase 3: Rental & Leasing
-- [ ] Tenancy Agreement Builder [ ]
-- [ ] Ejar Integration [ ]
-- [ ] Rent Collection Tracking [ ]
-- [ ] Tenant Portal [ ]
+## Phase 3: Rental & Leasing [x]
+- [x] Tenancy Agreement Builder [x]
+- [x] Ejar Integration foundation [x]
+- [x] Rent Collection & Payment Tracking [x]
+- [x] Tenant Portal Foundation [x]
 
-## Phase 4: Finance & compliance
-- [ ] ZATCA Phase 2 e-Invoicing [ ]
-- [ ] Payment Gateway Integration (HyperPay) [ ]
-- [ ] Expense Tracking [ ]
+## Mimaric Rebranding [x]
+- [x] Update CSS variables in `globals.css` [x]
+- [x] Integrate DM Sans for numbers/English [x]
+- [x] Replace "AntiGravity" name/logo across all screens (Login, Register, Dashboard, Contracts) [x]
+- [x] Update visual patterns (PCB circuit theme) [x]
+
+
+## Phase 4: Finance & Compliance
+- [ ] ZATCA Phase 2 e-Invoicing
+- [ ] Payment Gateway Integration (HyperPay)
+- [ ] Expense Tracking
 
 ## Phase 5: Buyer & Tenant Portal
-- [ ] Public Property Listings [ ]
-- [ ] Interactive Floor Plans [ ]
-- [ ] Online Booking [ ]
+- [ ] Public Property Listings
+- [ ] Interactive Floor Plans
+- [ ] Online Booking
 
 ## Phase 6: AI & Advanced Analytics
-- [ ] AI Contract Summarizer [ ]
-- [ ] Predictive Maintenance [ ]
-- [ ] Advanced BI Dashboard [ ]
+- [ ] AI Contract Summarizer
+- [ ] Predictive Maintenance
+- [ ] Advanced BI Dashboard
+
+## Recent Enhancements (Completed)
+- [x] **Global Button Modernization** (High contrast, Responsive, Premium Design)
+- [x] **Lead & Customer Unification** (Unified Customer entity across Sales & Rentals)
+- [x] **Security Audit** (Verified no exposed secrets in repo)

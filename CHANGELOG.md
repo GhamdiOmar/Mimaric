@@ -3,8 +3,10 @@
 ## [0.3.0] — 2026-03-07
 
 ### Added
+- **Customers Hub** (`/dashboard/sales/customers`) — Unified Kanban and List views replacing former Leads page
+- **Rentals New Lease Modal** — Added "Add New Customer" button and popup to create customers on-the-fly
 - **Projects page** (`/dashboard/projects`) — Card grid with progress tracking
-- **Sales hub page** (`/dashboard/sales`) — Links to Leads, Reservations, Contracts
+- **Sales hub page** (`/dashboard/sales`) — Links to Customers, Reservations, Contracts
 - **Rentals hub page** (`/dashboard/rentals`) — Links to New Lease, Rent Collection
 - **Finance page** (`/dashboard/finance`) — Revenue KPIs, ZATCA placeholder
 - **Maintenance page** (`/dashboard/maintenance`) — Service request table with status badges
@@ -14,17 +16,22 @@
 ### Fixed
 - **Build Error**: Register page syntax error in `backgroundImage` SVG data URL (line 23)
 - **Build Error**: Stray markdown ` ```typescript ` tag at top of `register/page.tsx`
+- **Build Error**: NextAuth v5 TS inference issue in `auth.ts` suppressed and strictly typed
 - **Runtime Error**: Missing `Plus` icon import in Unit Matrix page
 - **Runtime Error**: Missing `MimaricLogo` import in Contract page
 - **Bug**: Login button was not clickable (no `onClick` handler)
 - **Bug**: JSX whitespace `< ShieldCheck>` in Team page
+- **Bug**: "Add Customer" inline logic in Sales Kanban columns fixed
 - **Branding**: Last 2 "AntiGravity" references in Register terms text → "Mimaric"
 - **Branding**: Contract signature "AntiGravity CEO" → "Mimaric CEO"
 - **Branding**: "AG" avatar initials in Leads Kanban → "M"
+- **UI**: Globally modernized Buttons; pure white text on dark backgrounds, `whitespace-nowrap`, and premium design tokens.
 
 ### Changed
-- Login button now redirects to `/dashboard/units` for testing
-- Test credentials enabled in `auth.ts`: `admin@mimaric.sa` / `mimaric2026`
+- Refactored Prisma Schema: `Lead` model and `LeadStatus` renamed globally to `Customer` and `CustomerStatus`.
+- Codebase-wide refactor replacing "Leads" logic with "Customers".
+- Login button now redirects to `/dashboard/units` for testing.
+- Test credentials enabled in `auth.ts`: `admin@mimaric.sa` / `mimaric2026`.
 
 ## [0.2.0] — 2026-03-06
 

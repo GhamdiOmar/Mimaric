@@ -44,7 +44,7 @@
 | New Project Wizard | `/dashboard/projects/new` | ✅ Complete |
 | Unit Matrix | `/dashboard/units` | ✅ Complete |
 | Sales Hub | `/dashboard/sales` | ✅ Complete |
-| Lead Management (Kanban) | `/dashboard/sales/leads` | ✅ Complete |
+| Customer Management (Kanban) | `/dashboard/sales/customers` | ✅ Complete |
 | Reservation Flow | `/dashboard/sales/reservations/new` | ✅ Complete |
 | Contract Template | `/dashboard/sales/contracts/[id]` | ✅ Complete |
 | Rentals Hub | `/dashboard/rentals` | ✅ Complete |
@@ -81,7 +81,7 @@
 - [x] Document vault for blueprints
 
 ### Phase 2 — Sales Engine ✅
-- [x] CRM / Lead management (Kanban + list views)
+- [x] CRM / Customer management (Kanban + list views)
 - [x] Unit availability board
 - [x] Reservation flow (4-step wizard)
 - [x] Sales contract template (bilingual, signature slots)
@@ -107,13 +107,12 @@
 ---
 
 ## Known Issues
-- `auth.ts` lint warnings about inferred types (non-blocking, cosmetic)
 - Some Tailwind v4 CSS rules (`@theme`, `@apply`) flagged by IDE (works at runtime)
 - Browser automated testing not supported on macOS
 
 ## Next Steps
 - [x] Implement Real Authentication (Bcrypt + Prisma)
-- [x] Create CRUD Server Actions (Projects, Leads, Units)
+- [x] Create CRUD Server Actions (Projects, Customers, Units)
 - [ ] Connect to Production PostgreSQL (Set DATABASE_URL)
 - [ ] Implement File Upload Logic (S3/Local)
 - [ ] Finalize unit matrix persistence
