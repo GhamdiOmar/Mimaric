@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  /* Mimaric Brand Tokens — from official guidelines */
+  --color-primary: hsl(216 45% 17%); /* #182840 (Brand Navy) */
+  --color-primary-deep: hsl(216 55% 14%); /* #102038 */
+  --color-primary-foreground: hsl(0 0% 100%);
+
+  --color-secondary: hsl(148 76% 27%); /* #107840 (Saudi Circuit Green) */
+  --color-secondary-foreground: hsl(0 0% 100%);
+
+  --color-accent: hsl(46 65% 52%); /* #D4AF37 (Horizon Gold) */
+  --color-accent-foreground: hsl(216 45% 17%);
+
+  --color-green-bright: hsl(143 67% 38%); /* #20A050 (PCB Bright Green) */
+
+  /* Surface & Layout */
+  --color-background: hsl(210 20% 98%); /* #F8F9FA (Digital Alabaster) */
+  --color-foreground: hsl(218 17% 35%); /* #4A5568 (Steel Slate) */
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(218 17% 35%);
+
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(218 17% 35%);
+
+  --color-muted: hsl(214 32% 91%); /* #E2E8F0 (Steel Scale) */
+  --color-muted-foreground: hsl(215 16% 47%);
+
+  --color-destructive: hsl(0 72% 51%); /* #E53E3E (Error) */
+  --color-destructive-foreground: hsl(0 0% 100%);
+
+  --color-warning: hsl(24 75% 50%); /* #DD6B20 */
+  --color-info: hsl(209 62% 50%); /* #3182CE */
+
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(148 76% 27%);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+
+  /* Mimaric Navy-Tinted Shadows */
+  --shadow-sm: 0 1px 3px rgba(24, 40, 64, 0.10), 0 1px 2px rgba(24, 40, 64, 0.06);
+  --shadow-md: 0 4px 6px rgba(24, 40, 64, 0.07), 0 2px 4px rgba(24, 40, 64, 0.06);
+  --shadow-lg: 0 10px 15px rgba(24, 40, 64, 0.10), 0 4px 6px rgba(24, 40, 64, 0.05);
+  --shadow-xl: 0 20px 25px rgba(24, 40, 64, 0.10), 0 10px 10px rgba(24, 40, 64, 0.04);
+  --shadow-card: var(--shadow-sm);
+  --shadow-raised: var(--shadow-md);
+
+  /* Font Families */
+  --font-primary: "IBM Plex Sans Arabic", "Inter", sans-serif;
+  --font-latin: "DM Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Arabic-first Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+    font-family: var(--font-primary);
+  }
+
+  /* SAR Numbers & Dates - Force LTR */
+  .number-ltr {
+    direction: ltr;
+    display: inline-block;
+  }
+
+  /* RTL Directional Icon Mirroring */
+  [dir=rtl] .icon-directional {
+    transform: scaleX(-1);
+  }
+}
+

@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  crNumber    String?  @unique // Commercial Registration Number
+  vatNumber   String?  @unique
+  type        OrgType  @default(DEVELOPER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  projects    Project[]
+  customers   Customer[]
+  documents   Document[]
+}
+
+enum OrgType {
+  DEVELOPER
+  COMMERCIAL
+}
+
+model User {
+  id             String       @id @default(cuid())
+  email          String       @unique
+  name           String?
+  password       String
+  role           UserRole     @default(USER)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  customers      Customer[]   @relation("AssignedCustomers")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  DEV_ADMIN
+  PROJECT_MANAGER
+  SALES_MANAGER
+  SALES_AGENT
+  PROPERTY_MANAGER
+  FINANCE_OFFICER
+  TECHNICIAN
+  BUYER
+  TENANT
+  USER
+}
+
+model Project {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  type           ProjectType
+  status         ProjectStatus @default(PLANNING)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  buildings      Building[]
+  documents      Document[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+}
+
+enum ProjectType {
+  RESIDENTIAL
+  COMMERCIAL
+  MIXED_USE
+  VILLA_COMPOUND
+}
+
+enum ProjectStatus {
+  PLANNING
+  UNDER_CONSTRUCTION
+  READY
+  HANDED_OVER
+}
+
+model Building {
+  id        String   @id @default(cuid())
+  name      String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  units     Unit[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+model Unit {
+  id         String     @id @default(cuid())
+  number     String
+  type       UnitType
+  status     UnitStatus @default(AVAILABLE)
+  buildingId   String
+  building     Building      @relation(fields: [buildingId], references: [id])
+  area         Float?        // sqm
+  price        Decimal?
+  reservations Reservation[]
+  contracts    Contract[]
+  leases       Lease[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([buildingId])
+}
+
+model Customer {
+  id             String        @id @default(cuid())
+  name           String
+  email          String?
+  phone          String
+  status         CustomerStatus @default(NEW)
+  source         String?
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  agentId        String?
+  agent          User?         @relation("AssignedCustomers", fields: [agentId], references: [id])
+  reservations   Reservation[]
+  contracts      Contract[]
+  leases         Lease[]
+  documents      Document[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([agentId])
+}
+
+enum CustomerStatus {
+  NEW
+  INTERESTED
+  QUALIFIED
+  VIEWING
+  RESERVED
+  CONVERTED
+  LOST
+  ACTIVE_TENANT
+  PAST_TENANT
+}
+
+model Reservation {
+  id         String            @id @default(cuid())
+  customerId String
+  customer   Customer          @relation(fields: [customerId], references: [id])
+  unitId     String
+  unit       Unit              @relation(fields: [unitId], references: [id])
+  userId     String?           // The agent/user who created the reservation
+  status     ReservationStatus @default(PENDING)
+  expiresAt  DateTime
+  amount     Decimal?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([customerId])
+  @@index([unitId])
+  @@index([userId])
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  EXPIRED
+  CANCELLED
+}
+
+model Contract {
+  id         String         @id @default(cuid())
+  customerId String
+  customer   Customer       @relation(fields: [customerId], references: [id])
+  unitId     String
+  unit       Unit           @relation(fields: [unitId], references: [id])
+  userId     String?        // The agent/user who created the contract
+  status     ContractStatus @default(DRAFT)
+  type       ContractType   @default(SALE)
+  fileUrl    String?
+  amount     Decimal
+  signedAt   DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@index([customerId])
+  @@index([unitId])
+  @@index([userId])
+}
+
+enum ContractStatus {
+  DRAFT
+  SENT
+  SIGNED
+  CANCELLED
+  VOID
+}
+
+enum ContractType {
+  SALE
+  LEASE
+}
+
+enum UnitType {
+  APARTMENT
+  VILLA
+  OFFICE
+  RETAIL
+  WAREHOUSE
+  PARKING
+}
+
+enum UnitStatus {
+  AVAILABLE
+  RESERVED
+  SOLD
+  RENTED
+  MAINTENANCE
+}
+
+model Lease {
+  id             String          @id @default(cuid())
+  unitId         String
+  unit           Unit            @relation(fields: [unitId], references: [id])
+  customerId     String
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  startDate      DateTime
+  endDate        DateTime
+  totalAmount    Decimal
+  status         LeaseStatus     @default(DRAFT)
+  installments   RentInstallment[]
+  ejarContractId String?         // For Ejar integration
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([unitId])
+  @@index([customerId])
+}
+
+enum LeaseStatus {
+  DRAFT
+  PENDING_SIGNATURE
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+model RentInstallment {
+  id          String            @id @default(cuid())
+  leaseId     String
+  lease       Lease             @relation(fields: [leaseId], references: [id])
+  dueDate     DateTime
+  amount      Decimal
+  status      PaymentStatus     @default(UNPAID)
+  paidAt      DateTime?
+  paymentMethod String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([leaseId])
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+model Document {
+  id             String       @id @default(cuid())
+  name           String
+  url            String
+  type           String       // file extension or mime type
+  category       DocCategory  @default(GENERAL)
+  size           Int?         // in bytes
+  projectId      String?
+  project        Project?     @relation(fields: [projectId], references: [id])
+  customerId     String?
+  customer       Customer?    @relation(fields: [customerId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  userId         String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([customerId])
+  @@index([organizationId])
+}
+
+enum DocCategory {
+  GENERAL
+  BLUEPRINT
+  LEGAL
+  CONTRACT
+  MARKETING
+  FINANCE
+}
