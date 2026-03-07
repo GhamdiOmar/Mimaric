@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client (if any)
+        run: npm run db:generate --if-present || npx turbo run db:generate
+
+      - name: Run Linters
+        run: npm run lint
+
+      - name: Run Type Checking
+        run: npm run check-types
+
+      - name: Build Project
+        run: npm run build
+        env:
+          # Assuming build might need environmental variables mocking.
+          # Here we can provide empty/mock env vars if needed during build
+          NEXT_PUBLIC_API_URL: ""
