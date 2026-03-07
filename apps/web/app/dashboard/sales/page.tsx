@@ -20,8 +20,8 @@ export default function SalesPage() {
 
   const salesModules = [
     { href: "/dashboard/sales/customers", icon: Users, label: { ar: "إدارة العملاء المحتملين", en: "Customer Management" }, desc: { ar: "تتبع وتحويل العملاء", en: "Track and convert customers" }, count: stats.customerCount },
-    { href: "/dashboard/sales/reservations/new", icon: Tag, label: { ar: "الحجوزات", en: "Reservations" }, desc: { ar: "إدارة حجوزات الوحدات", en: "Manage unit reservations" }, count: stats.reservationCount },
-    { href: "/dashboard/sales/contracts/1", icon: Receipt, label: { ar: "العقود", en: "Contracts" }, desc: { ar: "عقود البيع والشراء", en: "Sales contracts" }, count: stats.contractCount },
+    { href: "/dashboard/sales/reservations", icon: Tag, label: { ar: "الحجوزات", en: "Reservations" }, desc: { ar: "إدارة حجوزات الوحدات", en: "Manage unit reservations" }, count: stats.reservationCount },
+    { href: "/dashboard/sales/contracts", icon: Receipt, label: { ar: "العقود", en: "Contracts" }, desc: { ar: "عقود البيع والشراء", en: "Sales contracts" }, count: stats.contractCount },
   ];
 
   return (
