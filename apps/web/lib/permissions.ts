@@ -70,7 +70,15 @@ export type Permission =
   | "land:read"
   | "land:write"
   | "land:delete"
-  | "land:export";
+  | "land:export"
+  // Help
+  | "help:read"
+  | "help:create_ticket"
+  | "help:manage_tickets"
+  | "help:manage_permissions"
+  // Invitations
+  | "invitations:read"
+  | "invitations:write";
 
 const ALL_PERMISSIONS: Permission[] = [
   "customers:read", "customers:read_pii", "customers:write", "customers:delete", "customers:export",
@@ -90,6 +98,8 @@ const ALL_PERMISSIONS: Permission[] = [
   "dashboard:read",
   "notifications:read",
   "land:read", "land:write", "land:delete", "land:export",
+  "help:read", "help:create_ticket", "help:manage_tickets", "help:manage_permissions",
+  "invitations:read", "invitations:write",
 ];
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
@@ -110,6 +120,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "reports:read",
     "notifications:read",
     "land:read", "land:write", "land:export",
+    "help:read", "help:create_ticket",
   ],
 
   SALES_MANAGER: [
@@ -123,6 +134,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "reports:read", "reports:export",
     "notifications:read",
     "land:read",
+    "help:read", "help:create_ticket",
   ],
 
   SALES_AGENT: [
@@ -135,6 +147,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "reservations:read", "reservations:write",
     "documents:read",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   PROPERTY_MANAGER: [
@@ -147,6 +160,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "preventive_maintenance:read", "preventive_maintenance:write",
     "documents:read", "documents:write",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   FINANCE_OFFICER: [
@@ -159,6 +173,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "notifications:read",
     "land:read",
     "maintenance:read",
+    "help:read", "help:create_ticket",
   ],
 
   TECHNICIAN: [
@@ -167,6 +182,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "preventive_maintenance:read",
     "units:read",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   BUYER: [
@@ -175,6 +191,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "contracts:read",
     "reservations:read",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   TENANT: [
@@ -183,12 +200,14 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "leases:read",
     "maintenance:read", "maintenance:write",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   USER: [
     "dashboard:read",
     "units:read",
     "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 };
 

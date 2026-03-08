@@ -106,6 +106,8 @@ async function main() {
       password: hashedPassword,
       role: "SUPER_ADMIN",
       organizationId: org.id,
+      onboardingCompleted: true,
+      accountType: "company",
     },
   });
   console.log("Admin user:", admin.email);
@@ -123,6 +125,8 @@ async function main() {
       password: salesPassword,
       role: "SALES_AGENT",
       organizationId: org.id,
+      onboardingCompleted: true,
+      accountType: "company",
     },
   });
 
@@ -135,6 +139,8 @@ async function main() {
       password: financePassword,
       role: "FINANCE_OFFICER",
       organizationId: org.id,
+      onboardingCompleted: true,
+      accountType: "company",
     },
   });
 
@@ -147,8 +153,50 @@ async function main() {
       password: salesPassword,
       role: "TECHNICIAN",
       organizationId: org.id,
+      onboardingCompleted: true,
+      accountType: "company",
     },
   });
+
+  // 3b. Additional role users (one per role for access testing)
+  const testPassword = await bcrypt.hash("mimaric2026", 12);
+
+  await prisma.user.upsert({
+    where: { email: "dev_admin@mimaric.sa" },
+    update: {},
+    create: { email: "dev_admin@mimaric.sa", name: "Saeed Al-Anzi", password: testPassword, role: "DEV_ADMIN", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "pm@mimaric.sa" },
+    update: {},
+    create: { email: "pm@mimaric.sa", name: "Nasser Al-Zahrani", password: testPassword, role: "PROJECT_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "sales_mgr@mimaric.sa" },
+    update: {},
+    create: { email: "sales_mgr@mimaric.sa", name: "Huda Al-Maliki", password: testPassword, role: "SALES_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "property_mgr@mimaric.sa" },
+    update: {},
+    create: { email: "property_mgr@mimaric.sa", name: "Maryam Al-Subaie", password: testPassword, role: "PROPERTY_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "buyer@mimaric.sa" },
+    update: {},
+    create: { email: "buyer@mimaric.sa", name: "Turki Al-Fadhli", password: testPassword, role: "BUYER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "tenant@mimaric.sa" },
+    update: {},
+    create: { email: "tenant@mimaric.sa", name: "Reem Al-Harthy", password: testPassword, role: "TENANT", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  await prisma.user.upsert({
+    where: { email: "user@mimaric.sa" },
+    update: {},
+    create: { email: "user@mimaric.sa", name: "Lama Al-Jaber", password: testPassword, role: "USER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+  });
+  console.log("Created 7 additional role test users");
 
   // 4. Projects (Balady-aligned)
   const project1 = await prisma.project.create({

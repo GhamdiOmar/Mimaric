@@ -1,5 +1,48 @@
 # Changelog — Mimaric PropTech
 
+## [0.8.0] — 2026-03-08
+
+### Added — Registration & Organization Management
+- **Individual/Company Registration** — Account type toggle (فرد/شركة) wired to backend; company name used as org name, individual gets personal workspace
+- **Auto-Login on Registration** — New users are signed in immediately and redirected to onboarding wizard (no manual login required)
+- **SUPER_ADMIN Role for Org Creators** — First user in an organization gets full admin permissions instead of USER role
+- **Onboarding Wizard** — 4-step post-registration flow: organization path choice, business identity (CR/VAT/entity type), contact & location, team invitations. Every step is skippable.
+- **CR-Based Organization Discovery** — Individual users can search for existing organizations by Commercial Registration number. Found → join request with masked org name. Not found → option to register business with that CR.
+- **Join Request System** — Users request to join organizations, admins review/approve/decline from Help Center admin panel. On approval, user moves to target org as USER role with JWT refresh.
+- **Token-Based Team Invitations** — Email-based invitations with 7-day expiry, secure token links, role assignment. Replaces password-based invite flow.
+- **Invitation Acceptance Page** — `/auth/invite/[token]` — shows org name, role, inviter; new user creates account and auto-joins organization.
+- **Help Center** — Searchable FAQ (6 categories, bilingual), guides, support ticket system with threaded messages, permission request workflow, admin panel for managing tickets/join requests/permissions.
+- **Support Ticket System** — Users create tickets with categories, admins respond with threaded messages, status tracking (open → in progress → resolved → closed).
+- **Permission Request System** — Users request role upgrades, admins review and approve/decline with notifications.
+- **Notification Helpers** — `createNotification()` and `notifyAdmins()` utilities for system-wide notification delivery.
+- **Password Reveal Toggle** — Show/hide password button on login, register, and invitation acceptance pages.
+- **Enter Key Login** — Pressing Enter on the login form submits credentials.
+
+### Changed
+- **Password Policy** — Minimum length reduced from 15 to 10 characters (NIST-compliant, common password blocklist and contextual checks remain)
+- **Registration Page** — Sends `accountType` to backend, auto-redirects on success instead of showing "registered" message
+- **Login Page** — Removed `?registered=true` query param handling (replaced by auto-login)
+- **Auth Config** — JWT callback now supports `trigger === "update"` with session parameter for real-time token refresh after onboarding/org changes
+- **Dashboard Layout** — Sidebar shows organization name (fetched via lightweight `getOrgName()` that requires only authentication, not `organization:read` permission)
+- **Permissions** — Added `invitations:read`, `invitations:write` to ALL_PERMISSIONS matrix
+- **Seed Data** — All seed users have `onboardingCompleted: true` and `accountType: "company"` to skip onboarding
+
+### Schema Changes
+- **User Model** — Added `accountType` (individual/company), `onboardingCompleted` (boolean), `invitedBy`, `invitedVia` fields
+- **Invitation Model** — New model with token-based flow, email, role, organization, expiry, status tracking
+- **JoinRequest Model** — New model for CR-based org join requests with status machine (PENDING → APPROVED/DECLINED/EXPIRED/CANCELLED)
+- **InvitationStatus Enum** — PENDING, ACCEPTED, EXPIRED, REVOKED
+- **JoinRequestStatus Enum** — PENDING, APPROVED, DECLINED, EXPIRED, CANCELLED
+- **Organization** — Added `invitations` and `joinRequests` relations
+- **Help Models** — SupportTicket, SupportTicketMessage, PermissionRequest models with full CRUD
+
+### Fixed
+- Stale JWT after onboarding completion causing infinite redirect loop (now uses `useSession().update()` + `window.location.href`)
+- SALES_AGENT users crashing on dashboard due to missing `organization:read` permission (sidebar now uses lightweight `getOrgName()`)
+- Registration password validation rejecting passwords containing email substrings correctly
+
+---
+
 ## [0.7.0] — 2026-03-08
 
 ### Changed
@@ -70,7 +113,7 @@
 - **PII Encryption at Rest** — AES-256-GCM encryption for national IDs, phone numbers, and emails in the Customer model; SHA-256 hash columns for exact-match search on encrypted fields
 - **PII Masking UI** — Customer page masks sensitive data by default; authorized users can toggle visibility with Show/Hide PII button
 - **Audit Trail** — `AuditLog` model tracking all data access, PII reads, exports, logins, and modifications with user, IP, and timestamp; dedicated audit log viewer at `/dashboard/settings/audit`
-- **NIST SP 800-63B Password Policy** — Minimum 15 characters, 10K common password blocklist, contextual checks (no username/email in password), real-time bilingual strength hints
+- **NIST SP 800-63B Password Policy** — Minimum length enforcement, common password blocklist, contextual checks (no username/email in password), real-time bilingual strength hints
 - **Login Rate Limiting** — Progressive throttling: 30s after 5 failures, 5min after 10, 15min after 20
 - **Self-Registration** — `/auth/register` page with password policy enforcement and automatic org creation
 - **Password Recovery** — `/auth/forgot-password` and `/auth/reset-password` pages with time-limited tokens

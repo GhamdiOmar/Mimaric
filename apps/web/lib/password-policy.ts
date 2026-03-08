@@ -2,7 +2,7 @@
  * NIST SP 800-63B Compliant Password Policy
  *
  * Rules:
- * - Minimum 15 characters (NIST best practice)
+ * - Minimum 10 characters
  * - Maximum 64 characters
  * - No complexity requirements (per NIST guidance)
  * - All Unicode characters allowed (including Arabic, spaces)
@@ -69,10 +69,10 @@ export function validatePassword(
   const errors: { en: string; ar: string }[] = [];
 
   // Length checks
-  if (password.length < 15) {
+  if (password.length < 10) {
     errors.push({
-      en: `Password must be at least 15 characters (currently ${password.length}).`,
-      ar: `كلمة المرور يجب أن تكون 15 حرفًا على الأقل (حاليًا ${password.length}).`,
+      en: `Password must be at least 10 characters (currently ${password.length}).`,
+      ar: `كلمة المرور يجب أن تكون 10 أحرف على الأقل (حاليًا ${password.length}).`,
     });
   }
 
@@ -127,10 +127,10 @@ export function getPasswordStrengthHint(password: string): { en: string; ar: str
       ar: "استخدم عبارة من 3 كلمات عشوائية أو أكثر (مثال: \"جبل-بنفسجي-غروب\")",
     };
   }
-  if (password.length < 15) {
+  if (password.length < 10) {
     return {
-      en: `${15 - password.length} more characters needed. Try adding random words.`,
-      ar: `تحتاج ${15 - password.length} حرفًا إضافيًا. جرّب إضافة كلمات عشوائية.`,
+      en: `${10 - password.length} more characters needed. Try adding random words.`,
+      ar: `تحتاج ${10 - password.length} حرفًا إضافيًا. جرّب إضافة كلمات عشوائية.`,
     };
   }
   return {

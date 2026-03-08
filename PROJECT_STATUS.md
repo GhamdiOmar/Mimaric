@@ -1,6 +1,6 @@
 # Mimaric PropTech — Project Status
 
-> Last updated: 2026-03-07
+> Last updated: 2026-03-08
 
 ## Brand Identity
 - **App Name**: Mimaric
@@ -13,10 +13,10 @@
 | Layer | Technology | Status |
 |-------|------------|--------|
 | Framework | Next.js 16 + Turbopack | ✅ |
-| Auth | NextAuth.js v5 (Prisma Adapter) | 🛠️ In Progress |
+| Auth | NextAuth.js v5 (JWT + Credentials) | ✅ |
 | ORM | Prisma 7 | ✅ |
-| Database | PostgreSQL | 🛠️ In Progress |
-| Logic | Next.js Server Actions | 🛠️ In Progress |
+| Database | Supabase PostgreSQL | ✅ |
+| Logic | Next.js Server Actions | ✅ |
 | Styling | Tailwind CSS v4 | ✅ |
 | Icons | Phosphor Icons | ✅ |
 | UI Kit | shadcn/ui (`@repo/ui`) | ✅ |
@@ -35,6 +35,7 @@
 |------|-------|--------|
 | Login | `/auth/login` | ✅ Complete |
 | Register | `/auth/register` | ✅ Complete |
+| Invitation Acceptance | `/auth/invite/[token]` | ✅ Complete |
 
 ### Dashboard
 | Page | Route | Status |
@@ -53,6 +54,9 @@
 | Finance | `/dashboard/finance` | ✅ Complete |
 | Maintenance | `/dashboard/maintenance` | ✅ Complete |
 | Reports | `/dashboard/reports` | ✅ Complete |
+| Help Center | `/dashboard/help` | ✅ Complete |
+| Ticket Detail | `/dashboard/help/tickets/[id]` | ✅ Complete |
+| Onboarding Wizard | `/dashboard/onboarding` | ✅ Complete |
 | Org Settings | `/dashboard/settings` | ✅ Complete |
 | Team Management | `/dashboard/settings/team` | ✅ Complete |
 | Document Vault | `/dashboard/documents` | ✅ Complete |
@@ -104,20 +108,33 @@
 - [x] Typography configured (IBM Plex Arabic, DM Sans)
 - [x] Zero remaining "AntiGravity" references
 
+### Phase 5 — Registration & Org Management ✅
+- [x] Individual/Company registration with accountType toggle
+- [x] Auto-login after registration
+- [x] SUPER_ADMIN role for org creators
+- [x] 4-step onboarding wizard (skippable)
+- [x] CR-based organization discovery
+- [x] Join request system with admin review
+- [x] Token-based team invitations
+- [x] Invitation acceptance page
+- [x] Help center with FAQ, guides, support tickets
+- [x] Permission request workflow
+- [x] Password reveal toggle on auth pages
+- [x] Password policy updated to 10-char minimum
+
 ---
 
 ## Known Issues
 - Some Tailwind v4 CSS rules (`@theme`, `@apply`) flagged by IDE (works at runtime)
-- Browser automated testing not supported on macOS
 
 ## Next Steps
 - [x] Implement Real Authentication (Bcrypt + Prisma)
 - [x] Create CRUD Server Actions (Projects, Customers, Units)
-- [ ] Connect to Production PostgreSQL (Set DATABASE_URL)
-- [ ] Implement File Upload Logic (S3/Local)
-- [ ] Finalize unit matrix persistence
+- [x] Connect to Supabase PostgreSQL
+- [x] Registration & Organization Management
+- [ ] Team settings: email-based invitation UI (replace password-based)
 - [ ] ZATCA Phase 2 API integration
 - [ ] Ejar platform integration
 - [ ] Payment gateway (Mada/SADAD)
-- [ ] Real-time notifications
+- [ ] Buyer/Tenant portal
 - [ ] Mobile responsive polish pass

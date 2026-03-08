@@ -77,7 +77,10 @@ export async function registerUser(data: {
   name: string;
   email: string;
   password: string;
+  accountType?: "individual" | "company";
 }) {
+  const accountType = data.accountType ?? "individual";
+
   // Validate password
   const validation = validatePassword(data.password, { name: data.name, email: data.email });
   if (!validation.valid) {
@@ -93,18 +96,26 @@ export async function registerUser(data: {
   // Hash password
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
-  // Create user — needs an organization. Create a personal org for self-registration.
+  // Create organization — name based on account type
+  const orgName = accountType === "company" ? data.name : `${data.name}'s Workspace`;
   const org = await db.organization.create({
-    data: { name: `${data.name}'s Organization` },
+    data: {
+      name: orgName,
+      entityType: accountType === "company" ? "COMPANY" : "ESTABLISHMENT",
+    },
   });
 
+  // Create user as SUPER_ADMIN (org creator = admin)
   const user = await db.user.create({
     data: {
       name: data.name,
       email: data.email.toLowerCase().trim(),
       password: hashedPassword,
-      role: "USER",
+      role: "SUPER_ADMIN",
       organizationId: org.id,
+      accountType,
+      onboardingCompleted: false,
+      invitedVia: "registration",
     },
   });
 
@@ -117,5 +128,19 @@ export async function registerUser(data: {
     organizationId: org.id,
   });
 
-  return { success: true };
+  // Auto-sign-in the newly created user
+  try {
+    await signIn("credentials", {
+      email: data.email,
+      password: data.password,
+      redirect: false,
+    });
+  } catch (error: any) {
+    // signIn may throw a redirect error in Next.js — that's fine
+    if (!error.message?.includes("NEXT_REDIRECT")) {
+      console.error("Auto-sign-in after registration failed:", error);
+    }
+  }
+
+  return { success: true, redirect: "/dashboard/onboarding" };
 }

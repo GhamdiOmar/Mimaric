@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button, Input } from "@repo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe, Buildings, ArrowRight, ArrowLeft, User, Briefcase, Spinner } from "@phosphor-icons/react";
+import { Globe, Buildings, ArrowRight, ArrowLeft, User, Briefcase, Spinner, Eye, EyeSlash } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { MimaricLogo } from "../../../components/brand/MimaricLogo";
 import { PasswordStrengthHint } from "../../../components/PasswordStrengthHint";
@@ -19,13 +19,14 @@ export default function RegisterPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [agreed, setAgreed] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
   const router = useRouter();
 
   const handleRegister = async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await registerUser({ name, email, password });
+      const result = await registerUser({ name, email, password, accountType: userType });
       if (result.error) {
         if (result.error === "EMAIL_EXISTS") {
           setError(lang === "ar" ? "هذا البريد الإلكتروني مسجل بالفعل." : "This email is already registered.");
@@ -35,7 +36,7 @@ export default function RegisterPage() {
           setError(lang === "ar" ? "حدث خطأ." : "An error occurred.");
         }
       } else {
-        router.push("/auth/login?registered=true");
+        router.push(result.redirect || "/dashboard/onboarding");
       }
     } catch {
       setError(lang === "ar" ? "حدث خطأ في النظام." : "System error.");
@@ -148,7 +149,17 @@ export default function RegisterPage() {
               <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
                 {lang === "ar" ? "كلمة المرور" : "Password"}
               </label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               <PasswordStrengthHint password={password} lang={lang} context={{ name, email }} />
             </div>
 

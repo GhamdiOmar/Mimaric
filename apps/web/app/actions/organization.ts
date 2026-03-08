@@ -2,8 +2,18 @@
 
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
-import { requirePermission } from "../../lib/auth-helpers";
+import { requirePermission, getSessionOrThrow } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
+
+/** Lightweight org name lookup — any authenticated user can see their own org name */
+export async function getOrgName(): Promise<{ name: string; nameArabic?: string | null; nameEnglish?: string | null } | null> {
+  const session = await getSessionOrThrow();
+  const org = await db.organization.findUnique({
+    where: { id: session.organizationId },
+    select: { name: true, nameArabic: true, nameEnglish: true },
+  });
+  return org;
+}
 
 export async function getOrganization() {
   const session = await requirePermission("organization:read");

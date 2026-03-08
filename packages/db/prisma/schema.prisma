@@ -41,6 +41,10 @@ model Organization {
   documents           Document[]
   maintenanceRequests MaintenanceRequest[]
   preventivePlans     PreventiveMaintenancePlan[]
+  permissionRequests  PermissionRequest[]
+  supportTickets      SupportTicket[]
+  invitations         Invitation[]
+  joinRequests        JoinRequest[]    @relation("OrgJoinRequests")
 }
 
 enum OrgType {
@@ -90,11 +94,24 @@ model User {
   role                  UserRole             @default(USER)
   organizationId        String
   organization          Organization         @relation(fields: [organizationId], references: [id])
+  accountType           String?              // "individual" | "company"
+  onboardingCompleted   Boolean              @default(false)
+  invitedBy             String?              // userId of the person who invited this user
+  invitedVia            String?              // "registration" | "invitation" | "direct" | "join_request"
   customers             Customer[]           @relation("AssignedCustomers")
   assignedMaintenance   MaintenanceRequest[] @relation("AssignedMaintenance")
   preferences           Json?
   resetTokens           PasswordResetToken[]
   notifications         Notification[]
+  permissionRequests    PermissionRequest[]  @relation("PermissionRequests")
+  reviewedRequests      PermissionRequest[]  @relation("ReviewedRequests")
+  supportTickets        SupportTicket[]      @relation("SupportTickets")
+  assignedTickets       SupportTicket[]      @relation("AssignedTickets")
+  ticketMessages        TicketMessage[]      @relation("TicketMessages")
+  sentInvitations       Invitation[]         @relation("SentInvitations")
+  receivedInvitation    Invitation?          @relation("ReceivedInvitation")
+  joinRequests          JoinRequest[]        @relation("UserJoinRequests")
+  reviewedJoinRequests  JoinRequest[]        @relation("JoinReviewers")
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
@@ -734,4 +751,157 @@ enum PhaseStatus {
   IN_PROGRESS
   COMPLETED
   ON_HOLD
+}
+
+// ─── Permission Request (Help Dashboard) ────────────────────────────────────
+
+model PermissionRequest {
+  id                    String        @id @default(cuid())
+  userId                String
+  user                  User          @relation("PermissionRequests", fields: [userId], references: [id])
+  requestedRole         UserRole?
+  reason                String
+  status                RequestStatus @default(PENDING)
+  reviewedBy            String?
+  reviewer              User?         @relation("ReviewedRequests", fields: [reviewedBy], references: [id])
+  reviewNote            String?
+  organizationId        String
+  organization          Organization  @relation(fields: [organizationId], references: [id])
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+// ─── Support Ticket (Help Dashboard) ────────────────────────────────────────
+
+model SupportTicket {
+  id              String         @id @default(cuid())
+  ticketNumber    String         @unique
+  userId          String
+  user            User           @relation("SupportTickets", fields: [userId], references: [id])
+  subject         String
+  description     String
+  category        TicketCategory
+  priority        TicketPriority @default(MEDIUM)
+  status          TicketStatus   @default(OPEN)
+  assignedTo      String?
+  assignee        User?          @relation("AssignedTickets", fields: [assignedTo], references: [id])
+  organizationId  String
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  messages        TicketMessage[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+}
+
+model TicketMessage {
+  id           String        @id @default(cuid())
+  ticketId     String
+  ticket       SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User          @relation("TicketMessages", fields: [userId], references: [id])
+  message      String
+  isStaffReply Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  @@index([ticketId])
+}
+
+enum TicketCategory {
+  BUG_REPORT
+  FEATURE_REQUEST
+  ACCOUNT_ISSUE
+  BILLING
+  TECHNICAL_SUPPORT
+  GENERAL_INQUIRY
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_USER
+  RESOLVED
+  CLOSED
+}
+
+// ─── Invitation (Token-based team invitations) ────────────────────────────────
+
+model Invitation {
+  id              String           @id @default(cuid())
+  email           String
+  token           String           @unique
+  role            UserRole         @default(USER)
+  organizationId  String
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  invitedById     String
+  invitedBy       User             @relation("SentInvitations", fields: [invitedById], references: [id])
+  acceptedById    String?          @unique
+  acceptedBy      User?            @relation("ReceivedInvitation", fields: [acceptedById], references: [id])
+  status          InvitationStatus @default(PENDING_INVITE)
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdAt       DateTime         @default(now())
+
+  @@unique([email, organizationId])
+  @@index([token])
+  @@index([organizationId])
+}
+
+enum InvitationStatus {
+  PENDING_INVITE
+  ACCEPTED_INVITE
+  EXPIRED_INVITE
+  REVOKED_INVITE
+}
+
+// ─── Join Request (CR-based org discovery) ─────────────────────────────────────
+
+model JoinRequest {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation("UserJoinRequests", fields: [userId], references: [id])
+  targetOrgId     String
+  targetOrg       Organization      @relation("OrgJoinRequests", fields: [targetOrgId], references: [id])
+  crNumber        String            // CR number used for lookup
+  reason          String?           // Optional message from requester
+  status          JoinRequestStatus @default(PENDING_JOIN)
+  reviewedById    String?
+  reviewedBy      User?             @relation("JoinReviewers", fields: [reviewedById], references: [id])
+  reviewNote      String?
+  reviewedAt      DateTime?
+  expiresAt       DateTime          // createdAt + 14 days
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@unique([userId, targetOrgId, status])
+  @@index([userId])
+  @@index([targetOrgId])
+  @@index([status])
+}
+
+enum JoinRequestStatus {
+  PENDING_JOIN
+  APPROVED_JOIN
+  DECLINED_JOIN
+  EXPIRED_JOIN
+  CANCELLED_JOIN
 }

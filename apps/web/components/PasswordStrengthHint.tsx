@@ -18,14 +18,14 @@ export function PasswordStrengthHint({
     <div className="space-y-1.5 mt-1.5">
       {/* Character count */}
       <div className="flex items-center gap-2">
-        <div className={`h-1 flex-1 rounded-full ${password.length >= 15 ? "bg-emerald-400" : "bg-neutral/20"}`}>
+        <div className={`h-1 flex-1 rounded-full ${password.length >= 10 ? "bg-emerald-400" : "bg-neutral/20"}`}>
           <div
-            className={`h-full rounded-full transition-all ${password.length >= 15 ? "bg-emerald-500" : "bg-amber-400"}`}
-            style={{ width: `${Math.min((password.length / 15) * 100, 100)}%` }}
+            className={`h-full rounded-full transition-all ${password.length >= 10 ? "bg-emerald-500" : "bg-amber-400"}`}
+            style={{ width: `${Math.min((password.length / 10) * 100, 100)}%` }}
           />
         </div>
-        <span className={`text-[10px] font-bold font-latin ${password.length >= 15 ? "text-emerald-600" : "text-neutral"}`}>
-          {password.length}/15
+        <span className={`text-[10px] font-bold font-latin ${password.length >= 10 ? "text-emerald-600" : "text-neutral"}`}>
+          {password.length}/10
         </span>
       </div>
 

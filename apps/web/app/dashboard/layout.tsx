@@ -34,6 +34,7 @@ import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-au
 import { hasPermission, type Permission } from "../../lib/permissions";
 import { getUnreadCount, getMyNotifications, markAsRead, markAllAsRead } from "../actions/notifications";
 import { globalSearch } from "../actions/search";
+import { getOrgName } from "../actions/organization";
 
 const navItems: { label: { ar: string; en: string }; icon: any; href: string; section: string; permission?: Permission }[] = [
   { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main", permission: "dashboard:read" },
@@ -46,7 +47,7 @@ const navItems: { label: { ar: string; en: string }; icon: any; href: string; se
   { label: { ar: "المالية", en: "Finance" }, icon: Receipt, href: "/dashboard/finance", section: "main", permission: "finance:read" },
   { label: { ar: "الصيانة", en: "Maintenance" }, icon: Wrench, href: "/dashboard/maintenance", section: "main", permission: "maintenance:read" },
   { label: { ar: "التقارير", en: "Reports" }, icon: FileText, href: "/dashboard/reports", section: "secondary", permission: "reports:read" },
-  { label: { ar: "الإعدادات", en: "Settings" }, icon: Gear, href: "/dashboard/settings", section: "secondary" },
+  { label: { ar: "الإعدادات", en: "Settings" }, icon: Gear, href: "/dashboard/settings", section: "secondary", permission: "organization:read" },
 ];
 
 import { MimaricLogo } from "../../components/brand/MimaricLogo";
@@ -60,6 +61,8 @@ const roleLabels: Record<string, { ar: string; en: string }> = {
   PROPERTY_MANAGER: { ar: "مدير العقارات", en: "Property Manager" },
   FINANCE_OFFICER: { ar: "مسؤول مالي", en: "Finance Officer" },
   TECHNICIAN: { ar: "فني صيانة", en: "Technician" },
+  BUYER: { ar: "مشتري", en: "Buyer" },
+  TENANT: { ar: "مستأجر", en: "Tenant" },
   USER: { ar: "مستخدم", en: "User" },
 };
 
@@ -80,6 +83,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const userName = session?.user?.name ?? "مستخدم";
   const userRole = (session?.user as any)?.role ?? "USER";
   const roleLabel = roleLabels[userRole] ?? { ar: "مستخدم", en: "User" };
+  const [orgName, setOrgName] = React.useState<string>("");
 
   const filteredNavItems = navItems.filter((item) => {
     if (!item.permission) return true; // Settings always visible
@@ -90,6 +94,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     getUnreadCount().then(setUnreadCount).catch(() => {});
   }, [pathname]);
+
+  // Fetch org name
+  React.useEffect(() => {
+    getOrgName().then((org) => {
+      if (org) setOrgName(org.nameArabic || org.nameEnglish || org.name);
+    }).catch(() => {});
+  }, []);
 
   async function toggleNotifications() {
     if (!showNotifs) {
@@ -211,7 +222,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate leading-none">{userName}</p>
-                <p className="text-xs text-white/50 truncate mt-1">{roleLabel[lang]}</p>
+                <p className="text-xs text-white/50 truncate mt-0.5">{roleLabel[lang]}</p>
+                {orgName && <p className="text-[10px] text-white/35 truncate mt-0.5">{orgName}</p>}
               </div>
             )}
             {!isCollapsed && (

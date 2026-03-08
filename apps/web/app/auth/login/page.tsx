@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button, Input } from "@repo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe, Buildings, ArrowRight, ArrowLeft, Spinner } from "@phosphor-icons/react";
+import { Globe, Buildings, ArrowRight, ArrowLeft, Spinner, Eye, EyeSlash } from "@phosphor-icons/react";
 import { MimaricLogo } from "../../../components/brand/MimaricLogo";
 import { loginAction } from "../../actions/auth";
 
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [rateLimitSeconds, setRateLimitSeconds] = React.useState(0);
+  const [showPassword, setShowPassword] = React.useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -175,11 +176,12 @@ export default function LoginPage() {
               <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
                 {lang === "ar" ? "البريد الإلكتروني" : "Email"}
               </label>
-              <Input 
-                type="email" 
-                placeholder="name@example.com" 
+              <Input
+                type="email"
+                placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
                 disabled={loading}
               />
             </div>
@@ -193,13 +195,24 @@ export default function LoginPage() {
                   {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
                 </Link>
               </div>
-              <Input 
-                type="password" 
-                placeholder="••••••••" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loading}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <Button 

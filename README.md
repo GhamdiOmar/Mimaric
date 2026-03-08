@@ -1,40 +1,75 @@
 # Mimaric — Saudi-First Property Management Platform
 
-**Mimaric** (ميماريك) is an integrated PropTech platform built for Saudi real estate developers and property management companies. It covers the full property lifecycle — from land acquisition and project planning to sales, leasing, maintenance, and financial reporting — with native compliance for Saudi regulations (RERA, ZATCA, Ejar) and data protection laws (PDPL, NCA).
-
----
-
-## Key Capabilities
-
-| Module | What It Does |
-|--------|-------------|
-| **Dashboard** | Real-time analytics with occupancy rates, land pipeline, project status, and maintenance cost trend charts |
-| **Land Acquisition** | End-to-end pipeline: Identify → Review → Acquire → Convert to Project, with due diligence checklists |
-| **Projects** | Create and manage development projects with type, status, location, building management, and Balady document uploads |
-| **Unit Matrix** | Track units across buildings — area, price, type, availability — with bulk editing and SAR currency display |
-| **Customer CRM** | Unified customer database with Kanban pipeline (New → Interested → Qualified → Viewing → Reserved) and list view |
-| **Reservations** | Temporary unit holds linked to customers with expiry management |
-| **Contracts** | Sale and lease contract generation with bilingual templates, status tracking, and document uploads |
-| **Rentals** | Full tenancy lifecycle — lease creation, installment schedules, Ejar integration readiness |
-| **Finance** | Payment tracking, installment schedules, VAT calculation (ZATCA-compliant) |
-| **Maintenance** | Work order management with status transitions, technician assignment, and cost tracking |
-| **Preventive Maintenance** | CMMS scheduling with frequency-based plans, auto work-order generation, and category tagging |
-| **Reports** | Excel/PDF export for occupancy, financial, maintenance, lease, and customer reports with date range filtering |
-| **Site Logs** | Construction progress tracking per project with timestamped entries |
-| **Notifications** | In-app notification bell with unread counts and mark-all-read |
-| **Settings** | Organization setup, team management, user preferences, security, and audit logs |
+**Mimaric** (ميماريك) is an integrated PropTech platform built for Saudi real estate developers and property management companies. It covers the full property lifecycle — from land acquisition and project planning to sales, leasing, maintenance, and financial reporting — with native compliance for Saudi regulations (RERA, ZATCA, Ejar, Balady) and data protection laws (PDPL, NCA).
 
 ---
 
 ## Business Value
 
-Mimaric solves key challenges for Saudi property developers:
+Mimaric addresses the core operational pain points of Saudi property developers and facility managers:
 
-- **Unified Operations** — One platform replaces disconnected spreadsheets, WhatsApp groups, and paper-based workflows across sales, leasing, maintenance, and finance
-- **Saudi Regulatory Compliance** — Built-in alignment with RERA (real estate regulation), ZATCA (tax authority), Ejar (rental platform), and Balady (municipal permits)
-- **Data Protection by Design** — PDPL and NCA compliance baked into the architecture, not bolted on — PII encryption, role-based access, and audit trails are core infrastructure
-- **Bilingual RTL-First** — Full Arabic/English support with right-to-left layout, Hijri/Gregorian dual dates, and SAR currency formatting
-- **Decision Intelligence** — Real-time dashboards with pipeline visualization, cost trends, and occupancy analytics to drive data-informed decisions
+### Problem
+Saudi real estate companies manage property operations across disconnected spreadsheets, WhatsApp groups, paper forms, and multiple government portals. This fragmentation causes data loss, compliance gaps, delayed decision-making, and poor tenant/buyer experience.
+
+### Solution
+A single Arabic-first platform that unifies every stage of the property lifecycle under one roof:
+
+- **Eliminate Spreadsheet Chaos** — Centralized data for land, projects, units, customers, contracts, and maintenance replaces scattered files and manual tracking
+- **Saudi Regulatory Compliance Built-In** — RERA licensing, ZATCA VAT/e-invoicing, Ejar rental registration, Balady municipal permits, and WATHQ CR verification are integrated into workflows, not afterthoughts
+- **Data Protection by Design** — PDPL and NCA compliance baked into the architecture: AES-256-GCM PII encryption, role-based access with 30+ granular permissions, and full audit trails are core infrastructure
+- **Bilingual RTL-First** — Full Arabic/English interface with right-to-left layout, Hijri/Gregorian dual dates, SAR currency formatting, and Arabic typography (IBM Plex Arabic)
+- **Decision Intelligence** — Real-time dashboards with pipeline visualization, occupancy analytics, cost trends, and exportable reports drive data-informed decisions
+- **Multi-Tenant Team Collaboration** — Organization-scoped data isolation, role-based sidebar navigation, team invitations, and CR-based org discovery enable secure multi-user operations
+
+### Target Users
+- Real estate developers (مطورون عقاريون)
+- Property management companies (شركات إدارة الأملاك)
+- Facility management firms (شركات إدارة المرافق)
+- Individual property owners managing multiple assets (ملاك عقارات)
+
+---
+
+## Platform Modules
+
+| Module | What It Does |
+|--------|-------------|
+| **Dashboard** | Real-time KPI cards and analytics — occupancy rates, land pipeline chart, project status distribution, maintenance cost trends |
+| **Land Acquisition** | End-to-end pipeline: Identify → Review → Acquire → Convert to Project, with interactive map picker and due diligence |
+| **Projects** | Development project management with type, status, location, building/tower management, and Balady document uploads |
+| **Unit Matrix** | Track units across buildings — area, price, type (شقة/فيلا/مكتب), availability — with bulk editing and SAR currency display |
+| **Customer CRM** | Unified customer database with Kanban pipeline (New → Interested → Qualified → Viewing → Reserved) and list view |
+| **Reservations** | Temporary unit holds linked to customers with expiry management |
+| **Contracts** | Sale and lease contract generation with bilingual templates, status tracking, and document uploads |
+| **Rentals** | Full tenancy lifecycle — lease creation wizard, installment schedules, rent collection, Ejar integration readiness |
+| **Finance** | Payment tracking, installment schedules, VAT calculation (ZATCA-compliant), revenue KPIs |
+| **Maintenance** | CMMS work order management with status workflow (Open → Assigned → In Progress → On Hold → Resolved → Closed), SLA tracking, technician assignment, and cost tracking |
+| **Preventive Maintenance** | Frequency-based scheduling (daily to annual), auto work-order generation, category tagging across 10 maintenance types |
+| **Reports** | Excel/PDF export for occupancy, financial, maintenance, lease, and customer reports with date range filtering |
+| **Site Logs** | Construction progress tracking per project with timestamped entries |
+| **Notifications** | In-app notification bell with unread counts, mark-all-read, and admin alerts for join requests and permission changes |
+| **Help Center** | Searchable FAQ and guides (6 categories), support ticket system with threaded messages, permission request workflow |
+| **Settings** | Organization profile (MOC-aligned), team management with email invitations, user preferences, security settings, and audit log viewer |
+| **Onboarding** | 4-step post-registration wizard: org path choice (join/create), organization identity, contact info, team invitations |
+
+---
+
+## Registration & Organization Management
+
+### Account Types
+- **Company** (شركة) — Creates organization with company name, auto-assigned SUPER_ADMIN role
+- **Individual** (فرد) — Creates personal workspace, can later join existing organizations via CR number lookup
+
+### CR-Based Organization Discovery
+Individual users can search for existing organizations by Commercial Registration (CR) number:
+1. Enter 10-digit CR number → platform searches registered organizations
+2. If found → see masked org name → submit join request → admin reviews
+3. If not found → option to register that CR as a new business
+
+### Token-Based Team Invitations
+Admins invite team members via email with role assignment. Invitees receive a secure token link to create their account and join the organization directly.
+
+### Onboarding Wizard
+Post-registration, users complete an optional 4-step setup: organization path, business identity (CR/VAT/entity type), contact details, and team invitations. Every step is skippable.
 
 ---
 
@@ -54,18 +89,33 @@ Customer personal data is masked by default in the UI (`******6789`, `******4567
 ### Audit Trail
 Every data access, PII read, export, login, and modification is logged with user identity, role, IP address, and timestamp. A dedicated audit log viewer is available to administrators. `READ_PII` and `EXPORT` events are tracked separately per PDPL Article 32.
 
-### NIST SP 800-63B Password Policy
-- Minimum 15 characters (no arbitrary complexity rules)
-- 10,000-entry common password blocklist
+### Password Policy (NIST SP 800-63B)
+- Minimum 10 characters (no arbitrary complexity rules)
+- Common password blocklist
 - Contextual rejection (no username/email in password)
 - Progressive login rate limiting (30s → 5min → 15min lockout)
 - Real-time bilingual strength feedback
 
 ---
 
-## Design System
+## Roles & Access Control
 
-Mimaric uses a purpose-built design system optimized for Arabic RTL layouts:
+| Role | Description | PII Access | Export | Finance | Audit |
+|------|-------------|:----------:|:------:|:-------:|:-----:|
+| **Super Admin** | Full system access, org management, team invitations | Yes | Yes | Yes | Yes |
+| **Dev Admin** | Full system access | Yes | Yes | Yes | Yes |
+| **Sales Manager** | CRM, contracts, reservations, customer PII | Yes | Yes | No | No |
+| **Sales Agent** | CRM, reservations (no PII, no export) | No | No | No | No |
+| **Project Manager** | Projects, units, site logs | No | No | No | No |
+| **Property Manager** | Rentals, maintenance, tenant management | No | No | No | No |
+| **Finance Officer** | Payments, reporting, financial data | No | No | Yes | No |
+| **Technician** | Maintenance work orders only | No | No | No | No |
+
+Sidebar navigation and data access are automatically filtered based on role permissions.
+
+---
+
+## Design System
 
 ### Color Palette
 | Token | Hex | Usage |
@@ -77,32 +127,15 @@ Mimaric uses a purpose-built design system optimized for Arabic RTL layouts:
 | Warning | `#DD6B20` | Alerts, on-hold states |
 | Destructive | `#E53E3E` | Delete actions, errors, cancellations |
 
-### Button Variants
-All buttons have visible backgrounds, hover lift effects (`-translate-y-0.5`), and shadow transitions:
-- **Primary** — Navy background, white text, shadow lift on hover
-- **Secondary** — White with navy border, tints on hover
+### Button System
+All buttons use visible backgrounds with hover lift effects (`-translate-y-0.5`) and shadow transitions:
+- **Primary** — Navy background, white text
+- **Secondary** — White with navy border
 - **Success** — Green background for positive CTAs
 - **Danger** — Red background for destructive actions
-- **Ghost** — Subtle muted background, darkens on hover
+- **Ghost** — Subtle muted background
 
 Action buttons use color-coded hover accents: green for export/Excel, red for PDF/delete, amber for PII toggles.
-
----
-
-## Roles & Access Control
-
-| Role | Description | PII Access | Export | Finance | Audit |
-|------|-------------|:----------:|:------:|:-------:|:-----:|
-| **Super Admin** | Full system access | Yes | Yes | Yes | Yes |
-| **Dev Admin** | Full system access | Yes | Yes | Yes | Yes |
-| **Sales Manager** | CRM, contracts, reservations | Yes | Yes | No | No |
-| **Sales Agent** | CRM, reservations | No | No | No | No |
-| **Project Manager** | Projects, units | No | No | No | No |
-| **Property Manager** | Rentals, maintenance | No | No | No | No |
-| **Finance Officer** | Payments, reporting | No | No | Yes | No |
-| **Technician** | Maintenance requests | No | No | No | No |
-
-Sidebar navigation is automatically filtered based on role permissions.
 
 ---
 
@@ -110,17 +143,18 @@ Sidebar navigation is automatically filtered based on role permissions.
 
 | Layer | Technology |
 |-------|-----------|
-| **Frontend** | Next.js 16, React 19, Tailwind CSS v4, RTL-first (Arabic/English) |
-| **Charts** | Recharts with foreignObject for Arabic SVG text rendering |
-| **Currency** | SAR formatting with Hala font and bilingual display |
-| **Dates** | Hijri/Gregorian dual date display across all modules |
-| **Backend** | Next.js Server Actions, Prisma ORM v7 |
-| **Database** | Supabase (PostgreSQL) |
+| **Frontend** | Next.js 16, React 19, Tailwind CSS v4, RTL-first |
+| **Charts** | Recharts with foreignObject for Arabic SVG text |
+| **Currency** | SAR formatting with Hala font |
+| **Dates** | Hijri/Gregorian dual display |
+| **Backend** | Next.js Server Actions (no REST API) |
+| **ORM** | Prisma 7 with `@prisma/adapter-pg` |
+| **Database** | Supabase PostgreSQL (connection pooler) |
 | **Auth** | NextAuth.js v5 (JWT strategy, Credentials provider) |
 | **Encryption** | AES-256-GCM (Node.js crypto), bcrypt (cost 12) |
 | **File Storage** | Uploadthing |
-| **Monorepo** | Turborepo with `@repo/ui`, `@repo/db`, and shared config packages |
-| **CI/CD** | GitHub Actions (lint → type-check → build → Playwright tests) |
+| **Monorepo** | Turborepo with `@repo/ui`, `@repo/db`, shared configs |
+| **CI/CD** | GitHub Actions (lint → type-check → build) |
 | **Deployment** | Vercel-ready |
 
 ---
@@ -141,7 +175,7 @@ cd packages/db && npx prisma generate
 npx prisma db push
 
 # Seed the database
-npx prisma db seed
+npx tsx prisma/seed.ts
 
 # Start the development server
 cd ../.. && npm run dev
@@ -153,10 +187,11 @@ Visit `http://localhost:3000` for the management dashboard.
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | PostgreSQL connection string (Supabase pooler) |
 | `AUTH_SECRET` | NextAuth.js session signing key |
 | `AUTH_TRUST_HOST` | Set to `true` for local development |
 | `PII_ENCRYPTION_KEY` | 32-byte hex string for AES-256-GCM PII encryption |
+| `UPLOADTHING_SECRET` | File upload service credentials |
 
 ---
 
@@ -167,7 +202,8 @@ mimaric/
 ├── apps/
 │   └── web/                        # Next.js 16 application
 │       ├── app/
-│       │   ├── auth/               # Login, register, password recovery
+│       │   ├── auth/               # Login, register, invitation acceptance
+│       │   │   └── invite/         # Token-based team invitation flow
 │       │   ├── dashboard/          # All dashboard modules
 │       │   │   ├── land/           # Land acquisition pipeline
 │       │   │   ├── projects/       # Project & building management
@@ -177,10 +213,19 @@ mimaric/
 │       │   │   ├── maintenance/    # Work orders & preventive CMMS
 │       │   │   ├── finance/        # Financial overview
 │       │   │   ├── reports/        # Excel/PDF report generation
+│       │   │   ├── help/           # Help center, tickets, admin panel
+│       │   │   ├── onboarding/     # Post-registration setup wizard
 │       │   │   └── settings/       # Team, security, audit logs
 │       │   └── actions/            # Server actions (data layer)
+│       │       ├── auth.ts         # Registration, login
+│       │       ├── onboarding.ts   # Onboarding wizard + CR lookup
+│       │       ├── invitations.ts  # Team invitation management
+│       │       ├── join-requests.ts # CR-based org join requests
+│       │       ├── support-tickets.ts # Help center tickets
+│       │       └── permission-requests.ts # Role upgrade requests
 │       ├── components/
-│       │   └── charts/             # Dashboard chart components
+│       │   ├── charts/             # Dashboard chart components
+│       │   └── PasswordStrengthHint.tsx # Reusable password strength UI
 │       └── lib/
 │           ├── permissions.ts      # Role-based permission matrix
 │           ├── encryption.ts       # AES-256-GCM encrypt/decrypt
@@ -189,7 +234,9 @@ mimaric/
 │           ├── audit.ts            # Audit event logger
 │           ├── hijri.ts            # Hijri/Gregorian date formatting
 │           ├── export.ts           # Excel/PDF export utilities
-│           └── password-policy.ts  # NIST password validation
+│           ├── password-policy.ts  # NIST password validation
+│           ├── create-notification.ts # Notification helper
+│           └── help-content.ts     # FAQ and guides data
 ├── packages/
 │   ├── db/                         # Prisma schema & seed data
 │   └── ui/                         # Shared UI component library
@@ -207,10 +254,14 @@ mimaric/
 
 ## Status
 
-**v0.5.0** — All core modules operational including land acquisition, preventive maintenance (CMMS), dashboard analytics, reporting, and full UI polish. PDPL compliance layer and NIST password policy are production-ready.
+**v0.8.0** — Registration & organization management system complete: Individual/Company registration with auto-login, CR-based org discovery, token-based team invitations, 4-step onboarding wizard, join request workflow, help center with support tickets, and password policy update (10-char minimum).
 
-**Upcoming:** Ejar API integration, ZATCA e-invoicing, Buyer/Tenant portal, advanced analytics, and mobile-responsive optimization.
+**v0.7.0** — UI polish pass: button system overhaul with hover lift effects, color-coded action buttons, RTL layout fixes.
+
+**v0.5.0–v0.6.0** — Core modules operational: land acquisition, CMMS maintenance, dashboard analytics, reporting, PDPL compliance layer.
+
+**Upcoming:** Ejar API integration, ZATCA e-invoicing, Buyer/Tenant portal, payment gateway (Mada/SADAD), mobile-responsive optimization.
 
 ---
 
-> Built for the Saudi property management market. Compliant with RERA, ZATCA, Ejar, PDPL, and NCA standards.
+> Built for the Saudi property management market. Compliant with RERA, ZATCA, Ejar, Balady, PDPL, and NCA standards.

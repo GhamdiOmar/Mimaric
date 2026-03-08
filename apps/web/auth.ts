@@ -67,6 +67,11 @@ const result = NextAuth({
         try {
           const user = await db.user.findUnique({
             where: { email },
+            select: {
+              id: true, email: true, name: true, password: true,
+              role: true, organizationId: true,
+              onboardingCompleted: true, accountType: true,
+            },
           });
 
           if (!user) {
@@ -104,6 +109,8 @@ const result = NextAuth({
             email: user.email,
             role: user.role,
             organizationId: user.organizationId,
+            onboardingCompleted: (user as any).onboardingCompleted ?? true,
+            accountType: (user as any).accountType ?? null,
           };
         } catch (error: any) {
           if (error.message === "USER_NOT_FOUND" || error.message === "INVALID_PASSWORD" || error.message.startsWith("RATE_LIMITED")) {
