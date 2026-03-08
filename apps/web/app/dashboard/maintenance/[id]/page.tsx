@@ -15,16 +15,13 @@ import {
   CurrencyCircleDollar,
   X,
 } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
-import { RiyalIcon } from "@repo/ui";
+import { Button, Badge, SARAmount } from "@repo/ui";
 import {
   getMaintenanceRequest,
   updateMaintenanceRequest,
   getAssignableUsers,
 } from "../../../actions/maintenance";
 import { formatDualDate } from "../../../../lib/hijri";
-
-const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigits: 2 }).format(n);
 
 const categoryLabels: Record<string, { ar: string; en: string }> = {
   HVAC: { ar: "تكييف", en: "HVAC" },
@@ -194,28 +191,38 @@ export default function MaintenanceDetailPage() {
       </div>
 
       {/* Status Workflow Buttons */}
-      {validTransitions.length > 0 && (
-        <div className="bg-white rounded-md shadow-card border border-border p-4 flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-neutral">{lang === "ar" ? "تحويل الحالة:" : "Transition status:"}</span>
-          {validTransitions.map((nextStatus: string) => {
-            const nextLabel = statusLabels[nextStatus] ?? { ar: nextStatus, en: nextStatus };
-            return (
-              <Button
-                key={nextStatus}
-                size="sm"
-                variant={nextStatus === "RESOLVED" ? "primary" : "secondary"}
-                className="gap-2"
-                onClick={() => handleStatusChange(nextStatus)}
-                disabled={saving}
-                style={{ display: "inline-flex" }}
-              >
-                {saving ? <Spinner size={12} className="animate-spin" /> : <CheckCircle size={14} />}
-                {nextLabel[lang]}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+      {validTransitions.length > 0 && (() => {
+        const statusButtonStyles: Record<string, string> = {
+          ASSIGNED: "bg-info/10 text-info border border-info/30 hover:bg-info/20",
+          IN_PROGRESS: "bg-accent/10 text-amber-700 border border-accent/30 hover:bg-accent/20",
+          ON_HOLD: "bg-warning/10 text-warning border border-warning/30 hover:bg-warning/20",
+          RESOLVED: "bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20",
+          CLOSED: "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20",
+        };
+        return (
+          <div className="bg-white rounded-md shadow-card border border-border p-4 flex items-center gap-3 flex-wrap">
+            <span className="text-xs text-neutral font-bold">{lang === "ar" ? "تحويل الحالة:" : "Transition status:"}</span>
+            {validTransitions.map((nextStatus: string) => {
+              const nextLabel = statusLabels[nextStatus] ?? { ar: nextStatus, en: nextStatus };
+              return (
+                <Button
+                  key={nextStatus}
+                  size="sm"
+                  variant="secondary"
+                  className={`gap-2 hover:shadow-sm hover:-translate-y-0.5 transition-all ${statusButtonStyles[nextStatus] ?? ""}`}
+                  onClick={() => handleStatusChange(nextStatus)}
+                  disabled={saving}
+                  style={{ display: "inline-flex" }}
+                  title={nextLabel[lang === "ar" ? "en" : "ar"]}
+                >
+                  {saving ? <Spinner size={12} className="animate-spin" /> : <CheckCircle size={14} />}
+                  {nextLabel[lang]}
+                </Button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -313,7 +320,7 @@ export default function MaintenanceDetailPage() {
                 label={lang === "ar" ? "التكلفة التقديرية" : "Estimated"}
                 value={
                   request.estimatedCost ? (
-                    <span className="flex items-center gap-1"><RiyalIcon size={12} />{fmt(Number(request.estimatedCost))}</span>
+                    <SARAmount value={Number(request.estimatedCost)} size={12} />
                   ) : "—"
                 }
               />
@@ -321,7 +328,7 @@ export default function MaintenanceDetailPage() {
                 label={lang === "ar" ? "التكلفة الفعلية" : "Actual"}
                 value={
                   request.actualCost ? (
-                    <span className="flex items-center gap-1"><RiyalIcon size={12} />{fmt(Number(request.actualCost))}</span>
+                    <SARAmount value={Number(request.actualCost)} size={12} />
                   ) : "—"
                 }
               />

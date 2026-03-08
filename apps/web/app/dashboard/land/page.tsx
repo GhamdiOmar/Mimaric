@@ -8,10 +8,10 @@ import { getLandParcels, createLandParcel } from "../../actions/land";
 import { formatDualDate } from "../../../lib/hijri";
 import MapPicker from "../../../components/MapPicker";
 
-const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string }> = {
-  LAND_IDENTIFIED: { label: { ar: "تم التحديد", en: "Identified" }, variant: "reserved" },
-  LAND_UNDER_REVIEW: { label: { ar: "قيد المراجعة", en: "Under Review" }, variant: "draft" },
-  LAND_ACQUIRED: { label: { ar: "تم الاستحواذ", en: "Acquired" }, variant: "available" },
+const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string; className: string }> = {
+  LAND_IDENTIFIED: { label: { ar: "تم التحديد", en: "Identified" }, variant: "draft", className: "bg-info/15 text-info border border-info/30 font-bold" },
+  LAND_UNDER_REVIEW: { label: { ar: "قيد المراجعة", en: "Under Review" }, variant: "maintenance", className: "bg-accent/15 text-amber-700 border border-accent/30 font-bold" },
+  LAND_ACQUIRED: { label: { ar: "تم الاستحواذ", en: "Acquired" }, variant: "available", className: "bg-secondary/15 text-secondary border border-secondary/30 font-bold" },
 };
 
 const landUseLabels: Record<string, string> = {
@@ -96,19 +96,19 @@ export default function LandPage() {
               {filtered.map((p: any) => {
                 const config = statusConfig[p.status] ?? statusConfig.LAND_IDENTIFIED!;
                 return (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/10">
+                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 font-bold text-primary">{p.name}</td>
                     <td className="px-4 py-3 text-neutral" dir="ltr">{p.deedNumber || "—"}</td>
                     <td className="px-4 py-3 text-neutral text-xs">{[p.city, p.district].filter(Boolean).join(", ") || "—"}</td>
                     <td className="px-4 py-3">{p.totalAreaSqm ? fmt(p.totalAreaSqm) : "—"}</td>
                     <td className="px-4 py-3 text-xs">{landUseLabels[p.landUse] ?? p.landUse ?? "—"}</td>
                     <td className="px-4 py-3">
-                      <Badge variant={config.variant as any} className="text-xs">{config.label[lang]}</Badge>
+                      <Badge variant={config.variant as any} className={`text-xs ${config.className}`}>{config.label[lang]}</Badge>
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(p.createdAt, lang)}</td>
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/land/${p.id}`}>
-                        <Button size="sm" variant="ghost" className="text-xs h-7 px-2 gap-1">
+                        <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50">
                           <Eye size={14} />{lang === "ar" ? "عرض" : "View"}
                         </Button>
                       </Link>

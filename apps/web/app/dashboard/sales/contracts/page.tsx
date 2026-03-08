@@ -12,7 +12,7 @@ import {
   User,
   Eye,
 } from "@phosphor-icons/react";
-import { RiyalIcon } from "@repo/ui";
+import { SARAmount } from "@repo/ui";
 import { Button, Badge } from "@repo/ui";
 import Link from "next/link";
 import { getContracts } from "../../../actions/contracts";
@@ -168,10 +168,7 @@ export default function ContractsPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 font-bold">
-                        <RiyalIcon size={12} />
-                        {Number(contract.amount).toLocaleString()}
-                      </div>
+                      <SARAmount value={Number(contract.amount)} size={12} className="font-bold" />
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">
                       {formatDualDate(contract.createdAt, lang)}
@@ -184,7 +181,7 @@ export default function ContractsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/dashboard/sales/contracts/${contract.id}`}>
-                        <Button size="sm" variant="ghost" className="text-xs h-7 px-2 gap-1">
+                        <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50">
                           <Eye size={14} />
                           {lang === "ar" ? "عرض" : "View"}
                         </Button>

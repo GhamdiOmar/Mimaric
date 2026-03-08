@@ -15,12 +15,13 @@ import {
   Plus,
   Spinner
 } from "@phosphor-icons/react";
-import { Button, Badge, Input, RiyalIcon } from "@repo/ui";
+import { Button, Badge, Input, SARAmount } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
-import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit } from "../../actions/units";
+import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit, getUnitFinancialSummary } from "../../actions/units";
 import { getMaintenanceForUnit } from "../../actions/maintenance";
-import { Wrench, X, Eye } from "@phosphor-icons/react";
+import { Wrench, X, Eye, ShoppingCart, House, Spinner as SpinnerIcon } from "@phosphor-icons/react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const unitTypeLabels: Record<string, { ar: string; en: string }> = {
   APARTMENT: { ar: "شقة", en: "Apartment" },
@@ -39,7 +40,17 @@ const unitStatusLabels: Record<string, { ar: string; en: string }> = {
   MAINTENANCE: { ar: "صيانة", en: "Maintenance" },
 };
 
-export default function AdvancedUnitMatrixPage() {
+export default function AdvancedUnitMatrixPageWrapper() {
+  return (
+    <React.Suspense fallback={<div className="flex h-[calc(100vh-200px)] items-center justify-center"><Spinner className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <AdvancedUnitMatrixPage />
+    </React.Suspense>
+  );
+}
+
+function AdvancedUnitMatrixPage() {
+  const searchParams = useSearchParams();
+  const projectFilter = searchParams.get("project") || "";
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
   const [selectedUnits, setSelectedUnits] = React.useState<string[]>([]);
   const [units, setUnits] = React.useState<any[]>([]);
@@ -49,6 +60,7 @@ export default function AdvancedUnitMatrixPage() {
   const [buildings, setBuildings] = React.useState<any[]>([]);
   const [showPriceModal, setShowPriceModal] = React.useState(false);
   const [bulkPrice, setBulkPrice] = React.useState("");
+  const [selectedProject, setSelectedProject] = React.useState(projectFilter);
   const [newUnit, setNewUnit] = React.useState({
     number: "",
     type: "APARTMENT",
@@ -61,6 +73,7 @@ export default function AdvancedUnitMatrixPage() {
   // Unit detail modal
   const [detailUnit, setDetailUnit] = React.useState<any>(null);
   const [detailMaintenance, setDetailMaintenance] = React.useState<any[]>([]);
+  const [detailFinancials, setDetailFinancials] = React.useState<any>(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
 
   const maintenanceStatusLabels: Record<string, { ar: string; en: string; variant: string }> = {
@@ -74,10 +87,15 @@ export default function AdvancedUnitMatrixPage() {
 
   async function openUnitDetail(unit: any) {
     setDetailUnit(unit);
+    setDetailFinancials(null);
     setLoadingDetail(true);
     try {
-      const maint = await getMaintenanceForUnit(unit.id);
+      const [maint, fin] = await Promise.all([
+        getMaintenanceForUnit(unit.id),
+        getUnitFinancialSummary(unit.id).catch(() => null),
+      ]);
       setDetailMaintenance(maint);
+      setDetailFinancials(fin);
     } catch (e) {
       console.error(e);
       setDetailMaintenance([]);
@@ -273,25 +291,38 @@ export default function AdvancedUnitMatrixPage() {
            <div className="flex items-center gap-4 w-full md:w-auto">
               <div className="relative w-full md:w-64">
                 <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder={lang === "ar" ? "رقم الوحدة..." : "Unit #..."}
                   className="w-full bg-white border-border rounded py-2 pr-10 pl-4 text-sm outline-none font-primary"
                 />
               </div>
+              {/* Project Filter */}
+              <select
+                value={selectedProject}
+                onChange={(e) => setSelectedProject(e.target.value)}
+                className="h-9 px-3 bg-white border border-border rounded-md text-xs outline-none"
+              >
+                <option value="">{lang === "ar" ? "كل المشاريع" : "All Projects"}</option>
+                {Array.from(new Map(buildings.map((b: any) => [b.project?.id, b.project?.name])).entries())
+                  .filter(([id]) => id)
+                  .map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
+                  ))}
+              </select>
               <Button variant="secondary" size="sm" className="gap-2">
                  <Funnel size={16} />
                  {lang === "ar" ? "تصفية" : "Filter"}
               </Button>
            </div>
            <div className="flex items-center gap-2">
-              <Badge variant="available" className="bg-secondary/5 border-secondary/20 text-secondary">
+              <Badge variant="available" className="bg-secondary/15 border border-secondary/40 text-secondary font-bold px-3 py-1">
                 {units.filter(u => u.status === "AVAILABLE").length} {unitStatusLabels["AVAILABLE"]![lang]}
               </Badge>
-              <Badge variant="sold" className="bg-primary/5 border-primary/20 text-primary">
+              <Badge variant="sold" className="bg-primary/15 border border-primary/40 text-primary font-bold px-3 py-1">
                 {units.filter(u => u.status === "SOLD").length} {unitStatusLabels["SOLD"]![lang]}
               </Badge>
-              <Badge variant="reserved" className="bg-accent/5 border-accent/20 text-accent">
+              <Badge variant="reserved" className="bg-accent/15 border border-accent/40 text-accent font-bold px-3 py-1">
                 {units.filter(u => u.status === "RESERVED").length} {unitStatusLabels["RESERVED"]![lang]}
               </Badge>
            </div>
@@ -308,7 +339,7 @@ export default function AdvancedUnitMatrixPage() {
               </svg>
            </div>
 
-           {units.map((unit) => (
+           {units.filter((u) => !selectedProject || u.building?.project?.id === selectedProject).map((unit) => (
              <div 
                key={unit.id}
                onClick={() => toggleSelect(unit.id)}
@@ -321,8 +352,8 @@ export default function AdvancedUnitMatrixPage() {
              >
                 {/* Selection Circle */}
                 <div className={cn(
-                  "absolute top-3 left-3 h-5 w-5 rounded-full border flex items-center justify-center transition-all",
-                  selectedUnits.includes(unit.id) ? "bg-secondary border-secondary text-white" : "bg-white border-border text-transparent"
+                  "absolute bottom-3 left-3 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all z-10",
+                  selectedUnits.includes(unit.id) ? "bg-secondary border-secondary text-white scale-110" : "bg-white border-border text-transparent group-hover:border-primary/30"
                 )}>
                    <CheckSquare size={12} weight="fill" />
                 </div>
@@ -376,7 +407,7 @@ export default function AdvancedUnitMatrixPage() {
                  {lang === "ar" ? `تحديث سعر ${selectedUnits.length} وحدة مختارة` : `Update price for ${selectedUnits.length} selected unit(s)`}
               </p>
               <div className="space-y-1 mb-6">
-                 <label className="text-xs font-bold text-neutral flex items-center gap-1">{lang === "ar" ? "السعر الجديد" : "New Price"} (<RiyalIcon size={12} />)</label>
+                 <label className="text-xs font-bold text-neutral flex items-center gap-1">{lang === "ar" ? "السعر الجديد" : "New Price"}</label>
                  <Input
                    type="number"
                    value={bulkPrice}
@@ -429,11 +460,58 @@ export default function AdvancedUnitMatrixPage() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "السعر" : "Price"}</span>
-                  <p className="text-sm font-bold text-primary flex items-center gap-1">
-                    {detailUnit.price ? <><RiyalIcon size={12} />{new Intl.NumberFormat("en-SA").format(detailUnit.price)}</> : "—"}
+                  <p className="text-sm font-bold text-primary">
+                    <SARAmount value={detailUnit.price} size={12} />
                   </p>
                 </div>
               </div>
+
+              {/* Financial Summary */}
+              {detailFinancials && (
+                <div className="border-t border-border pt-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-3">
+                    {lang === "ar" ? "الملخص المالي" : "Financial Summary"}
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-muted/20 rounded-md p-3">
+                      <span className="text-[9px] font-bold text-neutral uppercase">{lang === "ar" ? "إيجار محصّل" : "Rent Collected"}</span>
+                      <p className="text-sm font-bold text-secondary mt-0.5"><SARAmount value={detailFinancials.totalRentCollected} size={10} compact /></p>
+                    </div>
+                    <div className="bg-muted/20 rounded-md p-3">
+                      <span className="text-[9px] font-bold text-neutral uppercase">{lang === "ar" ? "إيراد البيع" : "Sale Revenue"}</span>
+                      <p className="text-sm font-bold text-primary mt-0.5"><SARAmount value={detailFinancials.saleRevenue} size={10} compact /></p>
+                    </div>
+                    <div className="bg-muted/20 rounded-md p-3">
+                      <span className="text-[9px] font-bold text-neutral uppercase">{lang === "ar" ? "تكاليف صيانة" : "Maintenance"}</span>
+                      <p className="text-sm font-bold text-red-600 mt-0.5"><SARAmount value={detailFinancials.totalMaintenanceCost} size={10} compact /></p>
+                    </div>
+                    <div className="bg-muted/20 rounded-md p-3">
+                      <span className="text-[9px] font-bold text-neutral uppercase">{lang === "ar" ? "صافي الدخل" : "Net Income"}</span>
+                      <p className={`text-sm font-bold mt-0.5 ${detailFinancials.netIncome >= 0 ? "text-secondary" : "text-red-600"}`}>
+                        <SARAmount value={detailFinancials.netIncome} size={10} compact />
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sell / Rent Quick Actions */}
+              {detailUnit.status === "AVAILABLE" && (
+                <div className="border-t border-border pt-4 flex items-center gap-3">
+                  <Link href={`/dashboard/sales/reservations?unitId=${detailUnit.id}`} className="flex-1">
+                    <Button variant="secondary" size="sm" className="gap-2 w-full" style={{ display: "inline-flex" }}>
+                      <ShoppingCart size={14} />
+                      {lang === "ar" ? "بيع" : "Sell"}
+                    </Button>
+                  </Link>
+                  <Link href={`/dashboard/rentals/new?unitId=${detailUnit.id}`} className="flex-1">
+                    <Button size="sm" className="gap-2 w-full" style={{ display: "inline-flex" }}>
+                      <House size={14} />
+                      {lang === "ar" ? "تأجير" : "Rent"}
+                    </Button>
+                  </Link>
+                </div>
+              )}
 
               {/* Maintenance Section */}
               <div className="border-t border-border pt-4">

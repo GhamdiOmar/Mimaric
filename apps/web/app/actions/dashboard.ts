@@ -194,3 +194,100 @@ export async function getOccupancyByProject() {
 
   return results;
 }
+
+export async function getDashboardLandStats() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+
+  const LAND_STATUSES = ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"];
+
+  const [totalParcels, parcelsGrouped, valueAgg, activeProjects, maintenanceCostsMonth] = await Promise.all([
+    db.project.count({
+      where: { organizationId: orgId, status: { in: LAND_STATUSES as any } },
+    }),
+    db.project.groupBy({
+      by: ["status"],
+      where: { organizationId: orgId, status: { in: LAND_STATUSES as any } },
+      _count: true,
+    }),
+    db.project.aggregate({
+      where: { organizationId: orgId, status: { in: LAND_STATUSES as any } },
+      _sum: { estimatedValueSar: true },
+    }),
+    db.project.count({
+      where: {
+        organizationId: orgId,
+        status: { in: ["PLANNING", "UNDER_CONSTRUCTION", "READY"] as any },
+      },
+    }),
+    db.maintenanceRequest.aggregate({
+      where: {
+        organizationId: orgId,
+        createdAt: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
+      },
+      _sum: { actualCost: true, estimatedCost: true },
+    }),
+  ]);
+
+  const pipeline = {
+    identified: parcelsGrouped.find((p: any) => p.status === "LAND_IDENTIFIED")?._count ?? 0,
+    underReview: parcelsGrouped.find((p: any) => p.status === "LAND_UNDER_REVIEW")?._count ?? 0,
+    acquired: parcelsGrouped.find((p: any) => p.status === "LAND_ACQUIRED")?._count ?? 0,
+  };
+
+  return {
+    totalParcels,
+    activeProjects,
+    portfolioValue: Number(valueAgg._sum.estimatedValueSar ?? 0),
+    maintenanceCostsThisMonth: Number(maintenanceCostsMonth._sum.actualCost ?? maintenanceCostsMonth._sum.estimatedCost ?? 0),
+    pipeline,
+  };
+}
+
+export async function getProjectStatusDistribution() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+
+  const grouped = await db.project.groupBy({
+    by: ["status"],
+    where: {
+      organizationId: orgId,
+      status: { in: ["PLANNING", "UNDER_CONSTRUCTION", "READY", "HANDED_OVER"] as any },
+    },
+    _count: true,
+  });
+
+  return grouped.map((g: any) => ({
+    status: g.status as string,
+    count: g._count as number,
+  }));
+}
+
+export async function getMaintenanceCostTrend() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+  const now = new Date();
+  const months: { month: string; estimated: number; actual: number }[] = [];
+
+  for (let i = 5; i >= 0; i--) {
+    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+    const monthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+
+    const agg = await db.maintenanceRequest.aggregate({
+      where: {
+        organizationId: orgId,
+        createdAt: { gte: start, lt: end },
+      },
+      _sum: { estimatedCost: true, actualCost: true },
+    });
+
+    months.push({
+      month: monthKey,
+      estimated: Number(agg._sum.estimatedCost ?? 0),
+      actual: Number(agg._sum.actualCost ?? 0),
+    });
+  }
+
+  return months;
+}

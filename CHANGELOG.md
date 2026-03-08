@@ -1,5 +1,28 @@
 # Changelog — Mimaric PropTech
 
+## [0.7.0] — 2026-03-08
+
+### Changed
+- Button component: ghost variant now has visible `bg-muted/40` background; secondary hover upgraded with shadow lift and `-translate-y-0.5`
+- Color-coded hover accents on all action buttons (green for Excel/export, red for PDF/delete, amber for PII toggle)
+- Dashboard layout: added `min-w-0` and `overflow-x-hidden` to prevent horizontal scroll in RTL views
+- Customers page: compact toolbar with `sm` buttons and shortened labels for RTL fit
+- Maintenance detail: per-status colored transition buttons with hover lift effects
+- Reports page: export buttons with green/red hover accents
+- Land page: View button upgraded from ghost to secondary with green hover
+- Contracts page: View button upgraded from ghost to secondary with green hover
+- Reservations page: Cancel button with red hover accent
+- Projects detail: Delete buttons with red hover accent
+- Preventive maintenance: Delete button with red hover accent
+- README.md rewritten with full business value, expanded module coverage, design system documentation
+
+### Fixed
+- LandPipelineChart Arabic labels overlapping bars (foreignObject HTML rendering)
+- Customer page horizontal scroll in full-screen RTL view (min-w-0 on main flex item)
+- Chart text unreadable due to similar color shades between labels and backgrounds
+
+---
+
 ## [0.6.0] — 2026-03-07
 
 ### Added — Comprehensive Maintenance Module (CMMS)
@@ -27,6 +50,18 @@
 - Added `ASSIGNED`, `ON_HOLD` to `MaintenanceStatus`
 - Enhanced `MaintenanceRequest` with category, scheduledDate, dueDate, completedAt, costs, laborHours, notes, preventive link
 - New `PreventiveMaintenancePlan` model with recurrence scheduling, scope, cost estimation
+
+## [0.5.0] — 2026-03-07
+
+### Added
+- Dashboard analytics with LandPipelineChart, ProjectStatusChart, and MaintenanceCostTrendChart (Recharts + foreignObject for Arabic SVG rendering)
+- SAR currency formatting component (`SARAmount`) with Hala font and bilingual display
+- Reports module with Excel/PDF export, date range filtering, and 5 report types (occupancy, financial, maintenance, lease, customer)
+- Hijri/Gregorian dual date display across all modules
+- Notification bell with unread count and mark-all-read functionality
+- Site construction logs with timestamped entries per project
+
+---
 
 ## [0.4.0] — 2026-03-07
 

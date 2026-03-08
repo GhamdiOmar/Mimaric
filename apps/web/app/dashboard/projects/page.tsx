@@ -35,6 +35,13 @@ const typeLabels: Record<string, { ar: string; en: string }> = {
   VILLA_COMPOUND: { ar: "مجمع فلل", en: "Villa Compound" },
 };
 
+const typeColors: Record<string, string> = {
+  RESIDENTIAL: "bg-secondary/15 text-secondary",
+  COMMERCIAL: "bg-primary/15 text-primary",
+  MIXED_USE: "bg-accent/15 text-amber-700",
+  VILLA_COMPOUND: "bg-info/15 text-info",
+};
+
 export default function ProjectsPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
   const [projects, setProjects] = React.useState<Project[]>([]);
@@ -115,14 +122,17 @@ function ProjectCard({ project, lang, onClick }: { project: Project; lang: "ar" 
         <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary group-hover:bg-secondary/10 group-hover:text-secondary transition-colors">
           <Buildings size={28} weight="duotone" />
         </div>
-        <Badge variant={status.variant} className="text-[10px]">
+        <Badge variant={status.variant} className="text-[10px] font-bold px-2.5 py-0.5">
           {status[lang]}
         </Badge>
       </div>
       <h3 className="text-lg font-bold text-primary font-primary">{project.name}</h3>
-      <p className="text-xs text-neutral mt-1">
-        {type[lang]} {" \u2022 "} {project.buildings.length} {lang === "ar" ? "مبنى" : "buildings"}
-      </p>
+      <div className="flex items-center gap-2 mt-2">
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${typeColors[project.type] ?? "bg-muted text-neutral"}`}>
+          {type[lang]}
+        </span>
+        <span className="text-[10px] text-neutral">{project.buildings.length} {lang === "ar" ? "مبنى" : "buildings"}</span>
+      </div>
       {(project.city || project.district) ? (
         <div className="flex items-center gap-1 mt-1 text-[10px] text-neutral/60">
           <MapPin size={12} />

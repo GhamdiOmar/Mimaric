@@ -14,7 +14,7 @@ import {
   Lightning,
   X,
 } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
+import { Button, Badge, SARAmount } from "@repo/ui";
 import {
   getPreventivePlans,
   createPreventivePlan,
@@ -304,7 +304,7 @@ export default function PreventiveMaintenancePage() {
                     <Button variant="ghost" size="sm" onClick={() => openEdit(plan)} style={{ display: "inline-flex" }}>
                       <PencilSimple size={14} />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDelete(plan.id)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDelete(plan.id)} style={{ display: "inline-flex" }}>
                       <Trash size={14} />
                     </Button>
                   </div>
@@ -342,6 +342,12 @@ export default function PreventiveMaintenancePage() {
                     <span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "أوامر عمل" : "Work Orders"}</span>
                     <p className="font-medium text-primary">{plan._count?.workOrders ?? 0}</p>
                   </div>
+                  {plan.estimatedCost != null && (
+                    <div>
+                      <span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "التكلفة" : "Est. Cost"}</span>
+                      <p className="font-medium text-primary"><SARAmount value={plan.estimatedCost} size={10} /></p>
+                    </div>
+                  )}
                 </div>
 
                 {(plan.unit || plan.building) && (

@@ -211,3 +211,36 @@ export async function deleteCustomer(customerId: string) {
 
   revalidatePath("/dashboard/sales/customers");
 }
+
+export async function getCustomerUnitAssignments(customerId: string) {
+  const session = await requirePermission("customers:read");
+  const orgId = session.organizationId;
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId: orgId },
+    include: {
+      reservations: {
+        where: { status: { in: ["PENDING", "CONFIRMED"] } },
+        include: { unit: { include: { building: { select: { name: true } } } } },
+      },
+      contracts: {
+        where: { status: "SIGNED" },
+        include: { unit: { include: { building: { select: { name: true } } } } },
+      },
+      leases: {
+        where: { status: "ACTIVE" },
+        include: { unit: { include: { building: { select: { name: true } } } } },
+      },
+    },
+  });
+
+  if (!customer) throw new Error("Customer not found");
+
+  const units = [
+    ...customer.reservations.map(r => ({ unitId: r.unit.id, unitNumber: r.unit.number, building: r.unit.building.name, type: "reservation" as const, status: r.status })),
+    ...customer.contracts.map(c => ({ unitId: c.unit.id, unitNumber: c.unit.number, building: c.unit.building.name, type: "contract" as const, status: c.status })),
+    ...customer.leases.map(l => ({ unitId: l.unit.id, unitNumber: l.unit.number, building: l.unit.building.name, type: "lease" as const, status: l.status })),
+  ];
+
+  return JSON.parse(JSON.stringify(units));
+}

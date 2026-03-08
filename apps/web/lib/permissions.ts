@@ -39,6 +39,10 @@ export type Permission =
   | "maintenance:read"
   | "maintenance:write"
   | "maintenance:delete"
+  // Preventive Maintenance
+  | "preventive_maintenance:read"
+  | "preventive_maintenance:write"
+  | "preventive_maintenance:delete"
   // Finance
   | "finance:read"
   | "finance:write"
@@ -65,7 +69,8 @@ export type Permission =
   // Land
   | "land:read"
   | "land:write"
-  | "land:delete";
+  | "land:delete"
+  | "land:export";
 
 const ALL_PERMISSIONS: Permission[] = [
   "customers:read", "customers:read_pii", "customers:write", "customers:delete", "customers:export",
@@ -75,6 +80,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "leases:read", "leases:write", "leases:delete",
   "reservations:read", "reservations:write", "reservations:delete",
   "maintenance:read", "maintenance:write", "maintenance:delete",
+  "preventive_maintenance:read", "preventive_maintenance:write", "preventive_maintenance:delete",
   "finance:read", "finance:write",
   "organization:read", "organization:write",
   "team:read", "team:write", "team:delete",
@@ -83,7 +89,7 @@ const ALL_PERMISSIONS: Permission[] = [
   "audit:read",
   "dashboard:read",
   "notifications:read",
-  "land:read", "land:write", "land:delete",
+  "land:read", "land:write", "land:delete", "land:export",
 ];
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
@@ -99,10 +105,11 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "leases:read",
     "reservations:read",
     "maintenance:read", "maintenance:write",
+    "preventive_maintenance:read", "preventive_maintenance:write",
     "documents:read", "documents:write",
     "reports:read",
     "notifications:read",
-    "land:read", "land:write",
+    "land:read", "land:write", "land:export",
   ],
 
   SALES_MANAGER: [
@@ -115,6 +122,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "documents:read",
     "reports:read", "reports:export",
     "notifications:read",
+    "land:read",
   ],
 
   SALES_AGENT: [
@@ -123,6 +131,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "projects:read",
     "units:read",
     "contracts:read",
+    "leases:read",
     "reservations:read", "reservations:write",
     "documents:read",
     "notifications:read",
@@ -135,6 +144,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "units:read", "units:write",
     "leases:read", "leases:write",
     "maintenance:read", "maintenance:write",
+    "preventive_maintenance:read", "preventive_maintenance:write",
     "documents:read", "documents:write",
     "notifications:read",
   ],
@@ -147,11 +157,14 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "finance:read", "finance:write",
     "reports:read", "reports:export",
     "notifications:read",
+    "land:read",
+    "maintenance:read",
   ],
 
   TECHNICIAN: [
     "dashboard:read",
     "maintenance:read", "maintenance:write",
+    "preventive_maintenance:read",
     "units:read",
     "notifications:read",
   ],

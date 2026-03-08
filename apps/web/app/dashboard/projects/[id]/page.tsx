@@ -17,8 +17,7 @@ import {
   DownloadSimple,
   CheckCircle,
 } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
-import { RiyalIcon } from "@repo/ui";
+import { Button, Badge, SARAmount } from "@repo/ui";
 import {
   getProjectDetail,
   updateProject,
@@ -229,6 +228,12 @@ export default function ProjectDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href={`/dashboard/units?project=${id}`}>
+            <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+              <Buildings size={14} />
+              {lang === "ar" ? "عرض الوحدات" : "View Units"}
+            </Button>
+          </Link>
           <Link href={`/dashboard/projects/${id}/site-logs`}>
             <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
               <ClipboardText size={14} />
@@ -316,7 +321,7 @@ export default function ProjectDetailPage() {
                 <InfoRow label={lang === "ar" ? "المنطقة" : "Region"} value={project.region} />
                 <InfoRow label={lang === "ar" ? "الشارع" : "Street"} value={project.streetName} />
                 {project.estimatedValueSar && (
-                  <InfoRow label={lang === "ar" ? "القيمة التقديرية" : "Est. Value"} value={`${fmt(Number(project.estimatedValueSar))} ر.س`} />
+                  <InfoRow label={lang === "ar" ? "القيمة التقديرية" : "Est. Value"} value={<SARAmount value={Number(project.estimatedValueSar)} size={12} />} />
                 )}
                 <InfoRow label={lang === "ar" ? "تاريخ الإنشاء" : "Created"} value={formatDualDate(project.createdAt, lang)} />
               </div>
@@ -455,7 +460,7 @@ export default function ProjectDetailPage() {
                     >
                       <PencilSimple size={14} />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteBuilding(b.id)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteBuilding(b.id)} style={{ display: "inline-flex" }}>
                       <Trash size={14} />
                     </Button>
                   </div>
@@ -637,7 +642,7 @@ export default function ProjectDetailPage() {
                               <DownloadSimple size={14} />
                             </Button>
                           </a>
-                          <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDeleteDoc(doc.id)} style={{ display: "inline-flex" }}>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)} style={{ display: "inline-flex" }}>
                             <Trash size={14} />
                           </Button>
                         </div>

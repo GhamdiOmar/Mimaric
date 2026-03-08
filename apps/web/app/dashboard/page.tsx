@@ -1,19 +1,25 @@
 "use client";
 
 import * as React from "react";
-import { RiyalIcon } from "@repo/ui";
+import { SARAmount } from "@repo/ui";
 import {
   Buildings,
   TrendUp,
   Users,
   Handshake,
   Clock,
-  CurrencyCircleDollar
+  CurrencyCircleDollar,
+  MapPin,
+  Wrench,
+  HardHat
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
-import { getDashboardStats } from "../actions/dashboard";
+import { getDashboardStats, getDashboardLandStats } from "../actions/dashboard";
 import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
 import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
+import LandPipelineChart from "../../components/charts/LandPipelineChart";
+import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
+import MaintenanceCostTrendChart from "../../components/charts/MaintenanceCostTrendChart";
 
 type DashboardStats = {
   totalUnits: number;
@@ -26,6 +32,7 @@ type DashboardStats = {
 
 export default function DashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
+  const [landStats, setLandStats] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -33,6 +40,7 @@ export default function DashboardPage() {
       .then((data) => setStats(data))
       .catch(console.error)
       .finally(() => setLoading(false));
+    getDashboardLandStats().then(setLandStats).catch(console.error);
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
@@ -45,7 +53,7 @@ export default function DashboardPage() {
   const kpiData = [
     { label: { ar: "إجمالي الوحدات", en: "Total Units" }, value: stats ? formatNumber(stats.totalUnits) : "—", icon: Buildings, color: "primary" },
     { label: { ar: "نسبة الإشغال", en: "Occupancy Rate" }, value: stats ? `${stats.occupancyRate}%` : "—", icon: TrendUp, color: "secondary" },
-    { label: { ar: "الإيجارات المحصلة", en: "Rent Collected" }, value: stats ? <span className="flex items-center gap-1 justify-center"><RiyalIcon size={18} /> {formatCurrency(stats.totalRentCollected)}</span> : "—", icon: CurrencyCircleDollar, color: "secondary" },
+    { label: { ar: "الإيجارات المحصلة", en: "Rent Collected" }, value: stats ? <SARAmount value={stats.totalRentCollected} compact size={18} /> : "—", icon: CurrencyCircleDollar, color: "secondary" },
     { label: { ar: "عقود نشطة", en: "Active Leases" }, value: stats ? formatNumber(stats.activeLeases) : "—", icon: Handshake, color: "accent" },
     { label: { ar: "طلبات صيانة", en: "Maintenance Requests" }, value: stats ? formatNumber(stats.openMaintenanceCount) : "—", icon: Clock, color: "warning" },
     { label: { ar: "العملاء الجدد", en: "New Customers" }, value: stats ? `+${formatNumber(stats.newCustomersThisMonth)}` : "—", icon: Users, color: "secondary" },
@@ -91,6 +99,29 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Land & Projects KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: { ar: "الأراضي", en: "Land Parcels" }, value: landStats ? landStats.totalParcels : "—", icon: MapPin, color: "secondary" },
+          { label: { ar: "المشاريع النشطة", en: "Active Projects" }, value: landStats ? landStats.activeProjects : "—", icon: HardHat, color: "primary" },
+          { label: { ar: "قيمة المحفظة", en: "Portfolio Value" }, value: landStats ? <SARAmount value={landStats.portfolioValue} compact size={18} /> : "—", icon: CurrencyCircleDollar, color: "secondary" },
+          { label: { ar: "تكاليف الصيانة", en: "Maintenance Costs" }, value: landStats ? <SARAmount value={landStats.maintenanceCostsThisMonth} compact size={18} /> : "—", icon: Wrench, color: "accent" },
+        ].map((kpi, idx) => (
+          <div key={`land-${idx}`} className={cn("bg-white p-6 rounded-md shadow-card border border-border flex flex-col justify-between group hover:shadow-raised hover:border-primary/20 transition-all cursor-default relative overflow-hidden", !landStats && "animate-pulse")}>
+            <div className={cn("absolute top-0 right-0 bottom-0 w-1", kpi.color === "primary" ? "bg-primary" : kpi.color === "secondary" ? "bg-secondary" : "bg-accent")} />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-semibold uppercase text-neutral tracking-wider truncate mr-2">{kpi.label.ar}</span>
+              <div className={cn("p-2 rounded-sm", kpi.color === "primary" ? "bg-primary/10 text-primary" : kpi.color === "secondary" ? "bg-secondary/10 text-secondary" : "bg-accent/10 text-accent")}>
+                <kpi.icon size={20} weight="duotone" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-2xl font-bold text-primary">{kpi.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
@@ -100,6 +131,22 @@ export default function DashboardPage() {
         <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
           <h3 className="text-lg font-bold text-primary mb-6">توزيع الإشغال حسب المشروع</h3>
           <OccupancyDonutChart />
+        </div>
+      </div>
+
+      {/* Land & Project Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
+          <h3 className="text-lg font-bold text-primary mb-6">مسار استحواذ الأراضي</h3>
+          <LandPipelineChart />
+        </div>
+        <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
+          <h3 className="text-lg font-bold text-primary mb-6">توزيع حالات المشاريع</h3>
+          <ProjectStatusChart />
+        </div>
+        <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
+          <h3 className="text-lg font-bold text-primary mb-6">تكاليف الصيانة (آخر 6 أشهر)</h3>
+          <MaintenanceCostTrendChart />
         </div>
       </div>
     </div>

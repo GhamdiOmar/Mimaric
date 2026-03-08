@@ -12,8 +12,7 @@ import {
   Receipt,
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
-import { Button, Badge } from "@repo/ui";
-import { RiyalIcon } from "@repo/ui";
+import { Button, Badge, SARAmount } from "@repo/ui";
 import { getInstallments, recordPayment, markOverdueInstallments } from "../../../actions/installments";
 import { formatDualDate } from "../../../../lib/hijri";
 
@@ -29,9 +28,6 @@ type Installment = {
     unit: { number: string; building: { name: string } };
   };
 };
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
 
 export default function RentCollectionPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
@@ -100,9 +96,8 @@ export default function RentCollectionPage() {
                 kpi.color === "destructive" ? "text-destructive" : "text-accent"
               )} />
             </div>
-            <h3 className="text-xl font-bold text-primary flex items-center gap-1">
-              <RiyalIcon size={20} />
-              {loading ? "—" : fmt(kpi.value)}
+            <h3 className="text-xl font-bold text-primary">
+              {loading ? "—" : <SARAmount value={kpi.value} size={20} />}
             </h3>
           </div>
         ))}
@@ -150,9 +145,7 @@ export default function RentCollectionPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-primary flex items-center gap-1">
-                        <RiyalIcon size={12} /> {fmt(Number(p.amount))}
-                      </span>
+                      <SARAmount value={Number(p.amount)} size={12} />
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-xs text-neutral font-dm-sans">

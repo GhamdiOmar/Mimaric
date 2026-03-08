@@ -57,7 +57,7 @@ export async function createPreventivePlan(data: {
   estimatedHours?: number;
   assignToId?: string;
 }) {
-  const session = await requirePermission("maintenance:write");
+  const session = await requirePermission("preventive_maintenance:write");
   const interval = data.recurrenceInterval ?? 1;
   const startDate = new Date(data.startDate);
   const nextRunDate = computeNextRunDate(data.recurrenceType, interval, startDate);
@@ -95,7 +95,7 @@ export async function getPreventivePlans(filters?: {
   unitId?: string;
   buildingId?: string;
 }) {
-  const session = await requirePermission("maintenance:read");
+  const session = await requirePermission("preventive_maintenance:read");
 
   const where: any = { organizationId: session.organizationId };
   if (filters?.isActive !== undefined) where.isActive = filters.isActive;
@@ -134,7 +134,7 @@ export async function updatePreventivePlan(
     assignToId?: string | null;
   }
 ) {
-  const session = await requirePermission("maintenance:write");
+  const session = await requirePermission("preventive_maintenance:write");
 
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
@@ -175,7 +175,7 @@ export async function updatePreventivePlan(
 // ─── Toggle Preventive Plan ─────────────────────────────────────────────────
 
 export async function togglePreventivePlan(planId: string) {
-  const session = await requirePermission("maintenance:write");
+  const session = await requirePermission("preventive_maintenance:write");
 
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
@@ -194,7 +194,7 @@ export async function togglePreventivePlan(planId: string) {
 // ─── Delete Preventive Plan ─────────────────────────────────────────────────
 
 export async function deletePreventivePlan(planId: string) {
-  const session = await requirePermission("maintenance:delete");
+  const session = await requirePermission("preventive_maintenance:delete");
 
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
@@ -212,7 +212,7 @@ export async function deletePreventivePlan(planId: string) {
 // ─── Generate Work Orders from Plans ─────────────────────────────────────────
 
 export async function generateWorkOrdersFromPlans() {
-  const session = await requirePermission("maintenance:write");
+  const session = await requirePermission("preventive_maintenance:write");
   const now = new Date();
 
   const duePlans = await db.preventiveMaintenancePlan.findMany({
@@ -275,7 +275,7 @@ export async function generateWorkOrdersFromPlans() {
 // ─── Get Buildings for Plan Selectors ────────────────────────────────────────
 
 export async function getBuildingsForPlans() {
-  const session = await requirePermission("maintenance:read");
+  const session = await requirePermission("preventive_maintenance:read");
 
   const buildings = await db.building.findMany({
     where: { project: { organizationId: session.organizationId } },

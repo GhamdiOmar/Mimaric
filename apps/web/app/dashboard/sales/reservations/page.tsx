@@ -12,7 +12,7 @@ import {
   Buildings,
   User,
 } from "@phosphor-icons/react";
-import { RiyalIcon } from "@repo/ui";
+import { SARAmount } from "@repo/ui";
 import { Button, Badge } from "@repo/ui";
 import Link from "next/link";
 import { getReservations, updateReservationStatus } from "../../../actions/reservations";
@@ -150,10 +150,7 @@ export default function ReservationsPage() {
                       <p className="text-xs text-neutral">{res.unit?.building?.name}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1 font-bold">
-                        <RiyalIcon size={12} />
-                        {Number(res.amount).toLocaleString()}
-                      </div>
+                      <SARAmount value={Number(res.amount)} size={12} className="font-bold" />
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">
                       {formatDualDate(res.expiresAt, lang)}
@@ -183,7 +180,7 @@ export default function ReservationsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-xs h-7 px-2 text-red-500 hover:text-red-700"
+                            className="text-xs h-7 px-2 text-red-500 hover:bg-red-50 hover:text-red-600"
                             onClick={() => handleStatusChange(res.id, "CANCELLED")}
                           >
                             {lang === "ar" ? "إلغاء" : "Cancel"}

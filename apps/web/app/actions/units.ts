@@ -137,3 +137,55 @@ export async function getBuildings() {
   });
   return JSON.parse(JSON.stringify(buildings));
 }
+
+export async function getUnitFinancialSummary(unitId: string) {
+  const session = await requirePermission("units:read");
+
+  const unit = await db.unit.findFirst({
+    where: { id: unitId },
+    include: {
+      building: { include: { project: true } },
+      leases: {
+        include: { installments: true },
+      },
+      maintenanceRequests: {
+        select: { actualCost: true, estimatedCost: true },
+      },
+      contracts: {
+        where: { status: "SIGNED", type: "SALE" },
+        select: { amount: true },
+      },
+    },
+  });
+  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+    throw new Error("Unit not found");
+  }
+
+  const totalRentCollected = unit.leases.reduce((s, l) =>
+    s + l.installments.filter(i => i.status === "PAID").reduce((is, i) => is + Number(i.amount), 0), 0);
+  const totalMaintenanceCost = unit.maintenanceRequests.reduce((s, m) =>
+    s + Number(m.actualCost ?? m.estimatedCost ?? 0), 0);
+  const saleRevenue = unit.contracts.reduce((s, c) => s + Number(c.amount), 0);
+
+  return JSON.parse(JSON.stringify({
+    totalRentCollected,
+    saleRevenue,
+    totalMaintenanceCost,
+    netIncome: totalRentCollected + saleRevenue - totalMaintenanceCost,
+  }));
+}
+
+export async function getCustomersForUnitAction() {
+  const session = await requirePermission("customers:read");
+
+  const customers = await db.customer.findMany({
+    where: {
+      organizationId: session.organizationId,
+      status: { in: ["NEW", "INTERESTED", "QUALIFIED", "VIEWING"] as any },
+    },
+    select: { id: true, name: true, phone: true, status: true },
+    orderBy: { name: "asc" },
+  });
+
+  return JSON.parse(JSON.stringify(customers));
+}

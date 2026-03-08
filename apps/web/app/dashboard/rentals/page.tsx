@@ -2,14 +2,10 @@
 
 import * as React from "react";
 import { Tag, Plus, CurrencyCircleDollar, Buildings } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
-import { RiyalIcon } from "@repo/ui";
+import { Button, SARAmount } from "@repo/ui";
 import Link from "next/link";
 import { getLeases } from "../../actions/leases";
 import { formatDualDate } from "../../../lib/hijri";
-
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
 
 const rentalModules = [
   { href: "/dashboard/rentals/new", icon: Plus, label: { ar: "إنشاء عقد إيجار", en: "New Lease" }, desc: { ar: "إنشاء عقد إيجار جديد", en: "Create a new tenancy agreement" } },
@@ -61,9 +57,8 @@ export default function RentalsPage() {
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "إجمالي الإيجار السنوي" : "Total Annual Rent"}</span>
             <CurrencyCircleDollar size={20} className="text-primary" />
           </div>
-          <h3 className="text-2xl font-bold text-primary flex items-center gap-1">
-            <RiyalIcon size={20} />
-            {loading ? "—" : fmt(totalRent)}
+          <h3 className="text-2xl font-bold text-primary">
+            {loading ? "—" : <SARAmount value={totalRent} size={20} />}
           </h3>
         </div>
         <div className="bg-white p-6 rounded-md shadow-card border border-border">
@@ -111,7 +106,7 @@ export default function RentalsPage() {
                   <tr key={l.id} className="hover:bg-muted/5 transition-colors">
                     <td className="px-6 py-3 text-sm font-bold text-primary">{l.customer.name}</td>
                     <td className="px-6 py-3 text-sm text-primary">{l.unit.number}</td>
-                    <td className="px-6 py-3 text-sm font-bold text-primary flex items-center gap-1"><RiyalIcon size={12} />{fmt(Number(l.totalAmount))}</td>
+                    <td className="px-6 py-3 text-sm font-bold text-primary"><SARAmount value={Number(l.totalAmount)} size={12} /></td>
                     <td className="px-6 py-3 text-xs text-neutral font-latin">
                       {formatDualDate(l.startDate, lang)} — {formatDualDate(l.endDate, lang)}
                     </td>

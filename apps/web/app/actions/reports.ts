@@ -289,3 +289,152 @@ export async function getMaintenanceReport(startDate: string, endDate: string) {
     priorities,
   };
 }
+
+export async function getLandPortfolioReport(startDate: string, endDate: string) {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+
+  const LAND_STATUSES = ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"];
+
+  const parcels = await db.project.findMany({
+    where: {
+      organizationId: orgId,
+      status: { in: LAND_STATUSES as any },
+    },
+    select: {
+      id: true, name: true, status: true,
+      totalAreaSqm: true, estimatedValueSar: true,
+      acquisitionPrice: true, city: true, district: true,
+      landUse: true, createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const totalParcels = parcels.length;
+  const totalArea = parcels.reduce((s, p) => s + (p.totalAreaSqm ?? 0), 0);
+  const totalEstimatedValue = parcels.reduce((s, p) => s + Number(p.estimatedValueSar ?? 0), 0);
+  const totalAcquisitionCost = parcels.reduce((s, p) => s + Number(p.acquisitionPrice ?? 0), 0);
+
+  return {
+    totalParcels,
+    totalArea,
+    totalEstimatedValue,
+    totalAcquisitionCost,
+    unrealizedGainLoss: totalEstimatedValue - totalAcquisitionCost,
+    parcels: parcels.map(p => ({
+      name: p.name,
+      area: p.totalAreaSqm,
+      estimatedValue: Number(p.estimatedValueSar ?? 0),
+      acquisitionCost: Number(p.acquisitionPrice ?? 0),
+      status: p.status,
+      location: [p.city, p.district].filter(Boolean).join(", "),
+      landUse: p.landUse,
+    })),
+  };
+}
+
+export async function getProjectProgressReport(startDate: string, endDate: string) {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+
+  const projects = await db.project.findMany({
+    where: {
+      organizationId: orgId,
+      status: { in: ["PLANNING", "UNDER_CONSTRUCTION", "READY", "HANDED_OVER"] as any },
+    },
+    include: {
+      buildings: {
+        include: {
+          units: {
+            include: {
+              contracts: { where: { status: "SIGNED" }, select: { amount: true, type: true } },
+              leases: { where: { status: "ACTIVE" }, select: { totalAmount: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return JSON.parse(JSON.stringify({
+    projects: projects.map(p => {
+      const units = p.buildings.flatMap(b => b.units);
+      const totalUnits = units.length;
+      const soldUnits = units.filter(u => u.status === "SOLD").length;
+      const rentedUnits = units.filter(u => u.status === "RENTED").length;
+      const saleRevenue = units.reduce((s, u) =>
+        s + u.contracts.filter(c => c.type === "SALE").reduce((cs, c) => cs + Number(c.amount), 0), 0);
+      const rentRevenue = units.reduce((s, u) =>
+        s + u.leases.reduce((ls, l) => ls + Number(l.totalAmount), 0), 0);
+      const remainingUnits = units.filter(u => u.status === "AVAILABLE");
+      const remainingValue = remainingUnits.reduce((s, u) => s + Number(u.price ?? 0), 0);
+
+      return {
+        name: p.name,
+        status: p.status,
+        totalUnits,
+        soldPercent: totalUnits > 0 ? Math.round((soldUnits / totalUnits) * 100) : 0,
+        rentedPercent: totalUnits > 0 ? Math.round((rentedUnits / totalUnits) * 100) : 0,
+        totalRevenue: saleRevenue + rentRevenue,
+        remainingValue,
+      };
+    }),
+  }));
+}
+
+export async function getMaintenanceCostReport(startDate: string, endDate: string) {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  const requests = await db.maintenanceRequest.findMany({
+    where: {
+      organizationId: orgId,
+      createdAt: { gte: start, lte: end },
+    },
+    include: {
+      unit: {
+        include: { building: { select: { id: true, name: true, buildingAreaSqm: true } } },
+      },
+    },
+  });
+
+  const totalEstimated = requests.reduce((s, r) => s + Number(r.estimatedCost ?? 0), 0);
+  const totalActual = requests.reduce((s, r) => s + Number(r.actualCost ?? 0), 0);
+  const totalLaborHours = requests.reduce((s, r) => s + (r.laborHours ?? 0), 0);
+
+  const byCategory: Record<string, { estimated: number; actual: number; count: number }> = {};
+  requests.forEach(r => {
+    const cat = r.category;
+    if (!byCategory[cat]) byCategory[cat] = { estimated: 0, actual: 0, count: 0 };
+    byCategory[cat].estimated += Number(r.estimatedCost ?? 0);
+    byCategory[cat].actual += Number(r.actualCost ?? 0);
+    byCategory[cat].count++;
+  });
+
+  const byBuilding: Record<string, { name: string; estimated: number; actual: number; count: number; areaSqm: number }> = {};
+  requests.forEach(r => {
+    if (!r.unit?.building) return;
+    const bId = r.unit.building.id;
+    if (!byBuilding[bId]) byBuilding[bId] = { name: r.unit.building.name, estimated: 0, actual: 0, count: 0, areaSqm: r.unit.building.buildingAreaSqm ?? 0 };
+    byBuilding[bId].estimated += Number(r.estimatedCost ?? 0);
+    byBuilding[bId].actual += Number(r.actualCost ?? 0);
+    byBuilding[bId].count++;
+  });
+
+  const buildingData = Object.values(byBuilding).map(b => ({
+    ...b,
+    costPerSqm: b.areaSqm > 0 ? Math.round(b.actual / b.areaSqm) : 0,
+  }));
+
+  return JSON.parse(JSON.stringify({
+    totalEstimated,
+    totalActual,
+    variance: totalActual - totalEstimated,
+    totalLaborHours,
+    totalRequests: requests.length,
+    byCategory: Object.entries(byCategory).map(([cat, data]) => ({ category: cat, ...data })),
+    byBuilding: buildingData,
+  }));
+}

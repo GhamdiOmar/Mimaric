@@ -19,7 +19,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Badge, Button, Input } from "@repo/ui";
-import { getCustomers, updateCustomerStatus, createCustomer } from "../../../actions/customers";
+import { getCustomers, updateCustomerStatus, createCustomer, getCustomerUnitAssignments } from "../../../actions/customers";
 import { exportToExcel, exportToPDF } from "../../../../lib/export";
 import { usePermissions } from "../../../../hooks/usePermissions";
 import { maskNationalId, maskPhone, maskEmail } from "../../../../lib/pii-masking";
@@ -53,8 +53,36 @@ export default function CustomersPage() {
   });
   const [showOptionalFields, setShowOptionalFields] = React.useState(false);
   const [showPii, setShowPii] = React.useState(false);
+  const [expandedCustomer, setExpandedCustomer] = React.useState<string | null>(null);
+  const [customerUnits, setCustomerUnits] = React.useState<any[]>([]);
+  const [loadingUnits, setLoadingUnits] = React.useState(false);
   const { can } = usePermissions();
   const hasPiiAccess = can("customers:read_pii");
+
+  async function toggleCustomerUnits(customerId: string) {
+    if (expandedCustomer === customerId) {
+      setExpandedCustomer(null);
+      setCustomerUnits([]);
+      return;
+    }
+    setExpandedCustomer(customerId);
+    setLoadingUnits(true);
+    try {
+      const assignments = await getCustomerUnitAssignments(customerId);
+      setCustomerUnits(assignments);
+    } catch (e) {
+      console.error(e);
+      setCustomerUnits([]);
+    } finally {
+      setLoadingUnits(false);
+    }
+  }
+
+  const unitTypeLabelsAr: Record<string, string> = {
+    reservation: "حجز",
+    contract: "عقد بيع",
+    lease: "عقد إيجار",
+  };
 
   React.useEffect(() => {
     async function loadCustomers() {
@@ -142,7 +170,7 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -153,36 +181,37 @@ export default function CustomersPage() {
             {lang === "ar" ? "تتبع وتحويل العملاء المحتملين إلى مبيعات ناجحة" : "Track and convert potential customers into successful sales"}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {can("customers:export") && (
-            <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportExcel}>
-              <DownloadSimple size={18} />
-              {lang === "ar" ? "Excel تصدير" : "Export Excel"}
+            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-secondary/15 hover:border-secondary/50 hover:text-secondary" style={{ display: "inline-flex" }} onClick={handleExportExcel}>
+              <DownloadSimple size={16} />
+              {lang === "ar" ? "Excel" : "Excel"}
             </Button>
           )}
           {can("customers:export") && (
-            <Button variant="ghost" size="md" className="gap-2 text-neutral border border-border" onClick={handleExportPDF}>
-              <FilePdf size={18} />
-              {lang === "ar" ? "PDF تصدير" : "Export PDF"}
+            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-destructive/15 hover:border-destructive/50 hover:text-destructive" style={{ display: "inline-flex" }} onClick={handleExportPDF}>
+              <FilePdf size={16} />
+              {lang === "ar" ? "PDF" : "PDF"}
             </Button>
           )}
           {hasPiiAccess && (
             <Button
-              variant="ghost"
-              size="md"
-              className={cn("gap-2 text-neutral border border-border", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+              variant="secondary"
+              size="sm"
+              className={cn("gap-1.5 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+              style={{ display: "inline-flex" }}
               onClick={() => setShowPii(!showPii)}
             >
-              {showPii ? <EyeSlash size={18} /> : <Eye size={18} />}
-              {showPii ? (lang === "ar" ? "إخفاء البيانات" : "Hide PII") : (lang === "ar" ? "كشف البيانات" : "Show PII")}
+              {showPii ? <EyeSlash size={16} /> : <Eye size={16} />}
+              {showPii ? (lang === "ar" ? "إخفاء" : "Hide PII") : (lang === "ar" ? "كشف" : "PII")}
             </Button>
           )}
-          <Button variant="secondary" size="md" className="gap-2 ml-2">
-            <Funnel size={18} />
+          <Button variant="secondary" size="sm" className="gap-1.5">
+            <Funnel size={16} />
             {lang === "ar" ? "تصفية" : "Filter"}
           </Button>
           {can("customers:write") && (
-          <Button size="md" className="gap-2 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-5 h-10" onClick={() => {
+          <Button size="sm" className="gap-1.5 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-4 h-8" onClick={() => {
             setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
             setShowOptionalFields(false);
             setShowAddModal(true);
@@ -228,9 +257,9 @@ export default function CustomersPage() {
 
       {/* Kanban Board */}
       {viewMode === "kanban" ? (
-        <div className="flex h-[calc(100vh-280px)] gap-6 overflow-x-auto pb-4 custom-scrollbar" dir={lang === "ar" ? "rtl" : "ltr"}>
+        <div className="flex h-[calc(100vh-280px)] gap-4 overflow-x-auto pb-4 custom-scrollbar max-w-full" dir={lang === "ar" ? "rtl" : "ltr"}>
           {customerStatuses.map((status) => (
-            <div key={status.id} className="flex h-full w-72 min-w-[288px] flex-col gap-4">
+            <div key={status.id} className="flex h-full w-64 min-w-[256px] flex-col gap-3 shrink-0">
               {/* Column Header */}
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2">
@@ -258,7 +287,7 @@ export default function CustomersPage() {
                         <h4 className="text-sm font-bold text-primary group-hover:text-secondary transition-colors truncate">
                           {customer.name}
                         </h4>
-                        <Badge variant="available" className="text-[10px] bg-muted/50 text-neutral-foreground">
+                        <Badge variant="draft" className="text-[9px] bg-muted font-bold px-2 py-0.5">
                           {customer.source || "Direct"}
                         </Badge>
                       </div>
@@ -287,17 +316,42 @@ export default function CustomersPage() {
                           <Calendar size={12} />
                           <span>{formatDualDate(customer.createdAt, lang)}</span>
                         </div>
-                        {/* Selector for status change in lieu of real dnd library to show backend works */}
-                        <select 
-                          value={customer.status}
-                          onChange={(e) => handleStatusChange(customer.id, e.target.value)}
-                          className="text-[10px] border-none bg-transparent text-primary font-bold focus:ring-0"
-                        >
-                          {customerStatuses.map(s => (
-                            <option key={s.id} value={s.id}>{s.label[lang]}</option>
-                          ))}
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleCustomerUnits(customer.id); }}
+                            className={cn("text-[10px] font-bold transition-colors", expandedCustomer === customer.id ? "text-secondary" : "text-neutral/60 hover:text-primary")}
+                          >
+                            {lang === "ar" ? "الوحدات" : "Units"}
+                          </button>
+                          <select
+                            value={customer.status}
+                            onChange={(e) => handleStatusChange(customer.id, e.target.value)}
+                            className="text-[10px] border-none bg-transparent text-primary font-bold focus:ring-0"
+                          >
+                            {customerStatuses.map(s => (
+                              <option key={s.id} value={s.id}>{s.label[lang]}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
+                      {expandedCustomer === customer.id && (
+                        <div className="mt-2 pt-2 border-t border-muted/50">
+                          {loadingUnits ? (
+                            <p className="text-[10px] text-neutral text-center py-2">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</p>
+                          ) : customerUnits.length === 0 ? (
+                            <p className="text-[10px] text-neutral/60 text-center py-1">{lang === "ar" ? "لا توجد وحدات مرتبطة" : "No linked units"}</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {customerUnits.map((cu: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between text-[10px] py-1">
+                                  <span className="font-bold text-primary">{cu.unitNumber} — {cu.building}</span>
+                                  <Badge variant="draft" className="text-[8px] py-0">{lang === "ar" ? unitTypeLabelsAr[cu.type] ?? cu.type : cu.type}</Badge>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 

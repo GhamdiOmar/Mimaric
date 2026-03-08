@@ -226,7 +226,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex flex-1 flex-col transition-all duration-300">
+      <main className="flex flex-1 flex-col transition-all duration-300 min-w-0">
         {/* Topbar */}
         <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-white px-6">
           <div className="flex items-center gap-4">
@@ -345,7 +345,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Dashboard Content */}
-        <div className="p-6 lg:p-10 flex-1 overflow-y-auto">
+        <div className="p-6 lg:p-10 flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </div>
       </main>

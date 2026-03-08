@@ -1,20 +1,43 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar } from "@phosphor-icons/react";
-import { RiyalIcon } from "@repo/ui";
-import { getFinanceStats } from "../../actions/finance";
+import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings } from "@phosphor-icons/react";
+import { SARAmount } from "@repo/ui";
+import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary } from "../../actions/finance";
 
-const fmt = (n: number) =>
-  new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
+const categoryLabels: Record<string, string> = {
+  HVAC: "تكييف",
+  PLUMBING: "سباكة",
+  ELECTRICAL: "كهرباء",
+  STRUCTURAL: "إنشائي",
+  FIRE_SAFETY: "سلامة حريق",
+  ELEVATOR: "مصاعد",
+  CLEANING: "نظافة",
+  LANDSCAPING: "تنسيق حدائق",
+  PEST_CONTROL: "مكافحة آفات",
+  GENERAL: "عام",
+};
 
 export default function FinancePage() {
   const [stats, setStats] = React.useState<any>(null);
+  const [maintenanceCosts, setMaintenanceCosts] = React.useState<any>(null);
+  const [unitRevenue, setUnitRevenue] = React.useState<any[]>([]);
+  const [landInvestment, setLandInvestment] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    getFinanceStats()
-      .then(setStats)
+    Promise.all([
+      getFinanceStats(),
+      getMaintenanceCostSummary(),
+      getUnitRevenueBreakdown(),
+      getLandInvestmentSummary(),
+    ])
+      .then(([s, mc, ur, li]) => {
+        setStats(s);
+        setMaintenanceCosts(mc);
+        setUnitRevenue(ur);
+        setLandInvestment(li);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -30,19 +53,19 @@ export default function FinancePage() {
         {[
           {
             label: "إجمالي الإيرادات",
-            value: stats ? <span className="flex items-center gap-1"><RiyalIcon size={24} /> {fmt(stats.totalRevenue)}</span> : "—",
+            value: stats ? <SARAmount value={stats.totalRevenue} size={24} /> : "—",
             icon: CurrencyCircleDollar,
             color: "secondary",
           },
           {
             label: "الفواتير المعلقة",
-            value: stats ? <span className="flex items-center gap-1"><RiyalIcon size={20} /> {fmt(stats.pendingInvoices)}</span> : "—",
+            value: stats ? <SARAmount value={stats.pendingInvoices} size={20} /> : "—",
             icon: Receipt,
             color: "accent",
           },
           {
             label: "المتأخرات",
-            value: stats ? <span className="flex items-center gap-1"><RiyalIcon size={20} /> {fmt(stats.overdueAmount)}</span> : "—",
+            value: stats ? <SARAmount value={stats.overdueAmount} size={20} /> : "—",
             icon: Warning,
             color: "destructive",
           },
@@ -74,16 +97,14 @@ export default function FinancePage() {
           <div className="bg-white p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">إيرادات الإيجار</h3>
             <div className="flex items-center gap-2">
-              <RiyalIcon size={28} className="text-secondary" />
-              <span className="text-3xl font-bold text-primary">{fmt(stats.totalRentRevenue)}</span>
+              <SARAmount value={stats.totalRentRevenue} size={28} className="text-3xl font-bold text-primary" />
             </div>
             <p className="text-xs text-neutral mt-2">{stats.paidCount} دفعة محصّلة من {stats.installmentCount}</p>
           </div>
           <div className="bg-white p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">إيرادات البيع</h3>
             <div className="flex items-center gap-2">
-              <RiyalIcon size={28} className="text-primary" />
-              <span className="text-3xl font-bold text-primary">{fmt(stats.totalSaleRevenue)}</span>
+              <SARAmount value={stats.totalSaleRevenue} size={28} className="text-3xl font-bold text-primary" />
             </div>
             <p className="text-xs text-neutral mt-2">من العقود الموقّعة</p>
           </div>
@@ -96,6 +117,124 @@ export default function FinancePage() {
           سيتم تفعيل الربط مع فاتورة قريباً — Coming Soon
         </div>
       </div>
+
+      {/* Maintenance Costs Section */}
+      {maintenanceCosts && (
+        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <Wrench size={20} className="text-accent" />
+            <h3 className="text-lg font-bold text-primary font-primary">تكاليف الصيانة</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">تقديري</span>
+              <div className="mt-2">
+                <SARAmount value={maintenanceCosts.totalEstimated} size={24} className="text-2xl font-bold text-primary" />
+              </div>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">فعلي</span>
+              <div className="mt-2">
+                <SARAmount value={maintenanceCosts.totalActual} size={24} className="text-2xl font-bold text-primary" />
+              </div>
+            </div>
+          </div>
+          {Object.keys(maintenanceCosts.byCategory).length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-right py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">الفئة</th>
+                    <th className="text-left py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">التكلفة</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(maintenanceCosts.byCategory).map(([cat, cost]) => (
+                    <tr key={cat} className="border-b border-border/50">
+                      <td className="py-3 text-primary font-primary">{categoryLabels[cat] ?? cat}</td>
+                      <td className="py-3 text-left">
+                        <SARAmount value={cost as number} size={14} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Unit Revenue Table */}
+      {unitRevenue.length > 0 && (
+        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <Buildings size={20} className="text-secondary" />
+            <h3 className="text-lg font-bold text-primary font-primary">إيرادات الوحدات</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-right py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">الوحدة</th>
+                  <th className="text-right py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">المبنى</th>
+                  <th className="text-left py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">إيرادات الإيجار</th>
+                  <th className="text-left py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">تكاليف الصيانة</th>
+                  <th className="text-left py-2 text-[10px] font-bold uppercase tracking-widest text-neutral">صافي الدخل</th>
+                </tr>
+              </thead>
+              <tbody>
+                {unitRevenue.map((u: any) => (
+                  <tr key={u.id} className="border-b border-border/50">
+                    <td className="py-3 text-primary font-medium">{u.number}</td>
+                    <td className="py-3 text-primary font-primary">{u.building}</td>
+                    <td className="py-3 text-left">
+                      <SARAmount value={u.rentIncome} size={14} />
+                    </td>
+                    <td className="py-3 text-left">
+                      <SARAmount value={u.maintenanceCost} size={14} />
+                    </td>
+                    <td className={`py-3 text-left font-bold ${u.netIncome >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <SARAmount value={u.netIncome} size={14} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Land Investment Section */}
+      {landInvestment && (
+        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <MapPin size={20} className="text-secondary" />
+            <h3 className="text-lg font-bold text-primary font-primary">استثمارات الأراضي</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">تكلفة الاستحواذ</span>
+              <div className="mt-2">
+                <SARAmount value={landInvestment.totalAcquisitionCost} size={20} className="text-xl font-bold text-primary" />
+              </div>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">القيمة التقديرية</span>
+              <div className="mt-2">
+                <SARAmount value={landInvestment.totalEstimatedValue} size={20} className="text-xl font-bold text-primary" />
+              </div>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">الربح/الخسارة غير المحققة</span>
+              <div className="mt-2">
+                <span className={`text-xl font-bold ${landInvestment.unrealizedGainLoss >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <SARAmount value={landInvestment.unrealizedGainLoss} size={20} />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

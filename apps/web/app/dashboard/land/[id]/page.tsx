@@ -3,8 +3,7 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Spinner, CheckCircle, Circle, MapPin, ArrowRight } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
-import { RiyalIcon } from "@repo/ui";
+import { Button, Badge, SARAmount } from "@repo/ui";
 import { getLandDetail, updateLandStatus, getDueDiligence, updateDueDiligenceItems, updateLandFields } from "../../../actions/land";
 import MapPicker from "../../../../components/MapPicker";
 
@@ -143,7 +142,7 @@ export default function LandDetailPage() {
           { label: lang === "ar" ? "رقم الصك" : "Deed #", value: land.deedNumber || "—" },
           { label: lang === "ar" ? "المساحة" : "Area", value: land.totalAreaSqm ? `${fmt(land.totalAreaSqm)} م²` : "—" },
           { label: lang === "ar" ? "المالك" : "Owner", value: land.landOwner || "—" },
-          { label: lang === "ar" ? "القيمة التقديرية" : "Est. Value", value: land.estimatedValueSar ? <span className="flex items-center gap-1"><RiyalIcon size={14} />{fmt(Number(land.estimatedValueSar))}</span> : "—" },
+          { label: lang === "ar" ? "القيمة التقديرية" : "Est. Value", value: land.estimatedValueSar ? <SARAmount value={Number(land.estimatedValueSar)} size={14} /> : "—" },
         ].map((item, i) => (
           <div key={i} className="bg-white rounded-md shadow-card border border-border p-4">
             <span className="text-[10px] font-bold uppercase text-neutral">{item.label}</span>
