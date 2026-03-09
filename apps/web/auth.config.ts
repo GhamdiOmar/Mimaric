@@ -14,6 +14,7 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
       const isOnboarding = nextUrl.pathname === "/dashboard/onboarding";
+      const isBillingPage = nextUrl.pathname.startsWith("/dashboard/billing");
 
       if (isOnDashboard) {
         if (!isLoggedIn) return false; // Redirect to login
@@ -22,6 +23,18 @@ export const authConfig = {
         const onboardingDone = (auth?.user as any)?.onboardingCompleted !== false;
         if (!onboardingDone && !isOnboarding) {
           return Response.redirect(new URL("/dashboard/onboarding", nextUrl));
+        }
+
+        // Subscription enforcement — redirect expired/unpaid to billing page
+        const subscriptionStatus = (auth?.user as any)?.subscriptionStatus;
+        const isSystemRole = ["SYSTEM_ADMIN", "SYSTEM_SUPPORT"].includes((auth?.user as any)?.role);
+
+        // System roles bypass subscription checks (Mimaric platform staff)
+        if (!isSystemRole && subscriptionStatus) {
+          // CANCELED or UNPAID → redirect to billing (except billing page itself)
+          if (["CANCELED", "UNPAID"].includes(subscriptionStatus) && !isBillingPage) {
+            return Response.redirect(new URL("/dashboard/billing", nextUrl));
+          }
         }
 
         return true;
@@ -35,6 +48,7 @@ export const authConfig = {
         token.organizationId = (user as any).organizationId;
         token.onboardingCompleted = (user as any).onboardingCompleted ?? true;
         token.accountType = (user as any).accountType ?? null;
+        token.subscriptionStatus = (user as any).subscriptionStatus ?? null;
       }
       // Backward compatibility — map deprecated roles (remove after full migration)
       if (token.role === "SUPER_ADMIN") token.role = "COMPANY_ADMIN";
@@ -51,6 +65,9 @@ export const authConfig = {
         if (session.role !== undefined) {
           token.role = session.role;
         }
+        if (session.subscriptionStatus !== undefined) {
+          token.subscriptionStatus = session.subscriptionStatus;
+        }
       }
       return token;
     },
@@ -61,6 +78,7 @@ export const authConfig = {
         (session.user as any).organizationId = (token.organizationId as string) ?? "";
         (session.user as any).onboardingCompleted = token.onboardingCompleted ?? true;
         (session.user as any).accountType = token.accountType ?? null;
+        (session.user as any).subscriptionStatus = token.subscriptionStatus ?? null;
       }
       return session;
     },

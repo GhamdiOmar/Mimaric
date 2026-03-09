@@ -1,0 +1,279 @@
+"use client";
+
+import * as React from "react";
+import {
+  CheckCircle,
+  XCircle,
+  Crown,
+  Sparkle,
+  Buildings,
+  ArrowLeft,
+  ArrowRight,
+} from "@phosphor-icons/react";
+import { Button } from "@repo/ui";
+import Link from "next/link";
+import { getPlans, subscribeToPlan, getCurrentSubscription } from "../../../actions/billing";
+
+export default function PlansPage() {
+  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [currentSub, setCurrentSub] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [subscribing, setSubscribing] = React.useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = React.useState<"MONTHLY" | "ANNUAL">("ANNUAL");
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("preferredLanguage");
+    if (stored === "en" || stored === "ar") setLang(stored);
+  }, []);
+
+  React.useEffect(() => {
+    async function load() {
+      try {
+        const [p, sub] = await Promise.all([getPlans(), getCurrentSubscription()]);
+        setPlans(p);
+        setCurrentSub(sub);
+      } catch (error) {
+        console.error("Failed to load plans:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const t = translations[lang];
+
+  async function handleSubscribe(planId: string) {
+    setSubscribing(planId);
+    try {
+      await subscribeToPlan({ planId, billingCycle, startTrial: true });
+      // Reload data
+      const sub = await getCurrentSubscription();
+      setCurrentSub(sub);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setSubscribing(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  const planIcons = [Sparkle, Crown, Buildings];
+
+  return (
+    <div className="space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
+      {/* Back + Header */}
+      <div>
+        <Link href="/dashboard/billing" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
+          {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+          {t.backToBilling}
+        </Link>
+        <h1 className="text-2xl font-bold text-foreground">{t.title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p>
+      </div>
+
+      {/* Billing Cycle Toggle */}
+      <div className="flex items-center justify-center gap-4 p-1 rounded-full bg-muted w-fit mx-auto">
+        <button
+          onClick={() => setBillingCycle("MONTHLY")}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            billingCycle === "MONTHLY"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t.monthly}
+        </button>
+        <button
+          onClick={() => setBillingCycle("ANNUAL")}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            billingCycle === "ANNUAL"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {t.annual}
+          <span className="ms-1.5 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
+            {t.save20}
+          </span>
+        </button>
+      </div>
+
+      {/* Plans Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        {plans.map((plan: any, index: number) => {
+          const Icon = planIcons[index] ?? Crown;
+          const isCurrentPlan = currentSub?.planId === plan.id;
+          const price = billingCycle === "ANNUAL" ? Number(plan.priceAnnual) : Number(plan.priceMonthly);
+          const monthlyEquiv = billingCycle === "ANNUAL" ? Math.round(price / 12) : price;
+          const isPopular = index === 1; // Professional is middle/popular
+
+          return (
+            <div
+              key={plan.id}
+              className={`relative rounded-xl border bg-card shadow-sm overflow-hidden ${
+                isPopular ? "border-primary ring-2 ring-primary/20" : ""
+              }`}
+            >
+              {isPopular && (
+                <div className="absolute top-0 inset-x-0 bg-primary text-primary-foreground text-xs text-center py-1 font-medium">
+                  {t.mostPopular}
+                </div>
+              )}
+
+              <div className={`p-6 ${isPopular ? "pt-10" : ""}`}>
+                <Icon className="w-8 h-8 text-primary mb-3" />
+                <h3 className="text-xl font-bold">
+                  {lang === "ar" ? plan.nameAr : plan.nameEn}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1 min-h-[40px]">
+                  {lang === "ar" ? plan.descriptionAr : plan.descriptionEn}
+                </p>
+
+                <div className="mt-4 mb-6">
+                  {price === 0 ? (
+                    <p className="text-3xl font-bold">{t.free}</p>
+                  ) : (
+                    <>
+                      <p className="text-3xl font-bold">
+                        {monthlyEquiv.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")}
+                        <span className="text-base font-normal text-muted-foreground"> {t.sar}/{t.month}</span>
+                      </p>
+                      {billingCycle === "ANNUAL" && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {t.billedAnnually}: {price.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}/{t.year}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {isCurrentPlan ? (
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    disabled
+                    style={{ display: "inline-flex" }}
+                  >
+                    <CheckCircle className="w-4 h-4 me-2" />
+                    {t.currentPlan}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    variant={isPopular ? "primary" : "secondary"}
+                    disabled={!!subscribing}
+                    onClick={() => handleSubscribe(plan.id)}
+                    style={{ display: "inline-flex" }}
+                  >
+                    {subscribing === plan.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current me-2" />
+                    ) : null}
+                    {price === 0 ? t.getStarted : t.startTrial}
+                  </Button>
+                )}
+              </div>
+
+              {/* Feature List */}
+              <div className="border-t p-6 space-y-3">
+                {plan.entitlements?.map((ent: any) => {
+                  const granted = ent.type === "BOOLEAN" ? ent.value === "true" :
+                    ent.type === "LIMIT" ? ent.value !== "0" : true;
+
+                  return (
+                    <div key={ent.featureKey} className="flex items-center gap-2 text-sm">
+                      {granted ? (
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" weight="fill" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+                      )}
+                      <span className={granted ? "" : "text-muted-foreground/60"}>
+                        {formatEntitlement(ent, lang)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatEntitlement(ent: any, lang: "ar" | "en"): string {
+  const labels: Record<string, { ar: string; en: string }> = {
+    "projects.max": { ar: "مشاريع", en: "Projects" },
+    "users.max": { ar: "مستخدمين", en: "Users" },
+    "units.max": { ar: "وحدات", en: "Units" },
+    "cmms.access": { ar: "نظام إدارة الصيانة", en: "CMMS Maintenance System" },
+    "offplan.access": { ar: "نظام البيع على الخارطة", en: "Off-Plan Development" },
+    "reports.export": { ar: "تصدير التقارير", en: "Export Reports" },
+    "pii.encryption": { ar: "تشفير البيانات الشخصية", en: "PII Encryption" },
+    "audit.access": { ar: "سجل المراجعة", en: "Audit Log" },
+    "api.access": { ar: "الوصول لـ API", en: "API Access" },
+    "custom.branding": { ar: "العلامة التجارية المخصصة", en: "Custom Branding" },
+    "sla.priority": { ar: "أولوية الدعم", en: "Support Priority" },
+  };
+
+  const label = labels[ent.featureKey]?.[lang] ?? ent.featureKey;
+
+  if (ent.type === "LIMIT") {
+    const val = ent.value === "unlimited"
+      ? (lang === "ar" ? "غير محدود" : "Unlimited")
+      : ent.value;
+    return `${val} ${label}`;
+  }
+
+  return label;
+}
+
+// ─── Translations ────────────────────────────────────────────────────────────
+
+const translations = {
+  ar: {
+    title: "اختر خطتك",
+    subtitle: "اختر الخطة المناسبة لأعمالك",
+    backToBilling: "العودة للفوترة",
+    monthly: "شهري",
+    annual: "سنوي",
+    save20: "وفر 20%",
+    sar: "ر.س",
+    month: "شهر",
+    year: "سنة",
+    free: "مجاني",
+    billedAnnually: "يُفوتر سنوياً",
+    currentPlan: "الخطة الحالية",
+    getStarted: "ابدأ الآن",
+    startTrial: "ابدأ تجربة مجانية",
+    mostPopular: "الأكثر شيوعاً",
+  },
+  en: {
+    title: "Choose Your Plan",
+    subtitle: "Select the plan that fits your business",
+    backToBilling: "Back to Billing",
+    monthly: "Monthly",
+    annual: "Annual",
+    save20: "Save 20%",
+    sar: "SAR",
+    month: "month",
+    year: "year",
+    free: "Free",
+    billedAnnually: "Billed annually",
+    currentPlan: "Current Plan",
+    getStarted: "Get Started",
+    startTrial: "Start Free Trial",
+    mostPopular: "Most Popular",
+  },
+};

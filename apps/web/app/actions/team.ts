@@ -7,6 +7,7 @@ import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { validatePassword } from "../../lib/password-policy";
 import { isSystemRole } from "../../lib/permissions";
+import { checkLimit, FEATURE_KEYS } from "../../lib/entitlements";
 
 export async function getTeamMembers() {
   const session = await requirePermission("team:read");
@@ -36,6 +37,13 @@ export async function inviteTeamMember(data: {
   // Guard: non-system users cannot assign system roles
   if (isSystemRole(data.role) && !isSystemRole(session.role)) {
     throw new Error("Cannot assign system-level roles");
+  }
+
+  // Entitlement check: users.max
+  const userCount = await db.user.count({ where: { organizationId: session.organizationId } });
+  const entitlement = await checkLimit(session.organizationId, FEATURE_KEYS.USERS_MAX, userCount);
+  if (!entitlement.granted) {
+    throw new Error(entitlement.reason ?? "Team member limit reached. Please upgrade your plan.");
   }
 
   // Validate password strength

@@ -4,6 +4,7 @@ import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
+import { checkLimit, FEATURE_KEYS } from "../../lib/entitlements";
 
 export async function updateUnit(unitId: string, data: any) {
   const session = await requirePermission("units:write");
@@ -97,6 +98,15 @@ export async function createUnit(data: {
   });
   if (!building || building.project.organizationId !== session.organizationId) {
     throw new Error("Building not found");
+  }
+
+  // Entitlement check: units.max
+  const unitCount = await db.unit.count({
+    where: { building: { project: { organizationId: session.organizationId } } },
+  });
+  const entitlement = await checkLimit(session.organizationId, FEATURE_KEYS.UNITS_MAX, unitCount);
+  if (!entitlement.granted) {
+    throw new Error(entitlement.reason ?? "Unit limit reached. Please upgrade your plan.");
   }
 
   const unit = await db.unit.create({

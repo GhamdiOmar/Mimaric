@@ -48,6 +48,7 @@ const navItems: { label: { ar: string; en: string }; icon: any; href: string; se
   { label: { ar: "المالية", en: "Finance" }, icon: Receipt, href: "/dashboard/finance", section: "main", permission: "finance:read" },
   { label: { ar: "الصيانة", en: "Maintenance" }, icon: Wrench, href: "/dashboard/maintenance", section: "main", permission: "maintenance:read" },
   { label: { ar: "التقارير", en: "Reports" }, icon: FileText, href: "/dashboard/reports", section: "secondary", permission: "reports:read" },
+  { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: CurrencyCircleDollar, href: "/dashboard/billing", section: "secondary", permission: "billing:read" },
   { label: { ar: "الإعدادات", en: "Settings" }, icon: Gear, href: "/dashboard/settings", section: "secondary", permission: "organization:read" },
 ];
 

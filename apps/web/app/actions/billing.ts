@@ -1,0 +1,582 @@
+"use server";
+
+import { db } from "@repo/db";
+import { revalidatePath } from "next/cache";
+import { requirePermission, getSessionOrThrow } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
+import { createSubscription, transitionSubscription } from "../../lib/payment/subscription-machine";
+import { invalidateEntitlements } from "../../lib/entitlements";
+import { unstable_cache } from "next/cache";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Plans (Public)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get all public plans with their entitlements.
+ * Cached for 5 minutes — plans rarely change.
+ */
+export const getPlans = unstable_cache(
+  async () => {
+    const plans = await db.plan.findMany({
+      where: { isPublic: true },
+      include: { entitlements: true },
+      orderBy: { sortOrder: "asc" },
+    });
+    return JSON.parse(JSON.stringify(plans));
+  },
+  ["public-plans"],
+  { tags: ["plans"], revalidate: 300 }
+);
+
+/**
+ * Get a single plan by slug.
+ */
+export async function getPlanBySlug(slug: string) {
+  const plan = await db.plan.findUnique({
+    where: { slug },
+    include: { entitlements: true },
+  });
+  return plan ? JSON.parse(JSON.stringify(plan)) : null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Subscriptions
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get the current subscription for the logged-in user's organization.
+ */
+export async function getCurrentSubscription() {
+  const session = await requirePermission("billing:read");
+
+  const subscription = await db.subscription.findFirst({
+    where: {
+      organizationId: session.organizationId,
+      status: { in: ["TRIALING", "ACTIVE", "PAST_DUE", "PAUSED"] },
+    },
+    include: {
+      plan: { include: { entitlements: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return subscription ? JSON.parse(JSON.stringify(subscription)) : null;
+}
+
+/**
+ * Subscribe to a plan (start trial or direct).
+ */
+export async function subscribeToPlan(data: {
+  planId: string;
+  billingCycle: "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUAL";
+  startTrial?: boolean;
+}) {
+  const session = await requirePermission("billing:write");
+
+  // Check if org already has an active subscription
+  const existing = await db.subscription.findFirst({
+    where: {
+      organizationId: session.organizationId,
+      status: { in: ["TRIALING", "ACTIVE", "PAST_DUE"] },
+    },
+  });
+
+  if (existing) {
+    throw new Error("Organization already has an active subscription. Use upgrade/downgrade instead.");
+  }
+
+  const subscriptionId = await createSubscription({
+    organizationId: session.organizationId,
+    planId: data.planId,
+    billingCycle: data.billingCycle,
+    startTrial: data.startTrial ?? true,
+  });
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "CREATE", resource: "Subscription", resourceId: subscriptionId,
+    metadata: { planId: data.planId, billingCycle: data.billingCycle },
+    organizationId: session.organizationId,
+  });
+
+  invalidateEntitlements(session.organizationId);
+  revalidatePath("/dashboard/billing");
+
+  return { subscriptionId };
+}
+
+/**
+ * Change plan (upgrade or downgrade).
+ */
+export async function changePlan(data: {
+  newPlanId: string;
+  billingCycle?: "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUAL";
+}) {
+  const session = await requirePermission("billing:write");
+
+  const current = await db.subscription.findFirst({
+    where: {
+      organizationId: session.organizationId,
+      status: { in: ["TRIALING", "ACTIVE"] },
+    },
+  });
+
+  if (!current) {
+    throw new Error("No active subscription to change");
+  }
+
+  const newPlan = await db.plan.findUnique({ where: { id: data.newPlanId } });
+  if (!newPlan) throw new Error("Plan not found");
+
+  const billingCycle = data.billingCycle ?? current.billingCycle;
+
+  // Update subscription to new plan
+  await db.subscription.update({
+    where: { id: current.id },
+    data: {
+      planId: data.newPlanId,
+      billingCycle,
+      priceAtRenewal: billingCycle === "ANNUAL" ? newPlan.priceAnnual : newPlan.priceMonthly,
+    },
+  });
+
+  // Log event
+  await db.subscriptionEvent.create({
+    data: {
+      subscriptionId: current.id,
+      fromStatus: current.status,
+      toStatus: current.status,
+      triggeredBy: `user:${session.userId}`,
+      reason: `Plan changed to ${newPlan.slug}`,
+      metadata: {
+        previousPlanId: current.planId,
+        newPlanId: data.newPlanId,
+        billingCycle,
+      },
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "UPDATE", resource: "Subscription", resourceId: current.id,
+    metadata: { previousPlanId: current.planId, newPlanId: data.newPlanId },
+    organizationId: session.organizationId,
+  });
+
+  invalidateEntitlements(session.organizationId);
+  revalidatePath("/dashboard/billing");
+
+  return { success: true };
+}
+
+/**
+ * Cancel the current subscription.
+ */
+export async function cancelSubscription(reason?: string) {
+  const session = await requirePermission("billing:write");
+
+  const current = await db.subscription.findFirst({
+    where: {
+      organizationId: session.organizationId,
+      status: { in: ["TRIALING", "ACTIVE", "PAST_DUE"] },
+    },
+  });
+
+  if (!current) {
+    throw new Error("No active subscription to cancel");
+  }
+
+  await transitionSubscription(
+    current.id,
+    "CANCELED",
+    `user:${session.userId}`,
+    reason || "User-initiated cancellation"
+  );
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "UPDATE", resource: "Subscription", resourceId: current.id,
+    metadata: { action: "canceled", reason },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath("/dashboard/billing");
+
+  return { success: true };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Invoices
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get invoices for the current organization.
+ */
+export async function getInvoices(page = 1, pageSize = 20) {
+  const session = await requirePermission("billing:read");
+
+  const [invoices, total] = await Promise.all([
+    db.invoice.findMany({
+      where: { organizationId: session.organizationId },
+      include: { lineItems: true },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.invoice.count({
+      where: { organizationId: session.organizationId },
+    }),
+  ]);
+
+  return {
+    invoices: JSON.parse(JSON.stringify(invoices)),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
+/**
+ * Get a single invoice by ID.
+ */
+export async function getInvoiceById(invoiceId: string) {
+  const session = await requirePermission("billing:read");
+
+  const invoice = await db.invoice.findFirst({
+    where: {
+      id: invoiceId,
+      organizationId: session.organizationId,
+    },
+    include: {
+      lineItems: { orderBy: { sortOrder: "asc" } },
+      transactions: { orderBy: { initiatedAt: "desc" } },
+      coupon: true,
+    },
+  });
+
+  if (!invoice) throw new Error("Invoice not found");
+
+  return JSON.parse(JSON.stringify(invoice));
+}
+
+/**
+ * Generate a sequential invoice number.
+ */
+async function generateInvoiceNumber(): Promise<string> {
+  const year = new Date().getFullYear();
+  const lastInvoice = await db.invoice.findFirst({
+    where: {
+      invoiceNumber: { startsWith: `INV-${year}-` },
+    },
+    orderBy: { invoiceNumber: "desc" },
+  });
+
+  let seq = 1;
+  if (lastInvoice) {
+    const parts = lastInvoice.invoiceNumber.split("-");
+    seq = parseInt(parts[2] ?? "0", 10) + 1;
+  }
+
+  return `INV-${year}-${String(seq).padStart(5, "0")}`;
+}
+
+/**
+ * Generate an invoice for a subscription billing period.
+ */
+export async function generateSubscriptionInvoice(params: {
+  subscriptionId: string;
+  description?: string;
+}) {
+  const session = await getSessionOrThrow();
+
+  const subscription = await db.subscription.findUnique({
+    where: { id: params.subscriptionId },
+    include: { plan: true, organization: true },
+  });
+
+  if (!subscription) throw new Error("Subscription not found");
+  if (subscription.organizationId !== session.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const price = subscription.billingCycle === "ANNUAL"
+    ? subscription.plan.priceAnnual
+    : subscription.plan.priceMonthly;
+
+  const priceNum = Number(price);
+  const vatRate = 0.15; // Saudi VAT 15%
+  const vatAmount = priceNum * vatRate;
+  const total = priceNum + vatAmount;
+
+  const invoiceNumber = await generateInvoiceNumber();
+
+  const invoice = await db.invoice.create({
+    data: {
+      invoiceNumber,
+      organizationId: subscription.organizationId,
+      subscriptionId: subscription.id,
+      status: "ISSUED",
+      billingCycle: subscription.billingCycle,
+      subtotal: priceNum,
+      vatRate,
+      vatAmount,
+      total,
+      currency: "SAR",
+      issuedAt: new Date(),
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Due in 7 days
+      lineItems: {
+        create: [
+          {
+            description: `${subscription.plan.nameEn} - ${subscription.billingCycle} subscription`,
+            descriptionAr: `${subscription.plan.nameAr} - اشتراك ${getBillingCycleAr(subscription.billingCycle)}`,
+            quantity: 1,
+            unitPrice: priceNum,
+            vatRate,
+            vatAmount,
+            total,
+            sortOrder: 0,
+          },
+        ],
+      },
+    },
+    include: { lineItems: true },
+  });
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "CREATE", resource: "Invoice", resourceId: invoice.id,
+    metadata: { invoiceNumber, total, subscriptionId: subscription.id },
+    organizationId: session.organizationId,
+  });
+
+  return JSON.parse(JSON.stringify(invoice));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Payment Methods
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get saved payment methods for the current organization.
+ */
+export async function getPaymentMethods() {
+  const session = await requirePermission("billing:read");
+
+  const methods = await db.paymentMethod.findMany({
+    where: { organizationId: session.organizationId },
+    orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+  });
+
+  return JSON.parse(JSON.stringify(methods));
+}
+
+/**
+ * Set a payment method as the default.
+ */
+export async function setDefaultPaymentMethod(paymentMethodId: string) {
+  const session = await requirePermission("billing:write");
+
+  // Verify ownership
+  const method = await db.paymentMethod.findFirst({
+    where: { id: paymentMethodId, organizationId: session.organizationId },
+  });
+  if (!method) throw new Error("Payment method not found");
+
+  // Unset all, then set the chosen one
+  await db.$transaction([
+    db.paymentMethod.updateMany({
+      where: { organizationId: session.organizationId },
+      data: { isDefault: false },
+    }),
+    db.paymentMethod.update({
+      where: { id: paymentMethodId },
+      data: { isDefault: true },
+    }),
+  ]);
+
+  revalidatePath("/dashboard/billing");
+  return { success: true };
+}
+
+/**
+ * Delete a payment method.
+ */
+export async function deletePaymentMethod(paymentMethodId: string) {
+  const session = await requirePermission("billing:write");
+
+  const method = await db.paymentMethod.findFirst({
+    where: { id: paymentMethodId, organizationId: session.organizationId },
+  });
+  if (!method) throw new Error("Payment method not found");
+
+  await db.paymentMethod.delete({ where: { id: paymentMethodId } });
+
+  revalidatePath("/dashboard/billing");
+  return { success: true };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Admin Actions (System-level)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Admin: Get all subscriptions across all organizations.
+ */
+export async function adminGetAllSubscriptions(page = 1, pageSize = 50) {
+  await requirePermission("billing:admin");
+
+  const [subscriptions, total] = await Promise.all([
+    db.subscription.findMany({
+      include: {
+        plan: true,
+        organization: { select: { id: true, name: true, nameArabic: true, crNumber: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.subscription.count(),
+  ]);
+
+  return {
+    subscriptions: JSON.parse(JSON.stringify(subscriptions)),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
+/**
+ * Admin: Create or update a plan.
+ */
+export async function adminUpsertPlan(data: {
+  id?: string;
+  slug: string;
+  nameEn: string;
+  nameAr: string;
+  descriptionEn?: string;
+  descriptionAr?: string;
+  priceMonthly: number;
+  priceAnnual: number;
+  trialDays?: number;
+  isPublic?: boolean;
+  isDefault?: boolean;
+  sortOrder?: number;
+  features?: unknown;
+  entitlements?: { featureKey: string; type: "BOOLEAN" | "LIMIT" | "METERED"; value: string }[];
+}) {
+  const session = await requirePermission("billing:admin");
+
+  const planData = {
+    slug: data.slug,
+    nameEn: data.nameEn,
+    nameAr: data.nameAr,
+    descriptionEn: data.descriptionEn,
+    descriptionAr: data.descriptionAr,
+    priceMonthly: data.priceMonthly,
+    priceAnnual: data.priceAnnual,
+    trialDays: data.trialDays ?? 14,
+    isPublic: data.isPublic ?? true,
+    isDefault: data.isDefault ?? false,
+    sortOrder: data.sortOrder ?? 0,
+    features: data.features as any,
+  };
+
+  let plan;
+  if (data.id) {
+    plan = await db.plan.update({ where: { id: data.id }, data: planData });
+  } else {
+    plan = await db.plan.create({ data: planData });
+  }
+
+  // Sync entitlements
+  if (data.entitlements) {
+    // Delete existing and recreate
+    await db.planEntitlement.deleteMany({ where: { planId: plan.id } });
+    await db.planEntitlement.createMany({
+      data: data.entitlements.map((e) => ({
+        planId: plan.id,
+        featureKey: e.featureKey,
+        type: e.type,
+        value: e.value,
+      })),
+    });
+  }
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: data.id ? "UPDATE" : "CREATE", resource: "Plan", resourceId: plan.id,
+    metadata: { slug: data.slug },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath("/admin/plans");
+  return JSON.parse(JSON.stringify(plan));
+}
+
+/**
+ * Admin: Create an entitlement override for a specific organization.
+ */
+export async function adminCreateOverride(data: {
+  organizationId: string;
+  featureKey: string;
+  type: "BOOLEAN" | "LIMIT" | "METERED";
+  value: string;
+  reason?: string;
+  expiresAt?: Date;
+}) {
+  const session = await requirePermission("billing:admin");
+
+  const override = await db.entitlementOverride.upsert({
+    where: {
+      organizationId_featureKey: {
+        organizationId: data.organizationId,
+        featureKey: data.featureKey,
+      },
+    },
+    create: {
+      organizationId: data.organizationId,
+      featureKey: data.featureKey,
+      type: data.type,
+      value: data.value,
+      reason: data.reason,
+      grantedBy: session.userId,
+      expiresAt: data.expiresAt,
+    },
+    update: {
+      type: data.type,
+      value: data.value,
+      reason: data.reason,
+      grantedBy: session.userId,
+      expiresAt: data.expiresAt,
+    },
+  });
+
+  invalidateEntitlements(data.organizationId);
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "CREATE", resource: "EntitlementOverride", resourceId: override.id,
+    metadata: { targetOrgId: data.organizationId, featureKey: data.featureKey, value: data.value },
+    organizationId: session.organizationId,
+  });
+
+  return JSON.parse(JSON.stringify(override));
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function getBillingCycleAr(cycle: string): string {
+  const map: Record<string, string> = {
+    MONTHLY: "شهري",
+    QUARTERLY: "ربع سنوي",
+    SEMI_ANNUAL: "نصف سنوي",
+    ANNUAL: "سنوي",
+  };
+  return map[cycle] ?? cycle;
+}

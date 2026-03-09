@@ -102,6 +102,10 @@ export type Permission =
   // Invitations
   | "invitations:read"
   | "invitations:write"
+  // Billing & Subscriptions
+  | "billing:read"             // View own org subscription/invoices
+  | "billing:write"            // Manage subscription (upgrade/downgrade/cancel)
+  | "billing:admin"            // System-level: manage all plans, view all subscriptions
   // System (platform-level)
   | "system:admin"
   | "system:support";
@@ -139,18 +143,20 @@ const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "launch:read", "launch:write",
   "help:read", "help:create_ticket", "help:manage_permissions",
   "invitations:read", "invitations:write",
+  // Billing
+  "billing:read", "billing:write",
 ];
 
 // ─── System Permissions (Mimaric platform staff only) ────────────────────────
 
 const SYSTEM_ONLY_PERMISSIONS: Permission[] = [
-  "system:admin", "system:support", "help:manage_tickets",
+  "system:admin", "system:support", "help:manage_tickets", "billing:admin",
 ];
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   // ── System tier (Mimaric platform team) ──────────────────────────────────
   SYSTEM_ADMIN: [...COMPANY_ADMIN_PERMISSIONS, ...SYSTEM_ONLY_PERMISSIONS],
-  SYSTEM_SUPPORT: [...COMPANY_ADMIN_PERMISSIONS, "system:support", "help:manage_tickets"],
+  SYSTEM_SUPPORT: [...COMPANY_ADMIN_PERMISSIONS, "system:support", "help:manage_tickets", "billing:admin"],
 
   // ── Customer tier ────────────────────────────────────────────────────────
   COMPANY_ADMIN: COMPANY_ADMIN_PERMISSIONS,
@@ -248,6 +254,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "pricing:read", "pricing:write",
     "launch:read",
     "help:read", "help:create_ticket",
+    "billing:read",
   ],
 
   TECHNICIAN: [

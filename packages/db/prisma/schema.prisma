@@ -45,6 +45,13 @@ model Organization {
   supportTickets      SupportTicket[]
   invitations         Invitation[]
   joinRequests        JoinRequest[]    @relation("OrgJoinRequests")
+
+  // ── Commercialization relations ──
+  subscriptions         Subscription[]
+  entitlementOverrides  EntitlementOverride[]
+  paymentMethods        PaymentMethod[]
+  invoices              Invoice[]
+  couponRedemptions     CouponRedemption[]
 }
 
 enum OrgType {
@@ -1499,4 +1506,361 @@ enum WaveStatus {
   READY_WAVE
   LAUNCHED
   CLOSED_WAVE
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMMERCIALIZATION LAYER — Plans, Subscriptions, Payments, Invoicing
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  UNPAID
+  PAUSED
+  CANCELED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
+enum EntitlementType {
+  BOOLEAN    // Feature on/off (e.g., cmms.access)
+  LIMIT      // Numeric cap (e.g., projects.max = 25)
+  METERED    // Usage-based tracking (future)
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  PARTIALLY_PAID
+  OVERDUE
+  CANCELED
+  REFUNDED
+}
+
+enum ZatcaStatus {
+  NOT_APPLICABLE
+  PENDING
+  CLEARED
+  REPORTED
+  REJECTED
+}
+
+enum TransactionStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  VOIDED
+}
+
+enum CouponType {
+  PERCENTAGE    // e.g., 20% off
+  FIXED_AMOUNT  // e.g., 100 SAR off
+}
+
+// ─── Plan (commercial package definition) ────────────────────────────────────
+
+model Plan {
+  id               String            @id @default(cuid())
+  slug             String            @unique  // "starter", "professional", "enterprise"
+  nameEn           String                     // Display name (English)
+  nameAr           String                     // Display name (Arabic)
+  descriptionEn    String?
+  descriptionAr    String?
+  priceMonthly     Decimal           @default(0) // SAR per month
+  priceAnnual      Decimal           @default(0) // SAR per year (discounted)
+  currency         String            @default("SAR")
+  trialDays        Int               @default(14)
+  isPublic         Boolean           @default(true)  // Visible on pricing page
+  isDefault        Boolean           @default(false) // Assigned to new orgs
+  sortOrder        Int               @default(0)
+  features         Json?             // Marketing feature list for pricing page
+  metadata         Json?             // Additional config (e.g., SLA tier, support channel)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  entitlements     PlanEntitlement[]
+  subscriptions    Subscription[]
+  coupons          Coupon[]          @relation("CouponPlans")
+
+  @@index([isPublic, sortOrder])
+}
+
+// ─── Plan Entitlement (feature/limit per plan) ──────────────────────────────
+
+model PlanEntitlement {
+  id          String          @id @default(cuid())
+  planId      String
+  plan        Plan            @relation(fields: [planId], references: [id], onDelete: Cascade)
+  featureKey  String          // e.g., "projects.max", "cmms.access", "reports.export"
+  type        EntitlementType
+  value       String          // "true"/"false" for BOOLEAN, numeric string for LIMIT/METERED
+  metadata    Json?           // Additional context (e.g., description, display label)
+
+  @@unique([planId, featureKey])
+  @@index([featureKey])
+}
+
+// ─── Subscription (org enrollment in a plan) ────────────────────────────────
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  organizationId      String
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  planId              String
+  plan                Plan               @relation(fields: [planId], references: [id])
+  status              SubscriptionStatus @default(TRIALING)
+  billingCycle        BillingCycle       @default(MONTHLY)
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  trialEndsAt         DateTime?
+  canceledAt          DateTime?
+  cancelReason        String?
+  pausedAt            DateTime?
+  resumesAt           DateTime?
+  nextBillingDate     DateTime?
+  priceAtRenewal      Decimal?           // Locked-in price for next renewal
+  metadata            Json?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  events              SubscriptionEvent[]
+  invoices            Invoice[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+// ─── Subscription Event (audit trail for status transitions) ────────────────
+
+model SubscriptionEvent {
+  id              String       @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  fromStatus      SubscriptionStatus?
+  toStatus        SubscriptionStatus
+  triggeredBy     String       // "system", "webhook", "admin:<userId>", "user:<userId>"
+  reason          String?
+  metadata        Json?        // Additional context (e.g., gateway response, dunning attempt #)
+  createdAt       DateTime     @default(now())
+
+  @@index([subscriptionId])
+  @@index([createdAt])
+}
+
+// ─── Entitlement Override (per-org exceptions for enterprise/custom deals) ──
+
+model EntitlementOverride {
+  id              String          @id @default(cuid())
+  organizationId  String
+  organization    Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  featureKey      String
+  type            EntitlementType
+  value           String
+  reason          String?         // Why this override exists (e.g., "Enterprise contract #123")
+  grantedBy       String?         // userId of admin who granted
+  expiresAt       DateTime?       // Null = permanent
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([organizationId, featureKey])
+  @@index([organizationId])
+}
+
+// ─── Invoice ────────────────────────────────────────────────────────────────
+
+model Invoice {
+  id               String        @id @default(cuid())
+  invoiceNumber    String        @unique  // Sequential per ZATCA (e.g., INV-2026-00001)
+  uuid             String        @unique @default(uuid()) // UUID v4 per ZATCA
+  organizationId   String
+  organization     Organization  @relation(fields: [organizationId], references: [id])
+  subscriptionId   String?
+  subscription     Subscription? @relation(fields: [subscriptionId], references: [id])
+  status           InvoiceStatus @default(DRAFT)
+  billingCycle     BillingCycle?
+  subtotal         Decimal       // Before VAT
+  vatRate          Decimal       @default(0.15) // 15% Saudi VAT
+  vatAmount        Decimal
+  discountAmount   Decimal       @default(0)
+  total            Decimal       // subtotal + vatAmount - discountAmount
+  currency         String        @default("SAR")
+  issuedAt         DateTime?
+  dueDate          DateTime?
+  paidAt           DateTime?
+  notes            String?
+
+  // ZATCA e-invoicing fields
+  zatcaStatus      ZatcaStatus   @default(NOT_APPLICABLE)
+  zatcaHash        String?       // Previous invoice hash (for chaining)
+  zatcaQrCode      String?       // Base64 encoded QR
+  xmlContent       String?       // Signed ZATCA XML
+  zatcaSubmittedAt DateTime?
+  zatcaClearedAt   DateTime?
+
+  couponId         String?
+  coupon           Coupon?       @relation(fields: [couponId], references: [id])
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  lineItems        InvoiceLineItem[]
+  transactions     PaymentTransaction[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([issuedAt])
+  @@index([invoiceNumber])
+}
+
+// ─── Invoice Line Item ──────────────────────────────────────────────────────
+
+model InvoiceLineItem {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description   String
+  descriptionAr String?
+  quantity      Int      @default(1)
+  unitPrice     Decimal
+  vatRate       Decimal  @default(0.15)
+  vatAmount     Decimal
+  total         Decimal  // quantity * unitPrice + vatAmount
+  sortOrder     Int      @default(0)
+
+  @@index([invoiceId])
+}
+
+// ─── Payment Transaction ────────────────────────────────────────────────────
+
+model PaymentTransaction {
+  id              String        @id @default(cuid())
+  invoiceId       String
+  invoice         Invoice       @relation(fields: [invoiceId], references: [id])
+  paymentMethodId String?
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  gateway         String        // "moyasar", "hyperpay", "paytabs"
+  gatewayRef      String?       // Gateway-specific transaction ID
+  amount          Decimal
+  currency        String        @default("SAR")
+  status          TransactionStatus @default(PENDING)
+  failureReason   String?
+  refundedAmount  Decimal?
+  metadata        Json?         // Raw gateway response
+  initiatedAt     DateTime      @default(now())
+  completedAt     DateTime?
+
+  @@index([invoiceId])
+  @@index([gatewayRef])
+  @@index([status])
+}
+
+// ─── Payment Method (tokenized card per org) ────────────────────────────────
+
+model PaymentMethod {
+  id              String               @id @default(cuid())
+  organizationId  String
+  organization    Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  gateway         String               // "moyasar", "hyperpay"
+  tokenId         String               // Gateway token reference
+  brand           String?              // "mada", "visa", "mastercard", "applepay"
+  lastFourDigits  String?
+  expiryMonth     Int?
+  expiryYear      Int?
+  holderName      String?
+  isDefault       Boolean              @default(false)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  transactions    PaymentTransaction[]
+
+  @@index([organizationId])
+}
+
+// ─── Gateway Config (system-level gateway credentials) ──────────────────────
+
+model GatewayConfig {
+  id             String   @id @default(cuid())
+  gateway        String   @unique // "moyasar", "hyperpay", "paytabs"
+  displayName    String
+  isEnabled      Boolean  @default(false)
+  isPrimary      Boolean  @default(false)
+  supportedBrands Json?   // ["mada", "visa", "mastercard", "applepay"]
+  config         Json?    // Non-secret config (e.g., mode: "test"/"live")
+  // Secret keys stored in env vars, NOT here
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── Webhook Event (idempotency log) ────────────────────────────────────────
+
+model WebhookEvent {
+  id           String   @id @default(cuid())
+  gateway      String   // "moyasar", "hyperpay", "paytabs"
+  eventId      String   // Gateway event ID (for idempotency)
+  eventType    String   // e.g., "payment.succeeded", "payment.failed"
+  payload      Json     // Raw webhook payload
+  processedAt  DateTime?
+  error        String?  // Processing error message if failed
+  createdAt    DateTime @default(now())
+
+  @@unique([gateway, eventId])
+  @@index([gateway, eventType])
+  @@index([createdAt])
+}
+
+// ─── Coupon (code-based discount) ───────────────────────────────────────────
+
+model Coupon {
+  id              String           @id @default(cuid())
+  code            String           @unique
+  descriptionEn   String?
+  descriptionAr   String?
+  type            CouponType
+  value           Decimal          // Percentage (0-100) or fixed SAR amount
+  currency        String           @default("SAR")
+  maxRedemptions  Int?             // Null = unlimited
+  currentUses     Int              @default(0)
+  validFrom       DateTime         @default(now())
+  validUntil      DateTime?
+  isActive        Boolean          @default(true)
+  minPurchaseAmount Decimal?       // Minimum invoice amount
+  applicableCycles  Json?          // ["MONTHLY", "ANNUAL"] or null = all
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  plans           Plan[]           @relation("CouponPlans")
+  redemptions     CouponRedemption[]
+  invoices        Invoice[]
+
+  @@index([code])
+  @@index([isActive, validFrom, validUntil])
+}
+
+// ─── Coupon Redemption (usage tracking per org) ─────────────────────────────
+
+model CouponRedemption {
+  id              String       @id @default(cuid())
+  couponId        String
+  coupon          Coupon       @relation(fields: [couponId], references: [id])
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  discountApplied Decimal      // Actual SAR discount given
+  redeemedAt      DateTime     @default(now())
+
+  @@index([couponId])
+  @@index([organizationId])
 }

@@ -4,6 +4,7 @@ import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
+import { checkLimit, FEATURE_KEYS } from "../../lib/entitlements";
 
 export async function createProject(data: {
   name: string;
@@ -30,6 +31,13 @@ export async function createProject(data: {
   estimatedValueSar?: number;
 }) {
   const session = await requirePermission("projects:write");
+
+  // Entitlement check: projects.max
+  const projectCount = await db.project.count({ where: { organizationId: session.organizationId } });
+  const entitlement = await checkLimit(session.organizationId, FEATURE_KEYS.PROJECTS_MAX, projectCount);
+  if (!entitlement.granted) {
+    throw new Error(entitlement.reason ?? "Project limit reached. Please upgrade your plan.");
+  }
 
   const project = await db.project.create({
     data: {
