@@ -26,7 +26,7 @@ const fmt = (n: number) =>
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white p-3 rounded-md shadow-raised border border-border text-xs">
+    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs">
       <p className="font-bold text-primary mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">

@@ -8,6 +8,7 @@ import { requirePermission, getSessionOrThrow } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { createNotification } from "../../lib/create-notification";
 import { validatePassword } from "../../lib/password-policy";
+import { isSystemRole } from "../../lib/permissions";
 import { signIn } from "../../auth";
 
 // ─── Create Invitation ────────────────────────────────────────────────────────
@@ -22,6 +23,11 @@ export async function createInvitation(data: { email: string; role?: string }) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return { success: false, error: "Invalid email address" };
+    }
+
+    // Guard: non-system users cannot invite with system roles
+    if (data.role && isSystemRole(data.role) && !isSystemRole(session.role)) {
+      return { success: false, error: "Cannot assign system-level roles" };
     }
 
     // Check if email already belongs to an existing user

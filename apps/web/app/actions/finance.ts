@@ -130,3 +130,38 @@ export async function getLandInvestmentSummary() {
 
   return { totalAcquisitionCost, totalEstimatedValue, unrealizedGainLoss };
 }
+
+/**
+ * Off-plan inventory revenue summary — pipeline, reserved, sold values + conversion.
+ */
+export async function getOffPlanRevenueSummary() {
+  const session = await requirePermission("finance:read");
+  const orgId = session.organizationId;
+
+  const items = await db.inventoryItem.findMany({
+    where: { organizationId: orgId },
+    select: { status: true, finalPriceSar: true, basePriceSar: true },
+  });
+
+  const getPrice = (i: { finalPriceSar: any; basePriceSar: any }) =>
+    i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0;
+
+  const pipelineValue = items
+    .filter((i) => ["AVAILABLE_INV", "RESERVED_INV"].includes(i.status))
+    .reduce((sum, i) => sum + getPrice(i), 0);
+
+  const reservedValue = items
+    .filter((i) => i.status === "RESERVED_INV")
+    .reduce((sum, i) => sum + getPrice(i), 0);
+
+  const soldValue = items
+    .filter((i) => i.status === "SOLD_INV")
+    .reduce((sum, i) => sum + getPrice(i), 0);
+
+  const total = items.length;
+  const soldCount = items.filter((i) => i.status === "SOLD_INV").length;
+  const reservedCount = items.filter((i) => i.status === "RESERVED_INV").length;
+  const conversionRate = total > 0 ? Math.round(((soldCount + reservedCount) / total) * 100) : 0;
+
+  return { pipelineValue, reservedValue, soldValue, conversionRate, total, soldCount, reservedCount };
+}

@@ -105,6 +105,9 @@ export default function NewProjectPage() {
     }));
   }
 
+  // Off-plan mode
+  const [isOffPlan, setIsOffPlan] = React.useState(false);
+
   // Step 1: Project data
   const [formData, setFormData] = React.useState({
     name: "",
@@ -245,6 +248,7 @@ export default function NewProjectPage() {
         name: formData.name,
         description: formData.description || undefined,
         type: formData.type as any,
+        status: isOffPlan ? "CONCEPT_DESIGN" : undefined,
         region: formData.region || undefined,
         city: formData.city || undefined,
         district: formData.district || undefined,
@@ -292,7 +296,7 @@ export default function NewProjectPage() {
   };
 
   const inputClass =
-    "w-full h-10 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
+    "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
@@ -324,7 +328,7 @@ export default function NewProjectPage() {
                   "h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all duration-300",
                   i <= currentStep
                     ? "bg-secondary border-secondary text-white"
-                    : "bg-white border-border text-neutral"
+                    : "bg-card border-border text-neutral"
                 )}
               >
                 {i < currentStep ? <CheckCircle size={20} weight="fill" /> : i + 1}
@@ -343,7 +347,7 @@ export default function NewProjectPage() {
       </div>
 
       <div className="pt-10">
-        <div className="bg-white rounded-md shadow-card border border-border p-8 min-h-[400px]">
+        <div className="bg-card rounded-md shadow-card border border-border p-8 min-h-[400px]">
           {/* ─── Step 1: Project Details ─── */}
           {currentStep === 0 && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
@@ -399,11 +403,50 @@ export default function NewProjectPage() {
                 </div>
               </div>
 
+              {/* Off-Plan Toggle */}
+              <div
+                className={`border rounded-md p-5 space-y-3 cursor-pointer transition-all ${
+                  isOffPlan
+                    ? "border-secondary bg-secondary/5"
+                    : "border-border bg-card hover:border-secondary/30"
+                }`}
+                onClick={() => setIsOffPlan(!isOffPlan)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-md flex items-center justify-center ${isOffPlan ? "bg-secondary/20 text-secondary" : "bg-muted text-neutral/40"}`}>
+                      <MapTrifold size={22} weight="duotone" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-primary">
+                        {lang === "ar" ? "مشروع بيع على الخارطة" : "Off-Plan Development Project"}
+                      </p>
+                      <p className="text-[10px] text-neutral mt-0.5">
+                        {lang === "ar"
+                          ? "تفعيل مراحل التطوير: التقسيم، الموافقات، البنية التحتية، المخزون، التسعير، والإطلاق"
+                          : "Enable development stages: subdivision, approvals, infrastructure, inventory, pricing, and launch"}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      isOffPlan ? "bg-secondary" : "bg-border"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-card shadow transition-all ${
+                        isOffPlan ? (lang === "ar" ? "left-0.5" : "right-0.5 left-auto") : (lang === "ar" ? "right-0.5 left-auto" : "left-0.5")
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral">
                   {lang === "ar" ? "وصف المشروع" : "Description"}
                 </label>
-                <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full p-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all min-h-[80px]" />
+                <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full p-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all min-h-[80px]" />
               </div>
 
               {/* Location */}
@@ -577,7 +620,7 @@ export default function NewProjectPage() {
               )}
               <div className="space-y-3">
                 {buildings.map((b) => (
-                  <div key={b.id} className="flex items-center justify-between p-4 border border-border rounded-md bg-white hover:shadow-sm transition-all">
+                  <div key={b.id} className="flex items-center justify-between p-4 border border-border rounded-md bg-card hover:shadow-sm transition-all">
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
                         <Buildings size={24} />
@@ -701,6 +744,9 @@ export default function NewProjectPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <ReviewField label={lang === "ar" ? "الاسم" : "Name"} value={formData.name} />
                   <ReviewField label={lang === "ar" ? "النوع" : "Type"} value={formData.type} />
+                  {isOffPlan && (
+                    <ReviewField label={lang === "ar" ? "وضع المشروع" : "Mode"} value={lang === "ar" ? "بيع على الخارطة" : "Off-Plan"} />
+                  )}
                   <ReviewField label={lang === "ar" ? "المنطقة" : "Region"} value={formData.region} />
                   <ReviewField label={lang === "ar" ? "المدينة" : "City"} value={formData.city} />
                   <ReviewField label={lang === "ar" ? "الحي" : "District"} value={formData.district} />

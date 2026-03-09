@@ -16,7 +16,7 @@ const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigit
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white shadow-lg border border-border rounded-lg p-3 text-xs" dir="rtl">
+    <div className="bg-card shadow-lg border border-border rounded-lg p-3 text-xs" dir="rtl">
       <p className="font-bold text-primary mb-1">{label}</p>
       <div className="space-y-1">
         <p className="text-accent flex items-center gap-1">

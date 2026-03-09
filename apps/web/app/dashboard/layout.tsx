@@ -30,6 +30,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import { SessionProvider, useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import { hasPermission, type Permission } from "../../lib/permissions";
 import { getUnreadCount, getMyNotifications, markAsRead, markAllAsRead } from "../actions/notifications";
@@ -53,8 +54,12 @@ const navItems: { label: { ar: string; en: string }; icon: any; href: string; se
 import { MimaricLogo } from "../../components/brand/MimaricLogo";
 
 const roleLabels: Record<string, { ar: string; en: string }> = {
-  SUPER_ADMIN: { ar: "مدير النظام", en: "Super Admin" },
-  DEV_ADMIN: { ar: "مدير التطوير", en: "Dev Admin" },
+  SYSTEM_ADMIN: { ar: "مدير المنصة", en: "System Admin" },
+  SYSTEM_SUPPORT: { ar: "دعم المنصة", en: "System Support" },
+  COMPANY_ADMIN: { ar: "مدير الشركة", en: "Company Admin" },
+  // Backward compat — kept during migration
+  SUPER_ADMIN: { ar: "مدير الشركة", en: "Company Admin" },
+  DEV_ADMIN: { ar: "دعم المنصة", en: "System Support" },
   PROJECT_MANAGER: { ar: "مدير المشاريع", en: "Project Manager" },
   SALES_MANAGER: { ar: "مدير المبيعات", en: "Sales Manager" },
   SALES_AGENT: { ar: "وكيل مبيعات", en: "Sales Agent" },
@@ -146,7 +151,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Sidebar - Mimaric Visual Identity */}
       <aside 
         className={cn(
-          "fixed inset-y-0 right-0 z-50 flex flex-col bg-primary text-white transition-all duration-300 ease-in-out lg:static shadow-xl",
+          "fixed inset-y-0 right-0 z-50 flex flex-col bg-sidebar-bg text-white transition-all duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen shadow-xl",
           isCollapsed ? "w-[68px]" : "w-[256px]"
         )}
       >
@@ -240,7 +245,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <main className="flex flex-1 flex-col transition-all duration-300 min-w-0">
         {/* Topbar */}
-        <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-white px-6">
+        <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-border bg-card px-6">
           <div className="flex items-center gap-4">
             <div className="flex items-center text-xs text-neutral font-medium uppercase tracking-wider">
               {lang === "ar" ? "لوحة التحكم" : "Dashboard"}
@@ -260,10 +265,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 onFocus={() => searchResults && setShowSearch(true)}
                 onBlur={() => setTimeout(() => setShowSearch(false), 200)}
                 placeholder={lang === "ar" ? "بحث شامل في المشاريع، الوحدات، العقود..." : "Global search..."}
-                className="w-full bg-muted/50 border-transparent rounded-md py-2 pr-10 pl-4 text-sm focus:bg-white focus:border-primary/20 focus:ring-0 transition-all outline-none"
+                className="w-full bg-muted/50 border-transparent rounded-md py-2 pr-10 pl-4 text-sm focus:bg-card focus:border-primary/20 focus:ring-0 transition-all outline-none"
               />
               {showSearch && searchResults && (
-                <div className="absolute top-full mt-1 w-full bg-white rounded-md shadow-raised border border-border z-50 max-h-80 overflow-y-auto">
+                <div className="absolute top-full mt-1 w-full bg-card rounded-md shadow-raised border border-border z-50 max-h-80 overflow-y-auto">
                   {[
                     { key: "customers", label: lang === "ar" ? "العملاء" : "Customers", prefix: "/dashboard/sales/customers" },
                     { key: "projects", label: lang === "ar" ? "المشاريع" : "Projects", prefix: "/dashboard/projects" },
@@ -300,13 +305,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               <button onClick={toggleNotifications} className="relative p-2 text-neutral hover:text-primary transition-colors">
                 <Bell size={22} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary ring-2 ring-white">
+                  <span className="absolute top-2 left-2 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-primary ring-2 ring-card">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </button>
               {showNotifs && (
-                <div className="absolute top-full mt-1 left-0 w-80 bg-white rounded-md shadow-raised border border-border z-50 max-h-96 overflow-y-auto">
+                <div className="absolute top-full mt-1 left-0 w-80 bg-card rounded-md shadow-raised border border-border z-50 max-h-96 overflow-y-auto">
                   <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                     <span className="text-xs font-bold text-primary">{lang === "ar" ? "الإشعارات" : "Notifications"}</span>
                     {unreadCount > 0 && (
@@ -337,8 +342,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* Language Toggle icon in topbar */}
-            <button 
+            <button
               onClick={() => setLang(lang === "ar" ? "en" : "ar")}
               className="p-2 text-neutral hover:text-primary transition-colors"
               title={lang === "ar" ? "Switch to English" : "تغيير للعربية"}

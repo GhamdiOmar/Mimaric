@@ -208,7 +208,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Ticket Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-card rounded-xl border border-gray-100 p-5">
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -255,13 +255,13 @@ export default function TicketDetailPage() {
 
       {/* Admin Controls */}
       {isAdmin && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-card rounded-xl border border-gray-100 p-4">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-xs font-medium text-gray-500">
               {lang === "ar" ? "إجراءات المسؤول:" : "Admin Actions:"}
             </span>
             <select
-              className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-1 focus:ring-primary/20 focus:border-primary"
+              className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-card focus:ring-1 focus:ring-primary/20 focus:border-primary"
               value={ticket.status}
               onChange={(e) => handleStatusChange(e.target.value)}
               disabled={updatingStatus}
@@ -282,7 +282,7 @@ export default function TicketDetailPage() {
       )}
 
       {/* Messages Thread */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-card rounded-xl border border-gray-100 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
           <h2 className="text-sm font-semibold text-gray-700">
             {lang === "ar" ? "المحادثة" : "Conversation"}

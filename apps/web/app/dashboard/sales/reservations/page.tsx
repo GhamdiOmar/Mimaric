@@ -83,7 +83,7 @@ export default function ReservationsPage() {
           <Spinner className="animate-spin text-primary" size={32} />
         </div>
       ) : reservations.length === 0 ? (
-        <div className="bg-white rounded-md shadow-card border border-border p-12 text-center">
+        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
           <Tag size={48} className="text-neutral mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">
             {lang === "ar" ? "لا توجد حجوزات" : "No Reservations"}
@@ -99,7 +99,7 @@ export default function ReservationsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">

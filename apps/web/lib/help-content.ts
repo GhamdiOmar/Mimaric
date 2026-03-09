@@ -1,5 +1,6 @@
 export type FAQCategory =
   | "getting_started"
+  | "offplan_development"
   | "sales_crm"
   | "property_management"
   | "finance"
@@ -23,6 +24,7 @@ export type GuideItem = {
 
 export const FAQ_CATEGORIES: { key: FAQCategory; label: { ar: string; en: string } }[] = [
   { key: "getting_started", label: { ar: "البدء", en: "Getting Started" } },
+  { key: "offplan_development", label: { ar: "التطوير على الخارطة", en: "Off-Plan Development" } },
   { key: "sales_crm", label: { ar: "المبيعات والعملاء", en: "Sales & CRM" } },
   { key: "property_management", label: { ar: "إدارة العقارات", en: "Property Management" } },
   { key: "finance", label: { ar: "المالية", en: "Finance" } },
@@ -50,6 +52,67 @@ export const FAQ_ITEMS: FAQItem[] = [
     answer: { ar: "اذهب إلى صفحة المساعدة > طلب الصلاحيات. اختر الدور المطلوب واكتب سبب الطلب. سيراجع المدير طلبك ويوافق عليه أو يرفضه.", en: "Go to Help > Request Permissions. Select the desired role and write your reason. An admin will review and approve or decline your request." },
     category: "getting_started",
   },
+  // Off-Plan Development
+  {
+    id: "op-1",
+    question: { ar: "ما هو التطوير على الخارطة (Off-Plan)؟", en: "What is Off-Plan Development?" },
+    answer: { ar: "التطوير على الخارطة هو بيع الوحدات العقارية قبل اكتمال بنائها. يمر المشروع بـ 12 مرحلة من التصميم المبدئي حتى الإطلاق، وتشمل التقسيم والموافقات والبنية التحتية وهيكلة المخزون والتسعير والإطلاق.", en: "Off-Plan development is selling real estate units before construction is complete. A project goes through 12 stages from concept design to launch, including subdivision, approvals, infrastructure, inventory structuring, pricing, and launch." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-2",
+    question: { ar: "كيف أدير البنية التحتية للمشروع؟", en: "How do I manage project infrastructure?" },
+    answer: { ar: "من تبويب 'البنية التحتية' في صفحة المشروع، يمكنك إضافة فئات (كهرباء، مياه، طرق، صرف صحي...) مع تحديد المقاول والتكلفة والتاريخ المستهدف ونسبة الجاهزية. النظام يتابع التقدم ويعرض الفئات المتأخرة.", en: "From the 'Infrastructure' tab on the project page, add categories (electricity, water, roads, sewage...) with contractor, cost, target date, and readiness percentage. The system tracks progress and highlights delayed items." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-3",
+    question: { ar: "كيف أهيكل مخزون الوحدات للبيع على الخارطة؟", en: "How do I structure inventory for off-plan sales?" },
+    answer: { ar: "من تبويب 'المخزون'، أضف عناصر يدوياً مع تحديد نوع المنتج (فيلا، تاون هاوس، دوبلكس، تجاري، شقة...)، المساحة، السعر الأساسي، ومرحلة الإطلاق. كل عنصر يمر بحالات: لم يُطلق ← متاح ← محجوز ← مباع.", en: "From the 'Inventory' tab, add items manually specifying product type (villa, townhouse, duplex, commercial, apartment...), area, base price, and release phase. Each item goes through statuses: Unreleased → Available → Reserved → Sold." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-4",
+    question: { ar: "كيف أضع قواعد التسعير؟", en: "How do I set pricing rules?" },
+    answer: { ar: "من تبويب 'التسعير'، أضف قواعد مثل سعر المتر المربع الأساسي، علاوة الزاوية، علاوة إطلالة الحديقة وغيرها. حدد نوع القاعدة والمعامل والأولوية. انقر 'حساب الأسعار' لتطبيق القواعد على جميع عناصر المخزون.", en: "From the 'Pricing' tab, add rules like base price per sqm, corner premium, park-facing premium, etc. Set rule type, factor, and priority. Click 'Calculate Prices' to apply rules across all inventory items." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-5",
+    question: { ar: "ما هي موجات الإطلاق؟", en: "What are launch waves?" },
+    answer: { ar: "موجات الإطلاق تقسّم المخزون إلى مراحل بيع متتالية. من تبويب 'الإطلاق'، أنشئ موجة جديدة بتحديد الاسم وتاريخ الإطلاق وعدد الوحدات. كل موجة تمر بحالات: مخطط ← مُطلق ← مغلق.", en: "Launch waves split inventory into sequential sales phases. From the 'Launch' tab, create a new wave with name, planned date, and inventory count. Each wave goes through statuses: Planned → Launched → Closed." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-6",
+    question: { ar: "كيف أتحقق من جاهزية المشروع للإطلاق؟", en: "How do I check launch readiness?" },
+    answer: { ar: "تبويب 'جاهزية الإطلاق' يعرض قائمة تحقق تلقائية: مخطط تقسيم معتمد، موافقات الجهات، جاهزية البنية التحتية ≥ 70%، إنشاء المخزون، تطبيق قواعد التسعير، وتخطيط موجة إطلاق. العناصر غير المستوفاة تظهر مع زر 'إصلاح' ينقلك مباشرة للتبويب المعني.", en: "The 'Launch Readiness' tab shows an automatic checklist: approved subdivision plan, authority approvals, infrastructure readiness ≥ 70%, inventory created, pricing rules applied, and launch wave planned. Failed items show a 'Fix' button linking directly to the relevant tab." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-7",
+    question: { ar: "ما هي خريطة المخزون؟", en: "What is the Inventory Map?" },
+    answer: { ar: "خريطة المخزون تعرض جميع عناصر المخزون في شبكة ملونة حسب الحالة: أخضر (متاح)، أزرق (محجوز)، أصفر (مباع)، رمادي (لم يُطلق). يمكنك النقر على أي عنصر لعرض تفاصيله أو حجزه مباشرة.", en: "The Inventory Map displays all inventory items in a color-coded grid by status: green (available), blue (reserved), yellow (sold), gray (unreleased). Click any item to view details or reserve it directly." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-8",
+    question: { ar: "كيف أتابع التحليلات والأداء؟", en: "How do I track analytics and performance?" },
+    answer: { ar: "تبويب 'التحليلات' يعرض مؤشرات الأداء: إجمالي القيمة، متوسط سعر المتر المربع، عدد عناصر المخزون، ومعدل التحويل. كما يعرض جدول أداء الموجات (متاح/محجوز/مباع لكل موجة) وجدول التسعير حسب نوع المنتج.", en: "The 'Analytics' tab shows KPIs: total value, average price per sqm, inventory count, and conversion rate. It also displays wave performance tables (available/reserved/sold per wave) and pricing breakdown by product type." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-9",
+    question: { ar: "كيف أدير التقسيم والموافقات؟", en: "How do I manage subdivision and approvals?" },
+    answer: { ar: "من تبويب 'التقسيم'، أنشئ مخططات تقسيم مع البلكات والقطع. من تبويب 'الموافقات'، قدّم طلبات للجهات الحكومية (بلدي، شركة الكهرباء، المياه...) وتابع حالتها (مقدم ← قيد المراجعة ← موافق/مرفوض).", en: "From the 'Subdivision' tab, create subdivision plans with blocks and plots. From the 'Approvals' tab, submit requests to government entities (Balady, electricity company, water...) and track their status (Submitted → Under Review → Approved/Rejected)." },
+    category: "offplan_development",
+  },
+  {
+    id: "op-10",
+    question: { ar: "ما التقارير المتاحة للمشاريع على الخارطة؟", en: "What reports are available for off-plan projects?" },
+    answer: { ar: "يتوفر 3 تقارير متخصصة: تقرير مسار التطوير (توزيع المشاريع على المراحل)، تقرير حالة الموافقات (معدلات النجاح ووقت المعالجة)، وتقرير تحليل التسعير (متوسط الأسعار حسب نوع المنتج). جميعها قابلة للتصدير PDF/Excel.", en: "3 specialized reports are available: Development Pipeline (projects by stage), Approval Status (success rates and processing time), and Pricing Analysis (average prices by product type). All exportable as PDF/Excel." },
+    category: "offplan_development",
+  },
   // Sales & CRM
   {
     id: "sc-1",
@@ -66,7 +129,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "sc-3",
     question: { ar: "كيف أنشئ حجزاً لعميل؟", en: "How do I create a reservation for a customer?" },
-    answer: { ar: "من قسم الحجوزات، انقر على 'حجز جديد'. اختر العميل والوحدة وتاريخ الانتهاء. الحجز يحتفظ بالوحدة مؤقتاً حتى تاريخ الانتهاء.", en: "From Reservations, click 'New Reservation'. Select the customer, unit, and expiry date. The reservation holds the unit temporarily until expiry." },
+    answer: { ar: "من قسم الحجوزات، انقر على 'حجز جديد'. اختر مصدر الحجز: 'من الوحدات' للوحدات التقليدية أو 'من المخزون' لعناصر البيع على الخارطة. اختر العميل ثم الوحدة/العنصر وأكمل خطوات المعالج الرباعي.", en: "From Reservations, click 'New Reservation'. Choose the source: 'From Units' for traditional units or 'From Inventory' for off-plan items. Select the customer, then the unit/item, and complete the 4-step wizard." },
     category: "sales_crm",
   },
   // Property Management
@@ -104,7 +167,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "fi-3",
     question: { ar: "كيف أصدر تقارير مالية؟", en: "How do I generate financial reports?" },
-    answer: { ar: "من قسم التقارير، اختر نوع التقرير (مالي، إشغال، صيانة...) وحدد نطاق التاريخ. يمكنك التصدير بصيغة Excel أو PDF.", en: "From Reports, select the report type (financial, occupancy, maintenance...) and date range. Export as Excel or PDF." },
+    answer: { ar: "من قسم التقارير، اختر نوع التقرير (مالي، إشغال، صيانة، مسار التطوير، حالة الموافقات، تحليل التسعير...) وحدد نطاق التاريخ. يمكنك التصدير بصيغة Excel أو PDF. يتوفر 10 أنواع من التقارير تشمل التقارير التشغيلية والمالية والتطويرية والتنظيمية.", en: "From Reports, select the report type (financial, occupancy, maintenance, development pipeline, approval status, pricing analysis...) and date range. Export as Excel or PDF. 10 report types are available covering operational, financial, development, and regulatory categories." },
     category: "finance",
   },
   // Security & Privacy
@@ -222,7 +285,7 @@ export const GUIDE_ITEMS: GuideItem[] = [
     module: "reports",
     steps: [
       { ar: "اذهب إلى قسم التقارير", en: "Go to the Reports section" },
-      { ar: "اختر نوع التقرير (إشغال، مالي، صيانة، إيجارات، عملاء)", en: "Select report type (occupancy, financial, maintenance, leases, customers)" },
+      { ar: "اختر نوع التقرير (إشغال، مالي، صيانة، إيجارات، عملاء، مسار التطوير، حالة الموافقات، تحليل التسعير)", en: "Select report type (occupancy, financial, maintenance, leases, customers, development pipeline, approval status, pricing analysis)" },
       { ar: "حدد نطاق التاريخ المطلوب", en: "Set the desired date range" },
       { ar: "انقر زر Excel (أخضر) أو PDF (أحمر) للتصدير", en: "Click Excel (green) or PDF (red) button to export" },
     ],
@@ -252,6 +315,62 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "اكتب سبب الطلب بالتفصيل", en: "Write a detailed reason for the request" },
       { ar: "انقر 'إرسال الطلب' — سيتم إشعار المدير", en: "Click 'Submit Request' — the admin will be notified" },
       { ar: "تابع حالة طلبك من نفس الصفحة", en: "Track your request status from the same page" },
+    ],
+  },
+  // Off-Plan Development Guides
+  {
+    id: "guide-9",
+    title: { ar: "إعداد مشروع بيع على الخارطة", en: "Set Up an Off-Plan Project" },
+    description: { ar: "الخطوات الكاملة لإعداد مشروع تطوير على الخارطة من البداية", en: "Complete steps to set up an off-plan development project from scratch" },
+    module: "offplan",
+    steps: [
+      { ar: "أنشئ مشروعاً جديداً من قسم المشاريع واختر النوع (سكني/تجاري)", en: "Create a new project from the Projects section and select type (residential/commercial)" },
+      { ar: "من تبويب 'المخطط المبدئي'، أضف بدائل التصميم للمقارنة", en: "From the 'Concept Plan' tab, add design alternatives for comparison" },
+      { ar: "من تبويب 'التقسيم'، أنشئ مخطط تقسيم مع البلكات والقطع", en: "From the 'Subdivision' tab, create a subdivision plan with blocks and plots" },
+      { ar: "من تبويب 'الموافقات'، قدّم طلبات للجهات الحكومية المعنية", en: "From the 'Approvals' tab, submit requests to relevant government entities" },
+      { ar: "من تبويب 'البنية التحتية'، أضف فئات البنية التحتية وعيّن المقاولين", en: "From the 'Infrastructure' tab, add infrastructure categories and assign contractors" },
+      { ar: "تابع تبويب 'جاهزية الإطلاق' حتى تستوفي جميع المتطلبات", en: "Monitor the 'Launch Readiness' tab until all requirements are met" },
+    ],
+  },
+  {
+    id: "guide-10",
+    title: { ar: "هيكلة المخزون وإطلاق البيع", en: "Structure Inventory & Launch Sales" },
+    description: { ar: "كيفية إعداد المخزون وتسعيره وإطلاق موجات البيع", en: "How to set up inventory, price it, and launch sales waves" },
+    module: "offplan",
+    steps: [
+      { ar: "من تبويب 'المخزون'، أضف عناصر المخزون (فيلا، تاون هاوس، شقة، تجاري...)", en: "From the 'Inventory' tab, add inventory items (villa, townhouse, apartment, commercial...)" },
+      { ar: "حدد لكل عنصر: المساحة، السعر الأساسي، مرحلة الإطلاق، وقناة البيع", en: "For each item set: area, base price, release phase, and sales channel" },
+      { ar: "من تبويب 'التسعير'، أضف قواعد التسعير (سعر أساسي، علاوات، خصومات)", en: "From the 'Pricing' tab, add pricing rules (base price, premiums, discounts)" },
+      { ar: "انقر 'حساب الأسعار' لتطبيق القواعد على المخزون", en: "Click 'Calculate Prices' to apply rules to inventory" },
+      { ar: "من تبويب 'الإطلاق'، أنشئ موجة إطلاق جديدة بتاريخ وعدد وحدات", en: "From the 'Launch' tab, create a new launch wave with date and unit count" },
+      { ar: "راجع 'خريطة المخزون' لمتابعة الحالة المرئية لكل عنصر", en: "Review the 'Inventory Map' for a visual status overview of each item" },
+    ],
+  },
+  {
+    id: "guide-11",
+    title: { ar: "حجز من المخزون (البيع على الخارطة)", en: "Reserve from Inventory (Off-Plan Sales)" },
+    description: { ar: "كيفية إنشاء حجز لعميل من مخزون البيع على الخارطة", en: "How to create a reservation for a customer from off-plan inventory" },
+    module: "offplan",
+    steps: [
+      { ar: "اذهب إلى المبيعات > الحجوزات > حجز جديد", en: "Go to Sales > Reservations > New Reservation" },
+      { ar: "انقر 'من المخزون' في أعلى الصفحة لتغيير المصدر", en: "Click 'From Inventory' at the top of the page to switch source" },
+      { ar: "اختر العميل من القائمة أو ابحث باسمه أو رقمه", en: "Select the customer from the list or search by name or number" },
+      { ar: "اختر المشروع ثم اختر عنصر المخزون المتاح", en: "Select the project then choose an available inventory item" },
+      { ar: "أكمل بيانات الدفع في الخطوة الثانية", en: "Complete payment details in the second step" },
+      { ar: "راجع الملخص وأكد الحجز — سيتم تحديث حالة العنصر تلقائياً إلى 'محجوز'", en: "Review the summary and confirm — the item status will automatically update to 'Reserved'" },
+    ],
+  },
+  {
+    id: "guide-12",
+    title: { ar: "متابعة تحليلات المشروع", en: "Track Project Analytics" },
+    description: { ar: "كيفية استخدام لوحة التحليلات لمتابعة أداء المشروع", en: "How to use the analytics dashboard to monitor project performance" },
+    module: "offplan",
+    steps: [
+      { ar: "افتح المشروع واذهب إلى تبويب 'التحليلات'", en: "Open the project and go to the 'Analytics' tab" },
+      { ar: "راجع بطاقات المؤشرات: إجمالي القيمة، متوسط السعر، المخزون، معدل التحويل", en: "Review KPI cards: total value, average price, inventory count, conversion rate" },
+      { ar: "استعرض جدول أداء الموجات لمقارنة المتاح والمحجوز والمباع", en: "Review the wave performance table to compare available, reserved, and sold" },
+      { ar: "استعرض جدول التسعير حسب النوع لتحليل الأسعار بحسب فئة المنتج", en: "Review the pricing by type table to analyze prices by product category" },
+      { ar: "استخدم مؤشرات لوحة التحكم الرئيسية لمتابعة إجمالي المخزون ونشاط الإطلاق", en: "Use the main dashboard KPIs to track total inventory and launch activity" },
     ],
   },
 ];

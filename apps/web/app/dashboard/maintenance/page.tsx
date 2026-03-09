@@ -213,7 +213,7 @@ export default function MaintenancePage() {
     }
   }
 
-  const inputClass = "w-full h-10 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
+  const inputClass = "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -250,7 +250,7 @@ export default function MaintenancePage() {
           { label: lang === "ar" ? "متأخرة" : "Overdue", value: stats?.overdue ?? "—", icon: Warning, color: "text-red-600" },
           { label: lang === "ar" ? "مكتملة هذا الشهر" : "Completed (Month)", value: stats?.completedThisMonth ?? "—", icon: CheckCircle, color: "text-secondary" },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white p-5 rounded-md shadow-card border border-border">
+          <div key={i} className="bg-card p-5 rounded-md shadow-card border border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{kpi.label}</span>
               <kpi.icon size={20} className={kpi.color} />
@@ -261,7 +261,7 @@ export default function MaintenancePage() {
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-white rounded-md shadow-card border border-border p-4 flex flex-wrap items-center gap-4">
+      <div className="bg-card rounded-md shadow-card border border-border p-4 flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <MagnifyingGlass size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
           <input
@@ -269,22 +269,22 @@ export default function MaintenancePage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={lang === "ar" ? "بحث بالعنوان..." : "Search by title..."}
-            className="w-full h-9 pr-10 pl-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary"
+            className="w-full h-9 pr-10 pl-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary"
           />
         </div>
-        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-white">
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-card">
           <option value="">{lang === "ar" ? "كل الحالات" : "All Statuses"}</option>
           {Object.entries(statusLabels).map(([k, v]) => (
             <option key={k} value={k}>{v[lang]}</option>
           ))}
         </select>
-        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-white">
+        <select value={filterPriority} onChange={(e) => setFilterPriority(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-card">
           <option value="">{lang === "ar" ? "كل الأولويات" : "All Priorities"}</option>
           {Object.entries(priorityLabels).map(([k, v]) => (
             <option key={k} value={k}>{v[lang]}</option>
           ))}
         </select>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-white">
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="h-9 px-3 border border-border rounded-md text-xs bg-card">
           <option value="">{lang === "ar" ? "كل التصنيفات" : "All Categories"}</option>
           {Object.entries(categoryLabels).map(([k, v]) => (
             <option key={k} value={k}>{v[lang]}</option>
@@ -293,7 +293,7 @@ export default function MaintenancePage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Spinner size={32} className="animate-spin text-primary" />
@@ -381,7 +381,7 @@ export default function MaintenancePage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h2 className="text-lg font-bold text-primary">
                 {editingId

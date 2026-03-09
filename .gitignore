@@ -1,5 +1,12 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Playwright
+**/e2e/.auth/
+**/test-results/
+
+# Claude Code
+.claude/
+
 # Dependencies
 node_modules
 .pnp

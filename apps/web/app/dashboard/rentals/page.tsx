@@ -45,14 +45,14 @@ export default function RentalsPage() {
 
       {/* KPI Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "عقود نشطة" : "Active Leases"}</span>
             <Tag size={20} className="text-secondary" />
           </div>
           <h3 className="text-2xl font-bold text-primary">{loading ? "—" : activeLeases.length}</h3>
         </div>
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "إجمالي الإيجار السنوي" : "Total Annual Rent"}</span>
             <CurrencyCircleDollar size={20} className="text-primary" />
@@ -61,7 +61,7 @@ export default function RentalsPage() {
             {loading ? "—" : <SARAmount value={totalRent} size={20} />}
           </h3>
         </div>
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "إجمالي العقود" : "Total Leases"}</span>
             <Buildings size={20} className="text-accent" />
@@ -74,7 +74,7 @@ export default function RentalsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {rentalModules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="group">
-            <div className="bg-white rounded-md shadow-card border border-border p-8 hover:shadow-raised hover:border-primary/20 transition-all">
+            <div className="bg-card rounded-md shadow-card border border-border p-8 hover:shadow-raised hover:border-primary/20 transition-all">
               <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:bg-primary group-hover:text-white transition-all">
                 <mod.icon size={28} />
               </div>
@@ -87,7 +87,7 @@ export default function RentalsPage() {
 
       {/* Active Leases Table */}
       {!loading && activeLeases.length > 0 && (
-        <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
           <div className="px-6 py-4 border-b border-border">
             <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "العقود النشطة" : "Active Leases"}</h3>
           </div>

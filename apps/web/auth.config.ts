@@ -36,6 +36,10 @@ export const authConfig = {
         token.onboardingCompleted = (user as any).onboardingCompleted ?? true;
         token.accountType = (user as any).accountType ?? null;
       }
+      // Backward compatibility — map deprecated roles (remove after full migration)
+      if (token.role === "SUPER_ADMIN") token.role = "COMPANY_ADMIN";
+      if (token.role === "DEV_ADMIN") token.role = "SYSTEM_SUPPORT";
+
       // Refresh token data on session update (e.g., after onboarding completion)
       if (trigger === "update" && session) {
         if (session.onboardingCompleted !== undefined) {

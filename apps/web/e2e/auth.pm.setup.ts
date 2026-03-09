@@ -1,0 +1,10 @@
+import { test as setup } from '@playwright/test';
+
+setup('authenticate as project manager', async ({ page }) => {
+  await page.goto('/auth/login');
+  await page.locator('input[type="email"]').fill('pm@demo.sa');
+  await page.locator('input[type="password"]').fill('mimaric2026');
+  await page.getByRole('button', { name: /Login|تسجيل الدخول/i }).click();
+  await page.waitForURL('/dashboard**', { timeout: 15000 });
+  await page.context().storageState({ path: 'e2e/.auth/pm.json' });
+});

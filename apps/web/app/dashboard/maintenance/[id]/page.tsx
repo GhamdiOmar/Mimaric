@@ -159,7 +159,7 @@ export default function MaintenanceDetailPage() {
   const cat = categoryLabels[request.category] ?? { ar: request.category, en: request.category };
   const validTransitions = VALID_TRANSITIONS[request.status] ?? [];
   const isOverdue = request.dueDate && new Date(request.dueDate) < new Date() && !["RESOLVED", "CLOSED"].includes(request.status);
-  const inputClass = "w-full h-9 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
+  const inputClass = "w-full h-9 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -200,7 +200,7 @@ export default function MaintenanceDetailPage() {
           CLOSED: "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20",
         };
         return (
-          <div className="bg-white rounded-md shadow-card border border-border p-4 flex items-center gap-3 flex-wrap">
+          <div className="bg-card rounded-md shadow-card border border-border p-4 flex items-center gap-3 flex-wrap">
             <span className="text-xs text-neutral font-bold">{lang === "ar" ? "تحويل الحالة:" : "Transition status:"}</span>
             {validTransitions.map((nextStatus: string) => {
               const nextLabel = statusLabels[nextStatus] ?? { ar: nextStatus, en: nextStatus };
@@ -227,7 +227,7 @@ export default function MaintenanceDetailPage() {
       {/* Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Details Card */}
-        <div className="bg-white rounded-md shadow-card border border-border p-5 space-y-4">
+        <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-4">
           <h4 className="text-xs font-bold uppercase tracking-widest text-neutral">
             {lang === "ar" ? "تفاصيل الطلب" : "Request Details"}
           </h4>
@@ -265,7 +265,7 @@ export default function MaintenanceDetailPage() {
         {/* Assignment & Cost Card */}
         <div className="space-y-6">
           {/* Assigned To */}
-          <div className="bg-white rounded-md shadow-card border border-border p-5 space-y-3">
+          <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
                 <UserCircle size={14} />
@@ -305,7 +305,7 @@ export default function MaintenanceDetailPage() {
           </div>
 
           {/* Cost Section */}
-          <div className="bg-white rounded-md shadow-card border border-border p-5 space-y-3">
+          <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
                 <CurrencyCircleDollar size={14} />
@@ -365,7 +365,7 @@ export default function MaintenanceDetailPage() {
 
       {/* Notes */}
       {request.notes && !editingCost && (
-        <div className="bg-white rounded-md shadow-card border border-border p-5">
+        <div className="bg-card rounded-md shadow-card border border-border p-5">
           <h4 className="text-xs font-bold uppercase tracking-widest text-neutral mb-2">
             {lang === "ar" ? "ملاحظات" : "Notes"}
           </h4>

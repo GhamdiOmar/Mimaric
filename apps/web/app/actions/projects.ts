@@ -9,7 +9,8 @@ export async function createProject(data: {
   name: string;
   description?: string;
   type: any;
-  buildings?: { name: string; numberOfFloors?: number; buildingAreaSqm?: number }[];
+  status?: string;
+  buildings?: { name: string; numberOfFloors?: number; buildingAreaSqm?: number; buildingType?: string }[];
   // Balady-aligned fields
   parcelNumber?: string;
   plotNumber?: string;
@@ -35,6 +36,7 @@ export async function createProject(data: {
       name: data.name,
       description: data.description,
       type: data.type,
+      status: data.status as any || undefined,
       organizationId: session.organizationId,
       parcelNumber: data.parcelNumber,
       plotNumber: data.plotNumber,

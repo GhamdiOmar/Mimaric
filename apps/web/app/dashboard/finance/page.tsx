@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings } from "@phosphor-icons/react";
+import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings, Package, Tag } from "@phosphor-icons/react";
 import { SARAmount } from "@repo/ui";
-import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary } from "../../actions/finance";
+import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary, getOffPlanRevenueSummary } from "../../actions/finance";
 
 const categoryLabels: Record<string, string> = {
   HVAC: "تكييف",
@@ -23,6 +23,7 @@ export default function FinancePage() {
   const [maintenanceCosts, setMaintenanceCosts] = React.useState<any>(null);
   const [unitRevenue, setUnitRevenue] = React.useState<any[]>([]);
   const [landInvestment, setLandInvestment] = React.useState<any>(null);
+  const [offPlanRevenue, setOffPlanRevenue] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -31,12 +32,14 @@ export default function FinancePage() {
       getMaintenanceCostSummary(),
       getUnitRevenueBreakdown(),
       getLandInvestmentSummary(),
+      getOffPlanRevenueSummary(),
     ])
-      .then(([s, mc, ur, li]) => {
+      .then(([s, mc, ur, li, opr]) => {
         setStats(s);
         setMaintenanceCosts(mc);
         setUnitRevenue(ur);
         setLandInvestment(li);
+        setOffPlanRevenue(opr);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -76,7 +79,7 @@ export default function FinancePage() {
             color: "secondary",
           },
         ].map((kpi, i) => (
-          <div key={i} className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div key={i} className="bg-card p-6 rounded-md shadow-card border border-border">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{kpi.label}</span>
               <kpi.icon size={20} className={
@@ -94,14 +97,14 @@ export default function FinancePage() {
       {/* Revenue breakdown */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">إيرادات الإيجار</h3>
             <div className="flex items-center gap-2">
               <SARAmount value={stats.totalRentRevenue} size={28} className="text-3xl font-bold text-primary" />
             </div>
             <p className="text-xs text-neutral mt-2">{stats.paidCount} دفعة محصّلة من {stats.installmentCount}</p>
           </div>
-          <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">إيرادات البيع</h3>
             <div className="flex items-center gap-2">
               <SARAmount value={stats.totalSaleRevenue} size={28} className="text-3xl font-bold text-primary" />
@@ -111,7 +114,49 @@ export default function FinancePage() {
         </div>
       )}
 
-      <div className="bg-white p-8 rounded-md shadow-card border border-border">
+      {/* Off-Plan Revenue */}
+      {offPlanRevenue && offPlanRevenue.total > 0 && (
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
+          <div className="flex items-center gap-2 mb-6">
+            <Package size={20} className="text-accent" weight="duotone" />
+            <h3 className="text-lg font-bold text-primary font-primary">إيرادات على الخارطة</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المسار</span>
+              <div className="mt-2">
+                <SARAmount value={offPlanRevenue.pipelineValue} size={20} className="text-xl font-bold text-primary" />
+              </div>
+              <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.total} عنصر مخزون</p>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المحجوز</span>
+              <div className="mt-2">
+                <SARAmount value={offPlanRevenue.reservedValue} size={20} className="text-xl font-bold text-amber-600" />
+              </div>
+              <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.reservedCount} محجوز</p>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المباع</span>
+              <div className="mt-2">
+                <SARAmount value={offPlanRevenue.soldValue} size={20} className="text-xl font-bold text-secondary" />
+              </div>
+              <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.soldCount} مباع</p>
+            </div>
+            <div className="bg-muted/30 p-4 rounded-md">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">معدل التحويل</span>
+              <div className="mt-2">
+                <span className="text-xl font-bold text-info font-latin">{offPlanRevenue.conversionRate}%</span>
+              </div>
+              <div className="mt-2 h-1.5 bg-border rounded-full overflow-hidden">
+                <div className="h-full bg-info rounded-full transition-all" style={{ width: `${offPlanRevenue.conversionRate}%` }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-card p-8 rounded-md shadow-card border border-border">
         <h3 className="text-lg font-bold text-primary mb-6 font-primary">الفوترة الإلكترونية — ZATCA Phase 2</h3>
         <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted rounded-lg text-neutral/40 text-sm font-primary">
           سيتم تفعيل الربط مع فاتورة قريباً — Coming Soon
@@ -120,7 +165,7 @@ export default function FinancePage() {
 
       {/* Maintenance Costs Section */}
       {maintenanceCosts && (
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center gap-2 mb-6">
             <Wrench size={20} className="text-accent" />
             <h3 className="text-lg font-bold text-primary font-primary">تكاليف الصيانة</h3>
@@ -166,7 +211,7 @@ export default function FinancePage() {
 
       {/* Unit Revenue Table */}
       {unitRevenue.length > 0 && (
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center gap-2 mb-6">
             <Buildings size={20} className="text-secondary" />
             <h3 className="text-lg font-bold text-primary font-primary">إيرادات الوحدات</h3>
@@ -206,7 +251,7 @@ export default function FinancePage() {
 
       {/* Land Investment Section */}
       {landInvestment && (
-        <div className="bg-white p-6 rounded-md shadow-card border border-border">
+        <div className="bg-card p-6 rounded-md shadow-card border border-border">
           <div className="flex items-center gap-2 mb-6">
             <MapPin size={20} className="text-secondary" />
             <h3 className="text-lg font-bold text-primary font-primary">استثمارات الأراضي</h3>

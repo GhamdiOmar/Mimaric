@@ -185,7 +185,7 @@ export default function OrgSettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className={`bg-white rounded-md shadow-card border border-border overflow-hidden ${loading ? "animate-pulse" : ""}`}>
+          <div className={`bg-card rounded-md shadow-card border border-border overflow-hidden ${loading ? "animate-pulse" : ""}`}>
             {/* Header with logo */}
             <div className="p-8 border-b border-border bg-muted/5">
               <div className="flex items-center gap-6">
@@ -438,7 +438,7 @@ export default function OrgSettingsPage() {
           <div className="bg-primary-deep p-8 rounded-md text-white space-y-6 shadow-xl relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L10 40 L40 40' stroke='white' fill='none'/%3E%3Ccircle cx='40' cy='40' r='2' fill='white'/%3E%3C/svg%3E")` }} />
             <h3 className="text-sm font-bold uppercase tracking-widest text-secondary font-latin">{lang === "ar" ? "حالة التوثيق" : "Verification Status"}</h3>
-            <div className="flex items-center gap-4 p-4 bg-white/5 rounded border border-white/10">
+            <div className="flex items-center gap-4 p-4 bg-card/5 rounded border border-white/10">
               <div className="h-10 w-10 rounded-full bg-secondary/20 flex items-center justify-center text-secondary">
                 <CheckCircle weight="fill" size={24} />
               </div>
@@ -457,7 +457,7 @@ export default function OrgSettingsPage() {
           </div>
 
           {/* Settings Navigation */}
-          <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-3">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الإعدادات" : "Settings"}</h3>
             <Link href="/dashboard/settings/team" className="flex items-center gap-3 p-3 rounded-md hover:bg-muted/30 transition-colors group">
               <div className="p-2 bg-primary/5 rounded text-primary group-hover:bg-primary/10 transition-colors">
@@ -491,7 +491,7 @@ export default function OrgSettingsPage() {
           </div>
 
           {/* Landing Page Preference */}
-          <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-4">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border space-y-4">
             <div className="flex items-center gap-2">
               <House size={18} className="text-primary" />
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الصفحة الرئيسية" : "Landing Page"}</h3>
@@ -523,7 +523,7 @@ export default function OrgSettingsPage() {
 
           {/* Quick Info Card */}
           {org && (
-            <div className="bg-white p-6 rounded-md shadow-card border border-border space-y-4">
+            <div className="bg-card p-6 rounded-md shadow-card border border-border space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "معلومات سريعة" : "Quick Info"}</h3>
               {form.crNumber && (
                 <div className="flex justify-between text-xs">

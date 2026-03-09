@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@repo/ui/globals.css";
 import { IBM_Plex_Sans_Arabic, DM_Sans } from 'next/font/google';
+import { ThemeProvider } from "../components/ThemeProvider";
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic'],
@@ -25,9 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${ibmPlexArabic.variable} ${dmSans.variable}`}>
+    <html lang="ar" dir="rtl" className={`${ibmPlexArabic.variable} ${dmSans.variable}`} suppressHydrationWarning>
       <body className="font-ibm-plex-arabic antialiased text-body">
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

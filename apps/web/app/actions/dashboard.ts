@@ -263,6 +263,54 @@ export async function getProjectStatusDistribution() {
   }));
 }
 
+export async function getDashboardOffPlanStats() {
+  const session = await requirePermission("dashboard:read");
+  const orgId = session.organizationId;
+
+  const OFF_PLAN_STATUSES = [
+    "CONCEPT_DESIGN", "SUBDIVISION_PLANNING", "AUTHORITY_SUBMISSION",
+    "INFRASTRUCTURE_PLANNING", "INVENTORY_STRUCTURING", "PRICING_PACKAGING",
+    "LAUNCH_READINESS", "OFF_PLAN_LAUNCHED",
+  ];
+
+  const [offPlanProjects, inventoryItems, soldItems, launchedWaves] = await Promise.all([
+    db.project.findMany({
+      where: { organizationId: orgId, status: { in: OFF_PLAN_STATUSES as any } },
+      select: { id: true, status: true },
+    }),
+    db.inventoryItem.count({
+      where: { organizationId: orgId },
+    }),
+    db.inventoryItem.findMany({
+      where: { organizationId: orgId, status: "SOLD_INV" },
+      select: { finalPriceSar: true, basePriceSar: true },
+    }),
+    db.launchWave.count({
+      where: { organizationId: orgId, status: "LAUNCHED" },
+    }),
+  ]);
+
+  const activeLaunches = offPlanProjects.filter(
+    (p) => ["OFF_PLAN_LAUNCHED", "LAUNCH_READINESS"].includes(p.status)
+  ).length;
+
+  const pipelineValue = soldItems.reduce(
+    (sum, i) => sum + Number(i.finalPriceSar ?? i.basePriceSar ?? 0), 0
+  );
+
+  const totalSold = soldItems.length;
+  const conversionRate = inventoryItems > 0 ? Math.round((totalSold / inventoryItems) * 100) : 0;
+
+  return {
+    activeLaunches,
+    totalInventory: inventoryItems,
+    conversionRate,
+    pipelineValue,
+    totalOffPlanProjects: offPlanProjects.length,
+    launchedWaves,
+  };
+}
+
 export async function getMaintenanceCostTrend() {
   const session = await requirePermission("dashboard:read");
   const orgId = session.organizationId;

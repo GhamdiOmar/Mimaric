@@ -105,13 +105,13 @@ export async function registerUser(data: {
     },
   });
 
-  // Create user as SUPER_ADMIN (org creator = admin)
+  // Create user as COMPANY_ADMIN (org creator = admin)
   const user = await db.user.create({
     data: {
       name: data.name,
       email: data.email.toLowerCase().trim(),
       password: hashedPassword,
-      role: "SUPER_ADMIN",
+      role: "COMPANY_ADMIN",
       organizationId: org.id,
       accountType,
       onboardingCompleted: false,

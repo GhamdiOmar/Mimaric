@@ -65,20 +65,20 @@ export default function LandPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={lang === "ar" ? "بحث بالاسم أو رقم الصك..." : "Search by name or deed..."}
-          className="w-full border border-border rounded-md py-2 pr-10 pl-4 text-sm bg-white"
+          className="w-full border border-border rounded-md py-2 pr-10 pl-4 text-sm bg-card"
         />
       </div>
 
       {loading ? (
         <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-md shadow-card border border-border p-12 text-center">
+        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
           <MapPin size={48} className="text-neutral mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد أراضٍ" : "No Land Parcels"}</h3>
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "ابدأ بإضافة أرض جديدة" : "Start by adding a new land parcel"}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">
@@ -88,6 +88,7 @@ export default function LandPage() {
                 <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</th>
                 <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الاستخدام" : "Land Use"}</th>
                 <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
+                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الملاءمة" : "Score"}</th>
                 <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
                 <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral"></th>
               </tr>
@@ -104,6 +105,23 @@ export default function LandPage() {
                     <td className="px-4 py-3 text-xs">{landUseLabels[p.landUse] ?? p.landUse ?? "—"}</td>
                     <td className="px-4 py-3">
                       <Badge variant={config.variant as any} className={`text-xs ${config.className}`}>{config.label[lang]}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.suitabilityScore !== null && p.suitabilityScore !== undefined ? (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${p.suitabilityScore >= 70 ? "bg-secondary" : p.suitabilityScore >= 40 ? "bg-amber-500" : "bg-destructive"}`}
+                              style={{ width: `${p.suitabilityScore}%` }}
+                            />
+                          </div>
+                          <span className={`text-xs font-bold ${p.suitabilityScore >= 70 ? "text-secondary" : p.suitabilityScore >= 40 ? "text-amber-600" : "text-destructive"}`}>
+                            {p.suitabilityScore}%
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-neutral">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(p.createdAt, lang)}</td>
                     <td className="px-4 py-3">
@@ -153,7 +171,7 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة أرض جديدة" : "Add New Land"}</h3>
         </div>
@@ -179,7 +197,7 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
             </div>
             <div>
               <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاستخدام" : "Land Use"}</label>
-              <select value={form.landUse} onChange={set("landUse")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-white">
+              <select value={form.landUse} onChange={set("landUse")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 <option value="">—</option>
                 <option value="RESIDENTIAL_LAND">سكني</option>
                 <option value="COMMERCIAL_LAND">تجاري</option>

@@ -105,7 +105,7 @@ export default function DocumentVaultPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Categories Sidebar */}
         <div className="lg:col-span-1 space-y-4">
-           <div className="bg-white rounded-md border border-border p-6 shadow-sm">
+           <div className="bg-card rounded-md border border-border p-6 shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">Categories</h3>
               <div className="space-y-1">
                  {['All Documents', 'Blueprints', 'Legal Permits', 'Structural Plans', 'Commercial', 'Marketing'].map((cat) => (
@@ -124,7 +124,7 @@ export default function DocumentVaultPage() {
               <FilePdf size={48} className="absolute -bottom-4 -right-4 opacity-10 rotate-12" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-secondary font-latin">Storage Usage</p>
               <div className="mt-4 space-y-2">
-                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                 <div className="h-1.5 w-full bg-card/10 rounded-full overflow-hidden">
                     <div className="h-full bg-secondary w-3/4 rounded-full" />
                  </div>
                  <p className="text-[10px] text-white/50 text-end font-latin">7.2 GB / 10 GB</p>
@@ -135,13 +135,13 @@ export default function DocumentVaultPage() {
         {/* Document Grid */}
         <div className="lg:col-span-3 space-y-6">
            {/* Filters */}
-           <div className="bg-white rounded-md border border-border p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
+           <div className="bg-card rounded-md border border-border p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
              <div className="relative w-full md:w-80 group">
                 <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-secondary transition-colors" />
                 <input 
                   type="text" 
                   placeholder={lang === "ar" ? "بحث في الوثائق..." : "Search documents..."}
-                  className="w-full bg-muted/30 border-transparent rounded py-2 pr-10 pl-4 text-sm outline-none font-primary focus:bg-white focus:border-border transition-all"
+                  className="w-full bg-muted/30 border-transparent rounded py-2 pr-10 pl-4 text-sm outline-none font-primary focus:bg-card focus:border-border transition-all"
                 />
              </div>
              <div className="flex items-center gap-2">
@@ -162,7 +162,7 @@ export default function DocumentVaultPage() {
                 </div>
               )}
               {docs.map((doc) => (
-                <div key={doc.id} className="bg-white rounded-md border border-border p-5 hover:shadow-md transition-all group relative border-b-4 border-b-transparent hover:border-b-secondary">
+                <div key={doc.id} className="bg-card rounded-md border border-border p-5 hover:shadow-md transition-all group relative border-b-4 border-b-transparent hover:border-b-secondary">
                    <div className="flex items-start justify-between mb-4">
                       <div className={cn(
                         "h-12 w-12 rounded flex items-center justify-center",

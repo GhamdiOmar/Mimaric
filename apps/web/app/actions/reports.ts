@@ -382,6 +382,193 @@ export async function getProjectProgressReport(startDate: string, endDate: strin
   }));
 }
 
+export async function getDevelopmentPipelineReport() {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+
+  const OFF_PLAN_STAGES = [
+    { status: "LAND_IDENTIFIED", label: "تم التحديد", labelEn: "Land Identified" },
+    { status: "LAND_UNDER_REVIEW", label: "قيد المراجعة", labelEn: "Under Review" },
+    { status: "LAND_ACQUIRED", label: "تم الاستحواذ", labelEn: "Acquired" },
+    { status: "CONCEPT_DESIGN", label: "التصميم المبدئي", labelEn: "Concept Design" },
+    { status: "SUBDIVISION_PLANNING", label: "تخطيط التقسيم", labelEn: "Subdivision Planning" },
+    { status: "AUTHORITY_SUBMISSION", label: "تقديم للجهات", labelEn: "Authority Submission" },
+    { status: "INFRASTRUCTURE_PLANNING", label: "تخطيط البنية التحتية", labelEn: "Infrastructure Planning" },
+    { status: "INVENTORY_STRUCTURING", label: "هيكلة المخزون", labelEn: "Inventory Structuring" },
+    { status: "PRICING_PACKAGING", label: "التسعير والتغليف", labelEn: "Pricing & Packaging" },
+    { status: "LAUNCH_READINESS", label: "جاهزية الإطلاق", labelEn: "Launch Readiness" },
+    { status: "OFF_PLAN_LAUNCHED", label: "تم الإطلاق", labelEn: "Off-Plan Launched" },
+  ];
+
+  const projects = await db.project.findMany({
+    where: {
+      organizationId: orgId,
+      status: { in: OFF_PLAN_STAGES.map((s) => s.status) as any },
+    },
+    select: { id: true, name: true, status: true, createdAt: true },
+  });
+
+  // Enrich with inventory counts per project
+  const inventoryItems = await db.inventoryItem.findMany({
+    where: { organizationId: orgId },
+    select: { projectId: true, status: true, finalPriceSar: true, basePriceSar: true },
+  });
+
+  const invByProject = new Map<string, { total: number; sold: number; reserved: number; pipelineValue: number }>();
+  inventoryItems.forEach((i) => {
+    const entry = invByProject.get(i.projectId) ?? { total: 0, sold: 0, reserved: 0, pipelineValue: 0 };
+    entry.total++;
+    if (i.status === "SOLD_INV") entry.sold++;
+    if (i.status === "RESERVED_INV") entry.reserved++;
+    const price = i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0;
+    entry.pipelineValue += price;
+    invByProject.set(i.projectId, entry);
+  });
+
+  const stages = OFF_PLAN_STAGES.map((stage) => {
+    const stageProjects = projects.filter((p) => p.status === stage.status);
+    return {
+      stage: stage.label,
+      stageEn: stage.labelEn,
+      count: stageProjects.length,
+      projects: stageProjects.map((p) => {
+        const inv = invByProject.get(p.id);
+        return {
+          name: p.name,
+          inventoryTotal: inv?.total ?? 0,
+          inventorySold: inv?.sold ?? 0,
+          inventoryReserved: inv?.reserved ?? 0,
+          pipelineValue: inv?.pipelineValue ?? 0,
+        };
+      }),
+    };
+  });
+
+  const totalInventory = inventoryItems.length;
+  const totalPipelineValue = inventoryItems.reduce(
+    (s, i) => s + (i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0), 0
+  );
+
+  return { stages, totalProjects: projects.length, totalInventory, totalPipelineValue };
+}
+
+export async function getApprovalStatusReport() {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+
+  const submissions = await db.approvalSubmission.findMany({
+    where: { organizationId: orgId },
+    include: { project: { select: { name: true } } },
+  });
+
+  const total = submissions.length;
+  const approved = submissions.filter((s) => s.status === "APPROVED_FINAL").length;
+  const rejected = submissions.filter((s) => s.status === "REJECTED_APPROVAL").length;
+  const pending = submissions.filter((s) => ["SUBMITTED", "UNDER_REVIEW_APPROVAL"].includes(s.status)).length;
+
+  const byType: Record<string, { total: number; approved: number; rejected: number }> = {};
+  submissions.forEach((s) => {
+    const t = s.type;
+    if (!byType[t]) byType[t] = { total: 0, approved: 0, rejected: 0 };
+    byType[t].total++;
+    if (s.status === "APPROVED_FINAL") byType[t].approved++;
+    if (s.status === "REJECTED_APPROVAL") byType[t].rejected++;
+  });
+
+  const details = submissions.map((s) => ({
+    project: s.project.name,
+    type: s.type,
+    authority: s.authority,
+    status: s.status,
+    submittedAt: s.submittedAt?.toISOString().split("T")[0] ?? "—",
+  }));
+
+  return JSON.parse(JSON.stringify({
+    total,
+    approved,
+    rejected,
+    pending,
+    successRate: total > 0 ? Math.round((approved / total) * 100) : 0,
+    byType: Object.entries(byType).map(([type, data]) => ({ type, ...data })),
+    details,
+  }));
+}
+
+export async function getPricingAnalysisReport(projectId?: string) {
+  const session = await requirePermission("reports:read");
+  const orgId = session.organizationId;
+
+  const where: any = { organizationId: orgId };
+  if (projectId) where.projectId = projectId;
+
+  const items = await db.inventoryItem.findMany({
+    where,
+    select: {
+      productType: true,
+      areaSqm: true,
+      basePriceSar: true,
+      finalPriceSar: true,
+      status: true,
+      project: { select: { name: true } },
+    },
+  });
+
+  const rules = await db.pricingRule.findMany({
+    where: { organizationId: orgId, isActive: true, ...(projectId ? { projectId } : {}) },
+    select: { name: true, nameArabic: true, type: true, factor: true, fixedAmountSar: true },
+  });
+
+  const byType: Record<string, { count: number; totalValue: number; avgPrice: number; items: any[] }> = {};
+  items.forEach((i) => {
+    const t = i.productType;
+    if (!byType[t]) byType[t] = { count: 0, totalValue: 0, avgPrice: 0, items: [] };
+    byType[t].count++;
+    const price = Number(i.finalPriceSar ?? i.basePriceSar ?? 0);
+    byType[t].totalValue += price;
+    byType[t].items.push({
+      project: i.project.name,
+      area: i.areaSqm,
+      price,
+      pricePerSqm: i.areaSqm ? Math.round(price / Number(i.areaSqm)) : 0,
+      status: i.status,
+    });
+  });
+  Object.values(byType).forEach((v) => {
+    v.avgPrice = v.count > 0 ? Math.round(v.totalValue / v.count) : 0;
+  });
+
+  // Per-status value breakdown
+  const statusBreakdown: Record<string, { count: number; totalValue: number }> = {};
+  items.forEach((i) => {
+    const st = i.status;
+    if (!statusBreakdown[st]) statusBreakdown[st] = { count: 0, totalValue: 0 };
+    statusBreakdown[st].count++;
+    statusBreakdown[st].totalValue += Number(i.finalPriceSar ?? i.basePriceSar ?? 0);
+  });
+
+  return JSON.parse(JSON.stringify({
+    totalItems: items.length,
+    totalValue: items.reduce((s, i) => s + Number(i.finalPriceSar ?? i.basePriceSar ?? 0), 0),
+    byProductType: Object.entries(byType).map(([type, data]) => ({
+      type,
+      count: data.count,
+      totalValue: data.totalValue,
+      avgPrice: data.avgPrice,
+    })),
+    byStatus: Object.entries(statusBreakdown).map(([status, data]) => ({
+      status,
+      count: data.count,
+      totalValue: data.totalValue,
+    })),
+    activeRules: rules.map((r) => ({
+      name: r.nameArabic || r.name,
+      type: r.type,
+      factor: Number(r.factor ?? 0),
+      fixedAmount: Number(r.fixedAmountSar ?? 0),
+    })),
+  }));
+}
+
 export async function getMaintenanceCostReport(startDate: string, endDate: string) {
   const session = await requirePermission("reports:read");
   const orgId = session.organizationId;

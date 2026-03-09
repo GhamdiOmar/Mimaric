@@ -69,11 +69,11 @@ export default function SiteLogsPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-white">
+        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-card">
           <option value="">{lang === "ar" ? "كل الأنواع" : "All Types"}</option>
           {Object.entries(typeLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
         </select>
-        <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-white">
+        <select value={severityFilter} onChange={(e) => setSeverityFilter(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-sm bg-card">
           <option value="">{lang === "ar" ? "كل الأولويات" : "All Severities"}</option>
           {Object.entries(severityLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
         </select>
@@ -82,14 +82,14 @@ export default function SiteLogsPage() {
       {loading ? (
         <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>
       ) : logs.length === 0 ? (
-        <div className="bg-white rounded-md shadow-card border border-border p-12 text-center">
+        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
           <ClipboardText size={48} className="text-neutral mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد سجلات" : "No Logs"}</h3>
         </div>
       ) : (
         <div className="space-y-3">
           {logs.map((log: any) => (
-            <div key={log.id} className="bg-white rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
+            <div key={log.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -154,7 +154,7 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl border border-border w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة سجل موقع" : "Add Site Log"}</h3>
         </div>
@@ -166,7 +166,7 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
             </div>
             <div>
               <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "النوع" : "Type"}</label>
-              <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-white">
+              <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 {Object.entries(typeLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
               </select>
             </div>
@@ -178,7 +178,7 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الخطورة" : "Severity"}</label>
-              <select value={form.severity} onChange={set("severity")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-white">
+              <select value={form.severity} onChange={set("severity")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 <option value="">—</option>
                 {Object.entries(severityLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
               </select>

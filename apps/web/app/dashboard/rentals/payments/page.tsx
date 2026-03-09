@@ -87,7 +87,7 @@ export default function RentCollectionPage() {
           { label: "متأخرات", en: "Overdue", value: overdue, icon: Warning, color: "destructive" },
           { label: "قيد التحصيل", en: "Pending", value: pending, icon: Clock, color: "accent" },
         ].map((kpi, idx) => (
-          <div key={idx} className="bg-white p-6 rounded-md shadow-card border border-border group hover:shadow-raised transition-all">
+          <div key={idx} className="bg-card p-6 rounded-md shadow-card border border-border group hover:shadow-raised transition-all">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? kpi.label : kpi.en}</span>
               <kpi.icon size={20} className={cn(
@@ -104,7 +104,7 @@ export default function RentCollectionPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Spinner size={32} className="animate-spin text-primary" />

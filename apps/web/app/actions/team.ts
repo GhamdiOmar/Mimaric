@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { validatePassword } from "../../lib/password-policy";
+import { isSystemRole } from "../../lib/permissions";
 
 export async function getTeamMembers() {
   const session = await requirePermission("team:read");
@@ -31,6 +32,11 @@ export async function inviteTeamMember(data: {
   password: string;
 }) {
   const session = await requirePermission("team:write");
+
+  // Guard: non-system users cannot assign system roles
+  if (isSystemRole(data.role) && !isSystemRole(session.role)) {
+    throw new Error("Cannot assign system-level roles");
+  }
 
   // Validate password strength
   const validation = validatePassword(data.password, { name: data.name, email: data.email });
@@ -62,6 +68,11 @@ export async function inviteTeamMember(data: {
 
 export async function updateTeamMember(userId: string, data: { role?: any; name?: string }) {
   const session = await requirePermission("team:write");
+
+  // Guard: non-system users cannot assign system roles
+  if (data.role && isSystemRole(data.role) && !isSystemRole(session.role)) {
+    throw new Error("Cannot assign system-level roles");
+  }
 
   // Verify user belongs to same org
   const user = await db.user.findFirst({

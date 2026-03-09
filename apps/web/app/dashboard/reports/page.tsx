@@ -12,6 +12,9 @@ import {
   Table,
   MapPin,
   HardHat,
+  Rocket,
+  Stamp,
+  Tag,
 } from "@phosphor-icons/react";
 import { Button, Badge } from "@repo/ui";
 import {
@@ -22,6 +25,9 @@ import {
   getLandPortfolioReport,
   getProjectProgressReport,
   getMaintenanceCostReport,
+  getDevelopmentPipelineReport,
+  getApprovalStatusReport,
+  getPricingAnalysisReport,
 } from "../../actions/reports";
 import { generateReportPDF } from "../../../lib/report-pdf";
 import { exportToExcel } from "../../../lib/export";
@@ -101,6 +107,30 @@ const REPORTS = [
     desc: "تحليل التكاليف الفعلية مقابل التقديرية",
     type: "مالي",
     icon: Wrench,
+  },
+  {
+    id: "dev-pipeline",
+    name: "تقرير مسار التطوير",
+    nameEn: "Development Pipeline Report",
+    desc: "توزيع المشاريع على مراحل التطوير العقاري على الخارطة",
+    type: "تطويري",
+    icon: Rocket,
+  },
+  {
+    id: "approval-status",
+    name: "تقرير حالة الموافقات",
+    nameEn: "Approval Status Report",
+    desc: "تتبع طلبات الموافقة من الجهات الحكومية ونسب القبول",
+    type: "تنظيمي",
+    icon: Stamp,
+  },
+  {
+    id: "pricing-analysis",
+    name: "تقرير تحليل التسعير",
+    nameEn: "Pricing Analysis Report",
+    desc: "تحليل الأسعار حسب نوع المنتج وقواعد التسعير النشطة",
+    type: "مالي",
+    icon: Tag,
   },
 ];
 
@@ -304,6 +334,84 @@ export default function ReportsPage() {
             },
           ],
         });
+      } else if (reportId === "dev-pipeline") {
+        const data = await getDevelopmentPipelineReport();
+        generateReportPDF({
+          title: "تقرير مسار التطوير",
+          subtitle: "Development Pipeline Report",
+          dateRange,
+          sections: [
+            {
+              title: "ملخص",
+              rows: [
+                { label: "إجمالي المشاريع", value: String(data.totalProjects) },
+              ],
+            },
+            ...data.stages.filter((s: any) => s.count > 0).map((s: any) => ({
+              title: s.stage,
+              rows: s.projects.map((p: string, i: number) => ({
+                label: `${i + 1}. ${p}`,
+                value: "",
+              })),
+            })),
+          ],
+        });
+      } else if (reportId === "approval-status") {
+        const data = await getApprovalStatusReport();
+        generateReportPDF({
+          title: "تقرير حالة الموافقات",
+          subtitle: "Approval Status Report",
+          dateRange,
+          sections: [
+            {
+              title: "ملخص",
+              rows: [
+                { label: "إجمالي الطلبات", value: String(data.total) },
+                { label: "معتمدة", value: String(data.approved) },
+                { label: "مرفوضة", value: String(data.rejected) },
+                { label: "قيد المراجعة", value: String(data.pending) },
+                { label: "نسبة القبول", value: `${data.successRate}%` },
+              ],
+            },
+            {
+              title: "حسب النوع",
+              rows: data.byType.map((t: any) => ({
+                label: t.type,
+                value: `${t.approved}/${t.total} معتمدة`,
+              })),
+            },
+          ],
+        });
+      } else if (reportId === "pricing-analysis") {
+        const data = await getPricingAnalysisReport();
+        generateReportPDF({
+          title: "تقرير تحليل التسعير",
+          subtitle: "Pricing Analysis Report",
+          dateRange,
+          sections: [
+            {
+              title: "ملخص",
+              rows: [
+                { label: "عدد الوحدات", value: String(data.totalItems) },
+                { label: "إجمالي القيمة (ر.س)", value: fmt(data.totalValue) },
+              ],
+            },
+            {
+              title: "حسب نوع المنتج",
+              rows: data.byProductType.map((t: any) => ({
+                label: t.type,
+                value: `${t.count} وحدة — متوسط ${fmt(t.avgPrice)} ر.س`,
+              })),
+            },
+            {
+              title: "قواعد التسعير النشطة",
+              rows: data.activeRules.map((r: any) => ({
+                label: r.name,
+                value: r.fixedAmount > 0 ? `${fmt(r.fixedAmount)} ر.س` : `${r.factor}x`,
+              })),
+            },
+          ],
+        });
       }
     } catch (e) {
       console.error("Report generation failed:", e);
@@ -417,6 +525,45 @@ export default function ReportsPage() {
           filename: "maintenance-cost-report",
           title: "تقرير تكاليف الصيانة",
         });
+      } else if (reportId === "dev-pipeline") {
+        const data = await getDevelopmentPipelineReport();
+        await exportToExcel({
+          data: data.stages,
+          columns: [
+            { header: "المرحلة", key: "stage" },
+            { header: "Stage", key: "stageEn" },
+            { header: "عدد المشاريع", key: "count" },
+          ],
+          filename: "development-pipeline-report",
+          title: "تقرير مسار التطوير",
+        });
+      } else if (reportId === "approval-status") {
+        const data = await getApprovalStatusReport();
+        await exportToExcel({
+          data: data.details,
+          columns: [
+            { header: "المشروع", key: "project" },
+            { header: "النوع", key: "type" },
+            { header: "الجهة", key: "authority" },
+            { header: "الحالة", key: "status" },
+            { header: "تاريخ التقديم", key: "submittedAt" },
+          ],
+          filename: "approval-status-report",
+          title: "تقرير حالة الموافقات",
+        });
+      } else if (reportId === "pricing-analysis") {
+        const data = await getPricingAnalysisReport();
+        await exportToExcel({
+          data: data.byProductType,
+          columns: [
+            { header: "نوع المنتج", key: "type" },
+            { header: "عدد الوحدات", key: "count" },
+            { header: "إجمالي القيمة", key: "totalValue", render: (v: number) => fmt(v) },
+            { header: "متوسط السعر", key: "avgPrice", render: (v: number) => fmt(v) },
+          ],
+          filename: "pricing-analysis-report",
+          title: "تقرير تحليل التسعير",
+        });
       }
     } catch (e) {
       console.error("Excel export failed:", e);
@@ -437,21 +584,21 @@ export default function ReportsPage() {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-white"
+            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-card"
           />
           <span className="text-neutral text-sm">إلى</span>
           <input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-white"
+            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-card"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {REPORTS.map((report) => (
-          <div key={report.id} className="bg-white rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group">
+          <div key={report.id} className="bg-card rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group">
             <div className="flex items-start justify-between mb-4">
               <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
                 <report.icon size={24} />

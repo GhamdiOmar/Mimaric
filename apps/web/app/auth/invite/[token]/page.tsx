@@ -24,8 +24,12 @@ import {
 } from "../../../actions/invitations";
 
 const roleLabels: Record<string, { ar: string; en: string }> = {
-  SUPER_ADMIN: { ar: "مدير النظام", en: "Super Admin" },
-  DEV_ADMIN: { ar: "مدير تقني", en: "Dev Admin" },
+  SYSTEM_ADMIN: { ar: "مدير المنصة", en: "System Admin" },
+  SYSTEM_SUPPORT: { ar: "دعم المنصة", en: "System Support" },
+  COMPANY_ADMIN: { ar: "مدير الشركة", en: "Company Admin" },
+  // Backward compat
+  SUPER_ADMIN: { ar: "مدير الشركة", en: "Company Admin" },
+  DEV_ADMIN: { ar: "دعم المنصة", en: "System Support" },
   PROJECT_MANAGER: { ar: "مدير مشاريع", en: "Project Manager" },
   SALES_MANAGER: { ar: "مدير مبيعات", en: "Sales Manager" },
   SALES_AGENT: { ar: "وكيل مبيعات", en: "Sales Agent" },

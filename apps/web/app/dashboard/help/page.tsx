@@ -29,6 +29,7 @@ import { createSupportTicket, getMySupportTickets, getAllSupportTickets, getHelp
 import { getPendingJoinRequests, reviewJoinRequest } from "../../actions/join-requests";
 
 const ROLE_OPTIONS = [
+  { value: "COMPANY_ADMIN", label: { ar: "مدير الشركة", en: "Company Admin" } },
   { value: "PROJECT_MANAGER", label: { ar: "مدير المشاريع", en: "Project Manager" } },
   { value: "SALES_MANAGER", label: { ar: "مدير المبيعات", en: "Sales Manager" } },
   { value: "SALES_AGENT", label: { ar: "وكيل مبيعات", en: "Sales Agent" } },
@@ -53,12 +54,15 @@ const PRIORITY_OPTIONS = [
   { value: "URGENT", label: { ar: "عاجلة", en: "Urgent" } },
 ];
 
-type Tab = "overview" | "faq" | "tickets" | "permissions" | "admin";
+type Tab = "overview" | "faq" | "tickets" | "permissions" | "org-admin" | "system-admin";
 
 export default function HelpPage() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role ?? "USER";
-  const isAdmin = hasPermission(userRole, "help:manage_tickets");
+  const isOrgAdmin = hasPermission(userRole, "help:manage_permissions");
+  const isSystemStaff = hasPermission(userRole, "help:manage_tickets");
+  // Backward compat: treat old isAdmin references
+  const isAdmin = isOrgAdmin || isSystemStaff;
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
   const [activeTab, setActiveTab] = React.useState<Tab>("overview");
 
@@ -95,13 +99,14 @@ export default function HelpPage() {
       getMySupportTickets().then(setMyTickets).catch(() => {});
     } else if (activeTab === "permissions") {
       getMyPermissionRequests().then(setMyRequests).catch(() => {});
-    } else if (activeTab === "admin" && isAdmin) {
+    } else if (activeTab === "org-admin" && isOrgAdmin) {
       getPendingPermissionRequests().then(setPendingRequests).catch(() => {});
       getPendingJoinRequests().then(setPendingJoinRequests).catch(() => {});
+    } else if (activeTab === "system-admin" && isSystemStaff) {
       getAllSupportTickets().then(setAllTickets).catch(() => {});
       getHelpDashboardStats().then(setStats).catch(() => {});
     }
-  }, [activeTab, isAdmin]);
+  }, [activeTab, isOrgAdmin, isSystemStaff]);
 
   // Filter FAQs
   const filteredFaqs = FAQ_ITEMS.filter((item) => {
@@ -174,7 +179,8 @@ export default function HelpPage() {
     { key: "faq", label: { ar: "الأسئلة والأدلة", en: "FAQs & Guides" }, icon: BookOpen },
     { key: "tickets", label: { ar: "تذاكري", en: "My Tickets" }, icon: Ticket },
     { key: "permissions", label: { ar: "طلب صلاحيات", en: "Request Permissions" }, icon: ShieldCheck },
-    ...(isAdmin ? [{ key: "admin" as Tab, label: { ar: "لوحة الإدارة", en: "Admin Panel" }, icon: Gear, adminOnly: true }] : []),
+    ...(isOrgAdmin ? [{ key: "org-admin" as Tab, label: { ar: "إدارة المنظمة", en: "Org Management" }, icon: ShieldCheck, adminOnly: true }] : []),
+    ...(isSystemStaff ? [{ key: "system-admin" as Tab, label: { ar: "إدارة النظام", en: "System Admin" }, icon: Gear, adminOnly: true }] : []),
   ];
 
   const statusBadge = (status: string) => {
@@ -267,35 +273,35 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button onClick={() => { setActiveTab("tickets"); setShowNewTicket(true); }} className="bg-white p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
+            <button onClick={() => { setActiveTab("tickets"); setShowNewTicket(true); }} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
               <Ticket size={32} className="text-secondary mb-3" />
               <h3 className="font-bold text-primary">{lang === "ar" ? "تقديم تذكرة" : "Submit Ticket"}</h3>
               <p className="text-xs text-neutral mt-1">{lang === "ar" ? "أبلغ عن مشكلة أو اطلب ميزة جديدة" : "Report an issue or request a feature"}</p>
             </button>
-            <button onClick={() => setActiveTab("permissions")} className="bg-white p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
+            <button onClick={() => setActiveTab("permissions")} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
               <ShieldCheck size={32} className="text-accent mb-3" />
               <h3 className="font-bold text-primary">{lang === "ar" ? "طلب صلاحيات" : "Request Permissions"}</h3>
               <p className="text-xs text-neutral mt-1">{lang === "ar" ? "اطلب ترقية صلاحياتك في النظام" : "Request a role upgrade in the system"}</p>
             </button>
-            <button onClick={() => setActiveTab("faq")} className="bg-white p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
+            <button onClick={() => setActiveTab("faq")} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
               <BookOpen size={32} className="text-info mb-3" />
               <h3 className="font-bold text-primary">{lang === "ar" ? "الأسئلة الشائعة" : "FAQs & Guides"}</h3>
               <p className="text-xs text-neutral mt-1">{lang === "ar" ? "ابحث في الأسئلة الشائعة وأدلة الاستخدام" : "Browse FAQs and usage guides"}</p>
             </button>
           </div>
 
-          {/* Admin Stats */}
-          {isAdmin && stats && (
+          {/* System Staff Stats */}
+          {isSystemStaff && stats && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white p-4 rounded-md border border-border">
+              <div className="bg-card p-4 rounded-md border border-border">
                 <p className="text-xs text-neutral">{lang === "ar" ? "تذاكر مفتوحة" : "Open Tickets"}</p>
                 <p className="text-2xl font-bold text-primary mt-1">{stats.openTickets}</p>
               </div>
-              <div className="bg-white p-4 rounded-md border border-border">
+              <div className="bg-card p-4 rounded-md border border-border">
                 <p className="text-xs text-neutral">{lang === "ar" ? "قيد المعالجة" : "In Progress"}</p>
                 <p className="text-2xl font-bold text-blue-600 mt-1">{stats.inProgressTickets}</p>
               </div>
-              <div className="bg-white p-4 rounded-md border border-border">
+              <div className="bg-card p-4 rounded-md border border-border">
                 <p className="text-xs text-neutral">{lang === "ar" ? "طلبات صلاحيات معلقة" : "Pending Requests"}</p>
                 <p className="text-2xl font-bold text-amber-600 mt-1">{stats.pendingRequests}</p>
               </div>
@@ -314,7 +320,7 @@ export default function HelpPage() {
               value={faqSearch}
               onChange={(e) => setFaqSearch(e.target.value)}
               placeholder={lang === "ar" ? "ابحث في الأسئلة الشائعة..." : "Search FAQs..."}
-              className="w-full bg-white border border-border rounded-md py-2.5 pr-10 pl-4 text-sm focus:border-primary/30 focus:ring-0 outline-none"
+              className="w-full bg-card border border-border rounded-md py-2.5 pr-10 pl-4 text-sm focus:border-primary/30 focus:ring-0 outline-none"
             />
           </div>
 
@@ -338,7 +344,7 @@ export default function HelpPage() {
           </div>
 
           {/* FAQ Accordion */}
-          <div className="bg-white rounded-md border border-border divide-y divide-border">
+          <div className="bg-card rounded-md border border-border divide-y divide-border">
             {filteredFaqs.length === 0 ? (
               <div className="p-6 text-center text-sm text-neutral">{lang === "ar" ? "لا توجد نتائج" : "No results found"}</div>
             ) : (
@@ -366,7 +372,7 @@ export default function HelpPage() {
             <h2 className="text-lg font-bold text-primary mb-4">{lang === "ar" ? "أدلة الاستخدام" : "Usage Guides"}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {GUIDE_ITEMS.map((guide) => (
-                <div key={guide.id} className="bg-white rounded-md border border-border p-4">
+                <div key={guide.id} className="bg-card rounded-md border border-border p-4">
                   <button onClick={() => setOpenGuide(openGuide === guide.id ? null : guide.id)} className="w-full text-start">
                     <h3 className="font-bold text-primary text-sm">{guide.title[lang]}</h3>
                     <p className="text-xs text-neutral mt-1">{guide.description[lang]}</p>
@@ -402,7 +408,7 @@ export default function HelpPage() {
 
           {/* New Ticket Form */}
           {showNewTicket && (
-            <div className="bg-white p-4 rounded-md border border-border space-y-3">
+            <div className="bg-card p-4 rounded-md border border-border space-y-3">
               <input
                 type="text"
                 value={ticketForm.subject}
@@ -436,7 +442,7 @@ export default function HelpPage() {
           )}
 
           {/* Tickets Table */}
-          <div className="bg-white rounded-md border border-border overflow-hidden">
+          <div className="bg-card rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
                 <tr>
@@ -476,7 +482,7 @@ export default function HelpPage() {
       {activeTab === "permissions" && (
         <div className="space-y-6">
           {/* Request Form */}
-          <div className="bg-white p-4 rounded-md border border-border space-y-3">
+          <div className="bg-card p-4 rounded-md border border-border space-y-3">
             <h2 className="font-bold text-primary">{lang === "ar" ? "طلب ترقية الصلاحيات" : "Request Permission Upgrade"}</h2>
             <p className="text-xs text-neutral">{lang === "ar" ? "دورك الحالي: " : "Your current role: "}<span className="font-bold">{userRole}</span></p>
             <select value={permForm.requestedRole} onChange={(e) => setPermForm({ ...permForm, requestedRole: e.target.value })} className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none">
@@ -499,7 +505,7 @@ export default function HelpPage() {
           {/* Request History */}
           <div>
             <h3 className="font-bold text-primary mb-2">{lang === "ar" ? "سجل الطلبات" : "Request History"}</h3>
-            <div className="bg-white rounded-md border border-border overflow-hidden">
+            <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
                   <tr>
@@ -531,12 +537,13 @@ export default function HelpPage() {
         </div>
       )}
 
-      {activeTab === "admin" && isAdmin && (
+      {/* Org Management Tab — visible to COMPANY_ADMIN (via help:manage_permissions) */}
+      {activeTab === "org-admin" && isOrgAdmin && (
         <div className="space-y-6">
           {/* Pending Permission Requests */}
           <div>
             <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "طلبات الصلاحيات المعلقة" : "Pending Permission Requests"}</h2>
-            <div className="bg-white rounded-md border border-border overflow-hidden">
+            <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
                   <tr>
@@ -598,7 +605,7 @@ export default function HelpPage() {
           {/* Pending Join Requests */}
           <div>
             <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "طلبات الانضمام المعلقة" : "Pending Join Requests"}</h2>
-            <div className="bg-white rounded-md border border-border overflow-hidden">
+            <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
                   <tr>
@@ -654,11 +661,16 @@ export default function HelpPage() {
               </table>
             </div>
           </div>
+        </div>
+      )}
 
+      {/* System Admin Tab — visible to SYSTEM_ADMIN/SYSTEM_SUPPORT (via help:manage_tickets) */}
+      {activeTab === "system-admin" && isSystemStaff && (
+        <div className="space-y-6">
           {/* All Tickets */}
           <div>
             <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
-            <div className="bg-white rounded-md border border-border overflow-hidden">
+            <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
                   <tr>

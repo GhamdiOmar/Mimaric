@@ -224,7 +224,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between bg-white p-4 rounded-md border border-border">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between bg-card p-4 rounded-md border border-border">
         <div className="relative w-full sm:w-80 group">
           <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-primary transition-colors" />
           <Input 
@@ -238,7 +238,7 @@ export default function CustomersPage() {
             onClick={() => setViewMode("kanban")}
             className={cn(
               "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-              viewMode === "kanban" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
+              viewMode === "kanban" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
             )}
           >
             {lang === "ar" ? "لوحة كانبان" : "Kanban"}
@@ -247,7 +247,7 @@ export default function CustomersPage() {
             onClick={() => setViewMode("list")}
             className={cn(
               "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-              viewMode === "list" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
+              viewMode === "list" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
             )}
           >
             {lang === "ar" ? "قائمة" : "List"}
@@ -281,7 +281,7 @@ export default function CustomersPage() {
                   .map((customer) => (
                     <div 
                       key={customer.id} 
-                      className="group flex flex-col gap-3 rounded-md bg-white p-4 shadow-card border border-border hover:shadow-raised hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
+                      className="group flex flex-col gap-3 rounded-md bg-card p-4 shadow-card border border-border hover:shadow-raised hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex justify-between items-start">
                         <h4 className="text-sm font-bold text-primary group-hover:text-secondary transition-colors truncate">
@@ -361,7 +361,7 @@ export default function CustomersPage() {
                     setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: status.id });
                     setShowAddModal(true);
                   }}
-                  className="flex items-center justify-center gap-2 rounded-md border border-dashed border-muted py-3 text-xs text-neutral hover:bg-white hover:text-primary hover:border-primary/20 transition-all"
+                  className="flex items-center justify-center gap-2 rounded-md border border-dashed border-muted py-3 text-xs text-neutral hover:bg-card hover:text-primary hover:border-primary/20 transition-all"
                 >
                   <Plus size={14} />
                   <span>{lang === "ar" ? "إضافة عميل هنا" : "Add customer here"}</span>
@@ -371,7 +371,7 @@ export default function CustomersPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border bg-white overflow-hidden" id="customers-table">
+        <div className="rounded-md border border-border bg-card overflow-hidden" id="customers-table">
           <table className="w-full text-start border-collapse">
             <thead className="bg-muted capitalize">
               <tr>
@@ -444,7 +444,7 @@ export default function CustomersPage() {
       {/* Add Customer Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto" dir={lang === "ar" ? "rtl" : "ltr"}>
+           <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto" dir={lang === "ar" ? "rtl" : "ltr"}>
               <h2 className="text-xl font-bold text-primary mb-6">
                  {lang === "ar" ? "إضافة عميل محتمل جديد" : "Add New Customer"}
               </h2>

@@ -26,7 +26,7 @@ export async function createNotification(params: {
 }
 
 /**
- * Notify all admins (SUPER_ADMIN, DEV_ADMIN) in an organization.
+ * Notify all admins (COMPANY_ADMIN, SYSTEM_ADMIN, SYSTEM_SUPPORT) in an organization.
  */
 export async function notifyAdmins(params: {
   type: string;
@@ -40,7 +40,7 @@ export async function notifyAdmins(params: {
   const admins = await db.user.findMany({
     where: {
       organizationId: params.organizationId,
-      role: { in: ["SUPER_ADMIN", "DEV_ADMIN"] },
+      role: { in: ["COMPANY_ADMIN", "SYSTEM_ADMIN", "SYSTEM_SUPPORT"] },
     },
     select: { id: true },
   });

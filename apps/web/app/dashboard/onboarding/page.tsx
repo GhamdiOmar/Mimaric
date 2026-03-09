@@ -36,7 +36,7 @@ const selectClass =
   "w-full h-10 px-3 py-2 rounded-md border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
 const inputClass =
-  "w-full h-10 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
+  "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
 const entityTypeOptions = [
   { value: "ESTABLISHMENT", ar: "مؤسسة", en: "Establishment" },
@@ -379,7 +379,7 @@ export default function OnboardingPage() {
                       ? "bg-green-500 border-green-500 text-white"
                       : i === currentStep
                         ? "bg-secondary border-secondary text-white"
-                        : "bg-white border-gray-300 text-gray-400"
+                        : "bg-card border-gray-300 text-gray-400"
                   )}
                 >
                   {i < currentStep ? (
@@ -407,7 +407,7 @@ export default function OnboardingPage() {
 
         {/* Step Content */}
         <div className="pt-10">
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-8 min-h-[400px]">
+          <div className="bg-card rounded-xl border border-gray-100 shadow-sm p-8 min-h-[400px]">
             {/* Error Banner */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-primary">

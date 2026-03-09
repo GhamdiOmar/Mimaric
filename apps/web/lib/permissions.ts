@@ -1,11 +1,12 @@
 /**
  * PDPL & NCA Compliance — Role-Based Permission System
  *
+ * Two-tier SaaS architecture:
+ *   System tier  — SYSTEM_ADMIN, SYSTEM_SUPPORT (Mimaric platform team)
+ *   Customer tier — COMPANY_ADMIN + operational roles (tenant organizations)
+ *
  * Static permission matrix mapping UserRole → Permission[].
  * Checked on every server action via requirePermission().
- *
- * Key distinction: `customers:read` shows masked PII,
- * `customers:read_pii` unlocks full national ID, phone, email.
  */
 
 export type Permission =
@@ -71,16 +72,43 @@ export type Permission =
   | "land:write"
   | "land:delete"
   | "land:export"
+  // Off-Plan Development Lifecycle
+  | "constraints:read"
+  | "constraints:write"
+  | "feasibility:read"
+  | "feasibility:write"
+  | "decision_gates:read"
+  | "decision_gates:write"
+  | "concept_plans:read"
+  | "concept_plans:write"
+  | "subdivision:read"
+  | "subdivision:write"
+  | "approvals:read"
+  | "approvals:write"
+  | "approvals:submit"
+  | "infrastructure:read"
+  | "infrastructure:write"
+  | "inventory:read"
+  | "inventory:write"
+  | "pricing:read"
+  | "pricing:write"
+  | "launch:read"
+  | "launch:write"
   // Help
   | "help:read"
   | "help:create_ticket"
-  | "help:manage_tickets"
-  | "help:manage_permissions"
+  | "help:manage_tickets"      // System-level: respond as staff, manage ticket status
+  | "help:manage_permissions"  // Org-level: manage join requests + permission requests
   // Invitations
   | "invitations:read"
-  | "invitations:write";
+  | "invitations:write"
+  // System (platform-level)
+  | "system:admin"
+  | "system:support";
 
-const ALL_PERMISSIONS: Permission[] = [
+// ─── Company Admin Permissions (full org control, NO system access) ──────────
+
+const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "customers:read", "customers:read_pii", "customers:write", "customers:delete", "customers:export",
   "projects:read", "projects:write", "projects:delete",
   "units:read", "units:write", "units:delete",
@@ -98,14 +126,40 @@ const ALL_PERMISSIONS: Permission[] = [
   "dashboard:read",
   "notifications:read",
   "land:read", "land:write", "land:delete", "land:export",
-  "help:read", "help:create_ticket", "help:manage_tickets", "help:manage_permissions",
+  // Off-Plan Development Lifecycle
+  "constraints:read", "constraints:write",
+  "feasibility:read", "feasibility:write",
+  "decision_gates:read", "decision_gates:write",
+  "concept_plans:read", "concept_plans:write",
+  "subdivision:read", "subdivision:write",
+  "approvals:read", "approvals:write", "approvals:submit",
+  "infrastructure:read", "infrastructure:write",
+  "inventory:read", "inventory:write",
+  "pricing:read", "pricing:write",
+  "launch:read", "launch:write",
+  "help:read", "help:create_ticket", "help:manage_permissions",
   "invitations:read", "invitations:write",
 ];
 
-export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
-  SUPER_ADMIN: ALL_PERMISSIONS,
-  DEV_ADMIN: ALL_PERMISSIONS,
+// ─── System Permissions (Mimaric platform staff only) ────────────────────────
 
+const SYSTEM_ONLY_PERMISSIONS: Permission[] = [
+  "system:admin", "system:support", "help:manage_tickets",
+];
+
+export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
+  // ── System tier (Mimaric platform team) ──────────────────────────────────
+  SYSTEM_ADMIN: [...COMPANY_ADMIN_PERMISSIONS, ...SYSTEM_ONLY_PERMISSIONS],
+  SYSTEM_SUPPORT: [...COMPANY_ADMIN_PERMISSIONS, "system:support", "help:manage_tickets"],
+
+  // ── Customer tier ────────────────────────────────────────────────────────
+  COMPANY_ADMIN: COMPANY_ADMIN_PERMISSIONS,
+
+  // ── Backward compatibility (deprecated — mapped via JWT) ─────────────────
+  SUPER_ADMIN: COMPANY_ADMIN_PERMISSIONS,
+  DEV_ADMIN: COMPANY_ADMIN_PERMISSIONS,
+
+  // ── Operational roles ────────────────────────────────────────────────────
   PROJECT_MANAGER: [
     "dashboard:read",
     "customers:read",
@@ -120,6 +174,17 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "reports:read",
     "notifications:read",
     "land:read", "land:write", "land:export",
+    // Off-Plan (read/write, no decision gate approval)
+    "constraints:read", "constraints:write",
+    "feasibility:read", "feasibility:write",
+    "decision_gates:read",
+    "concept_plans:read", "concept_plans:write",
+    "subdivision:read", "subdivision:write",
+    "approvals:read", "approvals:write", "approvals:submit",
+    "infrastructure:read", "infrastructure:write",
+    "inventory:read", "inventory:write",
+    "pricing:read",
+    "launch:read",
     "help:read", "help:create_ticket",
   ],
 
@@ -134,6 +199,10 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "reports:read", "reports:export",
     "notifications:read",
     "land:read",
+    // Off-Plan (read + inventory/pricing/launch write for sales)
+    "inventory:read", "inventory:write",
+    "pricing:read", "pricing:write",
+    "launch:read", "launch:write",
     "help:read", "help:create_ticket",
   ],
 
@@ -173,6 +242,11 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "notifications:read",
     "land:read",
     "maintenance:read",
+    // Off-Plan (read + pricing for financial review)
+    "feasibility:read",
+    "inventory:read",
+    "pricing:read", "pricing:write",
+    "launch:read",
     "help:read", "help:create_ticket",
   ],
 
@@ -210,6 +284,24 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "help:read", "help:create_ticket",
   ],
 };
+
+// ─── Role classification helpers ───────────────────────────────────────────
+
+/** Roles that belong to the Mimaric platform team — never assignable by customers */
+export const SYSTEM_ROLES: string[] = ["SYSTEM_ADMIN", "SYSTEM_SUPPORT"];
+
+/** Roles that customers can assign to their team members */
+export const CUSTOMER_ASSIGNABLE_ROLES: string[] = [
+  "COMPANY_ADMIN", "PROJECT_MANAGER", "SALES_MANAGER", "SALES_AGENT",
+  "PROPERTY_MANAGER", "FINANCE_OFFICER", "TECHNICIAN", "BUYER", "TENANT", "USER",
+];
+
+/** Check if a role is a system (Mimaric platform) role */
+export function isSystemRole(role: string): boolean {
+  return SYSTEM_ROLES.includes(role);
+}
+
+// ─── Permission check functions ────────────────────────────────────────────
 
 export function hasPermission(role: string, permission: Permission): boolean {
   const permissions = ROLE_PERMISSIONS[role];

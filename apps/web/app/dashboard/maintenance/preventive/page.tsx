@@ -235,7 +235,7 @@ export default function PreventiveMaintenancePage() {
     }
   }
 
-  const inputClass = "w-full h-10 px-3 bg-white border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
+  const inputClass = "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -272,7 +272,7 @@ export default function PreventiveMaintenancePage() {
           <Spinner size={32} className="animate-spin text-primary" />
         </div>
       ) : plans.length === 0 ? (
-        <div className="bg-white rounded-md shadow-card border border-border p-12 text-center">
+        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
           <CalendarCheck size={48} className="text-neutral/30 mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد خطط وقائية" : "No Preventive Plans"}</h3>
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أضف أول خطة صيانة وقائية" : "Add your first preventive plan"}</p>
@@ -288,7 +288,7 @@ export default function PreventiveMaintenancePage() {
             return (
               <div
                 key={plan.id}
-                className={`bg-white rounded-md shadow-card border p-5 transition-all ${
+                className={`bg-card rounded-md shadow-card border p-5 transition-all ${
                   plan.isActive ? "border-border hover:shadow-raised" : "border-border/50 opacity-60"
                 }`}
               >
@@ -366,7 +366,7 @@ export default function PreventiveMaintenancePage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h2 className="text-lg font-bold text-primary">
                 {editingId

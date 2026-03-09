@@ -56,7 +56,7 @@ export default function ContractPage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
         {/* Document Viewer (Paper style) */}
         <div className="xl:col-span-3">
-          <div className="bg-white rounded-md shadow-card border border-border min-h-[1000px] p-16 md:p-24 overflow-hidden relative" dir={lang === "ar" ? "rtl" : "ltr"}>
+          <div className="bg-card rounded-md shadow-card border border-border min-h-[1000px] p-16 md:p-24 overflow-hidden relative" dir={lang === "ar" ? "rtl" : "ltr"}>
             {/* Header of Contract */}
             <div className="flex justify-between items-start mb-16">
               <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export default function ContractPage() {
                         <th className="px-4 py-3 text-start">{lang === "ar" ? "المبلغ" : "Amount"}</th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white">
+                    <tbody className="bg-card">
                       <tr>
                         <td className="px-4 py-3">{lang === "ar" ? "دفعة مقدمة" : "Downpayment"}</td>
                         <td className="px-4 py-3">10%</td>
@@ -161,7 +161,7 @@ export default function ContractPage() {
 
         {/* Sidebar info */}
         <div className="xl:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">{lang === "ar" ? "حالة المستند" : "Document Status"}</h3>
             <div className="flex items-center gap-3 mb-6">
               <Badge variant={isSigned ? "available" : "reserved"} className="px-3 py-1 text-xs">
@@ -191,7 +191,7 @@ export default function ContractPage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-md shadow-card border border-border">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">{lang === "ar" ? "البيانات المرتبطة" : "Related Entities"}</h3>
             <div className="space-y-3">
               <Link href="/dashboard/units" className="flex items-center justify-between p-3 rounded bg-muted/30 group hover:bg-primary/5 transition-colors">

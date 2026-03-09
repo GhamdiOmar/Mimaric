@@ -119,8 +119,9 @@ model User {
 }
 
 enum UserRole {
-  SUPER_ADMIN
-  DEV_ADMIN
+  SYSTEM_ADMIN       // Mimaric platform admin — full platform + all org access
+  SYSTEM_SUPPORT     // Mimaric support/engineering — ticket management + platform ops
+  COMPANY_ADMIN      // Customer organization admin — full org control, no platform access
   PROJECT_MANAGER
   SALES_MANAGER
   SALES_AGENT
@@ -167,11 +168,22 @@ model Project {
   acquisitionPrice  Decimal?   // Purchase price in SAR
   acquisitionDate   DateTime?  // Date of acquisition
   landLegalNotes    String?    // Legal notes / encumbrances
+  suitabilityScore Float?       // Weighted feasibility score 0-100
   buildings      Building[]
   documents      Document[]
   dueDiligence   DueDiligence[]
   siteLogs       SiteLog[]
   phases         Phase[]
+  constraints          ConstraintRecord[]
+  feasibilityAssessments FeasibilityAssessment[]
+  decisionGates        DecisionGate[]
+  conceptPlans         ConceptPlan[]
+  subdivisionPlans     SubdivisionPlan[]
+  approvalSubmissions  ApprovalSubmission[]
+  infrastructureReadiness InfrastructureReadiness[]
+  inventoryItems       InventoryItem[]
+  pricingRules         PricingRule[]
+  launchWaves          LaunchWave[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -186,9 +198,23 @@ enum ProjectType {
 }
 
 enum ProjectStatus {
+  // Raw Land Phase (Stages 1-3)
   LAND_IDENTIFIED
   LAND_UNDER_REVIEW
   LAND_ACQUIRED
+  // Transition (Stage 4)
+  CONCEPT_DESIGN
+  // Planned Land Phase (Stages 5-8)
+  SUBDIVISION_PLANNING
+  AUTHORITY_SUBMISSION
+  INFRASTRUCTURE_PLANNING
+  // Off-Plan Preparation (Stages 9-11)
+  INVENTORY_STRUCTURING
+  PRICING_PACKAGING
+  LAUNCH_READINESS
+  // Off-Plan Launch (Stage 12)
+  OFF_PLAN_LAUNCHED
+  // Existing construction statuses
   PLANNING
   UNDER_CONSTRUCTION
   READY
@@ -326,21 +352,24 @@ enum CustomerStatus {
 // ─── Reservation ──────────────────────────────────────────────────────────────
 
 model Reservation {
-  id         String            @id @default(cuid())
-  customerId String
-  customer   Customer          @relation(fields: [customerId], references: [id])
-  unitId     String
-  unit       Unit              @relation(fields: [unitId], references: [id])
-  userId     String?           // The agent/user who created the reservation
-  status     ReservationStatus @default(PENDING)
-  expiresAt  DateTime
-  amount     Decimal?
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
+  id              String            @id @default(cuid())
+  customerId      String
+  customer        Customer          @relation(fields: [customerId], references: [id])
+  unitId          String
+  unit            Unit              @relation(fields: [unitId], references: [id])
+  userId          String?           // The agent/user who created the reservation
+  inventoryItemId String?           // Off-plan inventory link (Phase 3)
+  inventoryItem   InventoryItem?    @relation("InventoryReservations", fields: [inventoryItemId], references: [id])
+  status          ReservationStatus @default(PENDING)
+  expiresAt       DateTime
+  amount          Decimal?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@index([customerId])
   @@index([unitId])
   @@index([userId])
+  @@index([inventoryItemId])
 }
 
 enum ReservationStatus {
@@ -475,6 +504,8 @@ model Document {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   userId         String?
+  version        Int          @default(1)
+  versions       DocumentVersion[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -904,4 +935,568 @@ enum JoinRequestStatus {
   DECLINED_JOIN
   EXPIRED_JOIN
   CANCELLED_JOIN
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// OFF-PLAN DEVELOPMENT LIFECYCLE (BRD Stages 1-12)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Phase 1: Constraint Record (Stage 2 — Spatial Screening) ────────────────
+
+model ConstraintRecord {
+  id             String             @id @default(cuid())
+  projectId      String
+  project        Project            @relation(fields: [projectId], references: [id])
+  type           ConstraintType
+  label          String
+  labelArabic    String?
+  severity       ConstraintSeverity @default(MEDIUM)
+  description    String?
+  source         String?            // e.g. "Balady Zoning Map", "Municipality Visit"
+  mitigationPlan String?
+  status         ConstraintStatus   @default(IDENTIFIED)
+  metadata       Json?              // Flexible data per constraint type
+  organizationId String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([projectId])
+}
+
+enum ConstraintType {
+  ZONING
+  TOPOGRAPHY
+  FLOOD_ZONE
+  UTILITY_ACCESS
+  ENVIRONMENTAL
+  ROAD_ACCESS
+  SETBACK
+  HEIGHT_LIMIT
+  HERITAGE
+  OTHER_CONSTRAINT
+}
+
+enum ConstraintSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  BLOCKER
+}
+
+enum ConstraintStatus {
+  IDENTIFIED
+  UNDER_REVIEW
+  MITIGATED
+  ACCEPTED
+  REJECTED
+}
+
+// ─── Phase 1: Feasibility Assessment (Stage 3 — Enhanced) ────────────────────
+
+model FeasibilityAssessment {
+  id             String          @id @default(cuid())
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id])
+  type           FeasibilityType
+  score          Float?          // 0-100 suitability score
+  recommendation String?         // GO, NO_GO, CONDITIONAL
+  assessedBy     String?         // User ID
+  assessedAt     DateTime?
+  findings       Json?           // Structured findings
+  attachmentIds  String[]        // Document IDs
+  notes          String?
+  organizationId String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+enum FeasibilityType {
+  LEGAL
+  COMMERCIAL
+  TECHNICAL
+  ENVIRONMENTAL_FEASIBILITY
+  FINANCIAL
+}
+
+// ─── Phase 1: Decision Gate (Stage Gates — Formal Approvals) ─────────────────
+
+model DecisionGate {
+  id             String       @id @default(cuid())
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id])
+  fromStage      String       // e.g. "LAND_UNDER_REVIEW"
+  toStage        String       // e.g. "LAND_ACQUIRED"
+  decision       GateDecision @default(PENDING)
+  decidedBy      String?      // User ID
+  decidedAt      DateTime?
+  conditions     Json?        // Array of conditions that must be met
+  notes          String?
+  organizationId String
+  createdAt      DateTime     @default(now())
+
+  @@index([projectId])
+}
+
+enum GateDecision {
+  PENDING
+  APPROVED
+  REJECTED
+  DEFERRED
+}
+
+// ─── Phase 1: Document Version ───────────────────────────────────────────────
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  documentId    String
+  document      Document @relation(fields: [documentId], references: [id])
+  versionNumber Int
+  url           String
+  size          Int?
+  uploadedBy    String?
+  changeNote    String?
+  createdAt     DateTime @default(now())
+
+  @@index([documentId])
+}
+
+// ─── Phase 2: Concept Plan (Stage 4 — Development Concept) ──────────────────
+
+model ConceptPlan {
+  id                 String            @id @default(cuid())
+  projectId          String
+  project            Project           @relation(fields: [projectId], references: [id])
+  name               String
+  nameArabic         String?
+  version            Int               @default(1)
+  isSelected         Boolean           @default(false)
+  description        String?
+  totalPlots         Int?
+  totalGfaSqm        Float?
+  farRatio           Float?            // Floor Area Ratio
+  densityUnitsPerHa  Float?
+  openSpacePct       Float?
+  roadNetworkSummary Json?             // {primaryRoads, secondaryRoads, totalRoadArea}
+  amenities          Json?             // [{type, area, count}]
+  attachmentDocIds   String[]
+  status             ConceptPlanStatus @default(DRAFT)
+  createdBy          String?
+  organizationId     String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([projectId])
+}
+
+enum ConceptPlanStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+// ─── Phase 2: Subdivision Plan (Stage 5 — Detailed Planning) ─────────────────
+
+model SubdivisionPlan {
+  id                 String                @id @default(cuid())
+  projectId          String
+  project            Project               @relation(fields: [projectId], references: [id])
+  version            Int                   @default(1)
+  name               String
+  nameArabic         String?
+  status             SubdivisionPlanStatus @default(DRAFT)
+  totalAreaSqm       Float?
+  developableAreaSqm Float?
+  numberOfPhases     Int?
+  plotCount          Int?
+  blockCount         Int?
+  boundaryGeoJson    Json?                 // GeoJSON polygon (plain JSON for now; FUTURE: PostGIS)
+  metadata           Json?
+  approvedBy         String?
+  approvedAt         DateTime?
+  plots              Plot[]
+  blocks             Block[]
+  roads              Road[]
+  utilityCorridors   UtilityCorridor[]
+  organizationId     String
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([projectId])
+}
+
+enum SubdivisionPlanStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  SUPERSEDED
+}
+
+// ─── Phase 2: Plot (Subdivided Parcels) ──────────────────────────────────────
+
+model Plot {
+  id                String    @id @default(cuid())
+  subdivisionPlanId String
+  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
+  plotNumber        String
+  blockId           String?
+  block             Block?    @relation(fields: [blockId], references: [id])
+  areaSqm           Float?
+  landUse           LandUse?
+  phase             Int?      // Phase number within subdivision
+  dimensions        Json?     // {frontage, depth} in meters
+  boundaryGeoJson   Json?     // Polygon coordinates
+  status            PlotStatus @default(PLANNED)
+  productType       String?   // VILLA, TOWNHOUSE, APARTMENT_BLOCK, COMMERCIAL_LOT
+  inventoryItemId   String?   @unique
+  inventoryItem     InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  organizationId    String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([subdivisionPlanId])
+  @@index([blockId])
+}
+
+enum PlotStatus {
+  PLANNED
+  APPROVED
+  AVAILABLE_FOR_SALE
+  RESERVED
+  SOLD
+  HELD
+}
+
+// ─── Phase 2: Block (Group of Plots) ─────────────────────────────────────────
+
+model Block {
+  id                String          @id @default(cuid())
+  subdivisionPlanId String
+  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
+  blockNumber       String
+  areaSqm           Float?
+  landUse           LandUse?
+  numberOfPlots     Int?
+  boundaryGeoJson   Json?
+  plots             Plot[]
+  organizationId    String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([subdivisionPlanId])
+}
+
+// ─── Phase 2: Road (Subdivision Roads) ───────────────────────────────────────
+
+model Road {
+  id                String          @id @default(cuid())
+  subdivisionPlanId String
+  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
+  name              String?
+  type              RoadType
+  widthMeters       Float?
+  lengthMeters      Float?
+  areaSqm           Float?
+  lineGeoJson       Json?           // LineString geometry
+  organizationId    String
+  createdAt         DateTime        @default(now())
+
+  @@index([subdivisionPlanId])
+}
+
+enum RoadType {
+  PRIMARY
+  SECONDARY
+  LOCAL
+  SERVICE
+  CUL_DE_SAC
+}
+
+// ─── Phase 2: Utility Corridor ───────────────────────────────────────────────
+
+model UtilityCorridor {
+  id                String          @id @default(cuid())
+  subdivisionPlanId String
+  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
+  name              String?
+  utilityType       UtilityType
+  widthMeters       Float?
+  lengthMeters      Float?
+  lineGeoJson       Json?
+  organizationId    String
+  createdAt         DateTime        @default(now())
+
+  @@index([subdivisionPlanId])
+}
+
+enum UtilityType {
+  ELECTRICITY
+  WATER
+  SEWAGE
+  TELECOM
+  GAS
+  STORMWATER
+  MULTI
+}
+
+// ─── Phase 2: Approval Submission (Stage 7 — Authority Tracking) ─────────────
+
+model ApprovalSubmission {
+  id                 String         @id @default(cuid())
+  projectId          String
+  project            Project        @relation(fields: [projectId], references: [id])
+  authority          String         // e.g. "Balady", "MOMRA", "SEC"
+  authorityArabic    String?
+  type               ApprovalType
+  referenceNumber    String?        // External tracking number
+  submittedAt        DateTime?
+  status             ApprovalStatus @default(DRAFT_APPROVAL)
+  documentIds        String[]       // Document IDs included in submission
+  responseDate       DateTime?
+  responseNotes      String?
+  conditions         ApprovalCondition[]
+  comments           ApprovalComment[]
+  parentSubmissionId String?        // Links to previous submission if resubmission
+  revisionNumber     Int            @default(1)
+  organizationId     String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([projectId])
+}
+
+enum ApprovalType {
+  SUBDIVISION_APPROVAL
+  BUILDING_PERMIT
+  INFRASTRUCTURE_PERMIT
+  ENVIRONMENTAL_CLEARANCE
+  UTILITY_CONNECTION
+  SALES_LICENSE
+  OTHER_APPROVAL
+}
+
+enum ApprovalStatus {
+  DRAFT_APPROVAL
+  SUBMITTED
+  UNDER_REVIEW_APPROVAL
+  APPROVED_WITH_CONDITIONS
+  APPROVED_FINAL
+  REJECTED_APPROVAL
+  RESUBMISSION_REQUIRED
+}
+
+// ─── Phase 2: Approval Comment ───────────────────────────────────────────────
+
+model ApprovalComment {
+  id           String                  @id @default(cuid())
+  submissionId String
+  submission   ApprovalSubmission      @relation(fields: [submissionId], references: [id])
+  author       String?                 // Authority reviewer name
+  comment      String
+  type         CommentType             @default(COMMENT)
+  status       CommentResolutionStatus @default(OPEN)
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  resolution   String?
+  createdAt    DateTime                @default(now())
+
+  @@index([submissionId])
+}
+
+enum CommentType {
+  COMMENT
+  CONDITION
+  OBJECTION
+  CLARIFICATION
+}
+
+enum CommentResolutionStatus {
+  OPEN
+  IN_PROGRESS_COMMENT
+  RESOLVED
+  WAIVED
+}
+
+// ─── Phase 2: Approval Condition ─────────────────────────────────────────────
+
+model ApprovalCondition {
+  id             String             @id @default(cuid())
+  submissionId   String
+  submission     ApprovalSubmission @relation(fields: [submissionId], references: [id])
+  condition      String
+  conditionArabic String?
+  isMet          Boolean            @default(false)
+  metAt          DateTime?
+  evidence       String?            // Document ID or URL
+  createdAt      DateTime           @default(now())
+
+  @@index([submissionId])
+}
+
+// ─── Phase 3: Infrastructure Readiness (Stage 8) ─────────────────────────────
+
+model InfrastructureReadiness {
+  id               String      @id @default(cuid())
+  projectId        String
+  project          Project     @relation(fields: [projectId], references: [id])
+  category         InfraCategory
+  status           InfraStatus @default(NOT_STARTED)
+  readinessScore   Float?      // 0-100
+  estimatedCostSar Decimal?
+  actualCostSar    Decimal?
+  targetDate       DateTime?
+  completedDate    DateTime?
+  contractor       String?
+  notes            String?
+  wave             Int?        // Wave/phase number for staged rollout
+  checklistItems   Json?       // [{item, checked, notes}]
+  organizationId   String
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([projectId])
+}
+
+enum InfraCategory {
+  ELECTRICITY_INFRA
+  WATER_INFRA
+  SEWAGE_INFRA
+  TELECOM_INFRA
+  ROADS_INFRA
+  STORMWATER_INFRA
+  LANDSCAPING_INFRA
+  FENCING_INFRA
+  SIGNAGE_INFRA
+  STREET_LIGHTING
+}
+
+enum InfraStatus {
+  NOT_STARTED
+  DESIGN_PHASE
+  TENDERING
+  IN_PROGRESS_INFRA
+  TESTING
+  COMPLETED_INFRA
+  DELAYED
+}
+
+// ─── Phase 3: Inventory Item (Stage 9 — Productization) ─────────────────────
+
+model InventoryItem {
+  id                 String          @id @default(cuid())
+  projectId          String
+  project            Project         @relation(fields: [projectId], references: [id])
+  plot               Plot?
+  itemNumber         String          // Inventory reference number
+  productType        ProductType
+  productLabel       String?         // e.g. "Villa Type A - 300sqm"
+  productLabelArabic String?
+  areaSqm            Float?
+  basePriceSar       Decimal?
+  finalPriceSar      Decimal?
+  pricePerSqm        Decimal?
+  pricingDetails     Json?           // Breakdown of pricing rules applied
+  releasePhase       Int?            // Release wave number
+  releaseDate        DateTime?
+  status             InventoryStatus @default(UNRELEASED)
+  channel            SalesChannel?
+  reservations       Reservation[]   @relation("InventoryReservations")
+  organizationId     String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([projectId])
+  @@index([status])
+}
+
+enum ProductType {
+  VILLA_PLOT
+  TOWNHOUSE_PLOT
+  DUPLEX_PLOT
+  APARTMENT_PLOT
+  COMMERCIAL_LOT
+  MIXED_USE_LOT
+  RAW_LAND_PLOT
+}
+
+enum InventoryStatus {
+  UNRELEASED
+  AVAILABLE_INV
+  RESERVED_INV
+  SOLD_INV
+  HELD_INV
+  WITHDRAWN
+}
+
+enum SalesChannel {
+  DIRECT
+  BROKER
+  ONLINE
+  AUCTION
+  VIP
+}
+
+// ─── Phase 3: Pricing Rule (Stage 10 — Pricing Engine) ──────────────────────
+
+model PricingRule {
+  id             String          @id @default(cuid())
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id])
+  name           String
+  nameArabic     String?
+  type           PricingRuleType
+  factor         Float?          // Multiplier (e.g. 1.15 for 15% premium)
+  fixedAmountSar Decimal?        // Fixed amount adjustment
+  appliesTo      Json?           // {plotNumbers: [], blocks: [], productTypes: [], phases: []}
+  condition      Json?           // {minArea, maxArea, landUse, facingDirection}
+  priority       Int             @default(0)
+  isActive       Boolean         @default(true)
+  organizationId String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([projectId])
+}
+
+enum PricingRuleType {
+  BASE_PRICE_PER_SQM
+  CORNER_PREMIUM
+  PARK_FACING_PREMIUM
+  MAIN_ROAD_PREMIUM
+  PHASE_PREMIUM
+  BLOCK_ADJUSTMENT
+  PRODUCT_TYPE_PREMIUM
+  CUSTOM_PRICING
+}
+
+// ─── Phase 3: Launch Wave (Stage 10-12 — Release Control) ───────────────────
+
+model LaunchWave {
+  id             String     @id @default(cuid())
+  projectId      String
+  project        Project    @relation(fields: [projectId], references: [id])
+  waveNumber     Int
+  name           String?
+  nameArabic     String?
+  status         WaveStatus @default(PLANNED)
+  plannedDate    DateTime?
+  launchedAt     DateTime?
+  inventoryCount Int?
+  totalValueSar  Decimal?
+  channelConfig  Json?      // {direct: 40, broker: 30, online: 30}
+  notes          String?
+  organizationId String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+enum WaveStatus {
+  PLANNED
+  READY_WAVE
+  LAUNCHED
+  CLOSED_WAVE
 }

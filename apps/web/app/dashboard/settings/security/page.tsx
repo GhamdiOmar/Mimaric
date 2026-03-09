@@ -76,7 +76,7 @@ export default function SecuritySettingsPage() {
       </div>
 
       <div className="max-w-lg">
-        <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
           <div className="p-6 border-b border-border bg-muted/5">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-primary/5 rounded-md text-primary">

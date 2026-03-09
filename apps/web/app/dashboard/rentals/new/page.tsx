@@ -77,7 +77,7 @@ export default function NewLeasePage() {
       </div>
 
       {/* Stepper Component */}
-      <div className="relative flex justify-between items-center px-4 md:px-20 py-8 bg-white rounded-md shadow-card border border-border overflow-hidden">
+      <div className="relative flex justify-between items-center px-4 md:px-20 py-8 bg-card rounded-md shadow-card border border-border overflow-hidden">
          {/* Background connecting line */}
          <div className="absolute top-[52px] left-20 right-20 h-0.5 bg-muted hidden md:block" />
          
@@ -85,7 +85,7 @@ export default function NewLeasePage() {
            <div key={s} className="relative z-10 flex flex-col items-center gap-3">
              <div className={cn(
                "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-               step >= s ? "bg-primary border-primary text-white shadow-raised" : "bg-white border-muted text-neutral"
+               step >= s ? "bg-primary border-primary text-white shadow-raised" : "bg-card border-muted text-neutral"
              )}>
                {step > s ? <CheckCircle weight="fill" size={24} /> : s}
              </div>
@@ -105,7 +105,7 @@ export default function NewLeasePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Form Area */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-8 rounded-md shadow-card border border-border min-h-[400px]">
+          <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
             {step === 1 && (
               <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex items-center gap-3 mb-4">
@@ -190,7 +190,7 @@ export default function NewLeasePage() {
                       {[1, 2, 4, 12].map(n => (
                         <button key={n} className={cn(
                           "py-3 rounded border text-sm font-bold transition-all",
-                          n === 4 ? "bg-primary text-white border-primary" : "bg-white text-neutral border-border hover:border-primary/50"
+                          n === 4 ? "bg-primary text-white border-primary" : "bg-card text-neutral border-border hover:border-primary/50"
                         )}>
                           {n}
                         </button>
@@ -203,7 +203,7 @@ export default function NewLeasePage() {
                     {[1, 2, 3, 4].map(i => (
                       <div key={i} className="flex items-center justify-between p-4 bg-muted/20 border border-border rounded-md">
                         <div className="flex items-center gap-3">
-                           <div className="h-8 w-8 rounded bg-white border border-border flex items-center justify-center text-[10px] font-bold text-neutral">#{i}</div>
+                           <div className="h-8 w-8 rounded bg-card border border-border flex items-center justify-center text-[10px] font-bold text-neutral">#{i}</div>
                            <div className="text-xs font-bold text-primary flex items-center gap-1"><RiyalIcon size={12}/> 11,250</div>
                         </div>
                         <div className="flex items-center gap-2 text-[10px] text-neutral font-dm-sans">
@@ -232,7 +232,7 @@ export default function NewLeasePage() {
 
         {/* Summary Card */}
         <div className="space-y-6">
-          <div className="bg-white p-6 rounded-md shadow-card border border-border sticky top-24">
+          <div className="bg-card p-6 rounded-md shadow-card border border-border sticky top-24">
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-6 border-b border-border pb-4">{lang === "ar" ? "ملخص العقد" : "Agreement Summary"}</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-start">
@@ -272,7 +272,7 @@ export default function NewLeasePage() {
       {/* Add Customer Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-           <div className="bg-white w-full max-w-md rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300" dir={lang === "ar" ? "rtl" : "ltr"}>
+           <div className="bg-card w-full max-w-md rounded-xl shadow-2xl p-8 border border-border animate-in zoom-in-95 duration-300" dir={lang === "ar" ? "rtl" : "ltr"}>
               <h2 className="text-xl font-bold text-primary mb-6">
                  {lang === "ar" ? "إضافة عميل جديد" : "Add New Customer"}
               </h2>

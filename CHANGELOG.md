@@ -1,5 +1,65 @@
 # Changelog — Mimaric PropTech
 
+## [0.9.0] — 2026-03-09
+
+### Added — Dark Mode / Light Mode
+
+- Full dark/light theme system using `next-themes` with CSS custom properties
+- `ThemeProvider` and `ThemeToggle` (Sun/Moon) components with hydration-safe mounting
+- Restructured `globals.css` with `:root` / `.dark` variable layers and `@custom-variant dark`
+- Sidebar stays navy in both themes via fixed `--sidebar-bg` / `--sidebar-deep` tokens
+- Replaced ~225 hardcoded `bg-white` across 38+ files with theme-aware `bg-card`
+- Dark palette: deep navy backgrounds (`216 55% 9%`), muted borders, adjusted accent colors
+
+### Added — Off-Plan Development System (Stages 7–12)
+
+- **14-tab project detail page**: Feasibility, Concept Plans, Constraints, Approvals, Subdivision, Infrastructure, Inventory, Pricing, Launch Waves, Launch Readiness, Map, Sales Tracking, Analytics, Decision Gates
+- **Inventory management**: Full CRUD with 9 product types (VILLA, APARTMENT, TOWNHOUSE, LAND_PLOT, COMMERCIAL, DUPLEX, PENTHOUSE, STUDIO, OTHER), status workflow (UNRELEASED → AVAILABLE → RESERVED → SOLD), and bulk operations
+- **Pricing engine**: Rules-based pricing with percentage/fixed adjustments, premium/discount modes, rule priority, and active/inactive toggling
+- **Launch waves**: Wave planning, launching, and closing with sequential wave numbering
+- **Launch readiness checklist**: 6-point validation (subdivision, approvals, infrastructure ≥70%, inventory, pricing, waves)
+- **Reservation from inventory**: "From Inventory" flow in existing reservation page with project → wave → item selection cascade
+- **4 modal dialogs**: Add Inventory Item, Add Pricing Rule, Create Launch Wave, Subdivision Plan
+- **3 analytics charts**: Pricing Distribution (bar), Sales Funnel (funnel), Wave Performance (composed) — all Recharts
+
+### Added — Cross-Module Off-Plan Awareness
+
+- **Units page**: New "مخزون على الخارطة" (Off-Plan Inventory) tab with 5 KPI cards, searchable/filterable inventory table, and project filter
+- **Sales page**: "مسار مبيعات على الخارطة" pipeline section with Pipeline Value, Reserved Value, Sold Value, and Conversion Rate
+- **Finance page**: "إيرادات على الخارطة" revenue section with 4-column KPI grid and progress bar
+- **Reports**: Development Pipeline report enriched with per-project inventory counts and pipeline values; Pricing Analysis report enriched with per-status value breakdown
+
+### Added — Notification Triggers
+
+- `LAUNCH_READINESS_COMPLETE` — all 6 readiness checks pass (30-day dedup)
+- `WAVE_LAUNCHED` — wave status changes to LAUNCHED
+- `INVENTORY_MILESTONE_25/50/75/100` — inventory conversion milestones (30-day dedup)
+- `INVENTORY_LOW` — less than 10% inventory available in a project (30-day dedup)
+
+### Added — E2E Test Suites
+
+- Playwright test suites: access control, analytics, dashboard, launch readiness, off-plan modals, reports, reservations
+- Role-based auth setup files for admin, PM, sales, and tech roles
+- Page object models for project detail and dashboard pages
+
+### Schema Changes
+
+- New models: `ConceptPlan`, `RegulatoryConstraint`, `ApprovalSubmission`, `SubdivisionPlan`, `InfrastructureReadiness`, `InventoryItem`, `PricingRule`, `LaunchWave`, `DecisionGate`
+- New enums: `InventoryStatus`, `ProductType`, `WaveStatus`, `GateStatus`, `GateType`
+- Extended `Reservation` with optional `inventoryItemId` relation
+- Extended `Notification` with `titleEn` and `messageEn` for bilingual notifications
+
+### New Server Actions (12 files)
+
+- `analytics.ts`, `approvals.ts`, `concept-plans.ts`, `constraints.ts`, `decision-gates.ts`, `feasibility.ts`, `infrastructure.ts`, `inventory.ts`, `launch.ts`, `launch-waves.ts`, `pricing.ts`, `subdivision.ts`
+
+### Fixed
+
+- Subdivision detail page language toggle was non-functional (`[lang]` → `[lang, setLang]`)
+- Added bilingual error messages and RTL `dir` attribute to subdivision detail
+
+---
+
 ## [0.8.0] — 2026-03-08
 
 ### Added — Registration & Organization Management

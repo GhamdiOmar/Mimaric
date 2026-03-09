@@ -16,7 +16,7 @@ import {
 import { Button, Input, Badge } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getTeamMembers, inviteTeamMember, removeTeamMember } from "../../../actions/team";
-import { hasPermission } from "../../../../lib/permissions";
+import { hasPermission, CUSTOMER_ASSIGNABLE_ROLES } from "../../../../lib/permissions";
 
 type TeamMember = {
   id: string;
@@ -28,16 +28,28 @@ type TeamMember = {
 };
 
 const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  DEV_ADMIN: "Dev Admin",
+  SYSTEM_ADMIN: "System Admin",
+  SYSTEM_SUPPORT: "System Support",
+  COMPANY_ADMIN: "Company Admin",
+  // Backward compat
+  SUPER_ADMIN: "Company Admin",
+  DEV_ADMIN: "System Support",
   PROJECT_MANAGER: "Project Manager",
   SALES_MANAGER: "Sales Manager",
   SALES_AGENT: "Sales Agent",
   PROPERTY_MANAGER: "Property Manager",
   FINANCE_OFFICER: "Finance Officer",
   TECHNICIAN: "Technician",
+  BUYER: "Buyer",
+  TENANT: "Tenant",
   USER: "User",
 };
+
+// Only customer-assignable roles shown in invite dropdown
+const inviteRoleOptions: { value: string; label: string }[] = CUSTOMER_ASSIGNABLE_ROLES.map((r) => ({
+  value: r,
+  label: roleLabels[r] ?? r,
+}));
 
 export default function TeamManagementPage() {
   const [lang, setLang] = React.useState<"ar" | "en">("ar");
@@ -108,7 +120,7 @@ export default function TeamManagementPage() {
 
       {/* Invite Modal */}
       {showInvite && (
-        <div className="bg-white rounded-md shadow-card border border-secondary/30 p-6 space-y-4">
+        <div className="bg-card rounded-md shadow-card border border-secondary/30 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "دعوة عضو جديد" : "Invite New Member"}</h3>
             <button onClick={() => setShowInvite(false)}><X size={18} className="text-neutral" /></button>
@@ -118,8 +130,8 @@ export default function TeamManagementPage() {
             <Input type="email" placeholder={lang === "ar" ? "البريد الإلكتروني" : "Email"} value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
             <Input type="password" placeholder={lang === "ar" ? "كلمة المرور" : "Password"} value={invitePassword} onChange={(e) => setInvitePassword(e.target.value)} />
             <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="rounded border border-border px-3 py-2 text-sm">
-              {Object.entries(roleLabels).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
+              {inviteRoleOptions.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
           </div>
@@ -130,7 +142,7 @@ export default function TeamManagementPage() {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-md shadow-card border border-border overflow-hidden">
+      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-start">
             <thead>
@@ -208,7 +220,7 @@ export default function TeamManagementPage() {
           { title: { ar: "تقارير النشاط", en: "Activity Reports" }, desc: { ar: "تتبع نشاط الفريق والمهام المنجزة في النظام.", en: "Track team activity and completed tasks." }, icon: UserGear },
           { title: { ar: "نظام الدعوات", en: "Invitation System" }, desc: { ar: "دعوة آمنة عبر البريد الإلكتروني مع انتهاء تلقائي.", en: "Secure email invitations with auto-expiry." }, icon: Envelope },
         ].map((item, i) => (
-          <div key={i} className="p-6 bg-white rounded-md border border-border flex items-start gap-4 hover:border-secondary/20 transition-all">
+          <div key={i} className="p-6 bg-card rounded-md border border-border flex items-start gap-4 hover:border-secondary/20 transition-all">
             <div className="p-3 bg-secondary/10 rounded text-secondary">
               <item.icon size={24} />
             </div>

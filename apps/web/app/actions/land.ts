@@ -89,7 +89,12 @@ export async function getLandDetail(projectId: string) {
 
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
-    include: { dueDiligence: true },
+    include: {
+      dueDiligence: true,
+      constraints: { orderBy: { createdAt: "desc" } },
+      feasibilityAssessments: { orderBy: { createdAt: "desc" } },
+      decisionGates: { orderBy: { createdAt: "desc" } },
+    },
   });
   if (!project) throw new Error("Project not found");
 

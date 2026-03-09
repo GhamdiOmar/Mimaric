@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission, getSessionOrThrow } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { createNotification, notifyAdmins } from "../../lib/create-notification";
+import { isSystemRole } from "../../lib/permissions";
 
 export async function createPermissionRequest(data: {
   requestedRole: string;
@@ -115,6 +116,10 @@ export async function reviewPermissionRequest(
 
   // If approved and role requested, update user's role
   if (decision === "APPROVED" && request.requestedRole) {
+    // Guard: non-system users cannot approve upgrades to system roles
+    if (isSystemRole(request.requestedRole) && !isSystemRole(session.role)) {
+      throw new Error("Cannot approve upgrade to system-level role");
+    }
     await db.user.update({
       where: { id: request.userId },
       data: { role: request.requestedRole },

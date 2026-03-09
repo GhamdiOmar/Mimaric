@@ -102,7 +102,7 @@ export default function RegisterPage() {
               onClick={() => setUserType("individual")}
               className={cn(
                 "flex flex-nowrap flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium whitespace-nowrap transition-all",
-                userType === "individual" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
+                userType === "individual" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
               )}
             >
               <User size={18} />
@@ -112,7 +112,7 @@ export default function RegisterPage() {
               onClick={() => setUserType("company")}
               className={cn(
                 "flex flex-nowrap flex-1 items-center justify-center gap-2 rounded py-2 text-sm font-medium whitespace-nowrap transition-all",
-                userType === "company" ? "bg-white text-primary shadow-sm" : "text-neutral hover:text-primary"
+                userType === "company" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
               )}
             >
               <Briefcase size={18} />
