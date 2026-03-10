@@ -331,7 +331,7 @@ export default function InviteAcceptPage() {
 
                 <Button
                   className="w-full"
-                  style={{ display: "inline-flex" }}
+                 
                   onClick={handleAccept}
                   disabled={loading || !name || !password || !agreed}
                 >

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Buildings,
@@ -28,7 +29,7 @@ const selectClass = "w-full h-10 px-3 py-2 rounded-md border border-input bg-bac
 
 export default function OrgSettingsPage() {
   const { can } = usePermissions();
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [org, setOrg] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -178,9 +179,6 @@ export default function OrgSettingsPage() {
             {lang === "ar" ? "إدارة الملف التعريفي والبيانات التجارية لمنشأتك." : "Manage your organization's profile and commercial data."}
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { 
   FilePdf, 
@@ -20,7 +21,7 @@ import { getDocuments, registerFileInDb } from "../../actions/documents";
 import { UploadButton } from "../../../lib/uploadthing";
 
 export default function DocumentVaultPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [docs, setDocs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -78,9 +79,6 @@ export default function DocumentVaultPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-             {lang === "ar" ? "English" : "العربية"}
-          </Button>
           <UploadButton
             endpoint="blueprintUploader"
             onClientUploadComplete={handleUploadComplete}

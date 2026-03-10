@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { RiyalIcon } from "@repo/ui";
 import { 
@@ -24,7 +25,7 @@ import { createCustomer } from "../../../actions/customers";
 
 export default function NewLeasePage() {
   const [step, setStep] = React.useState(1);
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
 
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -68,11 +69,6 @@ export default function NewLeasePage() {
           <p className="text-sm text-neutral mt-1">
             {lang === "ar" ? "خطوات بسيطة لتوثيق العلاقة الإيجارية وحفظ حقوق الأطراف" : "Simple steps to document leasing relationships and protect all parties."}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-            {lang === "ar" ? "English" : "العربية"}
-          </Button>
         </div>
       </div>
 

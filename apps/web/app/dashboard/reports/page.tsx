@@ -612,7 +612,7 @@ export default function ReportsPage() {
                 variant="secondary"
                 size="sm"
                 className="gap-2 text-xs hover:bg-secondary/10 hover:border-secondary/50 hover:text-secondary hover:shadow-sm hover:-translate-y-0.5 transition-all"
-                style={{ display: "inline-flex" }}
+               
                 onClick={() => handleExcel(report.id)}
                 disabled={loadingId !== null}
               >
@@ -623,7 +623,7 @@ export default function ReportsPage() {
                 variant="secondary"
                 size="sm"
                 className="gap-2 text-xs hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:shadow-sm hover:-translate-y-0.5 transition-all"
-                style={{ display: "inline-flex" }}
+               
                 onClick={() => handlePDF(report.id)}
                 disabled={loadingId !== null}
               >

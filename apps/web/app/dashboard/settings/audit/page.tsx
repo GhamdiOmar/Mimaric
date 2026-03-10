@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   ClockCounterClockwise,
@@ -81,7 +82,7 @@ const ACTIONS = ["CREATE", "READ", "UPDATE", "DELETE", "READ_PII", "EXPORT", "LO
 const RESOURCES = ["Customer", "Contract", "Lease", "Reservation", "RentInstallment", "Unit", "Project", "User", "Organization", "Document", "MaintenanceRequest", "Auth"];
 
 export default function AuditLogPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [logs, setLogs] = React.useState<AuditLog[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
@@ -138,9 +139,6 @@ export default function AuditLogPage() {
             <p className="text-xs text-muted">{t.subtitle}</p>
           </div>
         </div>
-        <Button size="sm" variant="ghost" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "EN" : "عربي"}
-        </Button>
       </div>
 
       {/* Filters */}

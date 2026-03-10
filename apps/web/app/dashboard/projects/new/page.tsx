@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Plus,
@@ -67,7 +68,7 @@ type UploadedDoc = {
 };
 
 export default function NewProjectPage() {
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [currentStep, setCurrentStep] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
@@ -558,7 +559,7 @@ export default function NewProjectPage() {
                     setBuildingForm({ name: "", numberOfFloors: "", buildingAreaSqm: "", buildingType: "residential", unitCount: "" });
                     setShowBuildingForm(true);
                   }}
-                  style={{ display: "inline-flex" }}
+                 
                 >
                   <Plus size={16} />
                   {lang === "ar" ? "إضافة مبنى" : "Add Building"}
@@ -600,10 +601,10 @@ export default function NewProjectPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 pt-2">
-                    <Button size="sm" onClick={handleAddBuilding} disabled={!buildingForm.name} style={{ display: "inline-flex" }}>
+                    <Button size="sm" onClick={handleAddBuilding} disabled={!buildingForm.name}>
                       {editingBuilding ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إضافة" : "Add")}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setShowBuildingForm(false); setEditingBuilding(null); }} style={{ display: "inline-flex" }}>
+                    <Button size="sm" variant="ghost" onClick={() => { setShowBuildingForm(false); setEditingBuilding(null); }}>
                       {lang === "ar" ? "إلغاء" : "Cancel"}
                     </Button>
                   </div>
@@ -636,10 +637,10 @@ export default function NewProjectPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleEditBuilding(b)} style={{ display: "inline-flex" }}>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditBuilding(b)}>
                         <PencilSimple size={14} />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeleteBuilding(b.id)} className="text-red-500 hover:text-red-700" style={{ display: "inline-flex" }}>
+                      <Button variant="ghost" size="sm" onClick={() => handleDeleteBuilding(b.id)} className="text-red-500 hover:text-red-700">
                         <Trash size={14} />
                       </Button>
                     </div>
@@ -719,7 +720,7 @@ export default function NewProjectPage() {
                           <p className="text-[10px] text-neutral">{doc.type.toUpperCase()}{doc.size ? ` • ${(doc.size / 1024).toFixed(0)} KB` : ""}</p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setDocuments((prev) => prev.filter((_, idx) => idx !== i))} style={{ display: "inline-flex" }}>
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setDocuments((prev) => prev.filter((_, idx) => idx !== i))}>
                         <Trash size={14} />
                       </Button>
                     </div>
@@ -812,18 +813,18 @@ export default function NewProjectPage() {
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-8 px-2">
-          <Button variant="ghost" onClick={prevStep} disabled={currentStep === 0 || loading} className="gap-2" style={{ display: "inline-flex" }}>
+          <Button variant="ghost" onClick={prevStep} disabled={currentStep === 0 || loading} className="gap-2">
             <ArrowRight size={18} />
             {lang === "ar" ? "السابق" : "Previous"}
           </Button>
 
           {currentStep === steps.length - 1 ? (
-            <Button onClick={handleCreateProject} disabled={loading || !formData.name} className="gap-2 bg-secondary hover:bg-green-bright transition-colors px-10" style={{ display: "inline-flex" }}>
+            <Button onClick={handleCreateProject} disabled={loading || !formData.name} className="gap-2 bg-secondary hover:bg-green-bright transition-colors px-10">
               {loading ? <Spinner className="animate-spin" size={18} /> : <CheckCircle size={20} weight="fill" />}
               {lang === "ar" ? "اعتماد المشروع" : "Approve Project"}
             </Button>
           ) : (
-            <Button onClick={nextStep} className="gap-2 px-10" style={{ display: "inline-flex" }}>
+            <Button onClick={nextStep} className="gap-2 px-10">
               {lang === "ar" ? "التالي" : "Next"}
               <ArrowLeft size={18} />
             </Button>

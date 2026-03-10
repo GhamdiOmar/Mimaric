@@ -1,5 +1,71 @@
 # Changelog — Mimaric PropTech
 
+## [1.0.0] — 2026-03-10
+
+### Added — SaaS Commercialization Layer
+
+- **Subscription plans** — 3-tier system (Lite/Professional/Enterprise) with monthly and annual billing, entitlement-based feature gating, and free trial support
+- **Coupon system** — Percentage and fixed-amount discount codes with max redemptions, expiry dates, and real-time validation on the plans page
+- **Invoice management** — Auto-generated invoices with subtotal, 15% VAT calculation, status tracking (Draft → Issued → Paid → Overdue), and download capability
+- **Payment tracking** — Payment method storage, grace period handling for past-due subscriptions, and billing cycle management (monthly/quarterly/semi-annual/annual)
+- **Platform admin panel** — 4-section admin hub: Plans Management, Subscriptions monitoring, Coupons CRUD, and Invoices & Payments overview with revenue totals
+- **Billing permissions** — `billing:read`, `billing:write`, `billing:admin` permissions with role-based access control
+
+### Added — Wafi Compliance & Escrow
+
+- **Wafi project page** — Off-plan compliance tracking with license management, milestone certification by engineering consultants, and escrow fund monitoring
+- **Escrow accounts** — Fund tracking for off-plan sales with deposit/withdrawal logging and balance monitoring
+- **Engineering Consultant role** — New `ENGINEERING_CONSULTANT` role for independent milestone certification per Wafi requirements
+- **System Support role** — New `SYSTEM_SUPPORT` role for platform operations and ticket management
+
+### Added — Centralized Language System
+
+- `LanguageProvider` context with localStorage persistence and hydration-safe initialization
+- Removed ~25 per-page duplicate language toggles — single unified toggle in the topbar
+- Fixed hydration mismatch (`dir="rtl"` server vs `dir="ltr"` client) by deferring localStorage read to useEffect
+
+### Added — Dark Mode Polish
+
+- Button CSS overrides for Tailwind v4 monorepo (`.dark .btn-primary` / `.dark .btn-secondary`) — green primary, muted secondary in dark mode
+- Chart dark mode colors via shared `useChartTheme` hook across all 4 dashboard charts
+- Popover/dropdown solid backgrounds in dark mode (eliminates transparency/readability issues)
+
+### Added — User Profile Popover
+
+- Functional profile menu in the topbar showing user name, role, organization, and email
+- Quick-link navigation to Settings, Security, and Help
+- Sign Out action accessible from profile popover
+- Removed duplicate user info section from sidebar bottom
+- Profile button visible on all screen sizes (mobile + desktop)
+
+### Added — Help Center Content Expansion
+
+- **12 new FAQs**: Land Management (2), Document Vault (1), Billing & Subscription (3), Rental Payments (1), Sales Contracts (1), Site Logs (1), Onboarding (2), Platform Administration (1)
+- **7 new step-by-step guides**: Add & Manage Land Parcels, Upload & Manage Documents, Track Sales Contracts, Record Rental Payments, Manage Subscription & Billing, Add Site Logs, Complete Account Setup
+- Total: 38 FAQs (was 26) and 19 guides (was 12) — ~95% platform coverage (was ~65%)
+- Corrected role count from 11 to 13 in FAQ, fixed team management button text
+
+### Added — UI Components
+
+- New shared components in `@repo/ui`: Dialog, EmptyState, KPICard, Popover, Select, Skeleton, Tabs, Toast
+- Usage guides section redesigned with numbered badges, accordion expand, and chevron rotation
+
+### Schema Changes
+
+- New models: `Subscription`, `SubscriptionPlan`, `PlanEntitlement`, `Invoice`, `InvoiceItem`, `PaymentMethod`, `Coupon`, `CouponRedemption`, `WafiLicense`, `EscrowAccount`, `EscrowTransaction`, `MilestoneVerification`, `EtmamRequest`
+- New enums: `SubscriptionStatus`, `BillingCycle`, `InvoiceStatus`, `PlanTier`, `CouponType`
+- New roles: `SYSTEM_SUPPORT`, `ENGINEERING_CONSULTANT` added to `UserRole` enum (13 total roles)
+
+### Fixed
+
+- Hydration mismatch from localStorage language read during SSR
+- Build error from orphaned `setLang` references after language centralization
+- Tailwind v4 `dark:` utility classes not generating CSS in monorepo package source files
+- Unit selection indicator changed from bottom-left circle to top-right checkbox style
+- Button text unreadable in dark mode (primary and secondary variants)
+
+---
+
 ## [0.9.0] — 2026-03-09
 
 ### Added — Dark Mode / Light Mode

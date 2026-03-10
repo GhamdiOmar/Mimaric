@@ -3,8 +3,9 @@
 import * as React from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LabelList } from "recharts";
 import { getDashboardLandStats } from "../../app/actions/dashboard";
+import { useChartTheme } from "./useChartTheme";
 
-const COLORS = ["#182840", "#107840", "#D4AF37"];
+const COLORS = ["#64748b", "#107840", "#D4AF37"];
 
 const statusLabels: Record<string, { ar: string; en: string }> = {
   identified: { ar: "تم التحديد", en: "Identified" },
@@ -12,21 +13,10 @@ const statusLabels: Record<string, { ar: string; en: string }> = {
   acquired: { ar: "تم الاستحواذ", en: "Acquired" },
 };
 
-function CustomYTick({ x, y, payload }: any) {
-  return (
-    <g transform={`translate(${x - 12},${y})`}>
-      <foreignObject x={-120} y={-12} width={120} height={24}>
-        <div style={{ textAlign: "left", fontSize: 13, fontWeight: 600, color: "#182840", lineHeight: "24px", whiteSpace: "nowrap" }}>
-          {payload.value}
-        </div>
-      </foreignObject>
-    </g>
-  );
-}
-
 export default function LandPipelineChart() {
   const [data, setData] = React.useState<{ name: string; value: number }[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const theme = useChartTheme();
 
   React.useEffect(() => {
     getDashboardLandStats()
@@ -47,17 +37,24 @@ export default function LandPipelineChart() {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={data} layout="vertical" margin={{ top: 5, right: 40, left: 10, bottom: 5 }}>
-        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: "#6b7280" }} axisLine={false} tickLine={false} />
-        <YAxis type="category" dataKey="name" width={140} tick={<CustomYTick />} tickLine={false} axisLine={false} />
+        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: theme.tickFill }} axisLine={false} tickLine={false} />
+        <YAxis
+          type="category"
+          dataKey="name"
+          width={140}
+          tick={{ fontSize: 12, fill: theme.tickFill, fontWeight: 600 }}
+          tickLine={false}
+          axisLine={false}
+        />
         <Tooltip
           formatter={(value: any) => [value, "عدد الأراضي"]}
-          contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb", fontSize: 12, direction: "rtl" }}
+          contentStyle={theme.tooltipStyle}
         />
         <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
           {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
-          <LabelList dataKey="value" position="right" fill="#182840" fontSize={14} fontWeight={700} offset={8} />
+          <LabelList dataKey="value" position="right" fill={theme.labelFill} fontSize={14} fontWeight={700} offset={8} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

@@ -7,6 +7,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        /* Domain-specific */
         available: "bg-secondary/10 text-secondary border-transparent",
         reserved: "bg-accent/10 text-accent border-transparent",
         sold: "bg-primary/10 text-primary border-transparent",
@@ -14,10 +15,19 @@ const badgeVariants = cva(
         maintenance: "bg-warning/10 text-warning border-transparent",
         overdue: "bg-destructive/10 text-destructive border-transparent",
         draft: "bg-muted text-muted-foreground border-transparent",
+        /* Generic semantic */
+        success: "bg-success/10 text-success border-transparent",
+        info: "bg-info/10 text-info border-transparent",
+        warning: "bg-warning/10 text-warning border-transparent",
+        pending: "bg-accent/10 text-accent border-transparent",
+        error: "bg-destructive/10 text-destructive border-transparent",
+        /* Neutral */
+        default: "bg-muted text-muted-foreground border-transparent",
+        outline: "border border-border text-muted-foreground bg-transparent",
       },
     },
     defaultVariants: {
-      variant: "available",
+      variant: "default",
     },
   }
 );

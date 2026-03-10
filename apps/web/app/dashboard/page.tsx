@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { SARAmount } from "@repo/ui";
+import { SARAmount, KPICard, SkeletonKPICard } from "@repo/ui";
 import {
   Buildings,
   TrendUp,
@@ -16,7 +16,6 @@ import {
   Package,
   ChartBar,
 } from "@phosphor-icons/react";
-import { cn } from "@repo/ui/lib/utils";
 import { getDashboardStats, getDashboardLandStats, getDashboardOffPlanStats } from "../actions/dashboard";
 import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
 import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
@@ -49,105 +48,78 @@ export default function DashboardPage() {
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
-  const formatCurrency = (n: number) => {
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `${(n / 1000).toFixed(0)}K`;
-    return formatNumber(n);
-  };
 
   const kpiData = [
-    { label: { ar: "إجمالي الوحدات", en: "Total Units" }, value: stats ? formatNumber(stats.totalUnits) : "—", icon: Buildings, color: "primary" },
-    { label: { ar: "نسبة الإشغال", en: "Occupancy Rate" }, value: stats ? `${stats.occupancyRate}%` : "—", icon: TrendUp, color: "secondary" },
-    { label: { ar: "الإيجارات المحصلة", en: "Rent Collected" }, value: stats ? <SARAmount value={stats.totalRentCollected} compact size={18} /> : "—", icon: CurrencyCircleDollar, color: "secondary" },
-    { label: { ar: "عقود نشطة", en: "Active Leases" }, value: stats ? formatNumber(stats.activeLeases) : "—", icon: Handshake, color: "accent" },
-    { label: { ar: "طلبات صيانة", en: "Maintenance Requests" }, value: stats ? formatNumber(stats.openMaintenanceCount) : "—", icon: Clock, color: "warning" },
-    { label: { ar: "العملاء الجدد", en: "New Customers" }, value: stats ? `+${formatNumber(stats.newCustomersThisMonth)}` : "—", icon: Users, color: "secondary" },
+    { label: "إجمالي الوحدات", value: stats ? formatNumber(stats.totalUnits) : "—", icon: <Buildings size={20} weight="duotone" />, color: "primary" as const },
+    { label: "نسبة الإشغال", value: stats ? `${stats.occupancyRate}%` : "—", icon: <TrendUp size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "الإيجارات المحصلة", value: stats ? <SARAmount value={stats.totalRentCollected} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "عقود نشطة", value: stats ? formatNumber(stats.activeLeases) : "—", icon: <Handshake size={20} weight="duotone" />, color: "accent" as const },
+    { label: "طلبات صيانة", value: stats ? formatNumber(stats.openMaintenanceCount) : "—", icon: <Clock size={20} weight="duotone" />, color: "warning" as const },
+    { label: "العملاء الجدد", value: stats ? `+${formatNumber(stats.newCustomersThisMonth)}` : "—", icon: <Users size={20} weight="duotone" />, color: "secondary" as const },
+  ];
+
+  const landKpiData = [
+    { label: "الأراضي", value: landStats ? landStats.totalParcels : "—", icon: <MapPin size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "المشاريع النشطة", value: landStats ? landStats.activeProjects : "—", icon: <HardHat size={20} weight="duotone" />, color: "primary" as const },
+    { label: "قيمة المحفظة", value: landStats ? <SARAmount value={landStats.portfolioValue} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "تكاليف الصيانة", value: landStats ? <SARAmount value={landStats.maintenanceCostsThisMonth} compact size={18} /> : "—", icon: <Wrench size={20} weight="duotone" />, color: "accent" as const },
+  ];
+
+  const offPlanKpiData = [
+    { label: "مشاريع البيع على الخارطة", value: offPlanStats ? offPlanStats.totalOffPlanProjects : "—", icon: <Rocket size={20} weight="duotone" />, color: "primary" as const },
+    { label: "إجمالي المخزون", value: offPlanStats ? offPlanStats.totalInventory : "—", icon: <Package size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "معدل التحويل", value: offPlanStats ? `${offPlanStats.conversionRate}%` : "—", icon: <ChartBar size={20} weight="duotone" />, color: "accent" as const },
+    { label: "قيمة المبيعات", value: offPlanStats ? <SARAmount value={offPlanStats.pipelineValue} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
   ];
 
   return (
     <div className="space-y-8">
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        {kpiData.map((kpi, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "bg-card p-6 rounded-md shadow-card border border-border flex flex-col justify-between group hover:shadow-raised hover:border-primary/20 transition-all cursor-default relative overflow-hidden",
-              loading && "animate-pulse"
-            )}
-          >
-            {/* Left Accent Bar */}
-            <div className={cn(
-              "absolute top-0 right-0 bottom-0 w-1",
-              kpi.color === "primary" ? "bg-primary" :
-              kpi.color === "secondary" ? "bg-secondary" :
-              kpi.color === "accent" ? "bg-accent" : "bg-warning"
-            )} />
-
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold uppercase text-neutral tracking-wider truncate mr-2">
-                {kpi.label.ar}
-              </span>
-              <div className={cn(
-                "p-2 rounded-sm",
-                kpi.color === "primary" ? "bg-primary/10 text-primary" :
-                kpi.color === "secondary" ? "bg-secondary/10 text-secondary" :
-                kpi.color === "accent" ? "bg-accent/10 text-accent" : "bg-warning/10 text-warning"
-              )}>
-                <kpi.icon size={20} weight="duotone" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-primary">{kpi.value}</h3>
-            </div>
-          </div>
-        ))}
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => <SkeletonKPICard key={i} />)
+          : kpiData.map((kpi, idx) => (
+              <KPICard
+                key={idx}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                accentColor={kpi.color}
+              />
+            ))
+        }
       </div>
 
       {/* Land & Projects KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: { ar: "الأراضي", en: "Land Parcels" }, value: landStats ? landStats.totalParcels : "—", icon: MapPin, color: "secondary" },
-          { label: { ar: "المشاريع النشطة", en: "Active Projects" }, value: landStats ? landStats.activeProjects : "—", icon: HardHat, color: "primary" },
-          { label: { ar: "قيمة المحفظة", en: "Portfolio Value" }, value: landStats ? <SARAmount value={landStats.portfolioValue} compact size={18} /> : "—", icon: CurrencyCircleDollar, color: "secondary" },
-          { label: { ar: "تكاليف الصيانة", en: "Maintenance Costs" }, value: landStats ? <SARAmount value={landStats.maintenanceCostsThisMonth} compact size={18} /> : "—", icon: Wrench, color: "accent" },
-        ].map((kpi, idx) => (
-          <div key={`land-${idx}`} className={cn("bg-card p-6 rounded-md shadow-card border border-border flex flex-col justify-between group hover:shadow-raised hover:border-primary/20 transition-all cursor-default relative overflow-hidden", !landStats && "animate-pulse")}>
-            <div className={cn("absolute top-0 right-0 bottom-0 w-1", kpi.color === "primary" ? "bg-primary" : kpi.color === "secondary" ? "bg-secondary" : "bg-accent")} />
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold uppercase text-neutral tracking-wider truncate mr-2">{kpi.label.ar}</span>
-              <div className={cn("p-2 rounded-sm", kpi.color === "primary" ? "bg-primary/10 text-primary" : kpi.color === "secondary" ? "bg-secondary/10 text-secondary" : "bg-accent/10 text-accent")}>
-                <kpi.icon size={20} weight="duotone" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-primary">{kpi.value}</h3>
-            </div>
-          </div>
-        ))}
+        {!landStats
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPICard key={i} />)
+          : landKpiData.map((kpi, idx) => (
+              <KPICard
+                key={`land-${idx}`}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                accentColor={kpi.color}
+              />
+            ))
+        }
       </div>
 
       {/* Off-Plan Development KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: { ar: "مشاريع البيع على الخارطة", en: "Off-Plan Projects" }, value: offPlanStats ? offPlanStats.totalOffPlanProjects : "—", icon: Rocket, color: "primary" },
-          { label: { ar: "إجمالي المخزون", en: "Total Inventory" }, value: offPlanStats ? offPlanStats.totalInventory : "—", icon: Package, color: "secondary" },
-          { label: { ar: "معدل التحويل", en: "Conversion Rate" }, value: offPlanStats ? `${offPlanStats.conversionRate}%` : "—", icon: ChartBar, color: "accent" },
-          { label: { ar: "قيمة المبيعات", en: "Pipeline Value" }, value: offPlanStats ? <SARAmount value={offPlanStats.pipelineValue} compact size={18} /> : "—", icon: CurrencyCircleDollar, color: "secondary" },
-        ].map((kpi, idx) => (
-          <div key={`offplan-${idx}`} className={cn("bg-card p-6 rounded-md shadow-card border border-border flex flex-col justify-between group hover:shadow-raised hover:border-primary/20 transition-all cursor-default relative overflow-hidden", !offPlanStats && "animate-pulse")}>
-            <div className={cn("absolute top-0 right-0 bottom-0 w-1", kpi.color === "primary" ? "bg-primary" : kpi.color === "secondary" ? "bg-secondary" : "bg-accent")} />
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold uppercase text-neutral tracking-wider truncate mr-2">{kpi.label.ar}</span>
-              <div className={cn("p-2 rounded-sm", kpi.color === "primary" ? "bg-primary/10 text-primary" : kpi.color === "secondary" ? "bg-secondary/10 text-secondary" : "bg-accent/10 text-accent")}>
-                <kpi.icon size={20} weight="duotone" />
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-primary">{kpi.value}</h3>
-            </div>
-          </div>
-        ))}
+        {!offPlanStats
+          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPICard key={i} />)
+          : offPlanKpiData.map((kpi, idx) => (
+              <KPICard
+                key={`offplan-${idx}`}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                accentColor={kpi.color}
+              />
+            ))
+        }
       </div>
 
       {/* Charts */}

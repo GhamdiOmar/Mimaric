@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -17,7 +18,7 @@ import {
   UserCircle,
   X,
 } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import {
   getMaintenanceRequests,
   getMaintenanceStats,
@@ -60,7 +61,7 @@ const priorityLabels: Record<string, { ar: string; en: string; color: string }> 
 
 export default function MaintenancePage() {
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [requests, setRequests] = React.useState<any[]>([]);
   const [stats, setStats] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -229,12 +230,12 @@ export default function MaintenancePage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/dashboard/maintenance/preventive">
-            <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="secondary" size="sm" className="gap-2">
               <CalendarCheck size={16} />
               {lang === "ar" ? "الصيانة الوقائية" : "Preventive Plans"}
             </Button>
           </Link>
-          <Button size="sm" className="gap-2" onClick={openCreate} style={{ display: "inline-flex" }}>
+          <Button size="sm" className="gap-2" onClick={openCreate}>
             <Plus size={16} />
             {lang === "ar" ? "طلب صيانة جديد" : "New Request"}
           </Button>
@@ -357,14 +358,14 @@ export default function MaintenancePage() {
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-1">
                           <Link href={`/dashboard/maintenance/${r.id}`}>
-                            <Button variant="ghost" size="sm" style={{ display: "inline-flex" }}>
+                            <Button variant="ghost" size="sm">
                               <Eye size={14} />
                             </Button>
                           </Link>
-                          <Button variant="ghost" size="sm" onClick={() => openEdit(r)} style={{ display: "inline-flex" }}>
+                          <Button variant="ghost" size="sm" onClick={() => openEdit(r)}>
                             <PencilSimple size={14} />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDelete(r.id)} style={{ display: "inline-flex" }}>
+                          <Button variant="ghost" size="sm" className="text-red-500" onClick={() => handleDelete(r.id)}>
                             <Trash size={14} />
                           </Button>
                         </div>
@@ -378,104 +379,98 @@ export default function MaintenancePage() {
         )}
       </div>
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-lg font-bold text-primary">
-                {editingId
-                  ? (lang === "ar" ? "تعديل طلب الصيانة" : "Edit Request")
-                  : (lang === "ar" ? "طلب صيانة جديد" : "New Request")}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="text-neutral hover:text-primary">
-                <X size={20} />
-              </button>
+      {/* Create/Edit Modal — using shared Dialog */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId
+                ? (lang === "ar" ? "تعديل طلب الصيانة" : "Edit Request")
+                : (lang === "ar" ? "طلب صيانة جديد" : "New Request")}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral">{lang === "ar" ? "العنوان *" : "Title *"}</label>
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مثال: تسريب ماء في الحمام" : "e.g. Water leak in bathroom"} />
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الوصف" : "Description"}</label>
+              <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${inputClass} h-20 py-2`} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "العنوان *" : "Title *"}</label>
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مثال: تسريب ماء في الحمام" : "e.g. Water leak in bathroom"} />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الوصف" : "Description"}</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${inputClass} h-20 py-2`} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "التصنيف" : "Category"}</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputClass}>
-                    {Object.entries(categoryLabels).map(([k, v]) => (
-                      <option key={k} value={k}>{v[lang]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الأولوية" : "Priority"}</label>
-                  <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className={inputClass}>
-                    {Object.entries(priorityLabels).map(([k, v]) => (
-                      <option key={k} value={k}>{v[lang]}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {!editingId && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الوحدة *" : "Unit *"}</label>
-                  <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
-                    <option value="">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</option>
-                    {units.map((u: any) => (
-                      <option key={u.id} value={u.id}>
-                        {u.number} — {u.building?.name} ({u.building?.project?.name})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "تعيين إلى" : "Assign To"}</label>
-                <select value={form.assignedToId} onChange={(e) => setForm({ ...form, assignedToId: e.target.value })} className={inputClass}>
-                  <option value="">{lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}</option>
-                  {users.map((u: any) => (
-                    <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "التصنيف" : "Category"}</label>
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputClass}>
+                  {Object.entries(categoryLabels).map(([k, v]) => (
+                    <option key={k} value={k}>{v[lang]}</option>
                   ))}
                 </select>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "تاريخ مجدول" : "Scheduled Date"}</label>
-                  <input type="date" value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} className={inputClass} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</label>
-                  <input type="number" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} className={inputClass} placeholder="0.00" />
-                </div>
-              </div>
-
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
-                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={`${inputClass} h-16 py-2`} />
+                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الأولوية" : "Priority"}</label>
+                <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className={inputClass}>
+                  {Object.entries(priorityLabels).map(([k, v]) => (
+                    <option key={k} value={k}>{v[lang]}</option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-              <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving} style={{ display: "inline-flex" }}>
-                {lang === "ar" ? "إلغاء" : "Cancel"}
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !form.title || (!editingId && !form.unitId)} className="gap-2" style={{ display: "inline-flex" }}>
-                {saving && <Spinner size={14} className="animate-spin" />}
-                {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
-              </Button>
+            {!editingId && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الوحدة *" : "Unit *"}</label>
+                <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
+                  <option value="">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</option>
+                  {units.map((u: any) => (
+                    <option key={u.id} value={u.id}>
+                      {u.number} — {u.building?.name} ({u.building?.project?.name})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral">{lang === "ar" ? "تعيين إلى" : "Assign To"}</label>
+              <select value={form.assignedToId} onChange={(e) => setForm({ ...form, assignedToId: e.target.value })} className={inputClass}>
+                <option value="">{lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}</option>
+                {users.map((u: any) => (
+                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "تاريخ مجدول" : "Scheduled Date"}</label>
+                <input type="date" value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} className={inputClass} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-neutral">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</label>
+                <input type="number" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} className={inputClass} placeholder="0.00" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-neutral">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={`${inputClass} h-16 py-2`} />
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving}>
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={saving || !form.title || (!editingId && !form.unitId)} loading={saving}>
+              {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

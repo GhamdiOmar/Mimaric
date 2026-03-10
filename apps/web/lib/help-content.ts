@@ -43,7 +43,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "gs-2",
     question: { ar: "ما هي الأدوار المتاحة في النظام؟", en: "What roles are available in the system?" },
-    answer: { ar: "يوفر ميماريك 11 دوراً: مدير النظام، مدير التطوير، مدير المشاريع، مدير المبيعات، وكيل مبيعات، مدير العقارات، مسؤول مالي، فني صيانة، مشتري، مستأجر، ومستخدم. كل دور له صلاحيات محددة.", en: "Mimaric offers 11 roles: Super Admin, Dev Admin, Project Manager, Sales Manager, Sales Agent, Property Manager, Finance Officer, Technician, Buyer, Tenant, and User. Each has specific permissions." },
+    answer: { ar: "يوفر ميماريك 13 دوراً: مدير النظام، دعم النظام، مدير الشركة، مدير المشاريع، مدير المبيعات، وكيل مبيعات، مدير العقارات، مسؤول مالي، فني صيانة، استشاري هندسي، مشتري، مستأجر، ومستخدم. كل دور له صلاحيات محددة.", en: "Mimaric offers 13 roles: System Admin, System Support, Company Admin, Project Manager, Sales Manager, Sales Agent, Property Manager, Finance Officer, Technician, Engineering Consultant, Buyer, Tenant, and User. Each has specific permissions." },
     category: "getting_started",
   },
   {
@@ -208,6 +208,85 @@ export const FAQ_ITEMS: FAQItem[] = [
     answer: { ar: "نعم، يعرض النظام التاريخ الهجري والميلادي معاً في جميع الأقسام.", en: "Yes, the system displays both Hijri and Gregorian dates across all sections." },
     category: "technical",
   },
+  // Land Management
+  {
+    id: "pm-4",
+    question: { ar: "كيف أضيف أرضاً جديدة؟", en: "How do I add a new land parcel?" },
+    answer: { ar: "من قسم الأراضي، انقر على 'إضافة أرض'. أدخل اسم الأرض، رقم القطعة، رقم الصك، المساحة، نوع الاستخدام (سكني، تجاري، صناعي، زراعي، متعدد)، الموقع (المنطقة، المدينة، الحي)، وحدد الموقع على الخريطة. يمكنك أيضاً إضافة اسم المالك والقيمة التقديرية.", en: "From the Lands section, click 'Add Land'. Enter the land name, parcel number, deed number, area, land use type (residential, commercial, industrial, agricultural, mixed-use), location (region, city, district), and pin the location on the map. You can also add the owner name and estimated value." },
+    category: "property_management",
+  },
+  {
+    id: "pm-5",
+    question: { ar: "ما هو مؤشر ملاءمة الأرض؟", en: "What is the land suitability score?" },
+    answer: { ar: "مؤشر الملاءمة هو تقييم من 0 إلى 100 يعكس مدى مناسبة الأرض للتطوير. النتيجة 70% وأعلى تظهر باللون الأخضر (ممتازة)، 40-69% باللون البرتقالي (متوسطة)، وأقل من 40% باللون الأحمر (ضعيفة). تمر الأرض بحالات: تم تحديدها ← قيد المراجعة ← تم الاستحواذ.", en: "The suitability score is a 0-100 rating reflecting how suitable the land is for development. Scores of 70%+ appear green (excellent), 40-69% amber (moderate), and below 40% red (poor). Land parcels go through statuses: Identified → Under Review → Acquired." },
+    category: "property_management",
+  },
+  // Document Vault
+  {
+    id: "pm-6",
+    question: { ar: "كيف أرفع وأدير المستندات؟", en: "How do I upload and manage documents?" },
+    answer: { ar: "من قسم المستندات، انقر 'رفع مستند' لرفع ملفات PDF أو صور أو مستندات نصية. المستندات تُصنّف تلقائياً (مخططات، تصاريح قانونية، مخططات إنشائية، تجاري، تسويق). يمكنك البحث بالاسم، إنشاء مجلدات جديدة، وتحميل أي مستند. يعرض النظام مؤشر المساحة المستخدمة من إجمالي التخزين المتاح.", en: "From the Documents section, click 'Upload Document' to upload PDFs, images, or text files. Documents are categorized automatically (blueprints, legal permits, structural plans, commercial, marketing). You can search by name, create new folders, and download any document. The system shows a storage usage indicator of your total available space." },
+    category: "property_management",
+  },
+  // Billing & Subscription
+  {
+    id: "fi-4",
+    question: { ar: "كيف أدير اشتراكي؟", en: "How do I manage my subscription?" },
+    answer: { ar: "من قسم الفوترة، يمكنك رؤية خطتك الحالية وحالتها (تجريبي، نشط، متأخر، ملغي)، دورة الفوترة (شهري، ربع سنوي، نصف سنوي، سنوي)، تاريخ الفاتورة التالية، وطرق الدفع المحفوظة. انقر 'تغيير الخطة' لعرض الخطط المتاحة والمقارنة بينها.", en: "From the Billing section, view your current plan and its status (trialing, active, past due, canceled), billing cycle (monthly, quarterly, semi-annual, annual), next billing date, and saved payment methods. Click 'Change Plan' to browse and compare available plans." },
+    category: "finance",
+  },
+  {
+    id: "fi-5",
+    question: { ar: "كيف أستخدم كود الخصم (كوبون)؟", en: "How do I apply a coupon code?" },
+    answer: { ar: "من صفحة الخطط (الفوترة > الخطط)، أدخل كود الخصم في حقل الكوبون وانقر 'تطبيق'. إذا كان الكود صالحاً، سيظهر الخصم (نسبة مئوية أو مبلغ ثابت) على أسعار الخطط مع عرض السعر الأصلي مشطوباً والسعر الجديد باللون الأخضر ومبلغ التوفير.", en: "From the Plans page (Billing > Plans), enter the discount code in the coupon field and click 'Apply'. If valid, the discount (percentage or fixed amount) appears on plan prices with the original price crossed out, the new price in green, and the savings amount displayed." },
+    category: "finance",
+  },
+  {
+    id: "fi-6",
+    question: { ar: "ماذا يحدث عند تأخر سداد الاشتراك؟", en: "What happens when my subscription payment is overdue?" },
+    answer: { ar: "عند تأخر السداد، تتحول حالة اشتراكك إلى 'متأخر' ويظهر شريط تنبيه مع زر 'تحديث الدفع'. لديك فترة سماح لتحديث طريقة الدفع قبل تعليق الخدمة. يمكنك مراجعة فواتيرك ومبالغها من صفحة الفواتير.", en: "When payment is overdue, your subscription status changes to 'Past Due' and a warning banner appears with an 'Update Payment' button. You have a grace period to update your payment method before service suspension. You can review your invoices and amounts from the Invoices page." },
+    category: "finance",
+  },
+  {
+    id: "fi-7",
+    question: { ar: "كيف أتابع مدفوعات الإيجار؟", en: "How do I track and record rental payments?" },
+    answer: { ar: "من الإيجارات > المدفوعات، تظهر لوحة بأربعة مؤشرات: إجمالي المستحق، المحصّل، المتأخر، والمعلق. الجدول يعرض كل قسط مع اسم المستأجر ورقم الوحدة والمبلغ وتاريخ الاستحقاق والحالة. انقر 'تسجيل دفعة' على أي قسط غير مدفوع لتسجيل التحصيل. النظام يحدّث الأقساط المتأخرة تلقائياً.", en: "From Rentals > Payments, a dashboard shows four KPIs: Total Due, Collected, Overdue, and Pending. The table lists each installment with tenant name, unit number, amount, due date, and status. Click 'Record Payment' on any unpaid installment to record collection. The system automatically marks overdue installments." },
+    category: "finance",
+  },
+  // Sales Contracts
+  {
+    id: "sc-4",
+    question: { ar: "كيف أتابع عقود المبيعات؟", en: "How do I track sales contracts?" },
+    answer: { ar: "من المبيعات > العقود، يعرض النظام جدولاً بجميع العقود مع بيانات العميل (الاسم والهاتف)، الوحدة (الرقم والمبنى)، نوع العقد (بيع أو إيجار)، المبلغ بالريال، التاريخ بالهجري والميلادي، والحالة. يمكنك تصفية العقود حسب الحالة: مسودة، مُرسل، موقّع، ملغي. انقر 'عرض' لفتح تفاصيل أي عقد.", en: "From Sales > Contracts, the system shows a table of all contracts with customer info (name and phone), unit (number and building), contract type (sale or lease), amount in SAR, date in Hijri and Gregorian, and status. Filter contracts by status: Draft, Sent, Signed, Canceled. Click 'View' to open any contract's details." },
+    category: "sales_crm",
+  },
+  // Site Logs
+  {
+    id: "op-11",
+    question: { ar: "كيف أستخدم سجلات الموقع؟", en: "How do I use site logs?" },
+    answer: { ar: "من صفحة المشروع > سجلات الموقع، يمكنك تسجيل ومتابعة الأحداث اليومية للموقع. أنواع السجلات: سجل يومي، تفتيش، ملاحظة فنية، سلامة، وطقس. كل سجل له مستوى خطورة (منخفض، متوسط، عالي، حرج) وحالة (مفتوح أو محلول). يمكنك تصفية السجلات حسب النوع والخطورة، وحل أي سجل مفتوح بنقرة واحدة.", en: "From the Project page > Site Logs, you can record and track daily site events. Log types: Daily Log, Inspection, Snag, Safety, and Weather. Each log has a severity level (Low, Medium, High, Critical) and status (Open or Resolved). Filter logs by type and severity, and resolve any open log with one click." },
+    category: "offplan_development",
+  },
+  // Onboarding / Getting Started
+  {
+    id: "gs-4",
+    question: { ar: "كيف أُعدّ حسابي ومنشأتي في ميماريك؟", en: "How do I set up my account and organization in Mimaric?" },
+    answer: { ar: "عند أول تسجيل دخول، يظهر معالج الإعداد المكوّن من 4 خطوات: (1) الانضمام لشركة قائمة أو المتابعة مستقلاً، (2) بيانات المنشأة (الاسم بالعربية والإنجليزية، السجل التجاري، الرقم الضريبي، نوع الكيان والشكل القانوني)، (3) بيانات التواصل (الجوال، المدينة، المنطقة)، (4) دعوة أعضاء الفريق عبر البريد الإلكتروني مع تحديد أدوارهم. يمكنك تخطي أي خطوة والعودة لإكمالها لاحقاً.", en: "On first login, a 4-step setup wizard appears: (1) Join an existing company or continue independently, (2) Organization details (Arabic and English names, CR number, VAT number, entity type, legal form), (3) Contact information (mobile, city, region), (4) Invite team members by email with role assignment. You can skip any step and complete it later." },
+    category: "getting_started",
+  },
+  {
+    id: "gs-5",
+    question: { ar: "كيف أنضم لشركة قائمة في ميماريك؟", en: "How do I join an existing company in Mimaric?" },
+    answer: { ar: "في الخطوة الأولى من الإعداد، اختر 'انضم لشركة'. أدخل رقم السجل التجاري المكوّن من 10 خانات وانقر 'بحث'. إذا وُجدت الشركة، ستظهر بياناتها ويمكنك إرسال طلب انضمام. سيراجع مدير الشركة طلبك ويوافق عليه.", en: "In the first setup step, choose 'Join a Company'. Enter the 10-digit CR number and click 'Search'. If the company is found, its details appear and you can send a join request. The company admin will review and approve your request." },
+    category: "getting_started",
+  },
+  // Platform Administration
+  {
+    id: "te-4",
+    question: { ar: "ما هي أدوات إدارة المنصة (للمسؤولين)؟", en: "What are the platform administration tools (for admins)?" },
+    answer: { ar: "لوحة الإدارة تتيح للمسؤولين: إدارة خطط الاشتراك (إنشاء وتعديل الخطط والأسعار والميزات)، متابعة جميع الاشتراكات (نشط، تجريبي، متأخر، ملغي) مع إحصائيات شاملة، إنشاء وإدارة الكوبونات (كود الخصم، النسبة أو المبلغ، الحد الأقصى للاستخدام، الصلاحية)، وعرض جميع الفواتير والمدفوعات عبر المنصة مع إجمالي الإيرادات.", en: "The Admin panel lets administrators: manage subscription plans (create and edit plans, pricing, and features), monitor all subscriptions (active, trialing, past due, canceled) with comprehensive statistics, create and manage coupons (discount codes, percentage or fixed amount, max redemptions, validity), and view all invoices and payments across the platform with total revenue." },
+    category: "technical",
+  },
 ];
 
 export const GUIDE_ITEMS: GuideItem[] = [
@@ -297,10 +376,10 @@ export const GUIDE_ITEMS: GuideItem[] = [
     module: "settings",
     steps: [
       { ar: "اذهب إلى الإعدادات > إدارة الفريق", en: "Go to Settings > Team Management" },
-      { ar: "انقر 'إضافة عضو جديد'", en: "Click 'Add New Member'" },
+      { ar: "انقر 'دعوة عضو جديد'", en: "Click 'Invite Member'" },
       { ar: "أدخل الاسم والبريد الإلكتروني وكلمة المرور", en: "Enter name, email, and password" },
       { ar: "اختر الدور المناسب (مدير مشاريع، وكيل مبيعات، فني، إلخ)", en: "Select the appropriate role (Project Manager, Sales Agent, Technician, etc.)" },
-      { ar: "انقر 'دعوة' — سيتمكن العضو من تسجيل الدخول فوراً", en: "Click 'Invite' — the member can log in immediately" },
+      { ar: "انقر 'حفظ' — سيتمكن العضو من تسجيل الدخول فوراً", en: "Click 'Save' — the member can log in immediately" },
     ],
   },
   {
@@ -371,6 +450,110 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "استعرض جدول أداء الموجات لمقارنة المتاح والمحجوز والمباع", en: "Review the wave performance table to compare available, reserved, and sold" },
       { ar: "استعرض جدول التسعير حسب النوع لتحليل الأسعار بحسب فئة المنتج", en: "Review the pricing by type table to analyze prices by product category" },
       { ar: "استخدم مؤشرات لوحة التحكم الرئيسية لمتابعة إجمالي المخزون ونشاط الإطلاق", en: "Use the main dashboard KPIs to track total inventory and launch activity" },
+    ],
+  },
+  // Land Management Guide
+  {
+    id: "guide-13",
+    title: { ar: "إضافة وإدارة الأراضي", en: "Add & Manage Land Parcels" },
+    description: { ar: "كيفية إضافة أراضي جديدة وتتبع حالتها وملاءمتها للتطوير", en: "How to add new land parcels and track their status and development suitability" },
+    module: "lands",
+    steps: [
+      { ar: "اذهب إلى قسم الأراضي من القائمة الجانبية", en: "Go to the Lands section from the sidebar" },
+      { ar: "انقر زر 'إضافة أرض' لفتح نموذج الإضافة", en: "Click the 'Add Land' button to open the form" },
+      { ar: "أدخل اسم الأرض، رقم القطعة، ورقم الصك", en: "Enter the land name, parcel number, and deed number" },
+      { ar: "حدد المساحة (م²) ونوع الاستخدام (سكني، تجاري، صناعي، زراعي، أو متعدد)", en: "Set the area (sqm) and land use (residential, commercial, industrial, agricultural, or mixed-use)" },
+      { ar: "أدخل الموقع (المنطقة، المدينة، الحي) وحدد الموقع على الخريطة", en: "Enter the location (region, city, district) and pin the location on the map" },
+      { ar: "اختيارياً: أضف اسم المالك والقيمة التقديرية بالريال", en: "Optionally: add the owner name and estimated value in SAR" },
+      { ar: "انقر 'حفظ' — ستظهر الأرض في الجدول مع مؤشر الملاءمة والحالة", en: "Click 'Save' — the land appears in the table with suitability score and status" },
+    ],
+  },
+  // Document Vault Guide
+  {
+    id: "guide-14",
+    title: { ar: "رفع وإدارة المستندات", en: "Upload & Manage Documents" },
+    description: { ar: "كيفية رفع الملفات وتصنيفها والبحث عنها في خزنة المستندات", en: "How to upload files, categorize them, and search in the document vault" },
+    module: "documents",
+    steps: [
+      { ar: "اذهب إلى قسم المستندات من القائمة الجانبية", en: "Go to the Documents section from the sidebar" },
+      { ar: "انقر زر 'رفع مستند' واختر ملفاً من جهازك (PDF، صورة، أو نص)", en: "Click 'Upload Document' and select a file from your device (PDF, image, or text)" },
+      { ar: "سيتم رفع الملف وتصنيفه تلقائياً في الفئة المناسبة", en: "The file will be uploaded and automatically categorized" },
+      { ar: "استخدم القائمة الجانبية للتصفية حسب الفئة (مخططات، تصاريح، إنشائية، تجاري، تسويق)", en: "Use the sidebar to filter by category (blueprints, legal permits, structural, commercial, marketing)" },
+      { ar: "استخدم شريط البحث للعثور على أي مستند بالاسم", en: "Use the search bar to find any document by name" },
+      { ar: "انقر زر التحميل على أي بطاقة مستند لتحميله إلى جهازك", en: "Click the download button on any document card to download it" },
+    ],
+  },
+  // Sales Contracts Guide
+  {
+    id: "guide-15",
+    title: { ar: "متابعة عقود المبيعات", en: "Track Sales Contracts" },
+    description: { ar: "كيفية عرض وتصفية ومتابعة دورة حياة عقود البيع والإيجار", en: "How to view, filter, and track the lifecycle of sales and lease contracts" },
+    module: "sales",
+    steps: [
+      { ar: "اذهب إلى المبيعات > العقود من القائمة الجانبية", en: "Go to Sales > Contracts from the sidebar" },
+      { ar: "استخدم أزرار التصفية في الأعلى لاختيار الحالة (الكل، مسودة، مُرسل، موقّع، ملغي)", en: "Use the filter buttons at the top to select status (All, Draft, Sent, Signed, Canceled)" },
+      { ar: "استعرض الجدول الذي يعرض بيانات العميل والوحدة ونوع العقد والمبلغ والتاريخ", en: "Browse the table showing customer info, unit, contract type, amount, and date" },
+      { ar: "انقر 'عرض' لفتح صفحة تفاصيل العقد", en: "Click 'View' to open the contract details page" },
+      { ar: "تابع دورة حياة العقد: مسودة ← مُرسل ← موقّع", en: "Follow the contract lifecycle: Draft → Sent → Signed" },
+    ],
+  },
+  // Rental Payments Guide
+  {
+    id: "guide-16",
+    title: { ar: "تسجيل مدفوعات الإيجار", en: "Record Rental Payments" },
+    description: { ar: "كيفية متابعة أقساط الإيجار وتسجيل المدفوعات المحصّلة", en: "How to monitor rental installments and record collected payments" },
+    module: "rentals",
+    steps: [
+      { ar: "اذهب إلى الإيجارات > المدفوعات من القائمة الجانبية", en: "Go to Rentals > Payments from the sidebar" },
+      { ar: "راجع بطاقات المؤشرات: إجمالي المستحق، المحصّل، المتأخر، والمعلق", en: "Review the KPI cards: Total Due, Collected, Overdue, and Pending" },
+      { ar: "استعرض جدول الأقساط مع بيانات المستأجر والوحدة والمبلغ وتاريخ الاستحقاق", en: "Browse the installments table with tenant info, unit, amount, and due date" },
+      { ar: "حدد القسط المطلوب تسجيله (غير مدفوع أو متأخر)", en: "Find the installment to record (unpaid or overdue)" },
+      { ar: "انقر زر 'تسجيل دفعة' — سيتم تحديث الحالة تلقائياً إلى 'مدفوع'", en: "Click 'Record Payment' — the status will automatically update to 'Paid'" },
+    ],
+  },
+  // Billing & Subscription Guide
+  {
+    id: "guide-17",
+    title: { ar: "إدارة الاشتراك والفوترة", en: "Manage Subscription & Billing" },
+    description: { ar: "كيفية اختيار خطة اشتراك وتطبيق كوبون ومراجعة الفواتير", en: "How to choose a subscription plan, apply a coupon, and review invoices" },
+    module: "billing",
+    steps: [
+      { ar: "اذهب إلى الفوترة من القائمة الجانبية لعرض خطتك الحالية", en: "Go to Billing from the sidebar to view your current plan" },
+      { ar: "انقر 'تغيير الخطة' لاستعراض الخطط المتاحة", en: "Click 'Change Plan' to browse available plans" },
+      { ar: "بدّل بين الفوترة الشهرية والسنوية (وفّر 20% مع السنوية)", en: "Toggle between monthly and annual billing (save 20% with annual)" },
+      { ar: "اختيارياً: أدخل كود خصم في حقل الكوبون وانقر 'تطبيق'", en: "Optionally: enter a discount code in the coupon field and click 'Apply'" },
+      { ar: "انقر 'اختر الخطة' أو 'ابدأ التجربة المجانية' للاشتراك", en: "Click 'Choose Plan' or 'Start Free Trial' to subscribe" },
+      { ar: "راجع فواتيرك من صفحة الفواتير (رقم الفاتورة، التاريخ، الحالة، المبلغ مع الضريبة)", en: "Review your invoices from the Invoices page (invoice number, date, status, amount with VAT)" },
+    ],
+  },
+  // Site Logs Guide
+  {
+    id: "guide-18",
+    title: { ar: "تسجيل سجلات الموقع", en: "Add Site Logs to a Project" },
+    description: { ar: "كيفية تسجيل أحداث الموقع اليومية (تفتيش، ملاحظات، سلامة، طقس)", en: "How to log daily site events (inspections, snags, safety, weather)" },
+    module: "projects",
+    steps: [
+      { ar: "افتح المشروع المطلوب واذهب إلى 'سجلات الموقع'", en: "Open the desired project and go to 'Site Logs'" },
+      { ar: "انقر زر 'إضافة سجل' لفتح نموذج الإدخال", en: "Click 'Add Log' to open the entry form" },
+      { ar: "حدد التاريخ ونوع السجل (يومي، تفتيش، ملاحظة فنية، سلامة، أو طقس)", en: "Select the date and log type (daily, inspection, snag, safety, or weather)" },
+      { ar: "اكتب وصفاً تفصيلياً للحدث أو الملاحظة", en: "Write a detailed description of the event or observation" },
+      { ar: "اختيارياً: حدد مستوى الخطورة (منخفض، متوسط، عالي، حرج) واسم المُبلّغ", en: "Optionally: set the severity level (low, medium, high, critical) and reporter name" },
+      { ar: "انقر 'حفظ' — يمكنك لاحقاً تصفية السجلات حسب النوع والخطورة، وحل المفتوح منها", en: "Click 'Save' — you can later filter logs by type and severity, and resolve open ones" },
+    ],
+  },
+  // Onboarding Guide
+  {
+    id: "guide-19",
+    title: { ar: "إكمال إعداد الحساب", en: "Complete Account Setup" },
+    description: { ar: "خطوات إعداد الحساب والمنشأة ودعوة فريق العمل عند أول استخدام", en: "Steps to set up your account, organization, and invite your team on first use" },
+    module: "onboarding",
+    steps: [
+      { ar: "الخطوة 1: اختر 'انضم لشركة' (أدخل رقم السجل التجاري) أو 'تابع مستقلاً'", en: "Step 1: Choose 'Join a Company' (enter CR number) or 'Continue Independently'" },
+      { ar: "الخطوة 2: أدخل بيانات المنشأة (الاسم بالعربية والإنجليزية، السجل التجاري، الرقم الضريبي)", en: "Step 2: Enter organization details (Arabic and English name, CR number, VAT number)" },
+      { ar: "اختر نوع الكيان (مؤسسة، شركة، فرع...) والشكل القانوني (ذ.م.م، مساهمة...)", en: "Select entity type (establishment, company, branch...) and legal form (LLC, joint stock...)" },
+      { ar: "الخطوة 3: أدخل بيانات التواصل (رقم الجوال 05XXXXXXXX، المدينة، المنطقة)", en: "Step 3: Enter contact info (mobile 05XXXXXXXX, city, region)" },
+      { ar: "الخطوة 4: أضف أعضاء الفريق عبر البريد الإلكتروني واختر دور كل عضو", en: "Step 4: Add team members by email and select each member's role" },
+      { ar: "انقر 'إرسال الدعوات وإكمال الإعداد' — سيتمكن فريقك من الدخول فوراً", en: "Click 'Send Invitations & Complete Setup' — your team can log in immediately" },
     ],
   },
 ];

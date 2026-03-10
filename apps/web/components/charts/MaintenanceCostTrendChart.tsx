@@ -4,6 +4,7 @@ import * as React from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { RiyalIcon } from "@repo/ui";
 import { getMaintenanceCostTrend } from "../../app/actions/dashboard";
+import { useChartTheme } from "./useChartTheme";
 
 const MONTH_NAMES_AR: Record<string, string> = {
   "01": "يناير", "02": "فبراير", "03": "مارس", "04": "أبريل",
@@ -33,6 +34,7 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function MaintenanceCostTrendChart() {
   const [data, setData] = React.useState<{ month: string; estimated: number; actual: number }[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const theme = useChartTheme();
 
   React.useEffect(() => {
     getMaintenanceCostTrend()
@@ -55,12 +57,12 @@ export default function MaintenanceCostTrendChart() {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-        <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} />
+        <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
+        <XAxis dataKey="month" tick={{ fontSize: 11, fill: theme.tickFill }} axisLine={{ stroke: theme.axisStroke }} tickLine={false} />
+        <YAxis tick={{ fontSize: 11, fill: theme.tickFill }} axisLine={false} tickLine={false} />
         <Tooltip content={<CustomTooltip />} />
         <Line type="monotone" dataKey="estimated" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} name="تقديري" />
-        <Line type="monotone" dataKey="actual" stroke="#107840" strokeWidth={2} dot={{ r: 4 }} name="فعلي" />
+        <Line type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name="فعلي" />
       </LineChart>
     </ResponsiveContainer>
   );

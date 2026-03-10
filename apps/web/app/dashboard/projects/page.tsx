@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { Buildings, Plus, MapPin } from "@phosphor-icons/react";
 import { Button, Badge } from "@repo/ui";
@@ -58,7 +59,7 @@ const typeColors: Record<string, string> = {
 };
 
 export default function ProjectsPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filter, setFilter] = React.useState<"all" | "regular" | "offplan">("all");
@@ -92,9 +93,6 @@ export default function ProjectsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-            {lang === "ar" ? "English" : "العربية"}
-          </Button>
           <Link href="/dashboard/projects/new">
             <Button size="sm" className="gap-2 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-5 h-10">
               <Plus size={18} weight="bold" />
@@ -122,7 +120,7 @@ export default function ProjectsPage() {
                     : "bg-primary text-white"
                   : "bg-muted/30 text-neutral hover:bg-muted/50"
               }`}
-              style={{ display: "inline-flex" }}
+             
             >
               {tab[lang]} ({tab.count})
             </button>

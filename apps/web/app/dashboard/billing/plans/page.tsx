@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   CheckCircle,
@@ -9,23 +10,27 @@ import {
   Buildings,
   ArrowLeft,
   ArrowRight,
+  Tag,
+  X,
 } from "@phosphor-icons/react";
 import { Button } from "@repo/ui";
 import Link from "next/link";
 import { getPlans, subscribeToPlan, getCurrentSubscription } from "../../../actions/billing";
+import { validateCoupon } from "../../../actions/coupons";
 
 export default function PlansPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [plans, setPlans] = React.useState<any[]>([]);
   const [currentSub, setCurrentSub] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [subscribing, setSubscribing] = React.useState<string | null>(null);
   const [billingCycle, setBillingCycle] = React.useState<"MONTHLY" | "ANNUAL">("ANNUAL");
 
-  React.useEffect(() => {
-    const stored = localStorage.getItem("preferredLanguage");
-    if (stored === "en" || stored === "ar") setLang(stored);
-  }, []);
+  // Coupon state
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponLoading, setCouponLoading] = React.useState(false);
+  const [appliedCoupon, setAppliedCoupon] = React.useState<any>(null);
+  const [couponError, setCouponError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     async function load() {
@@ -43,6 +48,44 @@ export default function PlansPage() {
   }, []);
 
   const t = translations[lang];
+
+  async function handleValidateCoupon() {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    try {
+      const result = await validateCoupon(couponCode.trim());
+      if (result.valid && result.coupon) {
+        setAppliedCoupon(result.coupon);
+        setCouponError(null);
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(result.reason ?? t.couponInvalid);
+      }
+    } catch (error: any) {
+      setCouponError(error.message ?? t.couponInvalid);
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponCode("");
+    setCouponError(null);
+  }
+
+  function calculateDiscount(price: number): { discountAmount: number; discountedPrice: number } {
+    if (!appliedCoupon || price === 0) return { discountAmount: 0, discountedPrice: price };
+    let discountAmount: number;
+    if (appliedCoupon.type === "PERCENTAGE") {
+      discountAmount = Math.round((price * appliedCoupon.value) / 100 * 100) / 100;
+    } else {
+      discountAmount = Math.min(appliedCoupon.value, price);
+    }
+    return { discountAmount, discountedPrice: Math.max(0, price - discountAmount) };
+  }
 
   async function handleSubscribe(planId: string) {
     setSubscribing(planId);
@@ -81,10 +124,10 @@ export default function PlansPage() {
       </div>
 
       {/* Billing Cycle Toggle */}
-      <div className="flex items-center justify-center gap-4 p-1 rounded-full bg-muted w-fit mx-auto">
+      <div className="inline-flex items-center justify-center gap-1 p-1.5 rounded-full bg-muted mx-auto">
         <button
           onClick={() => setBillingCycle("MONTHLY")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
             billingCycle === "MONTHLY"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
@@ -94,17 +137,83 @@ export default function PlansPage() {
         </button>
         <button
           onClick={() => setBillingCycle("ANNUAL")}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${
             billingCycle === "ANNUAL"
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
           {t.annual}
-          <span className="ms-1.5 text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
+          <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-2 py-0.5 rounded-full whitespace-nowrap">
             {t.save20}
           </span>
         </button>
+      </div>
+
+      {/* Coupon Code Section */}
+      <div className="max-w-md mx-auto" data-testid="coupon-section">
+        {appliedCoupon ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+            <Tag className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" weight="fill" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-green-800 dark:text-green-300">
+                {appliedCoupon.code}
+              </p>
+              <p className="text-xs text-green-600 dark:text-green-400">
+                {appliedCoupon.type === "PERCENTAGE"
+                  ? `${appliedCoupon.value}% ${t.discount}`
+                  : `${appliedCoupon.value} ${t.sar} ${t.discount}`}
+                {" — "}
+                {lang === "ar" ? appliedCoupon.descriptionAr : appliedCoupon.descriptionEn}
+              </p>
+            </div>
+            <button
+              onClick={handleRemoveCoupon}
+              className="p-1 rounded-md hover:bg-green-100 dark:hover:bg-green-800/40 text-green-600 dark:text-green-400"
+              title={t.removeCoupon}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Tag className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  setCouponError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleValidateCoupon();
+                }}
+                placeholder={t.couponPlaceholder}
+                className="w-full ps-9 pe-3 py-2 text-sm rounded-lg border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                data-testid="coupon-input"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={handleValidateCoupon}
+              disabled={!couponCode.trim() || couponLoading}
+             
+              data-testid="apply-coupon-btn"
+            >
+              {couponLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+              ) : (
+                t.applyCoupon
+              )}
+            </Button>
+          </div>
+        )}
+        {couponError && (
+          <p className="text-xs text-red-600 dark:text-red-400 mt-2" data-testid="coupon-error">
+            {couponError}
+          </p>
+        )}
       </div>
 
       {/* Plans Grid */}
@@ -115,6 +224,12 @@ export default function PlansPage() {
           const price = billingCycle === "ANNUAL" ? Number(plan.priceAnnual) : Number(plan.priceMonthly);
           const monthlyEquiv = billingCycle === "ANNUAL" ? Math.round(price / 12) : price;
           const isPopular = index === 1; // Professional is middle/popular
+
+          // Calculate coupon discount on the total price
+          const { discountAmount, discountedPrice } = calculateDiscount(price);
+          const discountedMonthly = billingCycle === "ANNUAL"
+            ? Math.round(discountedPrice / 12)
+            : discountedPrice;
 
           return (
             <div
@@ -143,13 +258,28 @@ export default function PlansPage() {
                     <p className="text-3xl font-bold">{t.free}</p>
                   ) : (
                     <>
-                      <p className="text-3xl font-bold">
-                        {monthlyEquiv.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")}
-                        <span className="text-base font-normal text-muted-foreground"> {t.sar}/{t.month}</span>
-                      </p>
+                      {appliedCoupon && discountAmount > 0 ? (
+                        <>
+                          <p className="text-sm text-muted-foreground line-through" data-testid="original-price">
+                            {monthlyEquiv.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}/{t.month}
+                          </p>
+                          <p className="text-3xl font-bold text-green-700 dark:text-green-400" data-testid="discounted-price">
+                            {discountedMonthly.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")}
+                            <span className="text-base font-normal text-muted-foreground"> {t.sar}/{t.month}</span>
+                          </p>
+                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                            {t.youSave} {discountAmount.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-3xl font-bold">
+                          {monthlyEquiv.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")}
+                          <span className="text-base font-normal text-muted-foreground"> {t.sar}/{t.month}</span>
+                        </p>
+                      )}
                       {billingCycle === "ANNUAL" && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          {t.billedAnnually}: {price.toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}/{t.year}
+                          {t.billedAnnually}: {(appliedCoupon ? discountedPrice : price).toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}/{t.year}
                         </p>
                       )}
                     </>
@@ -161,7 +291,7 @@ export default function PlansPage() {
                     variant="secondary"
                     className="w-full"
                     disabled
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     <CheckCircle className="w-4 h-4 me-2" />
                     {t.currentPlan}
@@ -172,7 +302,7 @@ export default function PlansPage() {
                     variant={isPopular ? "primary" : "secondary"}
                     disabled={!!subscribing}
                     onClick={() => handleSubscribe(plan.id)}
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {subscribing === plan.id ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current me-2" />
@@ -258,6 +388,12 @@ const translations = {
     getStarted: "ابدأ الآن",
     startTrial: "ابدأ تجربة مجانية",
     mostPopular: "الأكثر شيوعاً",
+    couponPlaceholder: "أدخل رمز الكوبون",
+    applyCoupon: "تطبيق",
+    removeCoupon: "إزالة الكوبون",
+    couponInvalid: "رمز الكوبون غير صالح",
+    discount: "خصم",
+    youSave: "توفر",
   },
   en: {
     title: "Choose Your Plan",
@@ -275,5 +411,11 @@ const translations = {
     getStarted: "Get Started",
     startTrial: "Start Free Trial",
     mostPopular: "Most Popular",
+    couponPlaceholder: "Enter coupon code",
+    applyCoupon: "Apply",
+    removeCoupon: "Remove coupon",
+    couponInvalid: "Invalid coupon code",
+    discount: "off",
+    youSave: "You save",
   },
 };

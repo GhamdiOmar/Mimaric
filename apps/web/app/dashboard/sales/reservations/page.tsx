@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Tag,
@@ -26,7 +27,7 @@ const statusConfig: Record<string, { label: { ar: string; en: string }; variant:
 };
 
 export default function ReservationsPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [reservations, setReservations] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -65,17 +66,12 @@ export default function ReservationsPage() {
             {lang === "ar" ? "إدارة جميع حجوزات الوحدات العقارية" : "Manage all unit reservations"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-            {lang === "ar" ? "English" : "العربية"}
+        <Link href="/dashboard/sales/reservations/new">
+          <Button size="sm" className="gap-2">
+            <Plus size={16} />
+            {lang === "ar" ? "حجز جديد" : "New Reservation"}
           </Button>
-          <Link href="/dashboard/sales/reservations/new">
-            <Button size="sm" className="gap-2">
-              <Plus size={16} />
-              {lang === "ar" ? "حجز جديد" : "New Reservation"}
-            </Button>
-          </Link>
-        </div>
+        </Link>
       </div>
 
       {loading ? (
@@ -99,7 +95,7 @@ export default function ReservationsPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">

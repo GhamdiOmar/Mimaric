@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   CurrencyCircleDollar,
@@ -30,7 +31,7 @@ type Installment = {
 };
 
 export default function RentCollectionPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [installments, setInstallments] = React.useState<Installment[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -74,9 +75,6 @@ export default function RentCollectionPage() {
             {lang === "ar" ? "متابعة دفعات المستأجرين، التحصيل المالي، والتدقيق المحاسبي." : "Monitor tenant payments, financial collection, and accounting audits."}
           </p>
         </div>
-        <Button variant="secondary" size="sm" className="gap-2" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
       </div>
 
       {/* KPI Grid */}

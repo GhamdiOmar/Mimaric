@@ -422,6 +422,19 @@ export async function deletePaymentMethod(paymentMethodId: string) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * Admin: Get all plans (public and draft) with entitlements.
+ */
+export async function adminGetAllPlans() {
+  await requirePermission("billing:admin");
+
+  const plans = await db.plan.findMany({
+    include: { entitlements: true },
+    orderBy: { sortOrder: "asc" },
+  });
+  return JSON.parse(JSON.stringify(plans));
+}
+
+/**
  * Admin: Get all subscriptions across all organizations.
  */
 export async function adminGetAllSubscriptions(page = 1, pageSize = 50) {
@@ -565,6 +578,35 @@ export async function adminCreateOverride(data: {
   });
 
   return JSON.parse(JSON.stringify(override));
+}
+
+/**
+ * Admin: Get all invoices across all organizations.
+ */
+export async function adminGetAllInvoices(page = 1, pageSize = 50) {
+  await requirePermission("billing:admin");
+
+  const [invoices, total] = await Promise.all([
+    db.invoice.findMany({
+      include: {
+        lineItems: true,
+        organization: { select: { id: true, name: true, nameArabic: true } },
+        subscription: { select: { id: true, plan: { select: { nameEn: true, nameAr: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+    db.invoice.count(),
+  ]);
+
+  return {
+    invoices: JSON.parse(JSON.stringify(invoices)),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

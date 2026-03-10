@@ -428,7 +428,7 @@ lib/auth-helpers.ts ← Session retrieval + permission check helpers
 
 | Component | Description |
 |-----------|-------------|
-| **Button** | Variants: solid (primary), secondary, ghost, outline. Note: requires `style={{ display: "inline-flex" }}` due to Tailwind v4 preflight |
+| **Button** | Variants: solid (primary), secondary, ghost, outline. Global `@layer base` fix handles Tailwind v4 preflight |
 | **Input** | Text input with validation styling |
 | **Badge** | Status badges — variants: draft, available, reserved, sold, maintenance |
 | **SARAmount** | Formatted SAR currency with Riyal symbol (ر.س) |
@@ -547,7 +547,7 @@ All sensitive operations (READ_PII, EXPORT, CREATE, DELETE, LOGIN) logged to Aud
 In-memory login attempt tracking: 5 attempts → 30s cooldown, 10 → 5min, 20 → 15min.
 
 ### 8. Button Display Fix
-Tailwind v4 preflight resets `<button>` to `display: inline-block`. All Button components require `style={{ display: "inline-flex" }}` override.
+Tailwind v4 preflight resets `<button>` to `display: inline-block`. Fixed globally via `@layer base { button { display: inline-flex; } }` in `globals.css`. No per-component `style` hack needed.
 
 ### 9. Prisma Decimal Handling
 Prisma Decimal type doesn't serialize cleanly. All server actions returning Decimal fields must wrap with `JSON.parse(JSON.stringify(result))`.

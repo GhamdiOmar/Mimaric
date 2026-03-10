@@ -106,6 +106,25 @@ export type Permission =
   | "billing:read"             // View own org subscription/invoices
   | "billing:write"            // Manage subscription (upgrade/downgrade/cancel)
   | "billing:admin"            // System-level: manage all plans, view all subscriptions
+  // Wafi Compliance
+  | "escrow:read"
+  | "escrow:write"
+  | "escrow:approve"
+  | "consultant:read"
+  | "consultant:write"
+  | "milestones:read"
+  | "milestones:write"
+  | "milestones:certify"
+  | "milestones:upload_evidence"
+  | "wafi_contracts:read"
+  | "wafi_contracts:write"
+  | "delay_penalties:read"
+  | "delay_penalties:write"
+  | "wafi_license:read"
+  | "wafi_license:write"
+  | "etmam:read"
+  | "etmam:write"
+  | "etmam:sync"
   // System (platform-level)
   | "system:admin"
   | "system:support";
@@ -145,6 +164,14 @@ const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "invitations:read", "invitations:write",
   // Billing
   "billing:read", "billing:write",
+  // Wafi Compliance
+  "escrow:read", "escrow:write", "escrow:approve",
+  "consultant:read", "consultant:write",
+  "milestones:read", "milestones:write",
+  "wafi_contracts:read", "wafi_contracts:write",
+  "delay_penalties:read", "delay_penalties:write",
+  "wafi_license:read", "wafi_license:write",
+  "etmam:read", "etmam:write", "etmam:sync",
 ];
 
 // ─── System Permissions (Mimaric platform staff only) ────────────────────────
@@ -191,6 +218,14 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "inventory:read", "inventory:write",
     "pricing:read",
     "launch:read",
+    // Wafi (read + write milestones, read escrow/contracts)
+    "escrow:read",
+    "consultant:read",
+    "milestones:read", "milestones:write",
+    "wafi_contracts:read",
+    "delay_penalties:read",
+    "wafi_license:read",
+    "etmam:read",
     "help:read", "help:create_ticket",
   ],
 
@@ -253,6 +288,13 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "inventory:read",
     "pricing:read", "pricing:write",
     "launch:read",
+    // Wafi (escrow read/write, milestones read, contracts read/write)
+    "escrow:read", "escrow:write",
+    "milestones:read",
+    "wafi_contracts:read", "wafi_contracts:write",
+    "delay_penalties:read", "delay_penalties:write",
+    "wafi_license:read", "wafi_license:write",
+    "etmam:read", "etmam:write",
     "help:read", "help:create_ticket",
     "billing:read",
   ],
@@ -262,6 +304,20 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "maintenance:read", "maintenance:write",
     "preventive_maintenance:read",
     "units:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  // ── Wafi: Independent engineering consultant (project-scoped) ──────────
+  ENGINEERING_CONSULTANT: [
+    "dashboard:read",
+    "projects:read",           // Assigned projects only (scoped via ConsultantAssignment)
+    "milestones:read",
+    "milestones:certify",
+    "milestones:upload_evidence",
+    "consultant:read",
+    "escrow:read",
+    "documents:read", "documents:write",
     "notifications:read",
     "help:read", "help:create_ticket",
   ],
@@ -300,7 +356,8 @@ export const SYSTEM_ROLES: string[] = ["SYSTEM_ADMIN", "SYSTEM_SUPPORT"];
 /** Roles that customers can assign to their team members */
 export const CUSTOMER_ASSIGNABLE_ROLES: string[] = [
   "COMPANY_ADMIN", "PROJECT_MANAGER", "SALES_MANAGER", "SALES_AGENT",
-  "PROPERTY_MANAGER", "FINANCE_OFFICER", "TECHNICIAN", "BUYER", "TENANT", "USER",
+  "PROPERTY_MANAGER", "FINANCE_OFFICER", "TECHNICIAN", "ENGINEERING_CONSULTANT",
+  "BUYER", "TENANT", "USER",
 ];
 
 /** Check if a role is a system (Mimaric platform) role */

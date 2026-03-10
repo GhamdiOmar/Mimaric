@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +15,7 @@ import {
   Lightning,
   X,
 } from "@phosphor-icons/react";
-import { Button, Badge, SARAmount } from "@repo/ui";
+import { Button, Badge, SARAmount, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import {
   getPreventivePlans,
   createPreventivePlan,
@@ -58,7 +59,7 @@ const recurrenceLabels: Record<string, { ar: string; en: string }> = {
 
 export default function PreventiveMaintenancePage() {
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [plans, setPlans] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [generating, setGenerating] = React.useState(false);
@@ -242,7 +243,7 @@ export default function PreventiveMaintenancePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")} style={{ display: "inline-flex" }}>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
             <ArrowLeft size={18} />
           </Button>
           <div>
@@ -255,11 +256,11 @@ export default function PreventiveMaintenancePage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" className="gap-2" onClick={handleGenerate} disabled={generating} style={{ display: "inline-flex" }}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={handleGenerate} disabled={generating}>
             {generating ? <Spinner size={14} className="animate-spin" /> : <Lightning size={16} />}
             {lang === "ar" ? "تشغيل الآن" : "Run Now"}
           </Button>
-          <Button size="sm" className="gap-2" onClick={openCreate} style={{ display: "inline-flex" }}>
+          <Button size="sm" className="gap-2" onClick={openCreate}>
             <Plus size={16} />
             {lang === "ar" ? "خطة جديدة" : "New Plan"}
           </Button>
@@ -298,13 +299,13 @@ export default function PreventiveMaintenancePage() {
                     <p className="text-[10px] text-neutral mt-0.5">{plan.description || "—"}</p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => handleToggle(plan.id)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" onClick={() => handleToggle(plan.id)}>
                       {plan.isActive ? <Pause size={14} className="text-accent" /> : <Play size={14} className="text-secondary" />}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(plan)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}>
                       <PencilSimple size={14} />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDelete(plan.id)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDelete(plan.id)}>
                       <Trash size={14} />
                     </Button>
                   </div>
@@ -363,22 +364,18 @@ export default function PreventiveMaintenancePage() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-card w-full max-w-lg rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-border">
-              <h2 className="text-lg font-bold text-primary">
-                {editingId
-                  ? (lang === "ar" ? "تعديل خطة وقائية" : "Edit Plan")
-                  : (lang === "ar" ? "خطة وقائية جديدة" : "New Preventive Plan")}
-              </h2>
-              <button onClick={() => setShowModal(false)} className="text-neutral hover:text-primary">
-                <X size={20} />
-              </button>
-            </div>
+      {/* Create/Edit Modal — using shared Dialog */}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingId
+                ? (lang === "ar" ? "تعديل خطة وقائية" : "Edit Plan")
+                : (lang === "ar" ? "خطة وقائية جديدة" : "New Preventive Plan")}
+            </DialogTitle>
+          </DialogHeader>
 
-            <div className="p-6 space-y-4">
+          <div className="space-y-4 py-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-neutral">{lang === "ar" ? "العنوان *" : "Title *"}</label>
                 <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مثال: فحص التكييف الشهري" : "e.g. Monthly HVAC Inspection"} />
@@ -477,18 +474,16 @@ export default function PreventiveMaintenancePage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-              <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving} style={{ display: "inline-flex" }}>
-                {lang === "ar" ? "إلغاء" : "Cancel"}
-              </Button>
-              <Button size="sm" onClick={handleSave} disabled={saving || !form.title || !form.startDate} className="gap-2" style={{ display: "inline-flex" }}>
-                {saving && <Spinner size={14} className="animate-spin" />}
-                {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving}>
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={saving || !form.title || !form.startDate} loading={saving}>
+              {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

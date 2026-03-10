@@ -1,9 +1,10 @@
 "use client";
 
+import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Spinner, CheckCircle, ClipboardText } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import { getSiteLogs, createSiteLog, resolveSiteLog } from "../../../../actions/site-logs";
 import { formatDualDate } from "../../../../../lib/hijri";
 
@@ -25,7 +26,7 @@ const severityLabels: Record<string, { ar: string; en: string }> = {
 export default function SiteLogsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [logs, setLogs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showModal, setShowModal] = React.useState(false);
@@ -54,7 +55,7 @@ export default function SiteLogsPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${id}`)} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${id}`)}>
           <ArrowLeft size={18} />
         </Button>
         <div>
@@ -62,7 +63,7 @@ export default function SiteLogsPage() {
           <p className="text-sm text-neutral mt-0.5">{lang === "ar" ? "تفتيشات، ملاحظات، وسجلات يومية" : "Inspections, snags, and daily logs"}</p>
         </div>
         <div className="flex-1" />
-        <Button size="sm" className="gap-2" onClick={() => setShowModal(true)} style={{ display: "inline-flex" }}>
+        <Button size="sm" className="gap-2" onClick={() => setShowModal(true)}>
           <Plus size={16} />{lang === "ar" ? "إضافة سجل" : "Add Log"}
         </Button>
       </div>
@@ -114,7 +115,7 @@ export default function SiteLogsPage() {
                   </div>
                 </div>
                 {!log.resolvedAt && (
-                  <Button size="sm" variant="secondary" className="text-xs gap-1" onClick={() => handleResolve(log.id)} style={{ display: "inline-flex" }}>
+                  <Button size="sm" variant="secondary" className="text-xs gap-1" onClick={() => handleResolve(log.id)}>
                     <CheckCircle size={12} />{lang === "ar" ? "حل" : "Resolve"}
                   </Button>
                 )}
@@ -124,14 +125,14 @@ export default function SiteLogsPage() {
         </div>
       )}
 
-      {showModal && (
+      <Dialog open={showModal} onOpenChange={setShowModal}>
         <AddLogModal
           lang={lang}
           projectId={id as string}
           onClose={() => setShowModal(false)}
           onSuccess={() => { setShowModal(false); loadLogs(); }}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
@@ -153,12 +154,11 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
   const set = (key: string) => (e: any) => setForm({ ...form, [key]: e.target.value });
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة سجل موقع" : "Add Site Log"}</h3>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle>{lang === "ar" ? "إضافة سجل موقع" : "Add Site Log"}</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التاريخ" : "Date"}</label>
@@ -188,15 +188,13 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
               <input value={form.reportedBy} onChange={set("reportedBy")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
-              {lang === "ar" ? "حفظ" : "Save"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+          <Button type="submit" size="sm" disabled={saving} loading={saving}>
+            {lang === "ar" ? "حفظ" : "Save"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }

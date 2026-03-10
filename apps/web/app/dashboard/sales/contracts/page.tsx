@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Receipt,
@@ -32,7 +33,7 @@ const typeLabels: Record<string, { ar: string; en: string }> = {
 };
 
 export default function ContractsPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [contracts, setContracts] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filter, setFilter] = React.useState<string>("");
@@ -65,11 +66,6 @@ export default function ContractsPage() {
           <p className="text-sm text-neutral mt-1">
             {lang === "ar" ? "إدارة عقود البيع والإيجار" : "Manage sales and lease contracts"}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-            {lang === "ar" ? "English" : "العربية"}
-          </Button>
         </div>
       </div>
 
@@ -109,7 +105,7 @@ export default function ContractsPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Receipt,
@@ -15,15 +16,10 @@ import Link from "next/link";
 import { getInvoices } from "../../../actions/billing";
 
 export default function InvoicesPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [data, setData] = React.useState<any>({ invoices: [], total: 0, page: 1, totalPages: 0 });
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
-
-  React.useEffect(() => {
-    const stored = localStorage.getItem("preferredLanguage");
-    if (stored === "en" || stored === "ar") setLang(stored);
-  }, []);
 
   React.useEffect(() => {
     async function load() {
@@ -140,7 +136,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page <= 1}
                     onClick={() => setPage(page - 1)}
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {lang === "ar" ? <CaretRight className="w-4 h-4" /> : <CaretLeft className="w-4 h-4" />}
                   </Button>
@@ -150,7 +146,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page >= data.totalPages}
                     onClick={() => setPage(page + 1)}
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {lang === "ar" ? <CaretLeft className="w-4 h-4" /> : <CaretRight className="w-4 h-4" />}
                   </Button>

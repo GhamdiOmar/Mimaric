@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Check,
@@ -38,7 +39,7 @@ const steps = [
 
 function InnerNewReservationPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [customers, setCustomers] = React.useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Buildings,
@@ -77,7 +78,7 @@ export default function AdvancedUnitMatrixPageWrapper() {
 function AdvancedUnitMatrixPage() {
   const searchParams = useSearchParams();
   const projectFilter = searchParams.get("project") || "";
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [selectedUnits, setSelectedUnits] = React.useState<string[]>([]);
   const [units, setUnits] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -295,9 +296,6 @@ function AdvancedUnitMatrixPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-             {lang === "ar" ? "English" : "العربية"}
-          </Button>
           {activeTab === "units" && (
             <Button size="sm" className="gap-2">
               <Buildings size={18} weight="fill" />
@@ -456,12 +454,12 @@ function AdvancedUnitMatrixPage() {
                    : "border-border bg-card hover:border-primary/20 hover:shadow-md"
                )}
              >
-                {/* Selection Circle */}
+                {/* Selection Checkbox */}
                 <div className={cn(
-                  "absolute bottom-3 left-3 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all z-10",
-                  selectedUnits.includes(unit.id) ? "bg-secondary border-secondary text-white scale-110" : "bg-card border-border text-transparent group-hover:border-primary/30"
+                  "absolute top-2.5 right-2.5 h-5 w-5 rounded border-[1.5px] flex items-center justify-center transition-all z-10",
+                  selectedUnits.includes(unit.id) ? "bg-secondary border-secondary text-white" : "bg-card/80 border-border text-transparent group-hover:border-primary/40"
                 )}>
-                   <CheckSquare size={12} weight="fill" />
+                   <CheckSquare size={12} weight="bold" />
                 </div>
 
                 <div className="text-end">
@@ -680,7 +678,7 @@ function AdvancedUnitMatrixPage() {
                             </td>
                             <td className="px-4 py-3">
                               <Link href={`/dashboard/projects/${item.project?.id}`}>
-                                <Button variant="ghost" size="sm" className="text-neutral hover:text-primary" style={{ display: "inline-flex" }}>
+                                <Button variant="ghost" size="sm" className="text-neutral hover:text-primary">
                                   <ArrowRight size={14} />
                                 </Button>
                               </Link>
@@ -812,13 +810,13 @@ function AdvancedUnitMatrixPage() {
               {detailUnit.status === "AVAILABLE" && (
                 <div className="border-t border-border pt-4 flex items-center gap-3">
                   <Link href={`/dashboard/sales/reservations?unitId=${detailUnit.id}`} className="flex-1">
-                    <Button variant="secondary" size="sm" className="gap-2 w-full" style={{ display: "inline-flex" }}>
+                    <Button variant="secondary" size="sm" className="gap-2 w-full">
                       <ShoppingCart size={14} />
                       {lang === "ar" ? "بيع" : "Sell"}
                     </Button>
                   </Link>
                   <Link href={`/dashboard/rentals/new?unitId=${detailUnit.id}`} className="flex-1">
-                    <Button size="sm" className="gap-2 w-full" style={{ display: "inline-flex" }}>
+                    <Button size="sm" className="gap-2 w-full">
                       <House size={14} />
                       {lang === "ar" ? "تأجير" : "Rent"}
                     </Button>
@@ -839,7 +837,7 @@ function AdvancedUnitMatrixPage() {
                     )}
                   </h3>
                   <Link href={`/dashboard/maintenance`}>
-                    <Button variant="secondary" size="sm" className="gap-1 text-[10px]" style={{ display: "inline-flex" }}>
+                    <Button variant="secondary" size="sm" className="gap-1 text-[10px]">
                       <Plus size={12} />
                       {lang === "ar" ? "طلب جديد" : "New Request"}
                     </Button>
@@ -868,7 +866,7 @@ function AdvancedUnitMatrixPage() {
                           <div className="flex items-center gap-2">
                             <Badge variant={mStatus.variant as any} className="text-[9px]">{mStatus[lang]}</Badge>
                             <Link href={`/dashboard/maintenance/${m.id}`}>
-                              <Button variant="ghost" size="sm" style={{ display: "inline-flex" }}>
+                              <Button variant="ghost" size="sm">
                                 <Eye size={12} />
                               </Button>
                             </Link>

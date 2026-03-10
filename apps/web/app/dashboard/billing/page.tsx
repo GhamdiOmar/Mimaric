@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   CreditCard,
@@ -23,16 +24,11 @@ import {
 
 export default function BillingDashboardPage() {
   const { can } = usePermissions();
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [subscription, setSubscription] = React.useState<any>(null);
   const [invoices, setInvoices] = React.useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    const stored = localStorage.getItem("preferredLanguage");
-    if (stored === "en" || stored === "ar") setLang(stored);
-  }, []);
 
   React.useEffect(() => {
     async function load() {
@@ -83,7 +79,7 @@ export default function BillingDashboardPage() {
         </div>
         {can("billing:write") && (
           <Link href="/dashboard/billing/plans">
-            <Button style={{ display: "inline-flex" }}>
+            <Button>
               <Crown className="w-4 h-4 me-2" />
               {t.changePlan}
             </Button>
@@ -99,7 +95,7 @@ export default function BillingDashboardPage() {
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">{t.pastDueBanner}</p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">{t.pastDueDescription}</p>
           </div>
-          <Button variant="secondary" size="sm" style={{ display: "inline-flex" }}>
+          <Button variant="secondary" size="sm">
             {t.updatePayment}
           </Button>
         </div>
@@ -154,7 +150,7 @@ export default function BillingDashboardPage() {
               <Crown className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground">{t.noSubscription}</p>
               <Link href="/dashboard/billing/plans">
-                <Button className="mt-4" style={{ display: "inline-flex" }}>{t.choosePlan}</Button>
+                <Button className="mt-4">{t.choosePlan}</Button>
               </Link>
             </div>
           )}

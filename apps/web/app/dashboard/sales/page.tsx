@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { Users, Tag, Receipt, Package, TrendUp, CurrencyCircleDollar, ChartBar, ArrowRight } from "@phosphor-icons/react";
 import { Button, Badge, SARAmount } from "@repo/ui";
@@ -7,7 +8,7 @@ import Link from "next/link";
 import { getSalesStats, getOffPlanSalesStats } from "../../actions/sales";
 
 export default function SalesPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [stats, setStats] = React.useState({ customerCount: 0, reservationCount: 0, contractCount: 0 });
   const [offPlanStats, setOffPlanStats] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -30,18 +31,13 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
-        <div>
-          <h1 className="text-2xl font-bold text-primary font-primary">
-            {lang === "ar" ? "محرك المبيعات" : "Sales Engine"}
-          </h1>
-          <p className="text-sm text-neutral mt-1 font-primary">
-            {lang === "ar" ? "إدارة دورة المبيعات الكاملة من العميل المحتمل إلى العقد النهائي." : "Manage the full sales pipeline from customer to final contract."}
-          </p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
+      <div className="px-2">
+        <h1 className="text-2xl font-bold text-primary font-primary">
+          {lang === "ar" ? "محرك المبيعات" : "Sales Engine"}
+        </h1>
+        <p className="text-sm text-neutral mt-1 font-primary">
+          {lang === "ar" ? "إدارة دورة المبيعات الكاملة من العميل المحتمل إلى العقد النهائي." : "Manage the full sales pipeline from customer to final contract."}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -82,7 +78,7 @@ export default function SalesPage() {
               </div>
             </div>
             <Link href="/dashboard/units?tab=inventory">
-              <Button variant="secondary" size="sm" className="gap-2 text-[10px]" style={{ display: "inline-flex" }}>
+              <Button variant="secondary" size="sm" className="gap-2 text-[10px]">
                 {lang === "ar" ? "عرض المخزون" : "View Inventory"}
                 <ArrowRight size={12} />
               </Button>

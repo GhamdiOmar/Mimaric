@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -64,7 +65,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 export default function MaintenanceDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [request, setRequest] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -165,7 +166,7 @@ export default function MaintenanceDetailPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
           <ArrowLeft size={18} />
         </Button>
         <div className="flex-1">
@@ -212,7 +213,7 @@ export default function MaintenanceDetailPage() {
                   className={`gap-2 hover:shadow-sm hover:-translate-y-0.5 transition-all ${statusButtonStyles[nextStatus] ?? ""}`}
                   onClick={() => handleStatusChange(nextStatus)}
                   disabled={saving}
-                  style={{ display: "inline-flex" }}
+                 
                   title={nextLabel[lang === "ar" ? "en" : "ar"]}
                 >
                   {saving ? <Spinner size={12} className="animate-spin" /> : <CheckCircle size={14} />}
@@ -271,7 +272,7 @@ export default function MaintenanceDetailPage() {
                 <UserCircle size={14} />
                 {lang === "ar" ? "المُعيَّن" : "Assigned To"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)} style={{ display: "inline-flex" }}>
+              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)}>
                 <PencilSimple size={14} />
               </Button>
             </div>
@@ -311,7 +312,7 @@ export default function MaintenanceDetailPage() {
                 <CurrencyCircleDollar size={14} />
                 {lang === "ar" ? "التكاليف" : "Costs"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)} style={{ display: "inline-flex" }}>
+              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)}>
                 <PencilSimple size={14} />
               </Button>
             </div>
@@ -353,7 +354,7 @@ export default function MaintenanceDetailPage() {
                   <label className="text-[10px] font-bold text-neutral">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputClass} h-16 py-2`} />
                 </div>
-                <Button size="sm" onClick={handleSaveCost} disabled={saving} className="gap-2" style={{ display: "inline-flex" }}>
+                <Button size="sm" onClick={handleSaveCost} disabled={saving} className="gap-2">
                   {saving && <Spinner size={12} className="animate-spin" />}
                   {lang === "ar" ? "حفظ" : "Save"}
                 </Button>

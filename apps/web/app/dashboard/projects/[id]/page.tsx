@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -22,6 +23,7 @@ import {
   Circle,
   SealCheck,
   XCircle,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import { Button, Badge, SARAmount } from "@repo/ui";
 import {
@@ -97,7 +99,7 @@ const docCategoryLabels: Record<string, { ar: string; en: string }> = {
 export default function ProjectDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [project, setProject] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<"overview" | "buildings" | "documents" | "maintenance" | "concepts" | "subdivision" | "approvals" | "infrastructure" | "inventory" | "pricing" | "launch" | "readiness" | "map" | "analytics">("overview");
@@ -400,7 +402,7 @@ export default function ProjectDetailPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/projects")} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/projects")}>
           <ArrowLeft size={18} />
         </Button>
         <div className="flex-1">
@@ -415,15 +417,21 @@ export default function ProjectDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/dashboard/units?project=${id}`}>
-            <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="secondary" size="sm" className="gap-2">
               <Buildings size={14} />
               {lang === "ar" ? "عرض الوحدات" : "View Units"}
             </Button>
           </Link>
           <Link href={`/dashboard/projects/${id}/site-logs`}>
-            <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="secondary" size="sm" className="gap-2">
               <ClipboardText size={14} />
               {lang === "ar" ? "سجلات الموقع" : "Site Logs"}
+            </Button>
+          </Link>
+          <Link href={`/dashboard/projects/${id}/wafi`}>
+            <Button variant="success" size="sm" className="gap-2">
+              <ShieldCheck size={14} />
+              {lang === "ar" ? "امتثال وافي" : "Wafi Compliance"}
             </Button>
           </Link>
         </div>
@@ -433,7 +441,7 @@ export default function ProjectDetailPage() {
       {project.status === "PLANNING" && (
         <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
           <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("UNDER_CONSTRUCTION")} style={{ display: "inline-flex" }} className="gap-2">
+          <Button size="sm" onClick={() => handleStatusChange("UNDER_CONSTRUCTION")} className="gap-2">
             <CheckCircle size={14} />
             {lang === "ar" ? "بدء الإنشاء" : "Start Construction"}
           </Button>
@@ -442,7 +450,7 @@ export default function ProjectDetailPage() {
       {project.status === "UNDER_CONSTRUCTION" && (
         <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
           <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("READY")} style={{ display: "inline-flex" }} className="gap-2">
+          <Button size="sm" onClick={() => handleStatusChange("READY")} className="gap-2">
             <CheckCircle size={14} />
             {lang === "ar" ? "جاهز للتسليم" : "Mark Ready"}
           </Button>
@@ -451,7 +459,7 @@ export default function ProjectDetailPage() {
       {project.status === "READY" && (
         <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
           <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("HANDED_OVER")} style={{ display: "inline-flex" }} className="gap-2">
+          <Button size="sm" onClick={() => handleStatusChange("HANDED_OVER")} className="gap-2">
             <CheckCircle size={14} />
             {lang === "ar" ? "تم التسليم" : "Mark Handed Over"}
           </Button>
@@ -558,7 +566,7 @@ export default function ProjectDetailPage() {
                 setBuildingForm({ name: "", numberOfFloors: "", buildingAreaSqm: "", buildingType: "residential" });
                 setShowBuildingForm(true);
               }}
-              style={{ display: "inline-flex" }}
+             
             >
               <Plus size={16} />
               {lang === "ar" ? "إضافة مبنى" : "Add Building"}
@@ -594,11 +602,11 @@ export default function ProjectDetailPage() {
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-2">
-                <Button size="sm" onClick={handleSaveBuilding} disabled={!buildingForm.name || savingBuilding} style={{ display: "inline-flex" }}>
+                <Button size="sm" onClick={handleSaveBuilding} disabled={!buildingForm.name || savingBuilding}>
                   {savingBuilding ? <Spinner size={14} className="animate-spin" /> : null}
                   {editingBuildingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إضافة" : "Add")}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => { setShowBuildingForm(false); setEditingBuildingId(null); }} style={{ display: "inline-flex" }}>
+                <Button size="sm" variant="ghost" onClick={() => { setShowBuildingForm(false); setEditingBuildingId(null); }}>
                   {lang === "ar" ? "إلغاء" : "Cancel"}
                 </Button>
               </div>
@@ -642,11 +650,11 @@ export default function ProjectDetailPage() {
                         });
                         setShowBuildingForm(true);
                       }}
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       <PencilSimple size={14} />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteBuilding(b.id)} style={{ display: "inline-flex" }}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteBuilding(b.id)}>
                       <Trash size={14} />
                     </Button>
                   </div>
@@ -696,7 +704,7 @@ export default function ProjectDetailPage() {
               {maintenanceRequests.length} {lang === "ar" ? "طلب صيانة" : "maintenance requests"}
             </p>
             <Link href="/dashboard/maintenance">
-              <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
+              <Button variant="secondary" size="sm" className="gap-2">
                 <Wrench size={14} />
                 {lang === "ar" ? "إدارة الصيانة" : "Manage Maintenance"}
               </Button>
@@ -824,11 +832,11 @@ export default function ProjectDetailPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1">
                           <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" style={{ display: "inline-flex" }}>
+                            <Button variant="ghost" size="sm">
                               <DownloadSimple size={14} />
                             </Button>
                           </a>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)} style={{ display: "inline-flex" }}>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)}>
                             <Trash size={14} />
                           </Button>
                         </div>
@@ -849,7 +857,7 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-neutral">
               {conceptPlans.length} {lang === "ar" ? "مخطط مبدئي" : "concept plans"}
             </p>
-            <Button size="sm" className="gap-2" onClick={() => setShowConceptModal(true)} style={{ display: "inline-flex" }}>
+            <Button size="sm" className="gap-2" onClick={() => setShowConceptModal(true)}>
               <Plus size={14} />{lang === "ar" ? "إضافة مخطط" : "Add Concept"}
             </Button>
           </div>
@@ -891,12 +899,12 @@ export default function ProjectDetailPage() {
                             size="sm"
                             className="text-secondary text-xs"
                             onClick={async () => { await selectConceptPlan(cp.id); loadConceptPlans(); }}
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <Star size={14} />{lang === "ar" ? "اختيار" : "Select"}
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={async () => { await deleteConceptPlan(cp.id); loadConceptPlans(); }} style={{ display: "inline-flex" }}>
+                        <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={async () => { await deleteConceptPlan(cp.id); loadConceptPlans(); }}>
                           <Trash size={14} />
                         </Button>
                       </div>
@@ -945,7 +953,7 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-neutral">
               {subdivisionPlans.length} {lang === "ar" ? "مخطط تقسيم" : "subdivision plans"}
             </p>
-            <Button size="sm" className="gap-2" onClick={() => setShowSubdivisionModal(true)} style={{ display: "inline-flex" }}>
+            <Button size="sm" className="gap-2" onClick={() => setShowSubdivisionModal(true)}>
               <Plus size={14} />{lang === "ar" ? "إضافة مخطط" : "Add Plan"}
             </Button>
           </div>
@@ -983,7 +991,7 @@ export default function ProjectDetailPage() {
                         {sp.nameArabic && <p className="text-xs text-neutral mt-0.5">{sp.nameArabic}</p>}
                       </div>
                       <Link href={`/dashboard/projects/${id}/subdivision/${sp.id}`}>
-                        <Button variant="secondary" size="sm" className="text-xs gap-1" style={{ display: "inline-flex" }}>
+                        <Button variant="secondary" size="sm" className="text-xs gap-1">
                           <Eye size={14} />{lang === "ar" ? "عرض" : "View"}
                         </Button>
                       </Link>
@@ -1030,7 +1038,7 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-neutral">
               {approvalSubmissions.length} {lang === "ar" ? "طلب موافقة" : "approval submissions"}
             </p>
-            <Button size="sm" className="gap-2" onClick={() => setShowApprovalModal(true)} style={{ display: "inline-flex" }}>
+            <Button size="sm" className="gap-2" onClick={() => setShowApprovalModal(true)}>
               <Plus size={14} />{lang === "ar" ? "تقديم طلب" : "New Submission"}
             </Button>
           </div>
@@ -1087,7 +1095,7 @@ export default function ProjectDetailPage() {
                             size="sm"
                             className="text-xs gap-1"
                             onClick={async () => { await submitApproval(sub.id); loadApprovals(); }}
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <SealCheck size={12} />{lang === "ar" ? "تقديم" : "Submit"}
                           </Button>
@@ -1098,7 +1106,7 @@ export default function ProjectDetailPage() {
                             size="sm"
                             className="text-red-500 hover:bg-red-50"
                             onClick={async () => { await deleteApprovalSubmission(sub.id); loadApprovals(); }}
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <Trash size={14} />
                           </Button>
@@ -1153,7 +1161,7 @@ export default function ProjectDetailPage() {
             <button
               onClick={() => setShowInfraModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-              style={{ display: "inline-flex" }}
+             
             >
               <Plus size={14} />{lang === "ar" ? "إضافة فئة" : "Add Category"}
             </button>
@@ -1229,7 +1237,7 @@ export default function ProjectDetailPage() {
                               }
                             }}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30 transition-all"
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <CheckCircle size={12} />{lang === "ar" ? "تقدّم" : "Advance"}
                           </button>
@@ -1237,7 +1245,7 @@ export default function ProjectDetailPage() {
                         <button
                           onClick={async () => { await deleteInfrastructureItem(item.id); loadInfrastructure(); }}
                           className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           <Trash size={14} />
                         </button>
@@ -1322,7 +1330,7 @@ export default function ProjectDetailPage() {
                     loadInventory();
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-secondary text-white hover:bg-secondary/90 active:bg-secondary/80 transition-all"
-                  style={{ display: "inline-flex" }}
+                 
                 >
                   <Rocket size={14} />{lang === "ar" ? `إطلاق (${selectedInvItems.size})` : `Release (${selectedInvItems.size})`}
                 </button>
@@ -1337,7 +1345,7 @@ export default function ProjectDetailPage() {
                     }
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all"
-                  style={{ display: "inline-flex" }}
+                 
                 >
                   <Package size={14} />{lang === "ar" ? "توليد من القطع" : "Generate from Plots"}
                 </button>
@@ -1345,7 +1353,7 @@ export default function ProjectDetailPage() {
               <button
                 onClick={() => setShowInventoryModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-                style={{ display: "inline-flex" }}
+               
               >
                 <Plus size={14} />{lang === "ar" ? "إضافة يدوياً" : "Add Item"}
               </button>
@@ -1436,7 +1444,7 @@ export default function ProjectDetailPage() {
                             <button
                               onClick={async () => { await deleteInventoryItem(item.id); loadInventory(); }}
                               className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
-                              style={{ display: "inline-flex" }}
+                             
                             >
                               <Trash size={14} />
                             </button>
@@ -1493,14 +1501,14 @@ export default function ProjectDetailPage() {
                   loadInventory();
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all"
-                style={{ display: "inline-flex" }}
+               
               >
                 <CurrencyDollar size={14} />{lang === "ar" ? "حساب الأسعار" : "Calculate All"}
               </button>
               <button
                 onClick={() => setShowPricingModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-                style={{ display: "inline-flex" }}
+               
               >
                 <Plus size={14} />{lang === "ar" ? "إضافة قاعدة" : "Add Rule"}
               </button>
@@ -1554,14 +1562,14 @@ export default function ProjectDetailPage() {
                               ? "bg-amber-50 text-amber-700 hover:bg-amber-100 active:bg-amber-200"
                               : "bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30"
                           }`}
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           <ToggleRight size={12} />{rule.isActive ? (lang === "ar" ? "تعطيل" : "Disable") : (lang === "ar" ? "تفعيل" : "Enable")}
                         </button>
                         <button
                           onClick={async () => { await deletePricingRule(rule.id); loadPricing(); }}
                           className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           <Trash size={14} />
                         </button>
@@ -1594,7 +1602,7 @@ export default function ProjectDetailPage() {
             <button
               onClick={() => setShowWaveModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-              style={{ display: "inline-flex" }}
+             
             >
               <Plus size={14} />{lang === "ar" ? "إضافة موجة" : "Add Wave"}
             </button>
@@ -1639,7 +1647,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={async () => { await updateLaunchWave(wave.id, { status: "READY_WAVE" }); loadWaves(); }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 active:bg-amber-200 transition-all"
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <CheckCircle size={12} />{lang === "ar" ? "تجهيز" : "Mark Ready"}
                           </button>
@@ -1648,7 +1656,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={async () => { await launchWave(wave.id); loadWaves(); }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-secondary text-white hover:bg-secondary/90 active:bg-secondary/80 transition-all"
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <Play size={12} weight="fill" />{lang === "ar" ? "إطلاق" : "Launch"}
                           </button>
@@ -1657,7 +1665,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={async () => { await closeWave(wave.id); loadWaves(); }}
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-neutral/10 text-neutral hover:bg-neutral/20 active:bg-neutral/30 transition-all"
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <Stop size={12} weight="fill" />{lang === "ar" ? "إغلاق" : "Close"}
                           </button>
@@ -1666,7 +1674,7 @@ export default function ProjectDetailPage() {
                           <button
                             onClick={async () => { await deleteLaunchWave(wave.id); loadWaves(); }}
                             className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
-                            style={{ display: "inline-flex" }}
+                           
                           >
                             <Trash size={14} />
                           </button>
@@ -1748,7 +1756,7 @@ export default function ProjectDetailPage() {
                       <button
                         onClick={() => handleTabChange(item.fixTab)}
                         className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all"
-                        style={{ display: "inline-flex" }}
+                       
                       >
                         {lang === "ar" ? "إصلاح" : "Fix"}
                       </button>
@@ -2001,8 +2009,8 @@ function ConceptPlanModal({ lang, projectId, onClose, onSuccess }: {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2072,8 +2080,8 @@ function SubdivisionPlanModal({ lang, projectId, onClose, onSuccess }: {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2150,8 +2158,8 @@ function ApprovalSubmissionModal({ lang, projectId, onClose, onSuccess }: {
             <input value={form.referenceNumber} onChange={set("referenceNumber")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2243,8 +2251,8 @@ function InfrastructureModal({ lang, projectId, onClose, onSuccess }: {
             <textarea value={form.notes} onChange={set("notes")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2358,8 +2366,8 @@ function InventoryModal({ lang, projectId, onClose, onSuccess }: {
             </select>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2449,8 +2457,8 @@ function PricingRuleModal({ lang, projectId, onClose, onSuccess }: {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -2520,8 +2528,8 @@ function LaunchWaveModal({ lang, projectId, onClose, onSuccess }: {
             <textarea value={form.notes} onChange={set("notes")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>

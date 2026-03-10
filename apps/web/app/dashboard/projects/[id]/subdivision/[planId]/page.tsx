@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -47,7 +48,7 @@ type SubTab = "plots" | "blocks" | "roads" | "corridors";
 export default function SubdivisionPlanDetailPage() {
   const { id: projectId, planId } = useParams();
   const router = useRouter();
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [plan, setPlan] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [subTab, setSubTab] = React.useState<SubTab>("plots");
@@ -81,7 +82,7 @@ export default function SubdivisionPlanDetailPage() {
     <div className="space-y-6 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)}>
           <ArrowLeft size={18} />
         </Button>
         <div className="flex-1">
@@ -91,9 +92,6 @@ export default function SubdivisionPlanDetailPage() {
             {plan.nameArabic && ` · ${plan.nameArabic}`}
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -134,7 +132,7 @@ export default function SubdivisionPlanDetailPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "القطع" : "Plots"}</h4>
-                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddPlot(true)} style={{ display: "inline-flex" }}>
+                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddPlot(true)}>
                   <Plus size={14} />{lang === "ar" ? "إضافة قطعة" : "Add Plot"}
                 </Button>
               </div>
@@ -189,7 +187,7 @@ export default function SubdivisionPlanDetailPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "البلكات" : "Blocks"}</h4>
-                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddBlock(true)} style={{ display: "inline-flex" }}>
+                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddBlock(true)}>
                   <Plus size={14} />{lang === "ar" ? "إضافة بلك" : "Add Block"}
                 </Button>
               </div>
@@ -226,7 +224,7 @@ export default function SubdivisionPlanDetailPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "الطرق" : "Roads"}</h4>
-                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddRoad(true)} style={{ display: "inline-flex" }}>
+                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddRoad(true)}>
                   <Plus size={14} />{lang === "ar" ? "إضافة طريق" : "Add Road"}
                 </Button>
               </div>
@@ -269,7 +267,7 @@ export default function SubdivisionPlanDetailPage() {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "ممرات المرافق" : "Utility Corridors"}</h4>
-                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddCorridor(true)} style={{ display: "inline-flex" }}>
+                <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddCorridor(true)}>
                   <Plus size={14} />{lang === "ar" ? "إضافة ممر" : "Add Corridor"}
                 </Button>
               </div>
@@ -349,10 +347,10 @@ function AddPlotForm({ lang, planId, blocks, onClose, onSuccess }: {
           {blocks.map((b: any) => <option key={b.id} value={b.id}>{b.blockNumber}</option>)}
         </select>
         <div className="flex gap-2">
-          <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+          <Button type="submit" size="sm" disabled={saving}>
             {saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>✕</Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
         </div>
       </form>
     </div>
@@ -387,8 +385,8 @@ function AddBlockForm({ lang, planId, onClose, onSuccess }: {
         <input required value={form.blockNumber} onChange={set("blockNumber")} placeholder={lang === "ar" ? "رقم البلك *" : "Block # *"} className="border border-border rounded-md px-3 py-2 text-sm" />
         <input type="number" value={form.areaSqm} onChange={set("areaSqm")} placeholder={lang === "ar" ? "المساحة (م²)" : "Area (sqm)"} className="border border-border rounded-md px-3 py-2 text-sm w-32" />
         <input type="number" value={form.numberOfPlots} onChange={set("numberOfPlots")} placeholder={lang === "ar" ? "عدد القطع" : "Plot count"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>✕</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>
   );
@@ -426,8 +424,8 @@ function AddRoadForm({ lang, planId, onClose, onSuccess }: {
         </select>
         <input type="number" value={form.widthMeters} onChange={set("widthMeters")} placeholder={lang === "ar" ? "العرض (م)" : "Width (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
         <input type="number" value={form.lengthMeters} onChange={set("lengthMeters")} placeholder={lang === "ar" ? "الطول (م)" : "Length (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>✕</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>
   );
@@ -465,8 +463,8 @@ function AddCorridorForm({ lang, planId, onClose, onSuccess }: {
         </select>
         <input type="number" value={form.widthMeters} onChange={set("widthMeters")} placeholder={lang === "ar" ? "العرض (م)" : "Width (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
         <input type="number" value={form.lengthMeters} onChange={set("lengthMeters")} placeholder={lang === "ar" ? "الطول (م)" : "Length (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
-        <Button type="button" variant="ghost" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>✕</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>
   );

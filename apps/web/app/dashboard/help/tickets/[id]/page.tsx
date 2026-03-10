@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   ArrowRight,
@@ -52,7 +53,7 @@ export default function TicketDetailPage() {
   const userRole = (session?.user as any)?.role ?? "USER";
   const userId = (session?.user as any)?.id;
   const isAdmin = hasPermission(userRole, "help:manage_tickets");
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
 
   const [ticket, setTicket] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -199,12 +200,6 @@ export default function TicketDetailPage() {
             </>
           )}
         </Link>
-        <button
-          onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          {lang === "ar" ? "EN" : "عربي"}
-        </button>
       </div>
 
       {/* Ticket Header */}
@@ -366,7 +361,7 @@ export default function TicketDetailPage() {
                 onClick={handleSendMessage}
                 disabled={!replyText.trim() || sending}
                 className="self-end"
-                style={{ display: "inline-flex" }}
+               
               >
                 <PaperPlaneTilt size={16} className={lang === "ar" ? "rotate-180" : ""} />
                 <span className="ms-1.5 text-sm">

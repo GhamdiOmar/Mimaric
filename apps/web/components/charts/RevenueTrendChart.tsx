@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { RiyalIcon } from "@repo/ui";
 import { getRevenueTimeline } from "../../app/actions/dashboard";
+import { useChartTheme } from "./useChartTheme";
 
 const MONTH_NAMES_AR: Record<string, string> = {
   "01": "يناير", "02": "فبراير", "03": "مارس", "04": "أبريل",
@@ -50,6 +51,7 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function RevenueTrendChart() {
   const [data, setData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const theme = useChartTheme();
 
   React.useEffect(() => {
     getRevenueTimeline()
@@ -81,28 +83,32 @@ export default function RevenueTrendChart() {
     );
   }
 
+  // Use brighter green in dark mode for visibility
+  const rentColor = theme.isDark ? "hsl(148 76% 42%)" : "hsl(148 76% 27%)";
+  const salesColor = theme.isDark ? "hsl(216 50% 55%)" : "hsl(216 45% 17%)";
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
         <defs>
           <linearGradient id="colorRent" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(148 76% 27%)" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="hsl(148 76% 27%)" stopOpacity={0} />
+            <stop offset="5%" stopColor={rentColor} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={rentColor} stopOpacity={0} />
           </linearGradient>
           <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(216 45% 17%)" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="hsl(216 45% 17%)" stopOpacity={0} />
+            <stop offset="5%" stopColor={salesColor} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={salesColor} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 32% 91%)" />
+        <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
-          axisLine={{ stroke: "hsl(214 32% 91%)" }}
+          tick={{ fontSize: 11, fill: theme.tickFill }}
+          axisLine={{ stroke: theme.axisStroke }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
+          tick={{ fontSize: 11, fill: theme.tickFill }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)}
@@ -111,7 +117,7 @@ export default function RevenueTrendChart() {
         <Legend
           wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
           formatter={(value: string) => (
-            <span className="text-neutral text-xs">{value}</span>
+            <span className="text-muted-foreground text-xs">{value}</span>
           )}
         />
         <Area
@@ -119,7 +125,7 @@ export default function RevenueTrendChart() {
           dataKey="rent"
           name="إيجارات"
           stackId="1"
-          stroke="hsl(148 76% 27%)"
+          stroke={rentColor}
           fill="url(#colorRent)"
           strokeWidth={2}
         />
@@ -128,7 +134,7 @@ export default function RevenueTrendChart() {
           dataKey="sales"
           name="مبيعات"
           stackId="1"
-          stroke="hsl(216 45% 17%)"
+          stroke={salesColor}
           fill="url(#colorSales)"
           strokeWidth={2}
         />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import { RiyalIcon } from "@repo/ui";
 import { 
@@ -23,7 +24,7 @@ import Link from "next/link";
 import { MimaricLogo } from "../../../../../components/brand/MimaricLogo";
 
 export default function ContractPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [isSigned, setIsSigned] = React.useState(false);
 
   return (
@@ -106,7 +107,7 @@ export default function ContractPage() {
                     ? "تم الاتفاق على أن السعر الإجمالي للوحدة هو (950,000) ريال سعودي شاملاً ضريبة التصرفات العقارية..." 
                     : "It has been agreed that the total price of the unit is "}<RiyalIcon size={14} className="inline mr-1"/>{lang === "ar" ? "٩٥٠,٠٠٠ شامل ضريبة التصرفات العقارية..." : "950,000, including Real Estate Transaction Tax..."}
                 </p>
-                <div className="bg-muted capitalize overflow-hidden border border-border">
+                <div className="bg-muted capitalize overflow-x-auto border border-border">
                   <table className="w-full text-xs text-start">
                     <thead>
                       <tr className="bg-muted-foreground/5">

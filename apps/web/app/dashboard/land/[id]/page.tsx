@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -104,7 +105,7 @@ const STAGE_LABELS: Record<string, { ar: string; en: string }> = {
 export default function LandDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [land, setLand] = React.useState<any>(null);
   const [checklists, setChecklists] = React.useState<any[]>([]);
   const [constraints, setConstraints] = React.useState<any[]>([]);
@@ -199,7 +200,7 @@ export default function LandDetailPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/land")} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/land")}>
           <ArrowLeft size={18} />
         </Button>
         <div className="flex-1">
@@ -236,12 +237,12 @@ export default function LandDetailPage() {
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           {land.status === "LAND_IDENTIFIED" && (
-            <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_UNDER_REVIEW")} disabled={saving} style={{ display: "inline-flex" }}>
+            <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_UNDER_REVIEW")} disabled={saving}>
               <ArrowRight size={14} />{lang === "ar" ? "بدء المراجعة" : "Start Review"}
             </Button>
           )}
           {land.status === "LAND_UNDER_REVIEW" && (
-            <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_ACQUIRED")} disabled={saving || !allDDComplete} style={{ display: "inline-flex" }}>
+            <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_ACQUIRED")} disabled={saving || !allDDComplete}>
               {saving ? <Spinner size={14} className="animate-spin" /> : <CheckCircle size={14} />}
               {lang === "ar" ? "تأكيد الاستحواذ" : "Mark Acquired"}
             </Button>
@@ -250,7 +251,7 @@ export default function LandDetailPage() {
             <span className="text-xs text-neutral">{lang === "ar" ? "أكمل جميع قوائم الفحص أولاً" : "Complete all checklists first"}</span>
           )}
           {land.status === "LAND_ACQUIRED" && (
-            <Button size="sm" variant="secondary" className="gap-2" onClick={handleConvertToProject} disabled={saving} style={{ display: "inline-flex" }}>
+            <Button size="sm" variant="secondary" className="gap-2" onClick={handleConvertToProject} disabled={saving}>
               {lang === "ar" ? "تحويل إلى مشروع" : "Convert to Project"}
             </Button>
           )}
@@ -407,7 +408,7 @@ export default function LandDetailPage() {
 
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "سجل القيود" : "Constraint Records"}</h4>
-              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowConstraintModal(true)} style={{ display: "inline-flex" }}>
+              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowConstraintModal(true)}>
                 <Plus size={14} />{lang === "ar" ? "إضافة قيد" : "Add Constraint"}
               </Button>
             </div>
@@ -485,7 +486,7 @@ export default function LandDetailPage() {
 
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "تقييمات الجدوى" : "Feasibility Assessments"}</h4>
-              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowFeasibilityModal(true)} style={{ display: "inline-flex" }}>
+              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowFeasibilityModal(true)}>
                 <Plus size={14} />{lang === "ar" ? "إضافة تقييم" : "Add Assessment"}
               </Button>
             </div>
@@ -541,7 +542,7 @@ export default function LandDetailPage() {
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "سجل بوابات القرار" : "Decision Gate History"}</h4>
-              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowGateModal(true)} style={{ display: "inline-flex" }}>
+              <Button size="sm" className="gap-1 text-xs" onClick={() => setShowGateModal(true)}>
                 <Plus size={14} />{lang === "ar" ? "طلب انتقال" : "Request Transition"}
               </Button>
             </div>
@@ -582,7 +583,7 @@ export default function LandDetailPage() {
                               className="text-xs h-7 gap-1"
                               onClick={() => handleResolveGate(g.id, "APPROVED")}
                               disabled={saving}
-                              style={{ display: "inline-flex" }}
+                             
                             >
                               <SealCheck size={12} />{lang === "ar" ? "موافقة" : "Approve"}
                             </Button>
@@ -592,7 +593,7 @@ export default function LandDetailPage() {
                               className="text-xs h-7 gap-1"
                               onClick={() => handleResolveGate(g.id, "REJECTED")}
                               disabled={saving}
-                              style={{ display: "inline-flex" }}
+                             
                             >
                               <XCircle size={12} />{lang === "ar" ? "رفض" : "Reject"}
                             </Button>
@@ -710,8 +711,8 @@ function AddConstraintModal({ lang, projectId, onClose, onSuccess }: {
             <textarea value={form.mitigationPlan} onChange={set("mitigationPlan")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -787,8 +788,8 @@ function AddFeasibilityModal({ lang, projectId, onClose, onSuccess }: {
             <textarea value={form.notes} onChange={set("notes")} rows={3} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+            <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+            <Button type="submit" size="sm" disabled={saving}>
               {saving ? <Spinner size={14} className="animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
@@ -855,8 +856,8 @@ function RequestGateModal({ lang, projectId, currentStatus, onClose, onSuccess }
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-                <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
+                <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+                <Button type="submit" size="sm" disabled={saving}>
                   {saving ? <Spinner size={14} className="animate-spin" /> : null}
                   {lang === "ar" ? "إرسال الطلب" : "Submit Request"}
                 </Button>
@@ -865,7 +866,7 @@ function RequestGateModal({ lang, projectId, currentStatus, onClose, onSuccess }
           ) : (
             <div className="text-center py-4 text-neutral">
               <p className="text-sm">{lang === "ar" ? "لا يوجد انتقال متاح من هذه المرحلة" : "No transition available from this stage"}</p>
-              <Button type="button" variant="secondary" size="sm" onClick={onClose} className="mt-4" style={{ display: "inline-flex" }}>{lang === "ar" ? "إغلاق" : "Close"}</Button>
+              <Button type="button" variant="secondary" size="sm" onClick={onClose} className="mt-4">{lang === "ar" ? "إغلاق" : "Close"}</Button>
             </div>
           )}
         </form>

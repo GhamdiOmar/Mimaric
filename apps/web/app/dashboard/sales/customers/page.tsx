@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { 
   Plus,
@@ -34,7 +35,7 @@ const customerStatuses = [
 ];
 
 export default function CustomersPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [viewMode, setViewMode] = React.useState<"kanban" | "list">("kanban");
   const [customers, setCustomers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -183,13 +184,13 @@ export default function CustomersPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {can("customers:export") && (
-            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-secondary/15 hover:border-secondary/50 hover:text-secondary" style={{ display: "inline-flex" }} onClick={handleExportExcel}>
+            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-secondary/15 hover:border-secondary/50 hover:text-secondary" onClick={handleExportExcel}>
               <DownloadSimple size={16} />
               {lang === "ar" ? "Excel" : "Excel"}
             </Button>
           )}
           {can("customers:export") && (
-            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-destructive/15 hover:border-destructive/50 hover:text-destructive" style={{ display: "inline-flex" }} onClick={handleExportPDF}>
+            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-destructive/15 hover:border-destructive/50 hover:text-destructive" onClick={handleExportPDF}>
               <FilePdf size={16} />
               {lang === "ar" ? "PDF" : "PDF"}
             </Button>
@@ -199,7 +200,7 @@ export default function CustomersPage() {
               variant="secondary"
               size="sm"
               className={cn("gap-1.5 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
-              style={{ display: "inline-flex" }}
+             
               onClick={() => setShowPii(!showPii)}
             >
               {showPii ? <EyeSlash size={16} /> : <Eye size={16} />}

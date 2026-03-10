@@ -1,8 +1,9 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { MapPin, Plus, Spinner, MagnifyingGlass, Eye, NavigationArrow } from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import Link from "next/link";
 import { getLandParcels, createLandParcel } from "../../actions/land";
 import { formatDualDate } from "../../../lib/hijri";
@@ -25,7 +26,7 @@ const landUseLabels: Record<string, string> = {
 const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
 
 export default function LandPage() {
-  const [lang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [parcels, setParcels] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -53,7 +54,7 @@ export default function LandPage() {
           <h1 className="text-2xl font-bold text-primary">{lang === "ar" ? "إدارة الأراضي" : "Land Management"}</h1>
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "تتبع الأراضي من التحديد إلى الاستحواذ" : "Track land from identification to acquisition"}</p>
         </div>
-        <Button size="sm" className="gap-2" onClick={() => setShowModal(true)} style={{ display: "inline-flex" }}>
+        <Button size="sm" className="gap-2" onClick={() => setShowModal(true)}>
           <Plus size={16} />
           {lang === "ar" ? "إضافة أرض" : "Add Land"}
         </Button>
@@ -78,7 +79,7 @@ export default function LandPage() {
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "ابدأ بإضافة أرض جديدة" : "Start by adding a new land parcel"}</p>
         </div>
       ) : (
-        <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+        <div className="bg-card rounded-md shadow-card border border-border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">
@@ -140,7 +141,9 @@ export default function LandPage() {
       )}
 
       {/* Add Land Modal */}
-      {showModal && <AddLandModal lang={lang} onClose={() => setShowModal(false)} onSuccess={() => { setShowModal(false); loadParcels(); }} />}
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <AddLandModal lang={lang} onClose={() => setShowModal(false)} onSuccess={() => { setShowModal(false); loadParcels(); }} />
+      </Dialog>
     </div>
   );
 }
@@ -170,12 +173,11 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
   const set = (key: string) => (e: any) => setForm({ ...form, [key]: e.target.value });
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة أرض جديدة" : "Add New Land"}</h3>
-        </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+    <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{lang === "ar" ? "إضافة أرض جديدة" : "Add New Land"}</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div>
             <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "اسم الأرض *" : "Land Name *"}</label>
             <input required value={form.name} onChange={set("name")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
@@ -239,15 +241,13 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
               <input type="number" value={form.estimatedValueSar} onChange={set("estimatedValueSar")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button type="button" variant="secondary" size="sm" onClick={onClose} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-            <Button type="submit" size="sm" disabled={saving} style={{ display: "inline-flex" }}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
-              {lang === "ar" ? "حفظ" : "Save"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+          <Button type="submit" size="sm" disabled={saving} loading={saving}>
+            {lang === "ar" ? "حفظ" : "Save"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }

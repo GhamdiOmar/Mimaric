@@ -47,7 +47,9 @@ A single Arabic-first platform that unifies every stage of the property lifecycl
 | **Reports** | Excel/PDF export for occupancy, financial, maintenance, lease, and customer reports with date range filtering |
 | **Site Logs** | Construction progress tracking per project with timestamped entries |
 | **Notifications** | In-app notification bell with unread counts, mark-all-read, and admin alerts for join requests and permission changes |
-| **Help Center** | Searchable FAQ and guides (6 categories), support ticket system with threaded messages, permission request workflow |
+| **Help Center** | Searchable FAQ (38 items, 7 categories) and 19 step-by-step guides (bilingual), support ticket system with threaded messages, permission request workflow |
+| **Billing** | SaaS subscription management — 3-tier plans (Lite/Professional/Enterprise), monthly/annual billing, coupon codes, invoice history with VAT, payment method storage |
+| **Platform Admin** | Admin hub for managing subscription plans, monitoring all organization subscriptions, creating coupons, and viewing platform-wide invoices and revenue |
 | **Settings** | Organization profile (MOC-aligned), team management with email invitations, user preferences, security settings, and audit log viewer |
 | **Onboarding** | 4-step post-registration wizard: org path choice (join/create), organization identity, contact info, team invitations |
 
@@ -102,40 +104,45 @@ Every data access, PII read, export, login, and modification is logged with user
 
 | Role | Description | PII Access | Export | Finance | Audit |
 |------|-------------|:----------:|:------:|:-------:|:-----:|
-| **Super Admin** | Full system access, org management, team invitations | Yes | Yes | Yes | Yes |
-| **Dev Admin** | Full system access | Yes | Yes | Yes | Yes |
+| **System Admin** | Full platform + all org access | Yes | Yes | Yes | Yes |
+| **System Support** | Platform ops, ticket management | Yes | Yes | Yes | Yes |
+| **Company Admin** | Full org control, no platform access | Yes | Yes | Yes | Yes |
 | **Sales Manager** | CRM, contracts, reservations, customer PII | Yes | Yes | No | No |
 | **Sales Agent** | CRM, reservations (no PII, no export) | No | No | No | No |
 | **Project Manager** | Projects, units, site logs | No | No | No | No |
 | **Property Manager** | Rentals, maintenance, tenant management | No | No | No | No |
 | **Finance Officer** | Payments, reporting, financial data | No | No | Yes | No |
 | **Technician** | Maintenance work orders only | No | No | No | No |
+| **Engineering Consultant** | Wafi milestone certification | No | No | No | No |
+| **Buyer** | Purchase tracking, documents | No | No | No | No |
+| **Tenant** | Lease viewing, maintenance requests | No | No | No | No |
+| **User** | Basic access, profile management | No | No | No | No |
 
-Sidebar navigation and data access are automatically filtered based on role permissions.
+13 roles with granular permission mapping. Sidebar navigation and data access are automatically filtered based on role permissions.
 
 ---
 
 ## Design System
 
+### Dark Mode / Light Mode
+Full theme system with CSS custom properties and `.dark` class toggling. Sidebar stays dark navy in both themes. Charts, buttons, popovers, and all UI elements adapt with dedicated dark overrides.
+
 ### Color Palette
-| Token | Hex | Usage |
-|-------|-----|-------|
-| Primary | `#182840` | Navigation, headings, primary actions |
-| Secondary | `#107840` | Success states, CTA buttons, positive indicators |
-| Accent | `#D4AF37` | Gold highlights, reserved/pending states |
-| Info | `#3182CE` | Informational badges, early-stage pipeline |
-| Warning | `#DD6B20` | Alerts, on-hold states |
-| Destructive | `#E53E3E` | Delete actions, errors, cancellations |
+| Token | Light | Dark | Usage |
+|-------|-------|------|-------|
+| Primary | `#182840` | `hsl(214 32% 89%)` | Navigation, headings, primary text |
+| Secondary | `#107840` | `hsl(148 67% 42%)` | CTA buttons, success states |
+| Accent | `#D4AF37` | `#D4AF37` | Gold highlights, reserved/pending states |
+| Info | `#3182CE` | `#3182CE` | Informational badges |
+| Warning | `#DD6B20` | `#DD6B20` | Alerts, on-hold states |
+| Destructive | `#E53E3E` | `#E53E3E` | Delete actions, errors |
 
 ### Button System
 All buttons use visible backgrounds with hover lift effects (`-translate-y-0.5`) and shadow transitions:
-- **Primary** — Navy background, white text
-- **Secondary** — White with navy border
-- **Success** — Green background for positive CTAs
-- **Danger** — Red background for destructive actions
+- **Primary** — Navy in light mode, green in dark mode (CSS overrides for Tailwind v4 monorepo)
+- **Secondary** — White/navy border in light, muted with green accent hover in dark
 - **Ghost** — Subtle muted background
-
-Action buttons use color-coded hover accents: green for export/Excel, red for PDF/delete, amber for PII toggles.
+- Action buttons use color-coded hover accents: green for export/Excel, red for PDF/delete, amber for PII toggles
 
 ---
 
@@ -214,6 +221,8 @@ mimaric/
 │       │   │   ├── finance/        # Financial overview
 │       │   │   ├── reports/        # Excel/PDF report generation
 │       │   │   ├── help/           # Help center, tickets, admin panel
+│       │   │   ├── billing/        # Subscription plans, invoices, payments
+│       │   │   ├── admin/          # Platform admin: plans, subscriptions, coupons, payments
 │       │   │   ├── onboarding/     # Post-registration setup wizard
 │       │   │   └── settings/       # Team, security, audit logs
 │       │   └── actions/            # Server actions (data layer)
@@ -224,7 +233,9 @@ mimaric/
 │       │       ├── support-tickets.ts # Help center tickets
 │       │       └── permission-requests.ts # Role upgrade requests
 │       ├── components/
-│       │   ├── charts/             # Dashboard chart components
+│       │   ├── charts/             # Dashboard chart components + useChartTheme
+│       │   ├── LanguageProvider.tsx # Centralized bilingual context (AR/EN)
+│       │   ├── ThemeProvider.tsx    # Dark/light mode provider
 │       │   └── PasswordStrengthHint.tsx # Reusable password strength UI
 │       └── lib/
 │           ├── permissions.ts      # Role-based permission matrix
@@ -254,11 +265,13 @@ mimaric/
 
 ## Status
 
-**v0.8.0** — Registration & organization management system complete: Individual/Company registration with auto-login, CR-based org discovery, token-based team invitations, 4-step onboarding wizard, join request workflow, help center with support tickets, and password policy update (10-char minimum).
+**v1.0.0** — SaaS commercialization complete: 3-tier subscription plans, coupon system, invoice management with VAT, platform admin panel. Full dark/light mode polish, centralized bilingual language system, user profile popover, and help center expanded to 38 FAQs + 19 guides covering 95% of platform features. Wafi compliance and escrow tracking added. 13 user roles.
 
-**v0.7.0** — UI polish pass: button system overhaul with hover lift effects, color-coded action buttons, RTL layout fixes.
+**v0.9.0** — Dark mode system, off-plan development (stages 7-12), cross-module awareness, analytics dashboards.
 
-**v0.5.0–v0.6.0** — Core modules operational: land acquisition, CMMS maintenance, dashboard analytics, reporting, PDPL compliance layer.
+**v0.8.0** — Registration, organization management, onboarding wizard, help center, support tickets.
+
+**v0.5.0–v0.7.0** — Core modules: land acquisition, CMMS maintenance, dashboard analytics, PDPL compliance, UI polish.
 
 **Upcoming:** Ejar API integration, ZATCA e-invoicing, Buyer/Tenant portal, payment gateway (Mada/SADAD), mobile-responsive optimization.
 

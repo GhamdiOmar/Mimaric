@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { Button, Input } from "@repo/ui";
 import { LockKey, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
@@ -9,7 +10,7 @@ import { PasswordStrengthHint } from "../../../../components/PasswordStrengthHin
 import { changePassword } from "../../../actions/password";
 
 export default function SecuritySettingsPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const { data: session } = useSession();
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
@@ -70,9 +71,6 @@ export default function SecuritySettingsPage() {
             {lang === "ar" ? "تغيير كلمة المرور وإعدادات الأمان." : "Change your password and security settings."}
           </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
       </div>
 
       <div className="max-w-lg">

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   UserPlus,
@@ -52,7 +53,7 @@ const inviteRoleOptions: { value: string; label: string }[] = CUSTOMER_ASSIGNABL
 }));
 
 export default function TeamManagementPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [members, setMembers] = React.useState<TeamMember[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showInvite, setShowInvite] = React.useState(false);
@@ -107,15 +108,10 @@ export default function TeamManagementPage() {
             {lang === "ar" ? "دعوة الموظفين وتعيين الصلاحيات وإدارة أدوار الفريق." : "Invite staff, assign permissions, and manage team roles."}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-            {lang === "ar" ? "English" : "العربية"}
-          </Button>
-          <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors" onClick={() => setShowInvite(true)}>
-            <UserPlus size={18} weight="fill" />
-            {lang === "ar" ? "دعوة عضو جديد" : "Invite Member"}
-          </Button>
-        </div>
+        <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors" onClick={() => setShowInvite(true)}>
+          <UserPlus size={18} weight="fill" />
+          {lang === "ar" ? "دعوة عضو جديد" : "Invite Member"}
+        </Button>
       </div>
 
       {/* Invite Modal */}

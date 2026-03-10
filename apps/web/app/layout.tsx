@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "@repo/ui/globals.css";
 import { IBM_Plex_Sans_Arabic, DM_Sans } from 'next/font/google';
 import { ThemeProvider } from "../components/ThemeProvider";
+import { Toaster } from "@repo/ui";
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   subsets: ['arabic'],
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="font-ibm-plex-arabic antialiased text-body">
         <ThemeProvider>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Question,
@@ -63,7 +64,7 @@ export default function HelpPage() {
   const isSystemStaff = hasPermission(userRole, "help:manage_tickets");
   // Backward compat: treat old isAdmin references
   const isAdmin = isOrgAdmin || isSystemStaff;
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [activeTab, setActiveTab] = React.useState<Tab>("overview");
 
   // FAQ state
@@ -244,9 +245,6 @@ export default function HelpPage() {
           <h1 className="text-2xl font-bold text-primary">{lang === "ar" ? "مركز المساعدة" : "Help Center"}</h1>
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "الأسئلة الشائعة، الدعم الفني، وطلب الصلاحيات" : "FAQs, technical support, and permission requests"}</p>
         </div>
-        <button onClick={() => setLang(lang === "ar" ? "en" : "ar")} className="text-xs text-neutral hover:text-primary transition-colors">
-          {lang === "ar" ? "English" : "العربية"}
-        </button>
       </div>
 
       {/* Tabs */}
@@ -371,24 +369,41 @@ export default function HelpPage() {
           <div>
             <h2 className="text-lg font-bold text-primary mb-4">{lang === "ar" ? "أدلة الاستخدام" : "Usage Guides"}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {GUIDE_ITEMS.map((guide) => (
-                <div key={guide.id} className="bg-card rounded-md border border-border p-4">
-                  <button onClick={() => setOpenGuide(openGuide === guide.id ? null : guide.id)} className="w-full text-start">
-                    <h3 className="font-bold text-primary text-sm">{guide.title[lang]}</h3>
-                    <p className="text-xs text-neutral mt-1">{guide.description[lang]}</p>
-                    <span className="text-[10px] text-secondary font-medium mt-2 inline-block">
-                      {openGuide === guide.id ? (lang === "ar" ? "إخفاء الخطوات ▲" : "Hide Steps ▲") : (lang === "ar" ? "عرض الخطوات ▼" : "Show Steps ▼")}
+              {GUIDE_ITEMS.map((guide, idx) => (
+                <div key={guide.id} className="bg-card rounded-md border border-border overflow-hidden flex flex-col">
+                  <button
+                    onClick={() => setOpenGuide(openGuide === guide.id ? null : guide.id)}
+                    className="w-full text-start p-4 flex items-start gap-3 hover:bg-muted/20 transition-colors"
+                  >
+                    <span className="min-w-[32px] h-8 rounded-md bg-secondary/10 text-secondary flex items-center justify-center text-sm font-bold mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-primary text-sm leading-snug">{guide.title[lang]}</h3>
+                      <p className="text-xs text-neutral mt-1.5 leading-relaxed">{guide.description[lang]}</p>
+                    </div>
+                    <span className={cn(
+                      "min-w-[24px] h-6 w-6 rounded-full flex items-center justify-center transition-all mt-0.5",
+                      openGuide === guide.id
+                        ? "bg-secondary/15 text-secondary rotate-180"
+                        : "bg-muted/50 text-neutral"
+                    )}>
+                      <CaretDown size={14} weight="bold" />
                     </span>
                   </button>
                   {openGuide === guide.id && (
-                    <ol className="mt-3 space-y-2">
-                      {guide.steps.map((step, i) => (
-                        <li key={i} className="flex gap-2 text-xs text-neutral">
-                          <span className="min-w-[20px] h-5 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-[10px] font-bold">{i + 1}</span>
-                          <span>{step[lang]}</span>
-                        </li>
-                      ))}
-                    </ol>
+                    <div className="px-4 pb-4 border-t border-border bg-muted/5">
+                      <ol className="mt-3 space-y-2.5">
+                        {guide.steps.map((step, i) => (
+                          <li key={i} className="flex gap-2.5 text-xs text-neutral">
+                            <span className="min-w-[22px] h-[22px] rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-[10px] font-bold shrink-0">
+                              {i + 1}
+                            </span>
+                            <span className="pt-0.5 leading-relaxed">{step[lang]}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
                   )}
                 </div>
               ))}
@@ -401,7 +416,7 @@ export default function HelpPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-primary">{lang === "ar" ? "تذاكري" : "My Tickets"}</h2>
-            <Button size="sm" onClick={() => setShowNewTicket(!showNewTicket)} style={{ display: "inline-flex" }}>
+            <Button size="sm" onClick={() => setShowNewTicket(!showNewTicket)}>
               {lang === "ar" ? "تذكرة جديدة" : "New Ticket"}
             </Button>
           </div>
@@ -432,8 +447,8 @@ export default function HelpPage() {
                 className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none resize-none"
               />
               <div className="flex gap-2 justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setShowNewTicket(false)} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-                <Button variant="success" size="sm" onClick={handleSubmitTicket} disabled={ticketLoading} style={{ display: "inline-flex" }}>
+                <Button variant="ghost" size="sm" onClick={() => setShowNewTicket(false)}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+                <Button variant="success" size="sm" onClick={handleSubmitTicket} disabled={ticketLoading}>
                   <PaperPlaneTilt size={14} className="me-1" />
                   {ticketLoading ? "..." : (lang === "ar" ? "إرسال" : "Submit")}
                 </Button>
@@ -496,7 +511,7 @@ export default function HelpPage() {
               rows={3}
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none resize-none"
             />
-            <Button variant="success" size="sm" onClick={handleSubmitPermRequest} disabled={permLoading || !permForm.requestedRole || !permForm.reason.trim()} style={{ display: "inline-flex" }}>
+            <Button variant="success" size="sm" onClick={handleSubmitPermRequest} disabled={permLoading || !permForm.requestedRole || !permForm.reason.trim()}>
               <PaperPlaneTilt size={14} className="me-1" />
               {permLoading ? "..." : (lang === "ar" ? "إرسال الطلب" : "Submit Request")}
             </Button>
@@ -580,16 +595,16 @@ export default function HelpPage() {
                                 className="w-full border border-border rounded px-2 py-1 text-xs outline-none"
                               />
                               <div className="flex gap-1">
-                                <Button size="sm" variant="success" onClick={() => handleReview(req.id, "APPROVED")} style={{ display: "inline-flex" }} className="h-6 px-2 text-[10px]">
+                                <Button size="sm" variant="success" onClick={() => handleReview(req.id, "APPROVED")} className="h-6 px-2 text-[10px]">
                                   <CheckCircle size={12} className="me-1" />{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleReview(req.id, "DECLINED")} style={{ display: "inline-flex" }} className="h-6 px-2 text-[10px]">
+                                <Button size="sm" variant="danger" onClick={() => handleReview(req.id, "DECLINED")} className="h-6 px-2 text-[10px]">
                                   <XCircle size={12} className="me-1" />{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <Button size="sm" variant="secondary" onClick={() => setReviewingId(req.id)} style={{ display: "inline-flex" }} className="h-7 text-xs">
+                            <Button size="sm" variant="secondary" onClick={() => setReviewingId(req.id)} className="h-7 text-xs">
                               {lang === "ar" ? "مراجعة" : "Review"}
                             </Button>
                           )}
@@ -640,16 +655,16 @@ export default function HelpPage() {
                                 className="w-full border border-border rounded px-2 py-1 text-xs outline-none"
                               />
                               <div className="flex gap-1">
-                                <Button size="sm" variant="success" onClick={() => handleJoinReview(req.id, "APPROVED_JOIN")} style={{ display: "inline-flex" }} className="h-6 px-2 text-[10px]">
+                                <Button size="sm" variant="success" onClick={() => handleJoinReview(req.id, "APPROVED_JOIN")} className="h-6 px-2 text-[10px]">
                                   <CheckCircle size={12} className="me-1" />{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleJoinReview(req.id, "DECLINED_JOIN")} style={{ display: "inline-flex" }} className="h-6 px-2 text-[10px]">
+                                <Button size="sm" variant="danger" onClick={() => handleJoinReview(req.id, "DECLINED_JOIN")} className="h-6 px-2 text-[10px]">
                                   <XCircle size={12} className="me-1" />{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <Button size="sm" variant="secondary" onClick={() => setJoinReviewingId(req.id)} style={{ display: "inline-flex" }} className="h-7 text-xs">
+                            <Button size="sm" variant="secondary" onClick={() => setJoinReviewingId(req.id)} className="h-7 text-xs">
                               {lang === "ar" ? "مراجعة" : "Review"}
                             </Button>
                           )}

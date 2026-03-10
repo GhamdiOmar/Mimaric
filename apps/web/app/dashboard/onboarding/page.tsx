@@ -1,5 +1,6 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Buildings,
@@ -10,7 +11,6 @@ import {
   Plus,
   Trash,
   User,
-  Globe,
   MapPin,
   EnvelopeSimple,
   Spinner,
@@ -87,7 +87,7 @@ export default function OnboardingPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
 
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [currentStep, setCurrentStep] = React.useState(0);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -348,16 +348,6 @@ export default function OnboardingPage() {
                 : "Complete the following steps to activate your Mimaric account."}
             </p>
           </div>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            style={{ display: "inline-flex" }}
-            className="gap-2"
-          >
-            <Globe size={16} />
-            {lang === "ar" ? "English" : "العربية"}
-          </Button>
         </div>
 
         {/* Stepper */}
@@ -499,7 +489,7 @@ export default function OnboardingPage() {
                           onClick={handleCRLookup}
                           disabled={crSearch.length !== 10 || searching}
                           className="gap-2"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           {searching ? (
                             <Spinner size={16} className="animate-spin" />
@@ -531,7 +521,7 @@ export default function OnboardingPage() {
                           onClick={handleJoinRequest}
                           disabled={loading}
                           className="gap-2 w-full"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           {loading ? (
                             <Spinner size={16} className="animate-spin" />
@@ -556,7 +546,7 @@ export default function OnboardingPage() {
                           onClick={handleConvertPersonal}
                           disabled={loading}
                           className="gap-2"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           {loading ? (
                             <Spinner size={16} className="animate-spin" />
@@ -601,7 +591,7 @@ export default function OnboardingPage() {
                     <Button
                       onClick={goNext}
                       className="gap-2 px-8"
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {lang === "ar" ? "متابعة" : "Continue"}
                       {lang === "ar" ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
@@ -729,7 +719,7 @@ export default function OnboardingPage() {
                     onClick={goPrev}
                     disabled={loading}
                     className="gap-2"
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                     {lang === "ar" ? "السابق" : "Previous"}
@@ -739,7 +729,7 @@ export default function OnboardingPage() {
                       variant="ghost"
                       onClick={goNext}
                       disabled={loading}
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {lang === "ar" ? "تخطي" : "Skip"}
                     </Button>
@@ -747,7 +737,7 @@ export default function OnboardingPage() {
                       onClick={handleSaveOrg}
                       disabled={loading}
                       className="gap-2 px-8"
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {loading && <Spinner size={16} className="animate-spin" />}
                       {lang === "ar" ? "حفظ ومتابعة" : "Save & Continue"}
@@ -820,7 +810,7 @@ export default function OnboardingPage() {
                     onClick={goPrev}
                     disabled={loading}
                     className="gap-2"
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                     {lang === "ar" ? "السابق" : "Previous"}
@@ -830,7 +820,7 @@ export default function OnboardingPage() {
                       variant="ghost"
                       onClick={goNext}
                       disabled={loading}
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {lang === "ar" ? "تخطي" : "Skip"}
                     </Button>
@@ -838,7 +828,7 @@ export default function OnboardingPage() {
                       onClick={handleSaveContact}
                       disabled={loading}
                       className="gap-2 px-8"
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {loading && <Spinner size={16} className="animate-spin" />}
                       {lang === "ar" ? "حفظ ومتابعة" : "Save & Continue"}
@@ -893,7 +883,7 @@ export default function OnboardingPage() {
                           size="sm"
                           onClick={() => removeInviteRow(i)}
                           className="text-red-500 hover:text-red-700 flex-shrink-0"
-                          style={{ display: "inline-flex" }}
+                         
                         >
                           <Trash size={16} />
                         </Button>
@@ -918,7 +908,7 @@ export default function OnboardingPage() {
                     onClick={goPrev}
                     disabled={loading}
                     className="gap-2"
-                    style={{ display: "inline-flex" }}
+                   
                   >
                     {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
                     {lang === "ar" ? "السابق" : "Previous"}
@@ -928,7 +918,7 @@ export default function OnboardingPage() {
                       variant="ghost"
                       onClick={handleSkipComplete}
                       disabled={loading}
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {lang === "ar" ? "تخطي وإنهاء الإعداد" : "Skip & Complete Setup"}
                     </Button>
@@ -936,7 +926,7 @@ export default function OnboardingPage() {
                       onClick={handleSendInvitations}
                       disabled={loading || invites.every((inv) => !inv.email.trim())}
                       className="gap-2 px-8 bg-secondary hover:bg-green-600 transition-colors"
-                      style={{ display: "inline-flex" }}
+                     
                     >
                       {loading ? (
                         <Spinner size={16} className="animate-spin" />

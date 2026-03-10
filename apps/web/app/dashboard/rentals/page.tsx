@@ -1,8 +1,9 @@
 "use client";
 
+import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { Tag, Plus, CurrencyCircleDollar, Buildings } from "@phosphor-icons/react";
-import { Button, SARAmount } from "@repo/ui";
+import { SARAmount } from "@repo/ui";
 import Link from "next/link";
 import { getLeases } from "../../actions/leases";
 import { formatDualDate } from "../../../lib/hijri";
@@ -13,7 +14,7 @@ const rentalModules = [
 ];
 
 export default function RentalsPage() {
-  const [lang, setLang] = React.useState<"ar" | "en">("ar");
+  const { lang } = useLanguage();
   const [leases, setLeases] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -29,18 +30,13 @@ export default function RentalsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
-        <div>
-          <h1 className="text-2xl font-bold text-primary font-primary">
-            {lang === "ar" ? "إدارة الإيجارات" : "Rental Management"}
-          </h1>
-          <p className="text-sm text-neutral mt-1 font-primary">
-            {lang === "ar" ? "إدارة عقود الإيجار وتحصيل المدفوعات." : "Manage lease agreements and payment collections."}
-          </p>
-        </div>
-        <Button variant="secondary" size="sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
-          {lang === "ar" ? "English" : "العربية"}
-        </Button>
+      <div className="px-2">
+        <h1 className="text-2xl font-bold text-primary font-primary">
+          {lang === "ar" ? "إدارة الإيجارات" : "Rental Management"}
+        </h1>
+        <p className="text-sm text-neutral mt-1 font-primary">
+          {lang === "ar" ? "إدارة عقود الإيجار وتحصيل المدفوعات." : "Manage lease agreements and payment collections."}
+        </p>
       </div>
 
       {/* KPI Summary */}
