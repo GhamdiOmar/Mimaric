@@ -41,7 +41,7 @@ export class BillingPage {
     ).toBeVisible();
   }
 
-  async expectSubscriptionStatus(status: string) {
+  async expectSubscriptionStatus(status: string | RegExp) {
     const main = this.page.locator('main');
     await expect(
       main.getByText(status, { exact: false }).first()
