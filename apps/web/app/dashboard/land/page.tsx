@@ -3,7 +3,7 @@
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { MapPin, Plus, Spinner, MagnifyingGlass, Eye, NavigationArrow } from "@phosphor-icons/react";
-import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Card, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import Link from "next/link";
 import { getLandParcels, createLandParcel } from "../../actions/land";
 import { formatDualDate } from "../../../lib/hijri";
@@ -73,41 +73,41 @@ export default function LandPage() {
       {loading ? (
         <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>
       ) : filtered.length === 0 ? (
-        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
+        <Card className="p-12 text-center">
           <MapPin size={48} className="text-neutral mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد أراضٍ" : "No Land Parcels"}</h3>
           <p className="text-sm text-neutral mt-1">{lang === "ar" ? "ابدأ بإضافة أرض جديدة" : "Start by adding a new land parcel"}</p>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-card rounded-md shadow-card border border-border overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/30 border-b border-border">
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الاسم" : "Name"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "رقم الصك" : "Deed #"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الموقع" : "Location"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الاستخدام" : "Land Use"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الملاءمة" : "Score"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral"></th>
-              </tr>
-            </thead>
-            <tbody>
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{lang === "ar" ? "الاسم" : "Name"}</TableHead>
+                <TableHead>{lang === "ar" ? "رقم الصك" : "Deed #"}</TableHead>
+                <TableHead>{lang === "ar" ? "الموقع" : "Location"}</TableHead>
+                <TableHead>{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</TableHead>
+                <TableHead>{lang === "ar" ? "الاستخدام" : "Land Use"}</TableHead>
+                <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
+                <TableHead>{lang === "ar" ? "الملاءمة" : "Score"}</TableHead>
+                <TableHead>{lang === "ar" ? "التاريخ" : "Date"}</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {filtered.map((p: any) => {
                 const config = statusConfig[p.status] ?? statusConfig.LAND_IDENTIFIED!;
                 return (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-bold text-primary">{p.name}</td>
-                    <td className="px-4 py-3 text-neutral" dir="ltr">{p.deedNumber || "—"}</td>
-                    <td className="px-4 py-3 text-neutral text-xs">{[p.city, p.district].filter(Boolean).join(", ") || "—"}</td>
-                    <td className="px-4 py-3">{p.totalAreaSqm ? fmt(p.totalAreaSqm) : "—"}</td>
-                    <td className="px-4 py-3 text-xs">{landUseLabels[p.landUse] ?? p.landUse ?? "—"}</td>
-                    <td className="px-4 py-3">
+                  <TableRow key={p.id}>
+                    <TableCell className="font-bold text-primary">{p.name}</TableCell>
+                    <TableCell className="text-neutral" dir="ltr">{p.deedNumber || "—"}</TableCell>
+                    <TableCell className="text-neutral text-xs">{[p.city, p.district].filter(Boolean).join(", ") || "—"}</TableCell>
+                    <TableCell>{p.totalAreaSqm ? fmt(p.totalAreaSqm) : "—"}</TableCell>
+                    <TableCell className="text-xs">{landUseLabels[p.landUse] ?? p.landUse ?? "—"}</TableCell>
+                    <TableCell>
                       <Badge variant={config.variant as any} className={`text-xs ${config.className}`}>{config.label[lang]}</Badge>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       {p.suitabilityScore !== null && p.suitabilityScore !== undefined ? (
                         <div className="flex items-center gap-1.5">
                           <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -123,21 +123,21 @@ export default function LandPage() {
                       ) : (
                         <span className="text-xs text-neutral">—</span>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(p.createdAt, lang)}</td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="text-xs text-neutral">{formatDualDate(p.createdAt, lang)}</TableCell>
+                    <TableCell>
                       <Link href={`/dashboard/land/${p.id}`}>
                         <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50">
                           <Eye size={14} />{lang === "ar" ? "عرض" : "View"}
                         </Button>
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* Add Land Modal */}

@@ -7,15 +7,27 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { RiyalIcon } from "@repo/ui";
+import { RiyalIcon, ChartContainer, ChartTooltip, ChartLegend, ChartLegendContent, type ChartConfig } from "@repo/ui";
 import { getSalesTracking } from "../../app/actions/launch";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
+
+const chartConfig = {
+  available: {
+    label: "متاح",
+    color: "hsl(148 76% 27%)",
+  },
+  reserved: {
+    label: "محجوز",
+    color: "hsl(43 74% 53%)",
+  },
+  sold: {
+    label: "مباع",
+    color: "hsl(216 45% 17%)",
+  },
+} satisfies ChartConfig;
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -80,38 +92,32 @@ export default function SalesFunnelChart({ projectId }: { projectId: string }) {
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ChartContainer config={chartConfig} className="h-[280px] w-full">
       <BarChart
         data={data}
         layout="vertical"
         margin={{ top: 5, right: 10, left: 10, bottom: 5 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 32% 91%)" />
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           type="number"
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
-          axisLine={{ stroke: "hsl(214 32% 91%)" }}
+          tick={{ fontSize: 11 }}
           tickLine={false}
         />
         <YAxis
           type="category"
           dataKey="name"
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
+          tick={{ fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           width={80}
         />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-          formatter={(value: string) => (
-            <span className="text-neutral text-xs">{value}</span>
-          )}
-        />
-        <Bar dataKey="available" name="متاح" stackId="a" fill="hsl(148 76% 27%)" />
-        <Bar dataKey="reserved" name="محجوز" stackId="a" fill="hsl(43 74% 53%)" />
-        <Bar dataKey="sold" name="مباع" stackId="a" fill="hsl(216 45% 17%)" radius={[0, 4, 4, 0]} />
+        <ChartTooltip content={<CustomTooltip />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Bar dataKey="available" name="متاح" stackId="a" fill="var(--color-available)" />
+        <Bar dataKey="reserved" name="محجوز" stackId="a" fill="var(--color-reserved)" />
+        <Bar dataKey="sold" name="مباع" stackId="a" fill="var(--color-sold)" radius={[0, 4, 4, 0]} />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

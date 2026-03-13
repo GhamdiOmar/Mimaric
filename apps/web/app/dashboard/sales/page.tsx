@@ -3,7 +3,7 @@
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import { Users, Tag, Receipt, Package, TrendUp, CurrencyCircleDollar, ChartBar, ArrowRight } from "@phosphor-icons/react";
-import { Button, Badge, SARAmount } from "@repo/ui";
+import { Button, Badge, SARAmount, Card } from "@repo/ui";
 import Link from "next/link";
 import { getSalesStats, getOffPlanSalesStats } from "../../actions/sales";
 
@@ -43,7 +43,7 @@ export default function SalesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {salesModules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="group">
-            <div className="bg-card rounded-md shadow-card border border-border p-8 hover:shadow-raised hover:border-secondary/30 transition-all h-full flex flex-col">
+            <Card className="p-8 hover:shadow-raised hover:border-secondary/30 transition-all h-full flex flex-col">
               <div className="h-12 w-12 rounded-md bg-secondary/10 flex items-center justify-center text-secondary mb-6 group-hover:bg-secondary group-hover:text-white transition-all">
                 <mod.icon size={28} />
               </div>
@@ -55,7 +55,7 @@ export default function SalesPage() {
                 </Badge>
                 <span className="text-xs text-neutral group-hover:text-secondary transition-colors font-primary">{lang === "ar" ? "عرض" : "View"} →</span>
               </div>
-            </div>
+            </Card>
           </Link>
         ))}
       </div>
@@ -87,7 +87,7 @@ export default function SalesPage() {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Pipeline Value */}
-            <div className="bg-card rounded-lg border border-border p-5 shadow-card">
+            <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
                   <CurrencyCircleDollar size={16} className="text-primary" weight="duotone" />
@@ -100,10 +100,10 @@ export default function SalesPage() {
               <p className="text-[10px] text-neutral mt-1">
                 {offPlanStats.available + offPlanStats.reserved} {lang === "ar" ? "عنصر نشط" : "active items"}
               </p>
-            </div>
+            </Card>
 
             {/* Reserved Value */}
-            <div className="bg-card rounded-lg border border-border p-5 shadow-card">
+            <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-amber-500/10 flex items-center justify-center">
                   <Tag size={16} className="text-amber-600" weight="duotone" />
@@ -116,10 +116,10 @@ export default function SalesPage() {
               <p className="text-[10px] text-neutral mt-1">
                 {offPlanStats.reserved} {lang === "ar" ? "محجوز" : "reserved"}
               </p>
-            </div>
+            </Card>
 
             {/* Sold Value */}
-            <div className="bg-card rounded-lg border border-border p-5 shadow-card">
+            <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-secondary/10 flex items-center justify-center">
                   <ChartBar size={16} className="text-secondary" weight="duotone" />
@@ -132,10 +132,10 @@ export default function SalesPage() {
               <p className="text-[10px] text-neutral mt-1">
                 {offPlanStats.sold} {lang === "ar" ? "مباع" : "sold"}
               </p>
-            </div>
+            </Card>
 
             {/* Conversion Rate */}
-            <div className="bg-card rounded-lg border border-border p-5 shadow-card">
+            <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-info/10 flex items-center justify-center">
                   <TrendUp size={16} className="text-info" weight="duotone" />
@@ -148,7 +148,7 @@ export default function SalesPage() {
               <div className="mt-2 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div className="h-full bg-info rounded-full transition-all" style={{ width: `${offPlanStats.conversionRate}%` }} />
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       )}

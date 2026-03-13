@@ -9,6 +9,9 @@ import { logAuditEvent } from "./lib/audit";
 /**
  * In-memory rate limiter for login attempts.
  * Thresholds:  5 fails → 30s,  10 fails → 5min,  20 fails → 15min
+ *
+ * NOTE: This Map is per-process and resets on deploy. For multi-instance
+ * deployments, replace with Redis-backed rate limiting (@upstash/ratelimit).
  */
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
@@ -76,18 +79,18 @@ const result = NextAuth({
 
           if (!user) {
             recordFailedAttempt(email);
-            throw new Error("USER_NOT_FOUND");
+            throw new Error("INVALID_CREDENTIALS");
           }
 
           if (!user.password) {
             recordFailedAttempt(email);
-            throw new Error("INVALID_PASSWORD");
+            throw new Error("INVALID_CREDENTIALS");
           }
 
           const isValid = await bcrypt.compare(credentials.password as string, user.password);
           if (!isValid) {
             recordFailedAttempt(email);
-            throw new Error("INVALID_PASSWORD");
+            throw new Error("INVALID_CREDENTIALS");
           }
 
           // Success — clear rate limit counter
@@ -113,7 +116,7 @@ const result = NextAuth({
             accountType: (user as any).accountType ?? null,
           };
         } catch (error: any) {
-          if (error.message === "USER_NOT_FOUND" || error.message === "INVALID_PASSWORD" || error.message.startsWith("RATE_LIMITED")) {
+          if (error.message === "INVALID_CREDENTIALS" || error.message.startsWith("RATE_LIMITED")) {
             throw error;
           }
           console.error("Auth error:", error);

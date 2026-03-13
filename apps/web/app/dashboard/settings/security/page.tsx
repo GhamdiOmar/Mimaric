@@ -5,7 +5,7 @@ import * as React from "react";
 import { Button, Input } from "@repo/ui";
 import { LockKey, CheckCircle, ArrowLeft } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../../../components/SimpleSessionProvider";
 import { PasswordStrengthHint } from "../../../../components/PasswordStrengthHint";
 import { changePassword } from "../../../actions/password";
 

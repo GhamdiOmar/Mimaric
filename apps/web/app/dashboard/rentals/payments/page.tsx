@@ -13,7 +13,18 @@ import {
   Receipt,
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
-import { Button, Badge, SARAmount } from "@repo/ui";
+import {
+  Button,
+  Badge,
+  SARAmount,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import { getInstallments, recordPayment, markOverdueInstallments } from "../../../actions/installments";
 import { formatDualDate } from "../../../../lib/hijri";
 
@@ -85,7 +96,7 @@ export default function RentCollectionPage() {
           { label: "متأخرات", en: "Overdue", value: overdue, icon: Warning, color: "destructive" },
           { label: "قيد التحصيل", en: "Pending", value: pending, icon: Clock, color: "accent" },
         ].map((kpi, idx) => (
-          <div key={idx} className="bg-card p-6 rounded-md shadow-card border border-border group hover:shadow-raised transition-all">
+          <Card key={idx} className="p-6 group hover:shadow-raised transition-all">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? kpi.label : kpi.en}</span>
               <kpi.icon size={20} className={cn(
@@ -97,12 +108,12 @@ export default function RentCollectionPage() {
             <h3 className="text-xl font-bold text-primary">
               {loading ? "—" : <SARAmount value={kpi.value} size={20} />}
             </h3>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+      <Card className="overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Spinner size={32} className="animate-spin text-primary" />
@@ -113,72 +124,70 @@ export default function RentCollectionPage() {
             <p className="text-sm font-primary">{lang === "ar" ? "لا توجد دفعات حالياً" : "No installments found"}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border">
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "المستأجر" : "Tenant"}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الوحدة" : "Unit"}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "المبلغ" : "Amount"}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الاستحقاق" : "Due Date"}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الحالة" : "Status"}</th>
-                  <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-neutral text-center">{lang === "ar" ? "إجراءات" : "Actions"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {installments.map((p) => (
-                  <tr key={p.id} className="hover:bg-muted/5 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
-                          <IdentificationCard size={18} />
-                        </div>
-                        <p className="text-sm font-bold text-primary">{p.lease.customer.name}</p>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{lang === "ar" ? "المستأجر" : "Tenant"}</TableHead>
+                <TableHead>{lang === "ar" ? "الوحدة" : "Unit"}</TableHead>
+                <TableHead>{lang === "ar" ? "المبلغ" : "Amount"}</TableHead>
+                <TableHead>{lang === "ar" ? "الاستحقاق" : "Due Date"}</TableHead>
+                <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
+                <TableHead className="text-center">{lang === "ar" ? "إجراءات" : "Actions"}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {installments.map((p) => (
+                <TableRow key={p.id} className="group">
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
+                        <IdentificationCard size={18} />
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Building size={16} className="text-neutral" />
-                        <span className="text-xs font-semibold text-primary">{p.lease.unit.number}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <SARAmount value={Number(p.amount)} size={12} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-xs text-neutral font-dm-sans">
-                        <Clock size={14} />
-                        {formatDualDate(p.dueDate, lang)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={
-                        p.status === "PAID" ? "available" :
-                        p.status === "OVERDUE" ? "overdue" :
-                        "draft"
-                      } className="text-[10px]">
-                        {p.status === "PAID" ? (lang === "ar" ? "مدفوعة" : "Paid") :
-                         p.status === "OVERDUE" ? (lang === "ar" ? "متأخرة" : "Overdue") :
-                         (lang === "ar" ? "غير مدفوعة" : "Unpaid")}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {p.status !== "PAID" && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="text-xs"
-                          onClick={() => handleRecordPayment(p.id)}
-                        >
-                          {lang === "ar" ? "تسجيل دفعة" : "Record Payment"}
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <p className="text-sm font-bold text-primary">{p.lease.customer.name}</p>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Building size={16} className="text-neutral" />
+                      <span className="text-xs font-semibold text-primary">{p.lease.unit.number}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <SARAmount value={Number(p.amount)} size={12} />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 text-xs text-neutral font-dm-sans">
+                      <Clock size={14} />
+                      {formatDualDate(p.dueDate, lang)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      p.status === "PAID" ? "available" :
+                      p.status === "OVERDUE" ? "overdue" :
+                      "draft"
+                    } className="text-[10px]">
+                      {p.status === "PAID" ? (lang === "ar" ? "مدفوعة" : "Paid") :
+                       p.status === "OVERDUE" ? (lang === "ar" ? "متأخرة" : "Overdue") :
+                       (lang === "ar" ? "غير مدفوعة" : "Unpaid")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {p.status !== "PAID" && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => handleRecordPayment(p.id)}
+                      >
+                        {lang === "ar" ? "تسجيل دفعة" : "Record Payment"}
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
 
         <div className="p-4 bg-muted/10 border-t border-border flex items-center justify-between">
@@ -186,7 +195,7 @@ export default function RentCollectionPage() {
             {lang === "ar" ? `عرض ${installments.length} دفعة` : `Showing ${installments.length} payments`}
           </span>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

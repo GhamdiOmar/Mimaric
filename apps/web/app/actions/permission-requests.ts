@@ -7,11 +7,25 @@ import { logAuditEvent } from "../../lib/audit";
 import { createNotification, notifyAdmins } from "../../lib/create-notification";
 import { isSystemRole } from "../../lib/permissions";
 
+/** Roles that non-system users are allowed to request via self-service. */
+const REQUESTABLE_ROLES = [
+  "USER", "ACCOUNTANT", "TECHNICIAN", "PROPERTY_MANAGER",
+  "PROJECT_MANAGER", "SALES_AGENT", "COMPANY_ADMIN",
+];
+
 export async function createPermissionRequest(data: {
   requestedRole: string;
   reason: string;
 }) {
   const session = await requirePermission("help:create_ticket");
+
+  // Guard: reject system-level roles and unknown roles
+  if (isSystemRole(data.requestedRole)) {
+    return { error: "Cannot request system-level roles" };
+  }
+  if (!REQUESTABLE_ROLES.includes(data.requestedRole)) {
+    return { error: "Invalid role requested" };
+  }
 
   const request = await db.permissionRequest.create({
     data: {

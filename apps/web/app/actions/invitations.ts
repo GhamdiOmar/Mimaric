@@ -11,11 +11,49 @@ import { validatePassword } from "../../lib/password-policy";
 import { isSystemRole } from "../../lib/permissions";
 import { signIn } from "../../auth";
 
+// ─── Invitation Rate Limiter ─────────────────────────────────────────────────
+
+/**
+ * In-memory rate limiter for invitation creation.
+ * Limit: 10 invitations per organization per hour.
+ *
+ * NOTE: This Map is per-process and resets on deploy. For multi-instance
+ * deployments, replace with Redis-backed rate limiting (@upstash/ratelimit).
+ */
+const inviteAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const INVITE_RATE_LIMIT = 10;
+const INVITE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkInviteRateLimit(orgId: string): boolean {
+  const entry = inviteAttempts.get(orgId);
+  if (!entry) return false;
+  if (Date.now() - entry.firstAttempt > INVITE_WINDOW_MS) {
+    inviteAttempts.delete(orgId);
+    return false;
+  }
+  return entry.count >= INVITE_RATE_LIMIT;
+}
+
+function recordInviteAttempt(orgId: string) {
+  const entry = inviteAttempts.get(orgId);
+  const now = Date.now();
+  if (!entry || now - entry.firstAttempt > INVITE_WINDOW_MS) {
+    inviteAttempts.set(orgId, { count: 1, firstAttempt: now });
+  } else {
+    entry.count += 1;
+  }
+}
+
 // ─── Create Invitation ────────────────────────────────────────────────────────
 
 export async function createInvitation(data: { email: string; role?: string }) {
   try {
     const session = await requirePermission("team:write");
+
+    // Rate limit check
+    if (checkInviteRateLimit(session.organizationId)) {
+      return { success: false, error: "Too many invitations. Please try again later." };
+    }
 
     const email = data.email.toLowerCase().trim();
 
@@ -63,6 +101,8 @@ export async function createInvitation(data: { email: string; role?: string }) {
       },
     });
 
+    recordInviteAttempt(session.organizationId);
+
     logAuditEvent({
       userId: session.userId,
       userEmail: session.email,
@@ -78,7 +118,6 @@ export async function createInvitation(data: { email: string; role?: string }) {
 
     return {
       success: true,
-      token,
       inviteUrl: `/auth/invite/${token}`,
     };
   } catch (error: any) {
@@ -95,7 +134,7 @@ export async function acceptInvitation(data: {
   password: string;
 }) {
   try {
-    // Find invitation by token
+    // Find invitation by token (read-only, outside transaction)
     const invitation = await db.invitation.findFirst({
       where: { token: data.token, status: "PENDING_INVITE" },
       include: {
@@ -110,20 +149,11 @@ export async function acceptInvitation(data: {
 
     // Check expiry
     if (invitation.expiresAt < new Date()) {
-      // Mark as expired
       await db.invitation.update({
         where: { id: invitation.id },
         data: { status: "EXPIRED_INVITE" },
       });
       return { success: false, error: "This invitation has expired" };
-    }
-
-    // Check email not already taken
-    const existingUser = await db.user.findUnique({
-      where: { email: invitation.email },
-    });
-    if (existingUser) {
-      return { success: false, error: "An account with this email already exists" };
     }
 
     // Validate password strength
@@ -138,34 +168,56 @@ export async function acceptInvitation(data: {
       };
     }
 
-    // Hash password
+    // Hash password OUTSIDE transaction (CPU-intensive)
     const hashedPassword = await bcrypt.hash(data.password, 12);
 
-    // Create user
-    const user = await db.user.create({
-      data: {
-        name: data.name,
-        email: invitation.email,
-        password: hashedPassword,
-        role: invitation.role,
-        organizationId: invitation.organizationId,
-        onboardingCompleted: true,
-        invitedVia: "invitation",
-        invitedBy: invitation.invitedById,
-      },
-    });
+    // Atomic: create user + update invitation status
+    let user: any;
+    try {
+      user = await db.$transaction(async (tx: any) => {
+        // Re-check invitation status inside tx to prevent double-use
+        const freshInvite = await tx.invitation.findUnique({
+          where: { id: invitation.id },
+        });
+        if (!freshInvite || freshInvite.status !== "PENDING_INVITE") {
+          throw new Error("INVITATION_ALREADY_USED");
+        }
 
-    // Update invitation status
-    await db.invitation.update({
-      where: { id: invitation.id },
-      data: {
-        status: "ACCEPTED_INVITE",
-        acceptedById: user.id,
-        acceptedAt: new Date(),
-      },
-    });
+        const newUser = await tx.user.create({
+          data: {
+            name: data.name,
+            email: invitation.email,
+            password: hashedPassword,
+            role: invitation.role,
+            organizationId: invitation.organizationId,
+            onboardingCompleted: true,
+            invitedVia: "invitation",
+            invitedBy: invitation.invitedById,
+          },
+        });
 
-    // Notify the inviter
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: {
+            status: "ACCEPTED_INVITE",
+            acceptedById: newUser.id,
+            acceptedAt: new Date(),
+          },
+        });
+
+        return newUser;
+      });
+    } catch (error: any) {
+      if (error.message === "INVITATION_ALREADY_USED") {
+        return { success: false, error: "Invitation has already been used" };
+      }
+      if (error.code === "P2002" && error.meta?.target?.includes("email")) {
+        return { success: false, error: "An account with this email already exists" };
+      }
+      throw error;
+    }
+
+    // Post-transaction: notification, audit, auto-sign-in
     await createNotification({
       userId: invitation.invitedById,
       type: "INVITATION_ACCEPTED",
@@ -308,6 +360,11 @@ export async function resendInvitation(invitationId: string) {
   try {
     const session = await requirePermission("team:write");
 
+    // Rate limit check
+    if (checkInviteRateLimit(session.organizationId)) {
+      return { success: false, error: "Too many invitations. Please try again later." };
+    }
+
     const invitation = await db.invitation.findFirst({
       where: {
         id: invitationId,
@@ -331,6 +388,8 @@ export async function resendInvitation(invitationId: string) {
       },
     });
 
+    recordInviteAttempt(session.organizationId);
+
     logAuditEvent({
       userId: session.userId,
       userEmail: session.email,
@@ -346,7 +405,6 @@ export async function resendInvitation(invitationId: string) {
 
     return {
       success: true,
-      token: newToken,
       inviteUrl: `/auth/invite/${newToken}`,
     };
   } catch (error: any) {

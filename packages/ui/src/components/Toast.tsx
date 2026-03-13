@@ -2,6 +2,14 @@
 
 import { Toaster as SonnerToaster, toast } from "sonner";
 
+let useThemeHook: (() => { theme?: string }) | undefined;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  useThemeHook = require("next-themes").useTheme;
+} catch {
+  /* next-themes is an optional peer dependency */
+}
+
 interface ToasterProps {
   position?:
     | "top-left"
@@ -12,19 +20,24 @@ interface ToasterProps {
     | "bottom-center";
   richColors?: boolean;
   dir?: "ltr" | "rtl";
+  theme?: "light" | "dark" | "system";
 }
 
 function Toaster({
   position = "top-right",
   richColors = true,
   dir = "rtl",
+  theme: themeProp,
   ...props
 }: ToasterProps) {
+  const resolvedTheme = useThemeHook?.()?.theme ?? themeProp ?? "system";
+
   return (
     <SonnerToaster
       position={position}
       richColors={richColors}
       dir={dir}
+      theme={resolvedTheme as "light" | "dark" | "system"}
       toastOptions={{
         classNames: {
           toast:

@@ -93,6 +93,12 @@ export async function exportToPDF({
   title?: string;
   lang?: 'ar' | 'en';
 }) {
+  // Validate elementId to prevent injection of unexpected selectors
+  if (!/^[a-zA-Z0-9_-]+$/.test(elementId)) {
+    console.error(`Export rejected: invalid elementId "${elementId}"`);
+    return;
+  }
+
   const element = document.getElementById(elementId);
   if (!element) {
     console.error(`Element with id ${elementId} not found`);

@@ -30,21 +30,13 @@ export default function LoginPage() {
   }, [rateLimitSeconds]);
 
   const errorMessages: Record<string, { ar: string; en: string }> = {
-    USER_NOT_FOUND: {
-      ar: "البريد الإلكتروني المدخل غير مسجل لدينا.",
-      en: "This email is not registered in our system."
-    },
-    INVALID_PASSWORD: {
-      ar: "كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.",
-      en: "Incorrect password. Please try again."
+    INVALID_CREDENTIALS: {
+      ar: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      en: "Invalid email or password."
     },
     DATABASE_ERROR: {
       ar: "فشل الاتصال بقاعدة البيانات. يرجى المحاولة لاحقاً.",
       en: "Database connection failed. Please try again later."
-    },
-    INVALID_CREDENTIALS: {
-      ar: "بيانات الدخول غير صحيحة.",
-      en: "Invalid login credentials."
     },
     AUTH_ERROR: {
       ar: "حدث خطأ أثناء تسجيل الدخول.",

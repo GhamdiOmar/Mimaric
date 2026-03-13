@@ -11,7 +11,16 @@ import {
   CaretRight,
   Eye,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import {
+  Button,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import Link from "next/link";
 import { getInvoices } from "../../../actions/billing";
 
@@ -63,7 +72,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Invoices Table */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+      <Card className="rounded-xl shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -75,54 +84,52 @@ export default function InvoicesPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.invoiceNumber}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.date}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.status}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.subtotal}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.vat}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.total}</th>
-                    <th className="px-4 py-3 text-start font-medium text-muted-foreground">{t.actions}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.invoices.map((inv: any) => {
-                    const status = statusConfig[inv.status] ?? statusConfig.DRAFT!;
-                    return (
-                      <tr key={inv.id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3 font-medium">{inv.invoiceNumber}</td>
-                        <td className="px-4 py-3 text-muted-foreground">
-                          {inv.issuedAt
-                            ? new Date(inv.issuedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")
-                            : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
-                            {lang === "ar" ? status.labelAr : status.labelEn}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">{Number(inv.subtotal).toLocaleString()} {t.sar}</td>
-                        <td className="px-4 py-3">{Number(inv.vatAmount).toLocaleString()} {t.sar}</td>
-                        <td className="px-4 py-3 font-semibold">{Number(inv.total).toLocaleString()} {t.sar}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button className="p-1.5 rounded-md hover:bg-muted" title={t.view}>
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="p-1.5 rounded-md hover:bg-muted" title={t.download}>
-                              <DownloadSimple className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.invoiceNumber}</TableHead>
+                  <TableHead>{t.date}</TableHead>
+                  <TableHead>{t.status}</TableHead>
+                  <TableHead>{t.subtotal}</TableHead>
+                  <TableHead>{t.vat}</TableHead>
+                  <TableHead>{t.total}</TableHead>
+                  <TableHead>{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.invoices.map((inv: any) => {
+                  const status = statusConfig[inv.status] ?? statusConfig.DRAFT!;
+                  return (
+                    <TableRow key={inv.id}>
+                      <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {inv.issuedAt
+                          ? new Date(inv.issuedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")
+                          : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+                          {lang === "ar" ? status.labelAr : status.labelEn}
+                        </span>
+                      </TableCell>
+                      <TableCell>{Number(inv.subtotal).toLocaleString()} {t.sar}</TableCell>
+                      <TableCell>{Number(inv.vatAmount).toLocaleString()} {t.sar}</TableCell>
+                      <TableCell className="font-semibold">{Number(inv.total).toLocaleString()} {t.sar}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 rounded-md hover:bg-muted" title={t.view}>
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button className="p-1.5 rounded-md hover:bg-muted" title={t.download}>
+                            <DownloadSimple className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
 
             {/* Pagination */}
             {data.totalPages > 1 && (
@@ -136,7 +143,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page <= 1}
                     onClick={() => setPage(page - 1)}
-                   
+
                   >
                     {lang === "ar" ? <CaretRight className="w-4 h-4" /> : <CaretLeft className="w-4 h-4" />}
                   </Button>
@@ -146,7 +153,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page >= data.totalPages}
                     onClick={() => setPage(page + 1)}
-                   
+
                   >
                     {lang === "ar" ? <CaretLeft className="w-4 h-4" /> : <CaretRight className="w-4 h-4" />}
                   </Button>
@@ -155,7 +162,7 @@ export default function InvoicesPage() {
             )}
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

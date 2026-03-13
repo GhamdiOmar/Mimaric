@@ -27,11 +27,20 @@ export async function POST(request: NextRequest) {
 
     if (!result.success && !result.alreadyProcessed) {
       console.error(`[Moyasar Webhook] Failed: ${result.message}`);
-      // Return 200 anyway to prevent Moyasar from retrying
-      // (we log the error in WebhookEvent table)
+
+      if (result.message === "Invalid webhook signature") {
+        // Signature failure → 200 (don't reveal verification details to attacker)
+        return NextResponse.json({ received: true });
+      }
+
+      // Processing failure → 500 (gateway should retry)
+      return NextResponse.json(
+        { received: true, error: result.message },
+        { status: 500 }
+      );
     }
 
-    // Always return 200 to acknowledge receipt
+    // Success or already processed → 200
     return NextResponse.json({
       received: true,
       eventId: result.eventId,
@@ -39,8 +48,11 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("[Moyasar Webhook] Unhandled error:", error);
-    // Return 200 to prevent infinite retries
-    return NextResponse.json({ received: true, error: "Internal processing error" });
+    // Unhandled error → 500 (gateway should retry)
+    return NextResponse.json(
+      { received: true, error: "Internal processing error" },
+      { status: 500 }
+    );
   }
 }
 

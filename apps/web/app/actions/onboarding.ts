@@ -6,6 +6,39 @@ import { getSessionOrThrow } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { notifyAdmins } from "../../lib/create-notification";
 
+// ─── CR Lookup Rate Limiter ─────────────────────────────────────────────────
+
+/**
+ * In-memory rate limiter for CR number lookups.
+ * Limit: 5 lookups per user per 10 minutes.
+ *
+ * NOTE: This Map is per-process and resets on deploy. For multi-instance
+ * deployments, replace with Redis-backed rate limiting (@upstash/ratelimit).
+ */
+const crLookupAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const CR_LOOKUP_LIMIT = 5;
+const CR_LOOKUP_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
+
+function checkCRLookupLimit(userId: string): boolean {
+  const entry = crLookupAttempts.get(userId);
+  if (!entry) return false;
+  if (Date.now() - entry.firstAttempt > CR_LOOKUP_WINDOW_MS) {
+    crLookupAttempts.delete(userId);
+    return false;
+  }
+  return entry.count >= CR_LOOKUP_LIMIT;
+}
+
+function recordCRLookupAttempt(userId: string) {
+  const entry = crLookupAttempts.get(userId);
+  const now = Date.now();
+  if (!entry || now - entry.firstAttempt > CR_LOOKUP_WINDOW_MS) {
+    crLookupAttempts.set(userId, { count: 1, firstAttempt: now });
+  } else {
+    entry.count += 1;
+  }
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function maskOrgName(name: string): string {
@@ -26,9 +59,16 @@ function isValidVAT(vat: string): boolean {
 export async function lookupOrgByCR(crNumber: string) {
   const session = await getSessionOrThrow();
 
+  // Rate limit check
+  if (checkCRLookupLimit(session.userId)) {
+    return { found: false, error: "TOO_MANY_LOOKUPS" };
+  }
+
   if (!isValidCR(crNumber)) {
     return { found: false, error: "INVALID_CR_FORMAT" };
   }
+
+  recordCRLookupAttempt(session.userId);
 
   try {
     const org = await db.organization.findUnique({
@@ -144,16 +184,7 @@ export async function convertPersonalOrg(crNumber: string) {
   }
 
   try {
-    // Check CR not already taken
-    const existing = await db.organization.findUnique({
-      where: { crNumber },
-    });
-
-    if (existing) {
-      return { success: false, error: "CR_TAKEN" };
-    }
-
-    // Update user's org with the CR number
+    // Attempt update directly — rely on unique constraint for atomicity
     await db.organization.update({
       where: { id: session.organizationId },
       data: { crNumber },
@@ -172,7 +203,10 @@ export async function convertPersonalOrg(crNumber: string) {
 
     revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === "P2002" && error.meta?.target?.includes("crNumber")) {
+      return { success: false, error: "CR_TAKEN" };
+    }
     console.error("[Onboarding] Convert personal org failed:", error);
     return { success: false, error: "CONVERT_FAILED" };
   }
@@ -201,26 +235,7 @@ export async function updateOnboardingOrg(data: {
       return { success: false, error: "INVALID_VAT_FORMAT" };
     }
 
-    // Check uniqueness of crNumber if provided
-    if (data.crNumber) {
-      const existingCR = await db.organization.findUnique({
-        where: { crNumber: data.crNumber },
-      });
-      if (existingCR && existingCR.id !== session.organizationId) {
-        return { success: false, error: "CR_TAKEN" };
-      }
-    }
-
-    // Check uniqueness of vatNumber if provided
-    if (data.vatNumber) {
-      const existingVAT = await db.organization.findUnique({
-        where: { vatNumber: data.vatNumber },
-      });
-      if (existingVAT && existingVAT.id !== session.organizationId) {
-        return { success: false, error: "VAT_TAKEN" };
-      }
-    }
-
+    // Attempt update directly — rely on unique constraints for atomicity
     await db.organization.update({
       where: { id: session.organizationId },
       data: {
@@ -246,7 +261,12 @@ export async function updateOnboardingOrg(data: {
 
     revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      const target = error.meta?.target;
+      if (target?.includes("crNumber")) return { success: false, error: "CR_TAKEN" };
+      if (target?.includes("vatNumber")) return { success: false, error: "VAT_TAKEN" };
+    }
     console.error("[Onboarding] Update org failed:", error);
     return { success: false, error: "UPDATE_FAILED" };
   }

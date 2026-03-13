@@ -53,23 +53,23 @@ export async function createCustomer(data: {
     data: {
       name: data.name,
       phone: encryptedData.phone,
-      email: encryptedData.email,
-      source: data.source,
-      status: data.status,
+      email: encryptedData.email || undefined,
+      source: data.source || undefined,
+      status: data.status || undefined,
       nationalId: encryptedData.nationalId,
       nationalIdHash: encryptedData.nationalIdHash,
       phoneHash: encryptedData.phoneHash,
       emailHash: encryptedData.emailHash,
-      nameArabic: data.nameArabic,
-      personType: data.personType,
-      gender: data.gender,
+      nameArabic: data.nameArabic || undefined,
+      personType: data.personType || undefined,
+      gender: data.gender || undefined,
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : undefined,
-      dateOfBirthHijri: data.dateOfBirthHijri,
-      nationality: data.nationality,
-      nationalityCode: data.nationalityCode,
-      maritalStatus: data.maritalStatus,
-      address: data.address,
-      documentInfo: data.documentInfo,
+      dateOfBirthHijri: data.dateOfBirthHijri || undefined,
+      nationality: data.nationality || undefined,
+      nationalityCode: data.nationalityCode || undefined,
+      maritalStatus: data.maritalStatus || undefined,
+      address: data.address || undefined,
+      documentInfo: data.documentInfo || undefined,
       organizationId: session.organizationId,
     },
   });
@@ -127,7 +127,10 @@ export async function updateCustomer(
 ) {
   const session = await requirePermission("customers:write");
 
-  const updateData: any = { ...data };
+  // Sanitize empty strings to undefined for enum/optional fields
+  const updateData: any = Object.fromEntries(
+    Object.entries(data).map(([k, v]) => [k, v === "" ? undefined : v])
+  );
   if (data.dateOfBirth) updateData.dateOfBirth = new Date(data.dateOfBirth);
 
   // Encrypt PII fields if being updated

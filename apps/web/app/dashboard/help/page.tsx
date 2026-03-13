@@ -22,7 +22,7 @@ import { Button } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { hasPermission } from "../../../lib/permissions";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../../components/SimpleSessionProvider";
 import { FAQ_ITEMS, FAQ_CATEGORIES, GUIDE_ITEMS, type FAQCategory } from "../../../lib/help-content";
 import { createPermissionRequest, getMyPermissionRequests } from "../../actions/permission-requests";
 import { getPendingPermissionRequests, reviewPermissionRequest } from "../../actions/permission-requests";

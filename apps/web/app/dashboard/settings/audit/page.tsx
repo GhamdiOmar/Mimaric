@@ -9,7 +9,18 @@ import {
   CaretRight,
   MagnifyingGlass,
 } from "@phosphor-icons/react";
-import { Button, Input, Badge } from "@repo/ui";
+import {
+  Button,
+  Input,
+  Badge,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getAuditLogs } from "../../../actions/audit";
 
@@ -169,53 +180,51 @@ export default function AuditLogPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border bg-muted/5">
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.timestamp}</th>
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.user}</th>
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.action}</th>
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.resource}</th>
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.resourceId}</th>
-                <th className="px-4 py-3 font-medium text-muted text-start">{t.ip}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
-                    <div className="animate-pulse">Loading...</div>
-                  </td>
-                </tr>
-              ) : logs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">{t.noLogs}</td>
-                </tr>
-              ) : (
-                logs.map((log) => (
-                  <tr key={log.id} className="border-b border-border last:border-0 hover:bg-muted/10">
-                    <td className="px-4 py-2.5 text-muted whitespace-nowrap">{formatDate(log.createdAt)}</td>
-                    <td className="px-4 py-2.5">
-                      <div className="font-medium">{log.userEmail}</div>
-                      <div className="text-[10px] text-muted">{log.userRole}</div>
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", actionColors[log.action] || "bg-gray-500/10 text-gray-500")}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 font-medium">{log.resource}</td>
-                    <td className="px-4 py-2.5 text-muted font-mono text-[10px]">{log.resourceId ? log.resourceId.slice(0, 12) + "..." : "—"}</td>
-                    <td className="px-4 py-2.5 text-muted">{log.ipAddress || "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card className="overflow-hidden rounded-xl">
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-medium">{t.timestamp}</TableHead>
+              <TableHead className="font-medium">{t.user}</TableHead>
+              <TableHead className="font-medium">{t.action}</TableHead>
+              <TableHead className="font-medium">{t.resource}</TableHead>
+              <TableHead className="font-medium">{t.resourceId}</TableHead>
+              <TableHead className="font-medium">{t.ip}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted">
+                  <div className="animate-pulse">Loading...</div>
+                </TableCell>
+              </TableRow>
+            ) : logs.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted">{t.noLogs}</TableCell>
+              </TableRow>
+            ) : (
+              logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell className="text-muted whitespace-nowrap">{formatDate(log.createdAt)}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{log.userEmail}</div>
+                    <div className="text-[10px] text-muted">{log.userRole}</div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", actionColors[log.action] || "bg-gray-500/10 text-gray-500")}>
+                      {log.action}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-medium">{log.resource}</TableCell>
+                  <TableCell className="text-muted font-mono text-[10px]">{log.resourceId ? log.resourceId.slice(0, 12) + "..." : "—"}</TableCell>
+                  <TableCell className="text-muted">{log.ipAddress || "—"}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (

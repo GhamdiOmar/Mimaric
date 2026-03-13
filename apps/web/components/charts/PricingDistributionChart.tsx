@@ -7,10 +7,9 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
   Cell,
 } from "recharts";
+import { ChartContainer, ChartTooltip, type ChartConfig } from "@repo/ui";
 import { RiyalIcon } from "@repo/ui";
 import { getPricingAnalytics } from "../../app/actions/analytics";
 
@@ -36,6 +35,12 @@ const COLORS = [
   "hsl(340 82% 52%)",
   "hsl(262 80% 50%)",
 ];
+
+const chartConfig = {
+  avgPricePerSqm: {
+    label: "متوسط السعر/م²",
+  },
+} satisfies ChartConfig;
 
 function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
@@ -100,28 +105,27 @@ export default function PricingDistributionChart({ projectId }: { projectId: str
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ChartContainer config={chartConfig} className="h-[280px] w-full">
       <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 32% 91%)" />
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
-          axisLine={{ stroke: "hsl(214 32% 91%)" }}
+          tick={{ fontSize: 11 }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
+          tick={{ fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v))}
         />
-        <Tooltip content={<CustomTooltip />} />
+        <ChartTooltip content={<CustomTooltip />} />
         <Bar dataKey="avgPricePerSqm" name="متوسط السعر/م²" radius={[4, 4, 0, 0]}>
           {data.map((_, idx) => (
             <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
           ))}
         </Bar>
       </BarChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

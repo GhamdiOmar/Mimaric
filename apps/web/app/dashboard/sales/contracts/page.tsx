@@ -13,8 +13,18 @@ import {
   User,
   Eye,
 } from "@phosphor-icons/react";
-import { SARAmount } from "@repo/ui";
-import { Button, Badge } from "@repo/ui";
+import {
+  SARAmount,
+  Button,
+  Badge,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import Link from "next/link";
 import { getContracts } from "../../../actions/contracts";
 import { formatDualDate } from "../../../../lib/hijri";
@@ -95,7 +105,7 @@ export default function ContractsPage() {
           <Spinner className="animate-spin text-primary" size={32} />
         </div>
       ) : contracts.length === 0 ? (
-        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
+        <Card className="p-12 text-center">
           <Receipt size={48} className="text-neutral mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">
             {lang === "ar" ? "لا توجد عقود" : "No Contracts"}
@@ -103,44 +113,44 @@ export default function ContractsPage() {
           <p className="text-sm text-neutral mt-1">
             {lang === "ar" ? "لم يتم إنشاء أي عقود بعد" : "No contracts have been created yet"}
           </p>
-        </div>
+        </Card>
       ) : (
-        <div className="bg-card rounded-md shadow-card border border-border overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/30 border-b border-border">
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
                   {lang === "ar" ? "العميل" : "Customer"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "الوحدة" : "Unit"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "النوع" : "Type"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "المبلغ" : "Amount"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "التاريخ" : "Date"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "الحالة" : "Status"}
-                </th>
-                <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "عرض" : "View"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {contracts.map((contract: any) => {
                 const config = (statusConfig as any)[contract.status] || statusConfig.DRAFT;
                 const StatusIcon = config.icon;
                 const typeLabel = typeLabels[contract.type] || { ar: contract.type, en: contract.type };
 
                 return (
-                  <tr key={contract.id} className="border-b border-border last:border-0 hover:bg-muted/10">
-                    <td className="px-4 py-3">
+                  <TableRow key={contract.id}>
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary font-bold text-xs">
                           {contract.customer?.name?.charAt(0) || <User size={14} />}
@@ -150,45 +160,45 @@ export default function ContractsPage() {
                           <p className="text-xs text-neutral" dir="ltr">{contract.customer?.phone}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Buildings size={14} className="text-neutral" />
                         <span className="text-sm">{contract.unit?.number || "—"}</span>
                       </div>
                       <p className="text-xs text-neutral">{contract.unit?.building?.name}</p>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={"draft" as any} className="text-xs">
                         {typeLabel[lang]}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <SARAmount value={Number(contract.amount)} size={12} className="font-bold" />
-                    </td>
-                    <td className="px-4 py-3 text-xs text-neutral">
+                    </TableCell>
+                    <TableCell className="text-xs text-neutral">
                       {formatDualDate(contract.createdAt, lang)}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={config!.variant as any} className="gap-1 text-xs">
                         <StatusIcon size={12} />
                         {config.label[lang]}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <Link href={`/dashboard/sales/contracts/${contract.id}`}>
                         <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50">
                           <Eye size={14} />
                           {lang === "ar" ? "عرض" : "View"}
                         </Button>
                       </Link>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );

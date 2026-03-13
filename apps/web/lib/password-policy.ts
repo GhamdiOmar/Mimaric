@@ -51,7 +51,25 @@ function getCommonPasswords(): Set<string> {
       "abcdef", "abcdefg", "1q2w3e4r", "q1w2e3r4", "qazwsx",
       "zaq1zaq1", "1qaz2wsx", "qwer1234", "asdf1234", "1234qwer",
       "password12345", "correct horse battery staple",
+      // Extended blocklist — numeric patterns, keyboard walks, common tech terms
+      "1234567890", "0123456789", "9876543210", "12345678910",
+      "1111111111", "0000000000", "1234512345",
+      "qwerty12345", "password1234", "abcd1234",
+      "p@ssw0rd", "p@ssword", "passw0rd1",
+      "admin123", "root", "root123", "login",
+      "welcome123", "changeme1", "temp123",
+      "user123", "guest", "guest123", "default",
+      "security", "secure1", "system", "manager",
+      "supervisor", "operator", "developer", "testing",
+      "testtest", "test1234", "demo", "demo123",
+      "sample", "example", "letmein123", "access123",
+      "1q2w3e", "q1w2e3", "zaq12wsx",
+      "zxcvbnm", "asdfghjkl", "qwertyuiop",
+      "samsung", "google", "facebook",
+      "twitter", "linkedin", "instagram", "youtube",
     ];
+    // TODO: Integrate HaveIBeenPwned k-anonymity API for breach-database checking.
+    // See: https://haveibeenpwned.com/API/v3#SearchingPwnedPasswordsByRange
     commonPasswordsSet = new Set(passwords.map((p) => p.toLowerCase()));
   }
   return commonPasswordsSet;

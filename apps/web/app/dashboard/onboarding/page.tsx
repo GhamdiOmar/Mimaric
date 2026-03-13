@@ -17,7 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button, Input } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../../components/SimpleSessionProvider";
 import { useRouter } from "next/navigation";
 import {
   lookupOrgByCR,

@@ -7,13 +7,16 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { RiyalIcon } from "@repo/ui";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@repo/ui";
 import { getRevenueTimeline } from "../../app/actions/dashboard";
-import { useChartTheme } from "./useChartTheme";
 
 const MONTH_NAMES_AR: Record<string, string> = {
   "01": "يناير", "02": "فبراير", "03": "مارس", "04": "أبريل",
@@ -51,7 +54,23 @@ function CustomTooltip({ active, payload, label }: any) {
 export default function RevenueTrendChart() {
   const [data, setData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const theme = useChartTheme();
+
+  const chartConfig = {
+    rent: {
+      label: "إيجارات",
+      theme: {
+        light: "hsl(148 76% 27%)",
+        dark: "hsl(148 76% 42%)",
+      },
+    },
+    sales: {
+      label: "مبيعات",
+      theme: {
+        light: "hsl(216 45% 17%)",
+        dark: "hsl(216 50% 55%)",
+      },
+    },
+  } satisfies ChartConfig;
 
   React.useEffect(() => {
     getRevenueTimeline()
@@ -83,49 +102,40 @@ export default function RevenueTrendChart() {
     );
   }
 
-  // Use brighter green in dark mode for visibility
-  const rentColor = theme.isDark ? "hsl(148 76% 42%)" : "hsl(148 76% 27%)";
-  const salesColor = theme.isDark ? "hsl(216 50% 55%)" : "hsl(216 45% 17%)";
-
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ChartContainer config={chartConfig} className="h-[280px] w-full">
       <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
         <defs>
           <linearGradient id="colorRent" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={rentColor} stopOpacity={0.3} />
-            <stop offset="95%" stopColor={rentColor} stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--color-rent)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="var(--color-rent)" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={salesColor} stopOpacity={0.3} />
-            <stop offset="95%" stopColor={salesColor} stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.3} />
+            <stop offset="95%" stopColor="var(--color-sales)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={theme.gridStroke} />
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: theme.tickFill }}
-          axisLine={{ stroke: theme.axisStroke }}
+          tick={{ fontSize: 11 }}
+          axisLine={false}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: theme.tickFill }}
+          tick={{ fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v)}
         />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-          formatter={(value: string) => (
-            <span className="text-muted-foreground text-xs">{value}</span>
-          )}
-        />
+        <ChartTooltip content={<CustomTooltip />} />
+        <ChartLegend content={<ChartLegendContent />} />
         <Area
           type="monotone"
           dataKey="rent"
           name="إيجارات"
           stackId="1"
-          stroke={rentColor}
+          stroke="var(--color-rent)"
           fill="url(#colorRent)"
           strokeWidth={2}
         />
@@ -134,11 +144,11 @@ export default function RevenueTrendChart() {
           dataKey="sales"
           name="مبيعات"
           stackId="1"
-          stroke={salesColor}
+          stroke="var(--color-sales)"
           fill="url(#colorSales)"
           strokeWidth={2}
         />
       </AreaChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

@@ -135,6 +135,16 @@ export async function updateProject(
 export async function deleteProject(projectId: string) {
   const session = await requirePermission("projects:delete");
 
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "DELETE",
+    resource: "Project",
+    resourceId: projectId,
+    organizationId: session.organizationId,
+  });
+
   await db.project.delete({
     where: { id: projectId, organizationId: session.organizationId },
   });
@@ -233,6 +243,16 @@ export async function deleteBuilding(buildingId: string) {
   });
   if (!building) throw new Error("Building not found");
 
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "DELETE",
+    resource: "Building",
+    resourceId: buildingId,
+    organizationId: session.organizationId,
+  });
+
   await db.building.delete({ where: { id: buildingId } });
 
   revalidatePath("/dashboard/projects");
@@ -297,6 +317,17 @@ export async function deleteProjectDocument(documentId: string) {
     where: { id: documentId, organizationId: session.organizationId },
   });
   if (!doc) throw new Error("Document not found");
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "DELETE",
+    resource: "Document",
+    resourceId: documentId,
+    metadata: { name: doc.name },
+    organizationId: session.organizationId,
+  });
 
   await db.document.delete({ where: { id: documentId } });
 

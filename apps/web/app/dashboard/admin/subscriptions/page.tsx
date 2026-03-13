@@ -15,7 +15,16 @@ import {
   Pause,
   Receipt,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import {
+  Button,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllSubscriptions } from "../../../actions/billing";
 
@@ -163,18 +172,20 @@ export default function AdminSubscriptionsPage() {
   const pageSize = 20;
 
   React.useEffect(() => {
+    let active = true;
     async function load() {
       setLoading(true);
       try {
         const result = await adminGetAllSubscriptions(page, pageSize);
-        setData(result);
+        if (active) setData(result);
       } catch (error) {
-        console.error("Failed to load subscriptions:", error);
+        if (active) console.error("Failed to load subscriptions:", error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     load();
+    return () => { active = false; };
   }, [page]);
 
   const t = translations[lang];
@@ -256,143 +267,126 @@ export default function AdminSubscriptionsPage() {
 
       {/* Summary Stats Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Users size={16} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{t.total}</span>
           </div>
           <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
             <span className="text-xs text-muted-foreground">{t.active}</span>
           </div>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Clock size={16} className="text-blue-600 dark:text-blue-400" />
             <span className="text-xs text-muted-foreground">{t.trialing}</span>
           </div>
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.trialing}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <Warning size={16} className="text-amber-600 dark:text-amber-400" />
             <span className="text-xs text-muted-foreground">{t.pastDue}</span>
           </div>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pastDue}</p>
-        </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <XCircle size={16} className="text-red-600 dark:text-red-400" />
             <span className="text-xs text-muted-foreground">{t.canceled}</span>
           </div>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.canceled}</p>
-        </div>
+        </Card>
       </div>
 
       {/* Subscriptions Table */}
-      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.organization}
-                </th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.plan}
-                </th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.status}
-                </th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.billingCycle}
-                </th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.price}
-                </th>
-                <th className="px-4 py-3 font-medium text-muted-foreground text-start">
-                  {t.periodEnd}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
-                      {t.loading}
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t.organization}</TableHead>
+              <TableHead>{t.plan}</TableHead>
+              <TableHead>{t.status}</TableHead>
+              <TableHead>{t.billingCycle}</TableHead>
+              <TableHead>{t.price}</TableHead>
+              <TableHead>{t.periodEnd}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />
+                    {t.loading}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : subscriptions.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-16 text-center">
+                  <Receipt size={40} className="mx-auto mb-3 text-muted-foreground/30" />
+                  <p className="text-muted-foreground font-medium">{t.noSubscriptions}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.noSubscriptionsDesc}</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              subscriptions.map((sub) => (
+                <TableRow key={sub.id}>
+                  {/* Organization */}
+                  <TableCell>
+                    <div className="font-medium text-foreground">
+                      {getOrgDisplayName(sub.organization)}
                     </div>
-                  </td>
-                </tr>
-              ) : subscriptions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-16 text-center">
-                    <Receipt size={40} className="mx-auto mb-3 text-muted-foreground/30" />
-                    <p className="text-muted-foreground font-medium">{t.noSubscriptions}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{t.noSubscriptionsDesc}</p>
-                  </td>
-                </tr>
-              ) : (
-                subscriptions.map((sub) => (
-                  <tr
-                    key={sub.id}
-                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
-                  >
-                    {/* Organization */}
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-foreground">
-                        {getOrgDisplayName(sub.organization)}
+                    {sub.organization.crNumber && (
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {t.crNumber}: {sub.organization.crNumber}
                       </div>
-                      {sub.organization.crNumber && (
-                        <div className="text-xs text-muted-foreground mt-0.5">
-                          {t.crNumber}: {sub.organization.crNumber}
-                        </div>
-                      )}
-                    </td>
+                    )}
+                  </TableCell>
 
-                    {/* Plan */}
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-foreground">
-                        {lang === "ar" ? sub.plan.nameAr : sub.plan.nameEn}
-                      </span>
-                    </td>
+                  {/* Plan */}
+                  <TableCell>
+                    <span className="font-medium text-foreground">
+                      {lang === "ar" ? sub.plan.nameAr : sub.plan.nameEn}
+                    </span>
+                  </TableCell>
 
-                    {/* Status */}
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[sub.status] ?? "bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300"}`}
-                      >
-                        {statusIcons[sub.status]}
-                        {t.statuses[sub.status] ?? sub.status}
-                      </span>
-                    </td>
+                  {/* Status */}
+                  <TableCell>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[sub.status] ?? "bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300"}`}
+                    >
+                      {statusIcons[sub.status]}
+                      {t.statuses[sub.status] ?? sub.status}
+                    </span>
+                  </TableCell>
 
-                    {/* Billing Cycle */}
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {t.cycles[sub.billingCycle] ?? sub.billingCycle}
-                    </td>
+                  {/* Billing Cycle */}
+                  <TableCell className="text-muted-foreground">
+                    {t.cycles[sub.billingCycle] ?? sub.billingCycle}
+                  </TableCell>
 
-                    {/* Price */}
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      {formatPrice(sub.priceAtRenewal)}
-                    </td>
+                  {/* Price */}
+                  <TableCell className="font-medium text-foreground">
+                    {formatPrice(sub.priceAtRenewal)}
+                  </TableCell>
 
-                    {/* Period End */}
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(sub.currentPeriodEnd)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  {/* Period End */}
+                  <TableCell className="text-muted-foreground">
+                    {formatDate(sub.currentPeriodEnd)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (

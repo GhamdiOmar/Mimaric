@@ -2,6 +2,7 @@
 
 import { db } from "@repo/db";
 import { requirePermission } from "../../lib/auth-helpers";
+import { encrypt, decrypt } from "../../lib/encryption";
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -23,6 +24,11 @@ export async function getEscrowAccount(projectId: string) {
     where: { projectId },
     include: { transactions: { take: 20, orderBy: { createdAt: "desc" } } },
   });
+
+  if (escrow) {
+    (escrow as any).accountNumber = decrypt(escrow.accountNumber);
+    (escrow as any).ibanNumber = decrypt(escrow.ibanNumber);
+  }
 
   return escrow ? JSON.parse(JSON.stringify(escrow)) : null;
 }
@@ -79,8 +85,8 @@ export async function createEscrowAccount(data: {
       projectId: data.projectId,
       bankName: data.bankName,
       bankCode: data.bankCode,
-      accountNumber: data.accountNumber,
-      ibanNumber: data.ibanNumber,
+      accountNumber: encrypt(data.accountNumber),
+      ibanNumber: encrypt(data.ibanNumber),
       adminExpenseCap: data.adminExpenseCap,
       status: "PENDING_SETUP",
     },

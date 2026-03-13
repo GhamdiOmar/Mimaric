@@ -3,6 +3,7 @@
 import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 // ─── SLA Due Date Computation ─────────────────────────────────────────────────
 
@@ -204,6 +205,17 @@ export async function deleteMaintenanceRequest(requestId: string) {
     where: { id: requestId, organizationId: session.organizationId },
   });
   if (!request) throw new Error("Request not found");
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "DELETE",
+    resource: "MaintenanceRequest",
+    resourceId: requestId,
+    metadata: { title: request.title },
+    organizationId: session.organizationId,
+  });
 
   await db.maintenanceRequest.delete({ where: { id: requestId } });
   revalidatePath("/dashboard/maintenance");

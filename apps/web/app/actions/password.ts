@@ -7,6 +7,38 @@ import { getSessionOrThrow } from "../../lib/auth-helpers";
 import { validatePassword } from "../../lib/password-policy";
 import { logAuditEvent } from "../../lib/audit";
 
+/**
+ * In-memory rate limiter for password reset requests.
+ * Limit: 3 requests per email per hour.
+ *
+ * NOTE: This Map is per-process and resets on deploy. For multi-instance
+ * deployments, replace with Redis-backed rate limiting (@upstash/ratelimit).
+ */
+const resetAttempts = new Map<string, { count: number; firstAttempt: number }>();
+const RESET_RATE_LIMIT = 3;
+const RESET_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+function checkResetRateLimit(email: string): boolean {
+  const entry = resetAttempts.get(email);
+  if (!entry) return false;
+  const now = Date.now();
+  if (now - entry.firstAttempt > RESET_WINDOW_MS) {
+    resetAttempts.delete(email);
+    return false;
+  }
+  return entry.count >= RESET_RATE_LIMIT;
+}
+
+function recordResetAttempt(email: string) {
+  const entry = resetAttempts.get(email);
+  const now = Date.now();
+  if (!entry || now - entry.firstAttempt > RESET_WINDOW_MS) {
+    resetAttempts.set(email, { count: 1, firstAttempt: now });
+  } else {
+    entry.count += 1;
+  }
+}
+
 export async function changePassword(data: {
   currentPassword: string;
   newPassword: string;
@@ -53,7 +85,15 @@ export async function changePassword(data: {
 }
 
 export async function requestPasswordReset(email: string) {
-  const user = await db.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Rate limit check (before DB lookup to prevent timing-based enumeration)
+  if (checkResetRateLimit(normalizedEmail)) {
+    return { success: true };
+  }
+  recordResetAttempt(normalizedEmail);
+
+  const user = await db.user.findUnique({ where: { email: normalizedEmail } });
 
   // Always return success to avoid email enumeration
   if (!user) {
@@ -72,9 +112,8 @@ export async function requestPasswordReset(email: string) {
     },
   });
 
-  // Log the reset link (email integration can be added later)
-  console.log(`[Password Reset] Token for ${email}: ${token}`);
-  console.log(`[Password Reset] Link: /auth/reset-password?token=${token}`);
+  // TODO: Send password reset email with link: /auth/reset-password?token=${token}
+  // Email service integration needed. Until then, tokens are stored in DB only.
 
   logAuditEvent({
     userId: user.id,

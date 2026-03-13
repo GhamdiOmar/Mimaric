@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "../components/SimpleSessionProvider";
 import { hasPermission, type Permission } from "../lib/permissions";
 
 export function usePermissions() {

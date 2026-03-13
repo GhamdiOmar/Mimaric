@@ -54,19 +54,12 @@ export const authConfig = {
       if (token.role === "SUPER_ADMIN") token.role = "COMPANY_ADMIN";
       if (token.role === "DEV_ADMIN") token.role = "SYSTEM_SUPPORT";
 
-      // Refresh token data on session update (e.g., after onboarding completion)
+      // Only allow onboardingCompleted to be updated from client-side session.update().
+      // Role, organizationId, and subscriptionStatus must NOT be settable from the
+      // client to prevent privilege escalation. They are set at login time only.
       if (trigger === "update" && session) {
-        if (session.onboardingCompleted !== undefined) {
+        if (typeof session.onboardingCompleted === "boolean") {
           token.onboardingCompleted = session.onboardingCompleted;
-        }
-        if (session.organizationId !== undefined) {
-          token.organizationId = session.organizationId;
-        }
-        if (session.role !== undefined) {
-          token.role = session.role;
-        }
-        if (session.subscriptionStatus !== undefined) {
-          token.subscriptionStatus = session.subscriptionStatus;
         }
       }
       return token;

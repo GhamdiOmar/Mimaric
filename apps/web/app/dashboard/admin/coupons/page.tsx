@@ -17,7 +17,16 @@ import {
   Users,
   ListChecks,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import {
+  Button,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import Link from "next/link";
 import {
   adminGetCoupons,
@@ -235,8 +244,25 @@ export default function CouponManagementPage() {
   }, []);
 
   React.useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let active = true;
+    (async () => {
+      try {
+        const [couponData, planData] = await Promise.all([
+          adminGetCoupons(),
+          getPlans(),
+        ]);
+        if (active) {
+          setCoupons(couponData as Coupon[]);
+          setAllPlans(planData as Plan[]);
+        }
+      } catch (err) {
+        if (active) console.error("Failed to load coupon data:", err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   // ── Toggle active/inactive ─────────────────────────────────────────────────
 
@@ -467,182 +493,163 @@ export default function CouponManagementPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.code}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.type}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.value}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.status}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.redemptions}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.validUntil}
-                  </th>
-                  <th className="text-start px-4 py-3 font-semibold text-muted-foreground">
-                    {labels.plans}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {coupons.map((coupon) => {
-                  const isExpired =
-                    coupon.validUntil &&
-                    new Date(coupon.validUntil) < new Date();
-                  const isMaxedOut =
-                    coupon.maxRedemptions !== null &&
-                    coupon.currentUses >= coupon.maxRedemptions;
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{labels.code}</TableHead>
+                <TableHead>{labels.type}</TableHead>
+                <TableHead>{labels.value}</TableHead>
+                <TableHead>{labels.status}</TableHead>
+                <TableHead>{labels.redemptions}</TableHead>
+                <TableHead>{labels.validUntil}</TableHead>
+                <TableHead>{labels.plans}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {coupons.map((coupon) => {
+                const isExpired =
+                  coupon.validUntil &&
+                  new Date(coupon.validUntil) < new Date();
+                const isMaxedOut =
+                  coupon.maxRedemptions !== null &&
+                  coupon.currentUses >= coupon.maxRedemptions;
 
-                  return (
-                    <tr
-                      key={coupon.id}
-                      className="hover:bg-muted/30 transition-colors"
-                    >
-                      {/* Code */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded text-xs tracking-wider">
-                            {coupon.code}
-                          </span>
-                        </div>
-                        {coupon.descriptionEn && lang === "en" && (
-                          <p className="text-xs text-muted-foreground mt-1 max-w-[200px] truncate">
-                            {coupon.descriptionEn}
-                          </p>
-                        )}
-                        {coupon.descriptionAr && lang === "ar" && (
-                          <p className="text-xs text-muted-foreground mt-1 max-w-[200px] truncate">
-                            {coupon.descriptionAr}
-                          </p>
-                        )}
-                      </td>
-
-                      {/* Type */}
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          {coupon.type === "PERCENTAGE" ? (
-                            <Percent size={14} />
-                          ) : (
-                            <CurrencyCircleDollar size={14} />
-                          )}
-                          {coupon.type === "PERCENTAGE"
-                            ? labels.percentage
-                            : labels.fixedAmount}
+                return (
+                  <TableRow key={coupon.id}>
+                    {/* Code */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded text-xs tracking-wider">
+                          {coupon.code}
                         </span>
-                      </td>
+                      </div>
+                      {coupon.descriptionEn && lang === "en" && (
+                        <p className="text-xs text-muted-foreground mt-1 max-w-[200px] truncate">
+                          {coupon.descriptionEn}
+                        </p>
+                      )}
+                      {coupon.descriptionAr && lang === "ar" && (
+                        <p className="text-xs text-muted-foreground mt-1 max-w-[200px] truncate">
+                          {coupon.descriptionAr}
+                        </p>
+                      )}
+                    </TableCell>
 
-                      {/* Value */}
-                      <td className="px-4 py-3 font-semibold text-foreground">
-                        {formatValue(coupon)}
-                      </td>
-
-                      {/* Status Toggle */}
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() =>
-                            handleToggle(coupon.id, coupon.isActive)
-                          }
-                          disabled={togglingId === coupon.id}
-                          className="group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          style={{
-                            backgroundColor: coupon.isActive
-                              ? "rgb(34 197 94)"
-                              : "rgb(156 163 175)",
-                          }}
-                          role="switch"
-                          aria-checked={coupon.isActive}
-                          aria-label={
-                            coupon.isActive ? labels.active : labels.inactive
-                          }
-                        >
-                          <span
-                            className="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200"
-                            style={{
-                              transform: coupon.isActive
-                                ? lang === "ar"
-                                  ? "translateX(-0.25rem)"
-                                  : "translateX(1.25rem)"
-                                : lang === "ar"
-                                  ? "translateX(-1.25rem)"
-                                  : "translateX(0.25rem)",
-                            }}
-                          />
-                        </button>
-                        <span
-                          className={`ms-2 text-xs font-medium ${
-                            coupon.isActive
-                              ? "text-green-600 dark:text-green-400"
-                              : "text-gray-500 dark:text-gray-400"
-                          }`}
-                        >
-                          {coupon.isActive ? labels.active : labels.inactive}
-                        </span>
-                        {(isExpired || isMaxedOut) && (
-                          <span className="ms-1 text-xs text-orange-500 dark:text-orange-400">
-                            {isExpired
-                              ? lang === "ar"
-                                ? "(منتهي)"
-                                : "(Expired)"
-                              : lang === "ar"
-                                ? "(مكتمل)"
-                                : "(Maxed)"}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Redemptions */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <Users size={14} />
-                          <span>{formatRedemptions(coupon)}</span>
-                        </div>
-                      </td>
-
-                      {/* Valid Until */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-muted-foreground">
-                          <CalendarBlank size={14} />
-                          <span>{formatDate(coupon.validUntil)}</span>
-                        </div>
-                      </td>
-
-                      {/* Plans */}
-                      <td className="px-4 py-3">
-                        {coupon.plans.length === 0 ? (
-                          <span className="text-xs text-muted-foreground">
-                            {labels.allPlans}
-                          </span>
+                    {/* Type */}
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        {coupon.type === "PERCENTAGE" ? (
+                          <Percent size={14} />
                         ) : (
-                          <div className="flex flex-wrap gap-1">
-                            {coupon.plans.map((plan) => (
-                              <span
-                                key={plan.id}
-                                className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-medium"
-                              >
-                                {plan.nameEn}
-                              </span>
-                            ))}
-                          </div>
+                          <CurrencyCircleDollar size={14} />
                         )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                        {coupon.type === "PERCENTAGE"
+                          ? labels.percentage
+                          : labels.fixedAmount}
+                      </span>
+                    </TableCell>
+
+                    {/* Value */}
+                    <TableCell className="font-semibold text-foreground">
+                      {formatValue(coupon)}
+                    </TableCell>
+
+                    {/* Status Toggle */}
+                    <TableCell>
+                      <button
+                        onClick={() =>
+                          handleToggle(coupon.id, coupon.isActive)
+                        }
+                        disabled={togglingId === coupon.id}
+                        className="group relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{
+                          backgroundColor: coupon.isActive
+                            ? "rgb(34 197 94)"
+                            : "rgb(156 163 175)",
+                        }}
+                        role="switch"
+                        aria-checked={coupon.isActive}
+                        aria-label={
+                          coupon.isActive ? labels.active : labels.inactive
+                        }
+                      >
+                        <span
+                          className="pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm ring-0 transition-transform duration-200"
+                          style={{
+                            transform: coupon.isActive
+                              ? lang === "ar"
+                                ? "translateX(-0.25rem)"
+                                : "translateX(1.25rem)"
+                              : lang === "ar"
+                                ? "translateX(-1.25rem)"
+                                : "translateX(0.25rem)",
+                          }}
+                        />
+                      </button>
+                      <span
+                        className={`ms-2 text-xs font-medium ${
+                          coupon.isActive
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {coupon.isActive ? labels.active : labels.inactive}
+                      </span>
+                      {(isExpired || isMaxedOut) && (
+                        <span className="ms-1 text-xs text-orange-500 dark:text-orange-400">
+                          {isExpired
+                            ? lang === "ar"
+                              ? "(منتهي)"
+                              : "(Expired)"
+                            : lang === "ar"
+                              ? "(مكتمل)"
+                              : "(Maxed)"}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    {/* Redemptions */}
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Users size={14} />
+                        <span>{formatRedemptions(coupon)}</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Valid Until */}
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <CalendarBlank size={14} />
+                        <span>{formatDate(coupon.validUntil)}</span>
+                      </div>
+                    </TableCell>
+
+                    {/* Plans */}
+                    <TableCell>
+                      {coupon.plans.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                          {labels.allPlans}
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {coupon.plans.map((plan) => (
+                            <span
+                              key={plan.id}
+                              className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary font-medium"
+                            >
+                              {plan.nameEn}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* ── Create Coupon Modal ─────────────────────────────────────────────── */}

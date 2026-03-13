@@ -13,7 +13,16 @@ import {
   CaretRight,
   FileText,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import {
+  Button,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllInvoices } from "../../../actions/billing";
 
@@ -91,24 +100,26 @@ export default function AdminPaymentsPage() {
   const [total, setTotal] = React.useState(0);
   const pageSize = 50;
 
-  const fetchInvoices = React.useCallback(async (p: number) => {
-    setLoading(true);
-    try {
-      const data = await adminGetAllInvoices(p, pageSize);
-      setInvoices(data.invoices);
-      setTotalPages(data.totalPages);
-      setTotal(data.total);
-      setPage(data.page);
-    } catch {
-      // Permission or fetch error — leave empty
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   React.useEffect(() => {
-    fetchInvoices(page);
-  }, [page, fetchInvoices]);
+    let active = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const data = await adminGetAllInvoices(page, pageSize);
+        if (active) {
+          setInvoices(data.invoices);
+          setTotalPages(data.totalPages);
+          setTotal(data.total);
+          setPage(data.page);
+        }
+      } catch {
+        // Permission or fetch error — leave empty
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, [page]);
 
   // Computed stats
   const totalRevenue = invoices
@@ -189,9 +200,9 @@ export default function AdminPaymentsPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <div
+          <Card
             key={i}
-            className="bg-card rounded-md shadow-card border border-border p-5 flex items-center gap-4"
+            className="p-5 flex items-center gap-4"
           >
             <div
               className={`h-11 w-11 rounded-md ${stat.bg} flex items-center justify-center ${stat.color}`}
@@ -206,12 +217,12 @@ export default function AdminPaymentsPage() {
                 {stat.value}
               </p>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+      <Card className="overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
@@ -224,92 +235,87 @@ export default function AdminPaymentsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "رقم الفاتورة" : "Invoice #"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "المنظمة" : "Organization"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "الخطة" : "Plan"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "الحالة" : "Status"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "المبلغ" : "Subtotal"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "الضريبة" : "VAT"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "الإجمالي" : "Total"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "تاريخ الإصدار" : "Issued"}
-                  </th>
-                  <th className="px-4 py-3 text-start font-semibold text-muted-foreground font-primary">
-                    {lang === "ar" ? "تاريخ الاستحقاق" : "Due Date"}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => {
-                  const sc = statusConfig[invoice.status] ?? { label: { ar: "مسودة", en: "Draft" }, className: "bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300" };
-                  return (
-                    <tr
-                      key={invoice.id}
-                      className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-mono text-xs text-foreground">
-                        {invoice.invoiceNumber}
-                      </td>
-                      <td className="px-4 py-3 font-primary text-foreground">
-                        {lang === "ar"
-                          ? invoice.organization?.nameArabic ||
-                            invoice.organization?.name ||
-                            "-"
-                          : invoice.organization?.name ||
-                            invoice.organization?.nameArabic ||
-                            "-"}
-                      </td>
-                      <td className="px-4 py-3 font-primary text-foreground">
-                        {lang === "ar"
-                          ? invoice.subscription?.plan?.nameAr ?? "-"
-                          : invoice.subscription?.plan?.nameEn ?? "-"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium font-primary ${sc.className}`}
-                        >
-                          {sc.label[lang]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-foreground">
-                        {formatCurrency(invoice.subtotal, lang)}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs text-foreground">
-                        {formatCurrency(invoice.vatAmount, lang)}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-foreground">
-                        {formatCurrency(invoice.total, lang)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground font-primary text-xs">
-                        {formatDate(invoice.issuedAt, lang)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground font-primary text-xs">
-                        {formatDate(invoice.dueDate, lang)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "رقم الفاتورة" : "Invoice #"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "المنظمة" : "Organization"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "الخطة" : "Plan"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "الحالة" : "Status"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "المبلغ" : "Subtotal"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "الضريبة" : "VAT"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "الإجمالي" : "Total"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "تاريخ الإصدار" : "Issued"}
+                </TableHead>
+                <TableHead className="font-primary">
+                  {lang === "ar" ? "تاريخ الاستحقاق" : "Due Date"}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invoices.map((invoice) => {
+                const sc = statusConfig[invoice.status] ?? { label: { ar: "مسودة", en: "Draft" }, className: "bg-gray-100 text-gray-800 dark:bg-gray-900/40 dark:text-gray-300" };
+                return (
+                  <TableRow key={invoice.id}>
+                    <TableCell className="font-mono text-xs text-foreground">
+                      {invoice.invoiceNumber}
+                    </TableCell>
+                    <TableCell className="font-primary text-foreground">
+                      {lang === "ar"
+                        ? invoice.organization?.nameArabic ||
+                          invoice.organization?.name ||
+                          "-"
+                        : invoice.organization?.name ||
+                          invoice.organization?.nameArabic ||
+                          "-"}
+                    </TableCell>
+                    <TableCell className="font-primary text-foreground">
+                      {lang === "ar"
+                        ? invoice.subscription?.plan?.nameAr ?? "-"
+                        : invoice.subscription?.plan?.nameEn ?? "-"}
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium font-primary ${sc.className}`}
+                      >
+                        {sc.label[lang]}
+                      </span>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-foreground">
+                      {formatCurrency(invoice.subtotal, lang)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-foreground">
+                      {formatCurrency(invoice.vatAmount, lang)}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs font-semibold text-foreground">
+                      {formatCurrency(invoice.total, lang)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-primary text-xs">
+                      {formatDate(invoice.issuedAt, lang)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground font-primary text-xs">
+                      {formatDate(invoice.dueDate, lang)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
 
         {/* Pagination */}
@@ -326,7 +332,7 @@ export default function AdminPaymentsPage() {
                 size="sm"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-               
+
               >
                 <CaretLeft size={16} className="rtl:rotate-180" />
                 {lang === "ar" ? "السابق" : "Previous"}
@@ -336,7 +342,7 @@ export default function AdminPaymentsPage() {
                 size="sm"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-               
+
               >
                 {lang === "ar" ? "التالي" : "Next"}
                 <CaretRight size={16} className="rtl:rotate-180" />
@@ -344,7 +350,7 @@ export default function AdminPaymentsPage() {
             </div>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

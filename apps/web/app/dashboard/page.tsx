@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { SARAmount, KPICard, SkeletonKPICard } from "@repo/ui";
+import { SARAmount, KPICard, SkeletonKPICard, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import {
   Buildings,
   TrendUp,
@@ -124,30 +124,50 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
-          <h3 className="text-lg font-bold text-primary mb-6">تحليل الإيرادات (آخر 6 أشهر)</h3>
-          <RevenueTrendChart />
-        </div>
-        <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
-          <h3 className="text-lg font-bold text-primary mb-6">توزيع الإشغال حسب المشروع</h3>
-          <OccupancyDonutChart />
-        </div>
+        <Card className="min-h-[400px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-primary">تحليل الإيرادات (آخر 6 أشهر)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RevenueTrendChart />
+          </CardContent>
+        </Card>
+        <Card className="min-h-[400px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-primary">توزيع الإشغال حسب المشروع</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <OccupancyDonutChart />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Land & Project Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
-          <h3 className="text-lg font-bold text-primary mb-6">مسار استحواذ الأراضي</h3>
-          <LandPipelineChart />
-        </div>
-        <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
-          <h3 className="text-lg font-bold text-primary mb-6">توزيع حالات المشاريع</h3>
-          <ProjectStatusChart />
-        </div>
-        <div className="bg-card p-8 rounded-md shadow-card border border-border min-h-[400px]">
-          <h3 className="text-lg font-bold text-primary mb-6">تكاليف الصيانة (آخر 6 أشهر)</h3>
-          <MaintenanceCostTrendChart />
-        </div>
+        <Card className="min-h-[400px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-primary">مسار استحواذ الأراضي</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LandPipelineChart />
+          </CardContent>
+        </Card>
+        <Card className="min-h-[400px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-primary">توزيع حالات المشاريع</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProjectStatusChart />
+          </CardContent>
+        </Card>
+        <Card className="min-h-[400px]">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-bold text-primary">تكاليف الصيانة (آخر 6 أشهر)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MaintenanceCostTrendChart />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ import { Button } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "../../../../../components/SimpleSessionProvider";
 import { hasPermission } from "../../../../../lib/permissions";
 import {
   getTicketWithMessages,

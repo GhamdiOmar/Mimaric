@@ -18,7 +18,7 @@ import {
   UserCircle,
   X,
 } from "@phosphor-icons/react";
-import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Card, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import {
   getMaintenanceRequests,
   getMaintenanceStats,
@@ -251,18 +251,18 @@ export default function MaintenancePage() {
           { label: lang === "ar" ? "متأخرة" : "Overdue", value: stats?.overdue ?? "—", icon: Warning, color: "text-red-600" },
           { label: lang === "ar" ? "مكتملة هذا الشهر" : "Completed (Month)", value: stats?.completedThisMonth ?? "—", icon: CheckCircle, color: "text-secondary" },
         ].map((kpi, i) => (
-          <div key={i} className="bg-card p-5 rounded-md shadow-card border border-border">
+          <Card key={i} className="p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{kpi.label}</span>
               <kpi.icon size={20} className={kpi.color} />
             </div>
             <h3 className="text-2xl font-bold text-primary">{kpi.value}</h3>
-          </div>
+          </Card>
         ))}
       </div>
 
       {/* Filter Toolbar */}
-      <div className="bg-card rounded-md shadow-card border border-border p-4 flex flex-wrap items-center gap-4">
+      <Card className="p-4 flex flex-wrap items-center gap-4">
         <div className="relative flex-1 min-w-[200px]">
           <MagnifyingGlass size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
           <input
@@ -291,10 +291,10 @@ export default function MaintenancePage() {
             <option key={k} value={k}>{v[lang]}</option>
           ))}
         </select>
-      </div>
+      </Card>
 
       {/* Table */}
-      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+      <Card className="overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Spinner size={32} className="animate-spin text-primary" />
@@ -305,21 +305,20 @@ export default function MaintenancePage() {
             <p className="text-sm font-primary">{lang === "ar" ? "لا توجد طلبات صيانة" : "No maintenance requests"}</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border">
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "العنوان" : "Title"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الوحدة" : "Unit"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "التصنيف" : "Category"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الأولوية" : "Priority"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الحالة" : "Status"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "المُعيَّن" : "Assigned"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الاستحقاق" : "Due"}</th>
-                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-neutral text-start">{lang === "ar" ? "الإجراءات" : "Actions"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+          <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{lang === "ar" ? "العنوان" : "Title"}</TableHead>
+                  <TableHead>{lang === "ar" ? "الوحدة" : "Unit"}</TableHead>
+                  <TableHead>{lang === "ar" ? "التصنيف" : "Category"}</TableHead>
+                  <TableHead>{lang === "ar" ? "الأولوية" : "Priority"}</TableHead>
+                  <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
+                  <TableHead>{lang === "ar" ? "المُعيَّن" : "Assigned"}</TableHead>
+                  <TableHead>{lang === "ar" ? "الاستحقاق" : "Due"}</TableHead>
+                  <TableHead>{lang === "ar" ? "الإجراءات" : "Actions"}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {requests.map((r: any) => {
                   const status = statusLabels[r.status] ?? { ar: r.status, en: r.status, variant: "draft" };
                   const priority = priorityLabels[r.priority] ?? { ar: r.priority, en: r.priority, color: "text-neutral" };
@@ -327,25 +326,25 @@ export default function MaintenancePage() {
                   const isOverdue = r.dueDate && new Date(r.dueDate) < new Date() && !["RESOLVED", "CLOSED"].includes(r.status);
 
                   return (
-                    <tr key={r.id} className="hover:bg-muted/5 transition-colors">
-                      <td className="px-5 py-3">
+                    <TableRow key={r.id}>
+                      <TableCell>
                         <Link href={`/dashboard/maintenance/${r.id}`} className="text-sm font-bold text-primary hover:text-secondary transition-colors">
                           {r.title}
                           {r.isPreventive && <span className="text-[9px] text-secondary mr-1">[وقائي]</span>}
                         </Link>
-                      </td>
-                      <td className="px-5 py-3 text-sm text-primary">
+                      </TableCell>
+                      <TableCell className="text-sm text-primary">
                         {r.unit?.number ?? "—"} — {r.unit?.building?.name ?? ""}
-                      </td>
-                      <td className="px-5 py-3 text-xs text-neutral">{cat[lang]}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="text-xs text-neutral">{cat[lang]}</TableCell>
+                      <TableCell>
                         <span className={`text-xs font-bold ${priority.color}`}>{priority[lang]}</span>
-                      </td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell>
                         <Badge variant={status.variant as any} className="text-[10px]">{status[lang]}</Badge>
-                      </td>
-                      <td className="px-5 py-3 text-xs text-neutral">{r.assignedTo?.name ?? "—"}</td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell className="text-xs text-neutral">{r.assignedTo?.name ?? "—"}</TableCell>
+                      <TableCell>
                         {r.dueDate ? (
                           <span className={`text-xs ${isOverdue ? "text-red-600 font-bold" : "text-neutral"}`}>
                             {new Date(r.dueDate).toLocaleDateString("en-SA")}
@@ -354,8 +353,8 @@ export default function MaintenancePage() {
                         ) : (
                           <span className="text-xs text-neutral">—</span>
                         )}
-                      </td>
-                      <td className="px-5 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-1">
                           <Link href={`/dashboard/maintenance/${r.id}`}>
                             <Button variant="ghost" size="sm">
@@ -369,15 +368,14 @@ export default function MaintenancePage() {
                             <Trash size={14} />
                           </Button>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
 
       {/* Create/Edit Modal — using shared Dialog */}
       <Dialog open={showModal} onOpenChange={setShowModal}>

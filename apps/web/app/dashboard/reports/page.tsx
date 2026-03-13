@@ -147,7 +147,7 @@ export default function ReportsPage() {
     try {
       if (reportId === "revenue") {
         const data = await getRevenueReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير الإيرادات",
           subtitle: "Revenue Report",
           dateRange,
@@ -179,7 +179,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "occupancy") {
         const data = await getOccupancyReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير الإشغال",
           subtitle: "Occupancy Report",
           dateRange,
@@ -203,7 +203,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "collection") {
         const data = await getRentCollectionReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير تحصيل الإيجارات",
           subtitle: "Rent Collection Report",
           dateRange,
@@ -231,7 +231,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "maintenance") {
         const data = await getMaintenanceReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير الصيانة",
           subtitle: "Maintenance Report",
           dateRange,
@@ -257,7 +257,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "land") {
         const data = await getLandPortfolioReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير محفظة الأراضي",
           subtitle: "Land Portfolio Report",
           dateRange,
@@ -285,7 +285,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "project-progress") {
         const data = await getProjectProgressReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير تقدم المشاريع",
           subtitle: "Project Progress Report",
           dateRange,
@@ -303,7 +303,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "maintenance-costs") {
         const data = await getMaintenanceCostReport(startDate, endDate);
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير تكاليف الصيانة",
           subtitle: "Maintenance Cost Report",
           dateRange,
@@ -336,7 +336,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "dev-pipeline") {
         const data = await getDevelopmentPipelineReport();
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير مسار التطوير",
           subtitle: "Development Pipeline Report",
           dateRange,
@@ -358,7 +358,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "approval-status") {
         const data = await getApprovalStatusReport();
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير حالة الموافقات",
           subtitle: "Approval Status Report",
           dateRange,
@@ -384,7 +384,7 @@ export default function ReportsPage() {
         });
       } else if (reportId === "pricing-analysis") {
         const data = await getPricingAnalysisReport();
-        generateReportPDF({
+        await generateReportPDF({
           title: "تقرير تحليل التسعير",
           subtitle: "Pricing Analysis Report",
           dateRange,

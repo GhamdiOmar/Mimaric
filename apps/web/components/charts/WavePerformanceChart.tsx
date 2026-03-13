@@ -7,14 +7,27 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from "recharts";
+import { ChartContainer, ChartTooltip, ChartLegend, ChartLegendContent, type ChartConfig } from "@repo/ui";
 import { getWavePerformance } from "../../app/actions/analytics";
 
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
+
+const chartConfig = {
+  released: {
+    label: "متاح",
+    color: "hsl(148 76% 27%)",
+  },
+  reserved: {
+    label: "محجوز",
+    color: "hsl(43 74% 53%)",
+  },
+  sold: {
+    label: "مباع",
+    color: "hsl(216 45% 17%)",
+  },
+} satisfies ChartConfig;
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -69,31 +82,25 @@ export default function WavePerformanceChart({ projectId }: { projectId: string 
   }
 
   return (
-    <ResponsiveContainer width="100%" height={280}>
+    <ChartContainer config={chartConfig} className="h-[280px] w-full">
       <BarChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(214 32% 91%)" />
+        <CartesianGrid strokeDasharray="3 3" />
         <XAxis
           dataKey="name"
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
-          axisLine={{ stroke: "hsl(214 32% 91%)" }}
+          tick={{ fontSize: 11 }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "hsl(218 17% 35%)" }}
+          tick={{ fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
-        <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
-          formatter={(value: string) => (
-            <span className="text-neutral text-xs">{value}</span>
-          )}
-        />
-        <Bar dataKey="released" name="متاح" stackId="a" fill="hsl(148 76% 27%)" radius={[0, 0, 0, 0]} />
-        <Bar dataKey="reserved" name="محجوز" stackId="a" fill="hsl(43 74% 53%)" radius={[0, 0, 0, 0]} />
-        <Bar dataKey="sold" name="مباع" stackId="a" fill="hsl(216 45% 17%)" radius={[4, 4, 0, 0]} />
+        <ChartTooltip content={<CustomTooltip />} />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Bar dataKey="released" name="متاح" stackId="a" fill="var(--color-released)" radius={[0, 0, 0, 0]} />
+        <Bar dataKey="reserved" name="محجوز" stackId="a" fill="var(--color-reserved)" radius={[0, 0, 0, 0]} />
+        <Bar dataKey="sold" name="مباع" stackId="a" fill="var(--color-sold)" radius={[4, 4, 0, 0]} />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }

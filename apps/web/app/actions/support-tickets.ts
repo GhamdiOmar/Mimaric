@@ -15,34 +15,50 @@ export async function createSupportTicket(data: {
 }) {
   const session = await requirePermission("help:create_ticket");
 
-  // Generate ticket number
-  const lastTicket = await db.supportTicket.findFirst({
-    where: { organizationId: session.organizationId },
-    orderBy: { createdAt: "desc" },
-    select: { ticketNumber: true },
-  });
-  const nextNum = lastTicket
-    ? parseInt(lastTicket.ticketNumber.replace("TKT-", "")) + 1
-    : 1;
-  const ticketNumber = `TKT-${String(nextNum).padStart(3, "0")}`;
+  // Generate ticket number with retry on unique constraint violation
+  let ticket;
+  let retries = 3;
+  while (retries > 0) {
+    try {
+      const lastTicket = await db.supportTicket.findFirst({
+        where: { organizationId: session.organizationId },
+        orderBy: { createdAt: "desc" },
+        select: { ticketNumber: true },
+      });
+      const nextNum = lastTicket
+        ? parseInt(lastTicket.ticketNumber.replace("TKT-", "")) + 1
+        : 1;
+      const ticketNumber = `TKT-${String(nextNum).padStart(3, "0")}`;
 
-  const ticket = await db.supportTicket.create({
-    data: {
-      ticketNumber,
-      userId: session.userId,
-      subject: data.subject,
-      description: data.description,
-      category: data.category as any,
-      priority: (data.priority as any) ?? "MEDIUM",
-      status: "OPEN",
-      organizationId: session.organizationId,
-    },
-  });
+      ticket = await db.supportTicket.create({
+        data: {
+          ticketNumber,
+          userId: session.userId,
+          subject: data.subject,
+          description: data.description,
+          category: data.category as any,
+          priority: (data.priority as any) ?? "MEDIUM",
+          status: "OPEN",
+          organizationId: session.organizationId,
+        },
+      });
+      break; // Success
+    } catch (error: any) {
+      if (error.code === "P2002" && error.meta?.target?.includes("ticketNumber")) {
+        retries--;
+        if (retries === 0) throw new Error("Failed to generate unique ticket number");
+        continue; // Retry with new number
+      }
+      throw error;
+    }
+  }
+
+  if (!ticket) throw new Error("Failed to create ticket");
 
   await notifyAdmins({
     type: "SUPPORT_TICKET",
-    title: `تذكرة دعم جديدة: ${ticketNumber}`,
-    titleEn: `New Support Ticket: ${ticketNumber}`,
+    title: `تذكرة دعم جديدة: ${ticket.ticketNumber}`,
+    titleEn: `New Support Ticket: ${ticket.ticketNumber}`,
     message: `${session.name ?? session.email}: ${data.subject}`,
     messageEn: `${session.name ?? session.email}: ${data.subject}`,
     link: `/dashboard/help/tickets/${ticket.id}`,
@@ -56,7 +72,7 @@ export async function createSupportTicket(data: {
     action: "CREATE",
     resource: "SupportTicket",
     resourceId: ticket.id,
-    metadata: { ticketNumber, category: data.category },
+    metadata: { ticketNumber: ticket.ticketNumber, category: data.category },
     organizationId: session.organizationId,
   });
 
@@ -68,7 +84,7 @@ export async function getMySupportTickets() {
   const session = await requirePermission("help:read");
 
   return db.supportTicket.findMany({
-    where: { userId: session.userId },
+    where: { userId: session.userId, organizationId: session.organizationId },
     include: {
       _count: { select: { messages: true } },
     },

@@ -13,7 +13,7 @@ import {
   CalendarBlank,
   CurrencyCircleDollar,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import { Button, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import Link from "next/link";
 import { usePermissions } from "../../../hooks/usePermissions";
 import {
@@ -102,8 +102,8 @@ export default function BillingDashboardPage() {
       )}
 
       {/* Current Plan Card */}
-      <div className="rounded-xl border bg-card shadow-sm">
-        <div className="p-6 border-b">
+      <Card className="rounded-xl shadow-sm">
+        <CardHeader className="border-b">
           <div className="flex items-center gap-2 mb-4">
             <Crown className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-semibold">{t.currentPlan}</h2>
@@ -154,20 +154,20 @@ export default function BillingDashboardPage() {
               </Link>
             </div>
           )}
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
       {/* Payment Methods + Recent Invoices */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Payment Methods */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="p-6 border-b flex items-center justify-between">
+        <Card className="rounded-xl shadow-sm">
+          <CardHeader className="border-b flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-semibold">{t.paymentMethods}</h2>
             </div>
-          </div>
-          <div className="p-6">
+          </CardHeader>
+          <CardContent className="pt-6">
             {paymentMethods.length > 0 ? (
               <div className="space-y-3">
                 {paymentMethods.map((pm: any) => (
@@ -194,12 +194,12 @@ export default function BillingDashboardPage() {
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">{t.noPaymentMethods}</p>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Recent Invoices */}
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="p-6 border-b flex items-center justify-between">
+        <Card className="rounded-xl shadow-sm">
+          <CardHeader className="border-b flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-primary" />
               <h2 className="text-lg font-semibold">{t.recentInvoices}</h2>
@@ -207,8 +207,8 @@ export default function BillingDashboardPage() {
             <Link href="/dashboard/billing/invoices" className="text-sm text-primary hover:underline flex items-center gap-1">
               {t.viewAll} <CaretRight className="w-3 h-3" />
             </Link>
-          </div>
-          <div className="p-6">
+          </CardHeader>
+          <CardContent className="pt-6">
             {invoices.length > 0 ? (
               <div className="space-y-3">
                 {invoices.map((inv: any) => (
@@ -237,8 +237,8 @@ export default function BillingDashboardPage() {
             ) : (
               <p className="text-sm text-muted-foreground text-center py-4">{t.noInvoices}</p>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

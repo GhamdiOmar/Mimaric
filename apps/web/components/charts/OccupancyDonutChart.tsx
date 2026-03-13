@@ -1,14 +1,8 @@
 "use client";
 
 import * as React from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-  Tooltip,
-} from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
+import { ChartContainer, ChartTooltip, type ChartConfig } from "@repo/ui";
 import { getOccupancyByProject } from "../../app/actions/dashboard";
 
 const COLORS = [
@@ -48,6 +42,19 @@ export default function OccupancyDonutChart() {
       .finally(() => setLoading(false));
   }, []);
 
+  const chartData = React.useMemo(() => data.filter((d) => d.total > 0), [data]);
+
+  const chartConfig = React.useMemo(() => {
+    const config: ChartConfig = {};
+    chartData.forEach((d, idx) => {
+      config[d.name] = {
+        label: d.name,
+        color: COLORS[idx % COLORS.length]!,
+      };
+    });
+    return config;
+  }, [chartData]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64 animate-pulse">
@@ -68,12 +75,9 @@ export default function OccupancyDonutChart() {
   const totalOccupied = data.reduce((s, d) => s + d.occupied, 0);
   const overallRate = totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
 
-  // Filter out projects with 0 units for the chart
-  const chartData = data.filter((d) => d.total > 0);
-
   return (
     <div className="relative">
-      <ResponsiveContainer width="100%" height={280}>
+      <ChartContainer config={chartConfig} className="h-[280px] w-full">
         <PieChart>
           <Pie
             data={chartData}
@@ -90,15 +94,9 @@ export default function OccupancyDonutChart() {
               <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip content={<CustomTooltip />} />
-          <Legend
-            wrapperStyle={{ fontSize: 11, paddingTop: 12 }}
-            formatter={(value: string) => (
-              <span className="text-neutral text-[11px]">{value}</span>
-            )}
-          />
+          <ChartTooltip content={<CustomTooltip />} />
         </PieChart>
-      </ResponsiveContainer>
+      </ChartContainer>
       {/* Center label */}
       <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
         <span className="text-2xl font-bold text-primary">{overallRate}%</span>

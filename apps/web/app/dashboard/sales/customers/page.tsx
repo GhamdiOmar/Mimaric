@@ -2,7 +2,7 @@
 
 import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
-import { 
+import {
   Plus,
   DotsThreeVertical,
   User,
@@ -19,7 +19,18 @@ import {
   EyeSlash
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
-import { Badge, Button, Input } from "@repo/ui";
+import {
+  Badge,
+  Button,
+  Input,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@repo/ui";
 import { getCustomers, updateCustomerStatus, createCustomer, getCustomerUnitAssignments } from "../../../actions/customers";
 import { exportToExcel, exportToPDF } from "../../../../lib/export";
 import { usePermissions } from "../../../../hooks/usePermissions";
@@ -200,7 +211,7 @@ export default function CustomersPage() {
               variant="secondary"
               size="sm"
               className={cn("gap-1.5 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
-             
+
               onClick={() => setShowPii(!showPii)}
             >
               {showPii ? <EyeSlash size={16} /> : <Eye size={16} />}
@@ -225,36 +236,38 @@ export default function CustomersPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between bg-card p-4 rounded-md border border-border">
-        <div className="relative w-full sm:w-80 group">
-          <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-primary transition-colors" />
-          <Input 
-            placeholder={lang === "ar" ? "بحث بالاسم، الجوال أو البريد..." : "Search by name, phone or email..."}
-            className="pr-10 h-10 border-muted bg-muted/20"
-          />
+      <Card className="p-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
+          <div className="relative w-full sm:w-80 group">
+            <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder={lang === "ar" ? "بحث بالاسم، الجوال أو البريد..." : "Search by name, phone or email..."}
+              className="pr-10 h-10 border-muted bg-muted/20"
+            />
+          </div>
+
+          <div className="flex items-center gap-2 bg-muted p-1 rounded-sm">
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
+                viewMode === "kanban" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
+              )}
+            >
+              {lang === "ar" ? "لوحة كانبان" : "Kanban"}
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
+                viewMode === "list" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
+              )}
+            >
+              {lang === "ar" ? "قائمة" : "List"}
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2 bg-muted p-1 rounded-sm">
-          <button 
-            onClick={() => setViewMode("kanban")}
-            className={cn(
-              "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-              viewMode === "kanban" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
-            )}
-          >
-            {lang === "ar" ? "لوحة كانبان" : "Kanban"}
-          </button>
-          <button 
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-              viewMode === "list" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
-            )}
-          >
-            {lang === "ar" ? "قائمة" : "List"}
-          </button>
-        </div>
-      </div>
+      </Card>
 
       {/* Kanban Board */}
       {viewMode === "kanban" ? (
@@ -280,9 +293,9 @@ export default function CustomersPage() {
                 {customers
                   .filter((customer) => customer.status === status.id)
                   .map((customer) => (
-                    <div 
-                      key={customer.id} 
-                      className="group flex flex-col gap-3 rounded-md bg-card p-4 shadow-card border border-border hover:shadow-raised hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
+                    <Card
+                      key={customer.id}
+                      className="group flex flex-col gap-3 p-4 hover:shadow-raised hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex justify-between items-start">
                         <h4 className="text-sm font-bold text-primary group-hover:text-secondary transition-colors truncate">
@@ -292,7 +305,7 @@ export default function CustomersPage() {
                           {customer.source || "Direct"}
                         </Badge>
                       </div>
-                      
+
                       <div className="space-y-1.5">
                         {customer.nationalId && hasPiiAccess && (
                           <div className="flex items-center gap-2 text-xs text-neutral">
@@ -353,11 +366,11 @@ export default function CustomersPage() {
                           )}
                         </div>
                       )}
-                    </div>
+                    </Card>
                   ))}
-                
+
                 {/* Add Customer in Column */}
-                <button 
+                <button
                   onClick={() => {
                     setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: status.id });
                     setShowAddModal(true);
@@ -372,74 +385,74 @@ export default function CustomersPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-md border border-border bg-card overflow-hidden" id="customers-table">
-          <table className="w-full text-start border-collapse">
-            <thead className="bg-muted capitalize">
-              <tr>
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+        <Card className="overflow-hidden" id="customers-table">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
                   {lang === "ar" ? "الاسم" : "Name"}
-                </th>
+                </TableHead>
                 {hasPiiAccess && (
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                <TableHead>
                   {lang === "ar" ? "رقم الهوية" : "National ID"}
-                </th>
+                </TableHead>
                 )}
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                <TableHead>
                   {lang === "ar" ? "البيانات" : "Contact"}
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "الحالة" : "Status"}
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "المصدر" : "Source"}
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border">
+                </TableHead>
+                <TableHead>
                   {lang === "ar" ? "تاريخ الإضافة" : "Date Added"}
-                </th>
-                <th className="px-6 py-4 text-xs font-bold text-primary text-start border-b border-border"></th>
-              </tr>
-            </thead>
-            <tbody>
+                </TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {customers.map((customer) => (
-                <tr key={customer.id} className="group hover:bg-muted/30 transition-colors">
-                  <td className="px-6 py-4 border-b border-border">
+                <TableRow key={customer.id} className="group">
+                  <TableCell>
                     <div className="text-sm font-bold text-primary">{customer.name}</div>
                     {customer.nameArabic && customer.nameArabic !== customer.name && (
                       <div className="text-[10px] text-neutral/60">{customer.nameArabic}</div>
                     )}
-                  </td>
+                  </TableCell>
                   {hasPiiAccess && (
-                  <td className="px-6 py-4 text-xs text-neutral font-dm-sans border-b border-border" dir="ltr">
+                  <TableCell className="text-xs text-neutral font-dm-sans" dir="ltr">
                     {customer.nationalId ? (showPii ? customer.nationalId : maskNationalId(customer.nationalId)) : "—"}
-                  </td>
+                  </TableCell>
                   )}
-                  <td className="px-6 py-4 border-b border-border">
+                  <TableCell>
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-neutral font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
                       <span className="text-xs text-neutral/60 font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 border-b border-border">
+                  </TableCell>
+                  <TableCell>
                     <Badge variant={customer.status.toLowerCase() as any}>
                       {customerStatuses.find(s => s.id === customer.status)?.label[lang]}
                     </Badge>
-                  </td>
-                  <td className="px-6 py-4 text-xs text-neutral border-b border-border">
+                  </TableCell>
+                  <TableCell className="text-xs text-neutral">
                     {customer.source || "Direct"}
-                  </td>
-                  <td className="px-6 py-4 text-xs text-neutral border-b border-border font-dm-sans">
+                  </TableCell>
+                  <TableCell className="text-xs text-neutral font-dm-sans">
                     {formatDualDate(customer.createdAt, lang)}
-                  </td>
-                  <td className="px-6 py-4 text-end border-b border-border">
+                  </TableCell>
+                  <TableCell className="text-end">
                     <button className="p-1 text-neutral hover:text-primary transition-colors">
                       <DotsThreeVertical size={18} />
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* Add Customer Modal */}

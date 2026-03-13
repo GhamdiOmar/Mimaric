@@ -16,7 +16,7 @@ import {
   Warning,
   CheckCircle,
 } from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+import { Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllPlans, adminUpsertPlan } from "../../../actions/billing";
 
@@ -180,8 +180,19 @@ export default function AdminPlansPage() {
   }, []);
 
   React.useEffect(() => {
-    loadPlans();
-  }, [loadPlans]);
+    let active = true;
+    (async () => {
+      try {
+        const data = await adminGetAllPlans();
+        if (active) setPlans(data);
+      } catch (error) {
+        if (active) console.error("Failed to load plans:", error);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   // ── Auto-dismiss feedback ─────────────────────────────────────────────
   React.useEffect(() => {
@@ -360,42 +371,41 @@ export default function AdminPlansPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-start">
-              <thead>
-                <tr className="bg-muted/40 border-b border-border">
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-start">
+        <Card className="overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
                     {t.planName}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-start">
+                  </TableHead>
+                  <TableHead>
                     {t.slug}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-start">
+                  </TableHead>
+                  <TableHead>
                     {t.monthlyPrice}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-start">
+                  </TableHead>
+                  <TableHead>
                     {t.annualPrice}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
+                  </TableHead>
+                  <TableHead className="text-center">
                     {t.trialDays}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
+                  </TableHead>
+                  <TableHead className="text-center">
                     {t.status}
-                  </th>
-                  <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-center">
+                  </TableHead>
+                  <TableHead className="text-center">
                     {t.actions}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {plans.map((plan) => (
-                  <tr
+                  <TableRow
                     key={plan.id}
-                    className="hover:bg-muted/20 transition-colors group"
+                    className="group"
                   >
                     {/* Plan Name */}
-                    <td className="px-5 py-4">
+                    <TableCell>
                       <div className="flex flex-col gap-0.5">
                         <span className="text-sm font-semibold text-foreground">
                           {plan.nameAr}
@@ -409,44 +419,44 @@ export default function AdminPlansPage() {
                           {t.default}
                         </span>
                       )}
-                    </td>
+                    </TableCell>
 
                     {/* Slug */}
-                    <td className="px-5 py-4">
+                    <TableCell>
                       <code className="text-xs font-mono bg-muted px-2 py-1 rounded text-muted-foreground">
                         {plan.slug}
                       </code>
-                    </td>
+                    </TableCell>
 
                     {/* Monthly Price */}
-                    <td className="px-5 py-4">
+                    <TableCell>
                       <span className="text-sm font-medium text-foreground">
                         {formatPrice(plan.priceMonthly)}
                       </span>
                       <span className="text-xs text-muted-foreground ms-1">
                         {t.sar}
                       </span>
-                    </td>
+                    </TableCell>
 
                     {/* Annual Price */}
-                    <td className="px-5 py-4">
+                    <TableCell>
                       <span className="text-sm font-medium text-foreground">
                         {formatPrice(plan.priceAnnual)}
                       </span>
                       <span className="text-xs text-muted-foreground ms-1">
                         {t.sar}
                       </span>
-                    </td>
+                    </TableCell>
 
                     {/* Trial Days */}
-                    <td className="px-5 py-4 text-center">
+                    <TableCell className="text-center">
                       <span className="text-sm text-foreground">
                         {plan.trialDays}
                       </span>
-                    </td>
+                    </TableCell>
 
                     {/* Status */}
-                    <td className="px-5 py-4 text-center">
+                    <TableCell className="text-center">
                       {plan.isPublic ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
                           <Eye className="w-3.5 h-3.5" weight="bold" />
@@ -458,26 +468,25 @@ export default function AdminPlansPage() {
                           {t.draft}
                         </span>
                       )}
-                    </td>
+                    </TableCell>
 
                     {/* Actions */}
-                    <td className="px-5 py-4 text-center">
+                    <TableCell className="text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => openEdit(plan)}
-                       
+
                       >
                         <PencilSimple className="w-4 h-4" />
                         <span className="ms-1">{t.edit}</span>
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+        </Card>
       )}
 
       {/* ── Modal Overlay ─────────────────────────────────────────────── */}

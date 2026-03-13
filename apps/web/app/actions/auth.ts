@@ -42,11 +42,8 @@ export async function loginAction(formData: FormData) {
       // The error message might be wrapped by NextAuth
       const message = error.cause?.err?.message || error.message;
 
-      if (message === "USER_NOT_FOUND") {
-        return { error: "USER_NOT_FOUND" };
-      }
-      if (message === "INVALID_PASSWORD") {
-        return { error: "INVALID_PASSWORD" };
+      if (message === "INVALID_CREDENTIALS") {
+        return { error: "INVALID_CREDENTIALS" };
       }
       if (message === "DATABASE_ERROR") {
         return { error: "DATABASE_ERROR" };
@@ -87,37 +84,45 @@ export async function registerUser(data: {
     return { error: "WEAK_PASSWORD", details: validation.errors };
   }
 
-  // Check if email is already taken
-  const existing = await db.user.findUnique({ where: { email: data.email.toLowerCase().trim() } });
-  if (existing) {
-    return { error: "EMAIL_EXISTS" };
-  }
-
-  // Hash password
+  // Hash password before transaction (bcrypt is CPU-intensive, keep outside tx)
   const hashedPassword = await bcrypt.hash(data.password, 12);
-
-  // Create organization — name based on account type
+  const normalizedEmail = data.email.toLowerCase().trim();
   const orgName = accountType === "company" ? data.name : `${data.name}'s Workspace`;
-  const org = await db.organization.create({
-    data: {
-      name: orgName,
-      entityType: accountType === "company" ? "COMPANY" : "ESTABLISHMENT",
-    },
-  });
 
-  // Create user as COMPANY_ADMIN (org creator = admin)
-  const user = await db.user.create({
-    data: {
-      name: data.name,
-      email: data.email.toLowerCase().trim(),
-      password: hashedPassword,
-      role: "COMPANY_ADMIN",
-      organizationId: org.id,
-      accountType,
-      onboardingCompleted: false,
-      invitedVia: "registration",
-    },
-  });
+  let user: any;
+  try {
+    const result = await db.$transaction(async (tx: any) => {
+      const org = await tx.organization.create({
+        data: {
+          name: orgName,
+          entityType: accountType === "company" ? "COMPANY" : "ESTABLISHMENT",
+        },
+      });
+
+      const newUser = await tx.user.create({
+        data: {
+          name: data.name,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: "COMPANY_ADMIN",
+          organizationId: org.id,
+          accountType,
+          onboardingCompleted: false,
+          invitedVia: "registration",
+        },
+      });
+
+      return { org, user: newUser };
+    });
+
+    user = result.user;
+  } catch (error: any) {
+    // Prisma unique constraint violation on User.email
+    if (error.code === "P2002" && error.meta?.target?.includes("email")) {
+      return { error: "EMAIL_EXISTS" };
+    }
+    throw error;
+  }
 
   logAuditEvent({
     userId: user.id,
@@ -125,7 +130,7 @@ export async function registerUser(data: {
     userRole: user.role,
     action: "REGISTER",
     resource: "Auth",
-    organizationId: org.id,
+    organizationId: user.organizationId,
   });
 
   // Auto-sign-in the newly created user

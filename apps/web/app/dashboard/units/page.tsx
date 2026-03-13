@@ -22,7 +22,7 @@ import {
   Tag,
   ArrowRight
 } from "@phosphor-icons/react";
-import { Button, Badge, Input, SARAmount } from "@repo/ui";
+import { Button, Badge, Input, SARAmount, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit, getUnitFinancialSummary } from "../../actions/units";
 import { getMaintenanceForUnit } from "../../actions/maintenance";
@@ -389,7 +389,7 @@ function AdvancedUnitMatrixPage() {
       )}
 
       {/* Grid Layout */}
-      <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+      <Card className="overflow-hidden">
         {/* Toolbar */}
         <div className="p-4 border-b border-border bg-muted/10 flex flex-col md:flex-row gap-4 items-center justify-between">
            <div className="flex items-center gap-4 w-full md:w-auto">
@@ -490,7 +490,7 @@ function AdvancedUnitMatrixPage() {
            ))}
 
            {/* Add New Unit Placeholder */}
-           <div 
+           <div
              onClick={() => setShowAddModal(true)}
              className="aspect-square rounded-md border-2 border-dashed border-border flex flex-col items-center justify-center text-neutral hover:border-secondary hover:text-secondary transition-all cursor-pointer group"
            >
@@ -498,7 +498,7 @@ function AdvancedUnitMatrixPage() {
               <span className="text-[10px] font-bold uppercase tracking-widest mt-2">{lang === "ar" ? "أضف وحدة" : "Add Unit"}</span>
            </div>
         </div>
-      </div>
+      </Card>
 
       </>}
 
@@ -513,7 +513,7 @@ function AdvancedUnitMatrixPage() {
             {/* KPI Cards */}
             {inventoryStats && (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-2">
-                <div className="bg-card rounded-lg border border-border p-4 shadow-card">
+                <Card className="rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
                       <Package size={18} className="text-primary" weight="duotone" />
@@ -521,8 +521,8 @@ function AdvancedUnitMatrixPage() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "إجمالي المخزون" : "Total Items"}</span>
                   </div>
                   <p className="text-2xl font-bold text-primary font-latin">{inventoryStats.total}</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 shadow-card">
+                </Card>
+                <Card className="rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-8 w-8 rounded-md bg-secondary/10 flex items-center justify-center">
                       <Storefront size={18} className="text-secondary" weight="duotone" />
@@ -530,8 +530,8 @@ function AdvancedUnitMatrixPage() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "متاح" : "Available"}</span>
                   </div>
                   <p className="text-2xl font-bold text-secondary font-latin">{inventoryStats.available}</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 shadow-card">
+                </Card>
+                <Card className="rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-8 w-8 rounded-md bg-amber-500/10 flex items-center justify-center">
                       <Tag size={18} className="text-amber-600" weight="duotone" />
@@ -539,8 +539,8 @@ function AdvancedUnitMatrixPage() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "محجوز" : "Reserved"}</span>
                   </div>
                   <p className="text-2xl font-bold text-amber-600 font-latin">{inventoryStats.reserved}</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 shadow-card">
+                </Card>
+                <Card className="rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-8 w-8 rounded-md bg-info/10 flex items-center justify-center">
                       <ChartBar size={18} className="text-info" weight="duotone" />
@@ -548,8 +548,8 @@ function AdvancedUnitMatrixPage() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "مباع" : "Sold"}</span>
                   </div>
                   <p className="text-2xl font-bold text-info font-latin">{inventoryStats.sold}</p>
-                </div>
-                <div className="bg-card rounded-lg border border-border p-4 shadow-card">
+                </Card>
+                <Card className="rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="h-8 w-8 rounded-md bg-accent/10 flex items-center justify-center">
                       <CurrencyCircleDollar size={18} className="text-accent" weight="duotone" />
@@ -557,12 +557,12 @@ function AdvancedUnitMatrixPage() {
                     <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "قيمة المخزون" : "Pipeline Value"}</span>
                   </div>
                   <p className="text-lg font-bold text-primary"><SARAmount value={inventoryStats.totalValue} size={12} compact /></p>
-                </div>
+                </Card>
               </div>
             )}
 
             {/* Inventory Table */}
-            <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
+            <Card className="overflow-hidden">
               {/* Toolbar */}
               <div className="p-4 border-b border-border bg-muted/10 flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="flex items-center gap-4 w-full md:w-auto">
@@ -617,20 +617,19 @@ function AdvancedUnitMatrixPage() {
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/20">
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "رقم العنصر" : "Item #"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "نوع المنتج" : "Product Type"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "المشروع" : "Project"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "المساحة" : "Area"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "السعر" : "Price"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
-                      <th className="px-4 py-3 text-start text-[10px] font-bold uppercase tracking-widest text-neutral"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{lang === "ar" ? "رقم العنصر" : "Item #"}</TableHead>
+                      <TableHead>{lang === "ar" ? "نوع المنتج" : "Product Type"}</TableHead>
+                      <TableHead>{lang === "ar" ? "المشروع" : "Project"}</TableHead>
+                      <TableHead>{lang === "ar" ? "المساحة" : "Area"}</TableHead>
+                      <TableHead>{lang === "ar" ? "السعر" : "Price"}</TableHead>
+                      <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {inventoryItems
                       .filter((item: any) => {
                         if (invStatusFilter && item.status !== invStatusFilter) return false;
@@ -650,44 +649,44 @@ function AdvancedUnitMatrixPage() {
                         const ist = invStatusConfig[item.status] ?? invStatusConfig.UNRELEASED!;
                         const pt = productTypeLabels[item.productType] ?? { ar: item.productType, en: item.productType };
                         return (
-                          <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/10 transition-colors">
-                            <td className="px-4 py-3">
+                          <TableRow key={item.id}>
+                            <TableCell>
                               <span className="font-bold text-primary font-latin">{item.itemNumber}</span>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <span className="text-xs text-foreground">{pt[lang]}</span>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <Link href={`/dashboard/projects/${item.project?.id}`} className="text-xs text-primary hover:underline flex items-center gap-1">
                                 {item.project?.name ?? "—"}
                                 <ArrowSquareOut size={12} />
                               </Link>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <span className="text-xs text-neutral font-latin">{item.areaSqm ? `${item.areaSqm} م²` : "—"}</span>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <span className="text-xs font-bold text-primary">
                                 {item.finalPriceSar || item.basePriceSar ? (
                                   <SARAmount value={item.finalPriceSar ?? item.basePriceSar} size={10} compact />
                                 ) : "—"}
                               </span>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <span className={cn("text-[10px] font-bold px-2 py-1 rounded-full", ist.color)}>{ist[lang]}</span>
-                            </td>
-                            <td className="px-4 py-3">
+                            </TableCell>
+                            <TableCell>
                               <Link href={`/dashboard/projects/${item.project?.id}`}>
                                 <Button variant="ghost" size="sm" className="text-neutral hover:text-primary">
                                   <ArrowRight size={14} />
                                 </Button>
                               </Link>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
 
                 {/* Empty State */}
                 {inventoryItems.length === 0 && !loadingInventory && (
@@ -701,8 +700,7 @@ function AdvancedUnitMatrixPage() {
                     </p>
                   </div>
                 )}
-              </div>
-            </div>
+            </Card>
           </div>
         )
       )}
