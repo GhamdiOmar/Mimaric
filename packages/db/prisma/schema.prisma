@@ -52,6 +52,9 @@ model Organization {
   paymentMethods        PaymentMethod[]
   invoices              Invoice[]
   couponRedemptions     CouponRedemption[]
+
+  // ── Planning OS relations ──
+  planningWorkspaces    PlanningWorkspace[]
 }
 
 enum OrgType {
@@ -1139,6 +1142,7 @@ model SubdivisionPlan {
   blocks             Block[]
   roads              Road[]
   utilityCorridors   UtilityCorridor[]
+  planningScenario   PlanningScenario?     // Reverse relation to PlanningScenario
   organizationId     String
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
@@ -2205,4 +2209,262 @@ enum SyncLogStatus {
   SUCCESS
   FAILED
   CANCELLED
+}
+
+// ─── Planning OS Module ─────────────────────────────────────────────────────
+
+model PlanningWorkspace {
+  id                String              @id @default(cuid())
+  name              String
+  nameArabic        String?
+  status            PlanningWorkspaceStatus @default(DRAFT)
+  description       String?
+
+  // Links to existing records (one or both)
+  landRecordId      String?             // Project ID where status is LAND_*
+  projectId         String?             // Full project record (post-acquisition)
+
+  // Site metadata carried from land/project
+  siteMetadata      Json?               // {totalAreaSqm, region, city, district, latitude, longitude, boundaries}
+
+  // Ownership
+  createdBy         String?             // User ID who created
+  organizationId    String
+  organization      Organization        @relation(fields: [organizationId], references: [id])
+
+  // Children
+  scenarios         PlanningScenario[]
+  spatialLayers     SpatialLayer[]
+  comments          PlanningComment[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([landRecordId])
+  @@index([projectId])
+  @@index([status])
+}
+
+enum PlanningWorkspaceStatus {
+  DRAFT
+  ACTIVE
+  UNDER_REVIEW
+  APPROVED
+  ARCHIVED
+}
+
+model PlanningScenario {
+  id                String              @id @default(cuid())
+  name              String
+  nameArabic        String?
+  version           Int                 @default(1)
+  status            PlanningScenarioStatus @default(DRAFT)
+  isBaseline        Boolean             @default(false) // Only one per workspace
+
+  // Parent workspace
+  workspaceId       String
+  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  // Linked subdivision plan (geometry)
+  subdivisionPlanId String?             @unique
+  subdivisionPlan   SubdivisionPlan?    @relation(fields: [subdivisionPlanId], references: [id])
+
+  // Feasibility assumptions
+  feasibilitySet    FeasibilityAssumptionSet?
+
+  // Compliance results
+  complianceResults ComplianceResult[]
+
+  // Cached metrics (auto-calculated from geometry + assumptions)
+  metrics           Json?               // {totalArea, sellableArea, nonSellableArea, sellablePct, plotCount, roadArea, openSpaceArea, estimatedRevenue, estimatedCost, estimatedProfit, far, density}
+
+  // Approval tracking
+  approvedBy        String?
+  approvedAt        DateTime?
+  rejectedBy        String?
+  rejectedAt        DateTime?
+  reviewNotes       String?
+
+  organizationId    String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([workspaceId])
+  @@index([organizationId])
+  @@index([status])
+}
+
+enum PlanningScenarioStatus {
+  DRAFT
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model SpatialLayer {
+  id                String              @id @default(cuid())
+  name              String
+  nameArabic        String?
+  type              SpatialLayerType    @default(IMPORTED)
+  visible           Boolean             @default(true)
+  locked            Boolean             @default(false)
+  opacity           Float               @default(1.0)
+  style             Json?               // {color, fillColor, fillOpacity, weight, dashArray}
+  sourceFile        String?             // Original filename for imports
+  geoJson           Json?               // Full FeatureCollection GeoJSON
+  featureCount      Int                 @default(0)
+
+  workspaceId       String
+  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  organizationId    String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([workspaceId])
+  @@index([organizationId])
+}
+
+enum SpatialLayerType {
+  BOUNDARY
+  PARCELS
+  ROADS
+  ZONES
+  UTILITIES
+  IMPORTED
+  REFERENCE
+  TOPOGRAPHY
+}
+
+model RuleTemplate {
+  id                String              @id @default(cuid())
+  name              String
+  nameArabic        String?
+  description       String?
+  category          RuleCategory
+  operator          RuleOperator
+  value             Float               // Threshold value
+  valueTo           Float?              // For BETWEEN operator
+  unit              String              // SQM, METERS, RATIO, PERCENT, UNITS_PER_HA
+  landUseScope      String[]            // Empty array = all land uses
+  regionScope       String?             // null = all regions
+  isDefault         Boolean             @default(false) // System template vs org-specific
+  isActive          Boolean             @default(true)
+
+  organizationId    String?             // null = system default template
+  complianceResults ComplianceResult[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([organizationId])
+  @@index([category])
+}
+
+enum RuleCategory {
+  MIN_AREA
+  MAX_AREA
+  MIN_FRONTAGE
+  MAX_FRONTAGE
+  MIN_DEPTH
+  MAX_DEPTH
+  MIN_ROAD_WIDTH
+  MAX_FAR
+  MIN_SETBACK
+  MAX_COVERAGE
+  MAX_DENSITY
+  MIN_OPEN_SPACE
+}
+
+enum RuleOperator {
+  MIN
+  MAX
+  EQUALS
+  BETWEEN
+}
+
+model ComplianceResult {
+  id                String              @id @default(cuid())
+  status            ComplianceStatus
+  actualValue       Float
+  expectedValue     String              // Human-readable threshold (e.g., "≥ 200 sqm")
+  featureId         String?             // Reference to specific plot/road ID
+  featureType       String?             // PLOT, ROAD, BLOCK, ZONE
+  featureLabel      String?             // e.g., "Plot A-01"
+
+  scenarioId        String
+  scenario          PlanningScenario    @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  ruleId            String
+  rule              RuleTemplate        @relation(fields: [ruleId], references: [id])
+
+  organizationId    String
+  createdAt         DateTime            @default(now())
+
+  @@index([scenarioId])
+  @@index([ruleId])
+  @@index([organizationId])
+}
+
+enum ComplianceStatus {
+  PASS
+  FAIL
+  WARNING
+}
+
+model FeasibilityAssumptionSet {
+  id                  String            @id @default(cuid())
+  name                String?
+  nameArabic          String?
+
+  // Core assumptions
+  landPriceSarPerSqm  Float?
+  constructionCostPerSqm Float?
+  infrastructureCostTotal Float?
+  contingencyPct      Float?            @default(10)
+  profitMarginPct     Float?            @default(15)
+
+  // Per-land-use pricing assumptions (JSON map)
+  pricingAssumptions  Json?             // {RESIDENTIAL: {pricePerSqm: 3000, density: 25}, COMMERCIAL: {...}}
+  costAssumptions     Json?             // {softCosts: 500000, hardCosts: 0, marketingPct: 3}
+
+  // Auto-calculated results cached
+  calculatedMetrics   Json?             // {totalRevenue, totalCost, grossProfit, netProfit, roi, breakeven}
+
+  // Parent scenario
+  scenarioId          String            @unique
+  scenario            PlanningScenario  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+
+  organizationId      String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([organizationId])
+}
+
+model PlanningComment {
+  id                String              @id @default(cuid())
+  content           String
+  authorId          String              // User ID
+  authorName        String?
+  authorRole        String?
+
+  // Context
+  workspaceId       String
+  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  scenarioId        String?             // If comment is scenario-specific
+  featureId         String?             // If comment is on a specific map feature
+
+  // Threading
+  parentId          String?
+  mentions          String[]            // User IDs mentioned
+
+  organizationId    String
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([workspaceId])
+  @@index([scenarioId])
+  @@index([organizationId])
 }

@@ -28,6 +28,7 @@ import {
   Wrench as WrenchIcon2,
   ShieldCheck,
   X,
+  Compass,
 } from "@phosphor-icons/react";
 import { cn } from "@repo/ui/lib/utils";
 import { Popover, PopoverTrigger, PopoverContent } from "@repo/ui";
@@ -45,6 +46,7 @@ import { getOrgName } from "../actions/organization";
 const navItems: { label: { ar: string; en: string }; icon: any; href: string; section: string; permission?: Permission }[] = [
   { label: { ar: "نظرة عامة", en: "Overview" }, icon: SquaresFour, href: "/dashboard", section: "main", permission: "dashboard:read" },
   { label: { ar: "الأراضي", en: "Land" }, icon: MapPin, href: "/dashboard/land", section: "main", permission: "land:read" },
+  { label: { ar: "التخطيط", en: "Planning" }, icon: Compass, href: "/dashboard/planning", section: "main", permission: "planning:read" },
   { label: { ar: "المشاريع", en: "Projects" }, icon: HouseLine, href: "/dashboard/projects", section: "main", permission: "projects:read" },
   { label: { ar: "الوحدات", en: "Units" }, icon: Buildings, href: "/dashboard/units", section: "main", permission: "units:read" },
   { label: { ar: "العملاء", en: "Customers" }, icon: Users, href: "/dashboard/sales/customers", section: "main", permission: "customers:read" },
@@ -287,6 +289,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 const breadcrumbLabels: Record<string, { ar: string; en: string }> = {
                   "": { ar: "نظرة عامة", en: "Overview" },
                   "land": { ar: "الأراضي", en: "Land" },
+                  "planning": { ar: "التخطيط", en: "Planning" },
                   "projects": { ar: "المشاريع", en: "Projects" },
                   "units": { ar: "الوحدات", en: "Units" },
                   "sales": { ar: "المبيعات", en: "Sales" },

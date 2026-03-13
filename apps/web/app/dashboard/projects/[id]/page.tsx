@@ -46,7 +46,8 @@ import { getPricingRules, createPricingRule, updatePricingRule, deletePricingRul
 import { getLaunchWaves, createLaunchWave, updateLaunchWave, deleteLaunchWave, launchWave, closeWave, getWaveAnalytics } from "../../../actions/launch-waves";
 import { getLaunchReadinessChecklist, getSalesTracking } from "../../../actions/launch";
 import { getPricingAnalytics, getWavePerformance } from "../../../actions/analytics";
-import { Wrench, HardHat, Package, CurrencyDollar, Rocket, Lightning, Drop, WifiHigh, Broadcast, Car, CloudRain, Tree, Wall, SignIn as SignIcon, Lamp, ToggleRight, Play, Stop } from "@phosphor-icons/react";
+import { createWorkspaceFromProject } from "../../../actions/planning-workspaces";
+import { Wrench, HardHat, Package, CurrencyDollar, Rocket, Lightning, Drop, WifiHigh, Broadcast, Car, CloudRain, Tree, Wall, SignIn as SignIcon, Lamp, ToggleRight, Play, Stop, Compass } from "@phosphor-icons/react";
 import { formatDualDate } from "../../../../lib/hijri";
 import MapPicker from "../../../../components/MapPicker";
 import { UploadButton } from "../../../../lib/uploadthing";
@@ -416,6 +417,20 @@ export default function ProjectDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            className="gap-2"
+            onClick={async () => {
+              try {
+                const ws = await createWorkspaceFromProject(id as string);
+                router.push(`/dashboard/planning/${ws.id}`);
+              } catch { /* permission denied — button hidden for non-planners */ }
+            }}
+          >
+            <Compass size={14} />
+            {lang === "ar" ? "فتح في التخطيط" : "Open in Planning"}
+          </Button>
           <Link href={`/dashboard/units?project=${id}`}>
             <Button variant="secondary" size="sm" className="gap-2">
               <Buildings size={14} />

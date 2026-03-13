@@ -15,8 +15,13 @@ import {
   Rocket,
   Package,
   ChartBar,
+  Compass,
+  CheckCircle,
+  Stack,
+  Star,
 } from "@phosphor-icons/react";
 import { getDashboardStats, getDashboardLandStats, getDashboardOffPlanStats } from "../actions/dashboard";
+import { getDashboardPlanningStats } from "../actions/planning-reports";
 import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
 import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
 import LandPipelineChart from "../../components/charts/LandPipelineChart";
@@ -36,6 +41,7 @@ export default function DashboardPage() {
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [landStats, setLandStats] = React.useState<any>(null);
   const [offPlanStats, setOffPlanStats] = React.useState<any>(null);
+  const [planningStats, setPlanningStats] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -45,6 +51,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
     getDashboardLandStats().then(setLandStats).catch(console.error);
     getDashboardOffPlanStats().then(setOffPlanStats).catch(console.error);
+    getDashboardPlanningStats().then(setPlanningStats).catch(() => {});
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
@@ -70,6 +77,13 @@ export default function DashboardPage() {
     { label: "إجمالي المخزون", value: offPlanStats ? offPlanStats.totalInventory : "—", icon: <Package size={20} weight="duotone" />, color: "secondary" as const },
     { label: "معدل التحويل", value: offPlanStats ? `${offPlanStats.conversionRate}%` : "—", icon: <ChartBar size={20} weight="duotone" />, color: "accent" as const },
     { label: "قيمة المبيعات", value: offPlanStats ? <SARAmount value={offPlanStats.pipelineValue} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
+  ];
+
+  const planningKpiData = [
+    { label: "مساحات العمل", value: planningStats ? planningStats.totalWorkspaces : "—", icon: <Compass size={20} weight="duotone" />, color: "primary" as const },
+    { label: "مساحات نشطة", value: planningStats ? planningStats.activeWorkspaces : "—", icon: <Stack size={20} weight="duotone" />, color: "secondary" as const },
+    { label: "سيناريوهات معتمدة", value: planningStats ? planningStats.approvedBaselines : "—", icon: <Star size={20} weight="duotone" />, color: "accent" as const },
+    { label: "معدل الامتثال", value: planningStats ? `${planningStats.avgComplianceScore}%` : "—", icon: <CheckCircle size={20} weight="duotone" />, color: planningStats?.avgComplianceScore >= 70 ? "secondary" as const : "warning" as const },
   ];
 
   return (
@@ -121,6 +135,21 @@ export default function DashboardPage() {
             ))
         }
       </div>
+
+      {/* Planning OS KPI Cards */}
+      {planningStats && planningStats.totalWorkspaces > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {planningKpiData.map((kpi, idx) => (
+            <KPICard
+              key={`planning-${idx}`}
+              label={kpi.label}
+              value={kpi.value}
+              icon={kpi.icon}
+              accentColor={kpi.color}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

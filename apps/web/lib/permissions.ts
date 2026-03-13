@@ -125,6 +125,17 @@ export type Permission =
   | "etmam:read"
   | "etmam:write"
   | "etmam:sync"
+  // Planning OS
+  | "planning:read"
+  | "planning:write"
+  | "planning:delete"
+  | "planning:import"
+  | "planning:geometry"
+  | "planning:scenarios"
+  | "planning:compliance"
+  | "planning:feasibility"
+  | "planning:approve"
+  | "planning:export"
   // System (platform-level)
   | "system:admin"
   | "system:support";
@@ -162,6 +173,10 @@ const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "launch:read", "launch:write",
   "help:read", "help:create_ticket", "help:manage_permissions",
   "invitations:read", "invitations:write",
+  // Planning OS (full access for company admin)
+  "planning:read", "planning:write", "planning:delete",
+  "planning:import", "planning:geometry", "planning:scenarios",
+  "planning:compliance", "planning:feasibility", "planning:approve", "planning:export",
   // Billing
   "billing:read", "billing:write",
   // Wafi Compliance
@@ -218,6 +233,10 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "inventory:read", "inventory:write",
     "pricing:read",
     "launch:read",
+    // Planning OS (planner/PM — edit everything, no approve/delete)
+    "planning:read", "planning:write",
+    "planning:import", "planning:geometry", "planning:scenarios",
+    "planning:compliance", "planning:feasibility", "planning:export",
     // Wafi (read + write milestones, read escrow/contracts)
     "escrow:read",
     "consultant:read",
@@ -244,6 +263,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "inventory:read", "inventory:write",
     "pricing:read", "pricing:write",
     "launch:read", "launch:write",
+    // Planning OS (read-only for sales visibility)
+    "planning:read", "planning:export",
     "help:read", "help:create_ticket",
   ],
 
@@ -288,6 +309,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "inventory:read",
     "pricing:read", "pricing:write",
     "launch:read",
+    // Planning OS (read + feasibility for financial review)
+    "planning:read", "planning:feasibility", "planning:export",
     // Wafi (escrow read/write, milestones read, contracts read/write)
     "escrow:read", "escrow:write",
     "milestones:read",

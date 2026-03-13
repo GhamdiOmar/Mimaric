@@ -1,6 +1,7 @@
 export type FAQCategory =
   | "getting_started"
   | "offplan_development"
+  | "planning"
   | "sales_crm"
   | "property_management"
   | "finance"
@@ -25,6 +26,7 @@ export type GuideItem = {
 export const FAQ_CATEGORIES: { key: FAQCategory; label: { ar: string; en: string } }[] = [
   { key: "getting_started", label: { ar: "البدء", en: "Getting Started" } },
   { key: "offplan_development", label: { ar: "التطوير على الخارطة", en: "Off-Plan Development" } },
+  { key: "planning", label: { ar: "التخطيط والتقسيم", en: "Planning & Subdivision" } },
   { key: "sales_crm", label: { ar: "المبيعات والعملاء", en: "Sales & CRM" } },
   { key: "property_management", label: { ar: "إدارة العقارات", en: "Property Management" } },
   { key: "finance", label: { ar: "المالية", en: "Finance" } },
@@ -112,6 +114,43 @@ export const FAQ_ITEMS: FAQItem[] = [
     question: { ar: "ما التقارير المتاحة للمشاريع على الخارطة؟", en: "What reports are available for off-plan projects?" },
     answer: { ar: "يتوفر 3 تقارير متخصصة: تقرير مسار التطوير (توزيع المشاريع على المراحل)، تقرير حالة الموافقات (معدلات النجاح ووقت المعالجة)، وتقرير تحليل التسعير (متوسط الأسعار حسب نوع المنتج). جميعها قابلة للتصدير PDF/Excel.", en: "3 specialized reports are available: Development Pipeline (projects by stage), Approval Status (success rates and processing time), and Pricing Analysis (average prices by product type). All exportable as PDF/Excel." },
     category: "offplan_development",
+  },
+  // Planning & Subdivision
+  {
+    id: "pl-1",
+    question: { ar: "ما هو نظام التخطيط (Planning OS)؟", en: "What is the Planning OS?" },
+    answer: { ar: "نظام التخطيط يمكّنك من تخطيط تقسيم الأراضي بسيناريوهات متعددة. أنشئ مساحة عمل من أرض أو مشروع، ارسم القطع والشوارع على الخريطة، شغّل فحص الامتثال للتحقق من معايير البناء، واحسب الجدوى المالية تلقائياً.", en: "The Planning OS lets you plan land subdivision with multiple scenarios. Create a workspace from a land parcel or project, draw plots and roads on the map, run compliance checks against building regulations, and auto-calculate financial feasibility." },
+    category: "planning",
+  },
+  {
+    id: "pl-2",
+    question: { ar: "كيف أنشئ مساحة عمل تخطيطية؟", en: "How do I create a planning workspace?" },
+    answer: { ar: "اذهب إلى قسم التخطيط وانقر 'مساحة عمل جديدة'. حدد الاسم والموقع والمساحة واختيارياً اربطها بأرض من سجلاتك. يمكنك أيضاً الضغط على 'فتح في التخطيط' من صفحة الأرض أو المشروع مباشرة.", en: "Go to the Planning section and click 'New Workspace'. Set the name, location, area, and optionally link it to a land record. You can also click 'Open in Planning' from the Land or Project detail page." },
+    category: "planning",
+  },
+  {
+    id: "pl-3",
+    question: { ar: "كيف أقارن بين السيناريوهات؟", en: "How do I compare scenarios?" },
+    answer: { ar: "من تبويب 'المقارنة' في مساحة العمل، يعرض النظام جدولاً مقارناً لجميع السيناريوهات: عدد القطع، المساحة القابلة للبيع، الشوارع، المساحات المفتوحة، الإيرادات المتوقعة، والعائد على الاستثمار. اختر السيناريو الأفضل واعتمده كخط أساس.", en: "From the 'Comparison' tab in the workspace, the system shows a side-by-side table of all scenarios: plot count, sellable area, roads, open space, estimated revenue, and ROI. Pick the best scenario and approve it as the baseline." },
+    category: "planning",
+  },
+  {
+    id: "pl-4",
+    question: { ar: "كيف يعمل فحص الامتثال؟", en: "How does compliance checking work?" },
+    answer: { ar: "من تبويب 'الامتثال'، انقر 'تشغيل الفحص'. يقارن النظام القطع والشوارع بقواعد التخطيط السعودية (الحد الأدنى لمساحة القطعة، عرض الشارع، نسبة المساحات المفتوحة...). تظهر النتائج بألوان: أخضر (ناجح)، أحمر (فشل)، أصفر (تحذير).", en: "From the 'Compliance' tab, click 'Run Check'. The system compares plots and roads against Saudi planning rules (minimum plot area, road width, open space percentage...). Results show color-coded: green (pass), red (fail), yellow (warning)." },
+    category: "planning",
+  },
+  {
+    id: "pl-5",
+    question: { ar: "كيف أحسب الجدوى المالية للسيناريو؟", en: "How do I calculate scenario feasibility?" },
+    answer: { ar: "من تبويب 'الجدوى'، أدخل افتراضات التسعير (سعر م² للسكني والتجاري)، تكاليف البناء والبنية التحتية، ونسب التكاليف غير المباشرة. النظام يحسب تلقائياً: إجمالي الإيرادات، التكاليف، صافي الربح، والعائد على الاستثمار.", en: "From the 'Feasibility' tab, enter pricing assumptions (price/sqm for residential and commercial), construction and infrastructure costs, and soft cost percentages. The system auto-calculates: total revenue, costs, net profit, and ROI." },
+    category: "planning",
+  },
+  {
+    id: "pl-6",
+    question: { ar: "كيف أستورد بيانات مكانية؟", en: "How do I import spatial data?" },
+    answer: { ar: "من زر 'استيراد' في مساحة العمل، يمكنك رفع ملفات GeoJSON أو KML أو CSV (مع أعمدة lat/lng). الملفات تُضاف كطبقات مكانية على الخريطة يمكنك التحكم بظهورها.", en: "From the 'Import' button in the workspace, upload GeoJSON, KML, or CSV files (with lat/lng columns). Files are added as spatial layers on the map with visibility toggles." },
+    category: "planning",
   },
   // Sales & CRM
   {
@@ -539,6 +578,36 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "اكتب وصفاً تفصيلياً للحدث أو الملاحظة", en: "Write a detailed description of the event or observation" },
       { ar: "اختيارياً: حدد مستوى الخطورة (منخفض، متوسط، عالي، حرج) واسم المُبلّغ", en: "Optionally: set the severity level (low, medium, high, critical) and reporter name" },
       { ar: "انقر 'حفظ' — يمكنك لاحقاً تصفية السجلات حسب النوع والخطورة، وحل المفتوح منها", en: "Click 'Save' — you can later filter logs by type and severity, and resolve open ones" },
+    ],
+  },
+  // Planning OS Guides
+  {
+    id: "guide-20",
+    title: { ar: "تخطيط تقسيم أرض جديدة", en: "Plan a New Land Subdivision" },
+    description: { ar: "الخطوات الكاملة لتخطيط تقسيم أرض باستخدام نظام التخطيط", en: "Complete steps to plan a land subdivision using the Planning OS" },
+    module: "planning",
+    steps: [
+      { ar: "اذهب إلى قسم التخطيط من القائمة الجانبية", en: "Go to the Planning section from the sidebar" },
+      { ar: "انقر 'مساحة عمل جديدة' أو اضغط 'فتح في التخطيط' من صفحة الأرض", en: "Click 'New Workspace' or press 'Open in Planning' from the Land page" },
+      { ar: "أنشئ سيناريو جديد — سيتم إنشاء مخطط تقسيم فارغ تلقائياً", en: "Create a new scenario — an empty subdivision plan is auto-created" },
+      { ar: "استخدم أدوات الرسم على الخريطة لإضافة حدود الموقع والقطع والشوارع", en: "Use the map drawing tools to add site boundary, plots, and roads" },
+      { ar: "شغّل فحص الامتثال للتحقق من مطابقة المعايير السعودية", en: "Run compliance check to verify Saudi regulation compliance" },
+      { ar: "أدخل افتراضات الجدوى واحسب العائد المتوقع", en: "Enter feasibility assumptions and calculate expected returns" },
+      { ar: "كرر العملية لسيناريوهات بديلة وقارن بينها", en: "Repeat for alternative scenarios and compare them" },
+      { ar: "اعتمد السيناريو الأفضل كخط أساس", en: "Approve the best scenario as baseline" },
+    ],
+  },
+  {
+    id: "guide-21",
+    title: { ar: "تصدير تقارير التخطيط", en: "Export Planning Reports" },
+    description: { ar: "كيفية تصدير جدول القطع وتقرير المقارنة والجدوى", en: "How to export parcel schedules, comparison, and feasibility reports" },
+    module: "planning",
+    steps: [
+      { ar: "افتح مساحة العمل واختر السيناريو المطلوب", en: "Open the workspace and select the desired scenario" },
+      { ar: "لتصدير جدول القطع: من تبويب 'السيناريوهات' اختر 'تصدير جدول القطع'", en: "To export parcel schedule: from 'Scenarios' tab choose 'Export Parcel Schedule'" },
+      { ar: "لتصدير تقرير المقارنة: من تبويب 'المقارنة' اختر 'تصدير'", en: "To export comparison: from 'Comparison' tab choose 'Export'" },
+      { ar: "لتصدير الجدوى: من تبويب 'الجدوى' اختر 'تصدير الجدوى'", en: "To export feasibility: from 'Feasibility' tab choose 'Export Feasibility'" },
+      { ar: "التقارير متاحة بصيغة Excel مع جداول مفصلة", en: "Reports are available as Excel files with detailed tables" },
     ],
   },
   // Onboarding Guide

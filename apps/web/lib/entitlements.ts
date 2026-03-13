@@ -16,6 +16,7 @@ export const FEATURE_KEYS = {
   // Boolean features
   CMMS_ACCESS: "cmms.access",
   OFFPLAN_ACCESS: "offplan.access",
+  PLANNING_ACCESS: "planning.access",
   REPORTS_EXPORT: "reports.export",
   PII_ENCRYPTION: "pii.encryption",
   AUDIT_ACCESS: "audit.access",

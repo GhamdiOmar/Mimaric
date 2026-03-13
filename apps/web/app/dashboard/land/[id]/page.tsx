@@ -13,6 +13,7 @@ import { getLandDetail, updateLandStatus, getDueDiligence, updateDueDiligenceIte
 import { getConstraints, createConstraint, updateConstraint, deleteConstraint, getConstraintStats } from "../../../actions/constraints";
 import { getFeasibilityAssessments, createFeasibilityAssessment, updateFeasibilityAssessment, getSuitabilityScore } from "../../../actions/feasibility";
 import { getDecisionGates, requestStageTransition, resolveDecisionGate, getStageHistory } from "../../../actions/decision-gates";
+import { createWorkspaceFromLand } from "../../../actions/planning-workspaces";
 import MapPicker from "../../../../components/MapPicker";
 
 const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
@@ -207,6 +208,19 @@ export default function LandDetailPage() {
           <h1 className="text-2xl font-bold text-primary">{land.name}</h1>
           <p className="text-sm text-neutral mt-0.5">{[land.city, land.district, land.region].filter(Boolean).join(", ")}</p>
         </div>
+        <button
+          onClick={async () => {
+            try {
+              const ws = await createWorkspaceFromLand(land.id);
+              router.push(`/dashboard/planning/${ws.id}`);
+            } catch { /* empty */ }
+          }}
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors whitespace-nowrap"
+          style={{ display: "inline-flex" }}
+        >
+          <MapPin size={14} />
+          {lang === "ar" ? "فتح في التخطيط" : "Open in Planning"}
+        </button>
         {suitabilityScore !== null && (
           <div className="text-center">
             <div className={`text-2xl font-black ${suitabilityScore >= 70 ? "text-secondary" : suitabilityScore >= 40 ? "text-amber-600" : "text-destructive"}`}>
