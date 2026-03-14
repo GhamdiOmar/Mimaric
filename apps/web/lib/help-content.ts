@@ -175,7 +175,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "pm-1",
     question: { ar: "كيف أتابع حالة الوحدات؟", en: "How do I track unit status?" },
-    answer: { ar: "من قسم الوحدات، يمكنك رؤية جميع الوحدات مع حالتها (متاح، محجوز، مباع، مؤجر، صيانة). يمكنك تعديل الأسعار وتغيير الحالة.", en: "From the Units section, view all units with their status (Available, Reserved, Sold, Rented, Maintenance). You can edit prices and change status." },
+    answer: { ar: "من قسم الوحدات، يمكنك رؤية جميع الوحدات في شبكة بطاقات ملونة حسب الحالة (متاح، محجوز، مباع، مؤجر، صيانة). انقر زر التفاصيل على أي وحدة لفتح لوحة جانبية تعرض: النوع، الحالة، المساحة، أسعار التكلفة والبيع والإيجار، الملخص المالي (إيجار محصّل، إيراد البيع، تكاليف الصيانة، صافي الدخل)، العقد المرتبط (إن وُجد)، وطلبات الصيانة. حالة الوحدة تتحدث تلقائياً عند توقيع أو إلغاء العقود.", en: "From the Units section, view all units in a color-coded card grid by status (Available, Reserved, Sold, Rented, Maintenance). Click the detail button on any unit to open a side panel showing: type, status, area, cost/selling/rental prices, financial summary (rent collected, sale revenue, maintenance costs, net income), linked contract (if any), and maintenance requests. Unit status updates automatically when contracts are signed or cancelled." },
     category: "property_management",
   },
   {
@@ -194,7 +194,19 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "fi-1",
     question: { ar: "كيف أتابع الأقساط المستحقة؟", en: "How do I track due installments?" },
-    answer: { ar: "من قسم الإيجارات > تحصيل الإيجارات، يمكنك رؤية جميع الأقساط مع حالتها (مدفوع، غير مدفوع، متأخر). يمكنك تسجيل الدفعات من هناك.", en: "From Rentals > Rent Collection, view all installments with status (Paid, Unpaid, Overdue). You can record payments from there." },
+    answer: { ar: "من قسم الإيجارات > تحصيل الإيجارات، يمكنك رؤية جميع الأقساط مع حالتها (مدفوع، غير مدفوع، متأخر). يمكنك تسجيل الدفعات من هناك. عند إنشاء عقد إيجار متوافق مع إيجار، يُنشأ جدول الأقساط تلقائياً حسب دورية الدفع المحددة (شهري، ربع سنوي، نصف سنوي، سنوي) ويُربط بالعقد.", en: "From Rentals > Rent Collection, view all installments with status (Paid, Unpaid, Overdue). You can record payments from there. When creating an Ejar-compliant lease contract, the installment schedule is auto-generated based on the specified payment frequency (monthly, quarterly, semi-annual, annual) and linked to the contract." },
+    category: "finance",
+  },
+  {
+    id: "fi-8",
+    question: { ar: "كيف أتابع الملخص المالي للوحدة؟", en: "How do I view the financial summary for a unit?" },
+    answer: { ar: "من قسم الوحدات، افتح تفاصيل أي وحدة. قسم 'الملخص المالي' يعرض أربعة مؤشرات: إيجار محصّل (إجمالي الأقساط المدفوعة)، إيراد البيع (مبالغ عقود البيع الموقّعة)، تكاليف الصيانة (التكلفة الفعلية أو المقدّرة لطلبات الصيانة)، وصافي الدخل (الإيرادات ناقص التكاليف). المؤشرات تُحسب تلقائياً من بيانات العقود والإيجارات والصيانة.", en: "From the Units section, open any unit's details. The 'Financial Summary' section shows four KPIs: Rent Collected (total paid installments), Sale Revenue (signed sale contract amounts), Maintenance Costs (actual or estimated maintenance request costs), and Net Income (revenue minus costs). KPIs are auto-calculated from contracts, leases, and maintenance data." },
+    category: "finance",
+  },
+  {
+    id: "fi-9",
+    question: { ar: "كيف يعمل حساب الضمان (Escrow)؟", en: "How does the escrow account work?" },
+    answer: { ar: "حساب الضمان يُنشأ لكل مشروع وفقاً لنظام وافي. عند توقيع عقد بيع، يتم تلقائياً تسجيل إيداع (BUYER_DEPOSIT) بمبلغ العقد في حساب الضمان. عند إبطال عقد موقّع، يتم تسجيل عكس (REVERSAL) تلقائياً. يمكن للمسؤول المالي متابعة جميع حركات الضمان من قسم وافي.", en: "An escrow account is created per project per Wafi regulations. When a sale contract is signed, a deposit (BUYER_DEPOSIT) for the contract amount is auto-recorded in the escrow account. When a signed contract is voided, a reversal is auto-recorded. The Finance Officer can track all escrow transactions from the Wafi section." },
     category: "finance",
   },
   {
@@ -214,6 +226,12 @@ export const FAQ_ITEMS: FAQItem[] = [
     id: "sp-1",
     question: { ar: "كيف يتم حماية بيانات العملاء الشخصية؟", en: "How is customer personal data protected?" },
     answer: { ar: "يتم تشفير البيانات الشخصية (الهوية الوطنية، الهاتف، البريد الإلكتروني) بتقنية AES-256-GCM. فقط المستخدمون المصرح لهم يمكنهم عرض البيانات الكاملة.", en: "Personal data (national ID, phone, email) is encrypted with AES-256-GCM. Only authorized users can view full data." },
+    category: "security_privacy",
+  },
+  {
+    id: "sp-4",
+    question: { ar: "كيف يعمل نظام الصلاحيات للعقود؟", en: "How does the contract permissions system work?" },
+    answer: { ar: "يفصل ميماريك بين العمليات التقدمية والتدميرية للعقود. العمليات التقدمية (إنشاء، إرسال، توقيع) تتطلب صلاحية 'contracts:write' — متاحة لمدير الشركة، مدير المبيعات، ووكيل المبيعات. العمليات التدميرية (إلغاء، إبطال، حذف) تتطلب صلاحية 'contracts:delete' — متاحة لمدير الشركة فقط. مديرو المشاريع ومديرو العقارات يمكنهم عرض العقود (contracts:read). المستأجرون يمكنهم أيضاً عرض عقودهم (تنظيم إيجار يتطلب الشفافية).", en: "Mimaric separates progressive and destructive contract operations. Progressive operations (create, send, sign) require 'contracts:write' — available to Company Admin, Sales Manager, and Sales Agent. Destructive operations (cancel, void, delete) require 'contracts:delete' — available to Company Admin only. Project Managers and Property Managers can view contracts (contracts:read). Tenants can also view their contracts (Ejar regulation requires transparency)." },
     category: "security_privacy",
   },
   {
@@ -292,11 +310,65 @@ export const FAQ_ITEMS: FAQItem[] = [
     answer: { ar: "من الإيجارات > المدفوعات، تظهر لوحة بأربعة مؤشرات: إجمالي المستحق، المحصّل، المتأخر، والمعلق. الجدول يعرض كل قسط مع اسم المستأجر ورقم الوحدة والمبلغ وتاريخ الاستحقاق والحالة. انقر 'تسجيل دفعة' على أي قسط غير مدفوع لتسجيل التحصيل. النظام يحدّث الأقساط المتأخرة تلقائياً.", en: "From Rentals > Payments, a dashboard shows four KPIs: Total Due, Collected, Overdue, and Pending. The table lists each installment with tenant name, unit number, amount, due date, and status. Click 'Record Payment' on any unpaid installment to record collection. The system automatically marks overdue installments." },
     category: "finance",
   },
-  // Sales Contracts
+  // Sales Contracts & Ejar/Wafi Compliance
   {
     id: "sc-4",
     question: { ar: "كيف أتابع عقود المبيعات؟", en: "How do I track sales contracts?" },
-    answer: { ar: "من المبيعات > العقود، يعرض النظام جدولاً بجميع العقود مع بيانات العميل (الاسم والهاتف)، الوحدة (الرقم والمبنى)، نوع العقد (بيع أو إيجار)، المبلغ بالريال، التاريخ بالهجري والميلادي، والحالة. يمكنك تصفية العقود حسب الحالة: مسودة، مُرسل، موقّع، ملغي. انقر 'عرض' لفتح تفاصيل أي عقد.", en: "From Sales > Contracts, the system shows a table of all contracts with customer info (name and phone), unit (number and building), contract type (sale or lease), amount in SAR, date in Hijri and Gregorian, and status. Filter contracts by status: Draft, Sent, Signed, Canceled. Click 'View' to open any contract's details." },
+    answer: { ar: "من المبيعات > العقود، يعرض النظام جدولاً بجميع العقود مع بيانات العميل (الاسم والهاتف)، الوحدة (الرقم والمبنى)، نوع العقد (بيع أو إيجار)، المبلغ بالريال، التاريخ بالهجري والميلادي، والحالة. يمكنك تصفية العقود حسب الحالة: مسودة، مُرسل، موقّع، ملغي. لكل عقد رقم فريد تلقائي (مثل SALE-2026-0001 أو LEASE-2026-0001). انقر 'عرض' لفتح تفاصيل أي عقد.", en: "From Sales > Contracts, the system shows a table of all contracts with customer info (name and phone), unit (number and building), contract type (sale or lease), amount in SAR, date in Hijri and Gregorian, and status. Filter contracts by status: Draft, Sent, Signed, Canceled. Each contract gets an auto-generated unique number (e.g., SALE-2026-0001 or LEASE-2026-0001). Click 'View' to open any contract's details." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-5",
+    question: { ar: "ما هو نظام إيجار وكيف يتوافق ميماريك معه؟", en: "What is Ejar and how does Mimaric comply with it?" },
+    answer: { ar: "إيجار هو النظام الإلكتروني لعقود الإيجار في المملكة العربية السعودية. يتوافق ميماريك مع متطلبات إيجار عند إنشاء عقد إيجار: تاريخ البدء والانتهاء (إلزامي)، دورية الدفع (شهري، ربع سنوي، نصف سنوي، سنوي)، مبلغ الضمان (بحد أقصى 5% من قيمة العقد)، التجديد التلقائي (يُفعّل تلقائياً للعقود أكثر من 3 أشهر)، مسؤولية الصيانة (المؤجر أو المستأجر)، وفترة الإشعار (60 يوماً افتراضياً). النظام ينشئ جدول أقساط تلقائياً ويربطه بالعقد.", en: "Ejar is Saudi Arabia's electronic rental contract system. Mimaric complies with Ejar requirements when creating a lease contract: start and end dates (mandatory), payment frequency (monthly, quarterly, semi-annual, annual), security deposit (maximum 5% of contract value), auto-renewal (automatically enabled for leases over 3 months), maintenance responsibility (landlord or tenant), and notice period (60 days default). The system auto-generates an installment schedule linked to the contract." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-6",
+    question: { ar: "ما هو نظام وافي وكيف يتوافق ميماريك معه؟", en: "What is Wafi and how does Mimaric comply with it?" },
+    answer: { ar: "وافي هو برنامج البيع على الخارطة التابع لوزارة الإسكان. عند إنشاء عقد بيع، يدعم ميماريك حقول وافي: تاريخ التسليم، رقم رخصة وافي، ومرجع حساب الضمان. عند توقيع عقد البيع، يتم تلقائياً: تحديث حالة الوحدة إلى 'مباع'، تحويل حالة العميل إلى 'مُحوّل'، وتسجيل إيداع في حساب الضمان (Escrow).", en: "Wafi is the Ministry of Housing's off-plan sales program. When creating a sale contract, Mimaric supports Wafi fields: delivery date, Wafi license reference, and escrow account reference. When a sale contract is signed, the system automatically: updates the unit status to 'Sold', converts the customer status to 'Converted', and records a deposit in the escrow account." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-7",
+    question: { ar: "ما هي دورة حياة العقد في ميماريك؟", en: "What is the contract lifecycle in Mimaric?" },
+    answer: { ar: "يمر العقد بأربع حالات: مسودة ← مُرسل ← موقّع، ويمكن إلغاء العقد أو إبطاله. المسودة يمكن إرسالها أو إلغاؤها أو حذفها. المُرسل يمكن توقيعه أو إلغاؤه. الموقّع يمكن إبطاله فقط. عند التوقيع: عقد البيع يحوّل الوحدة إلى 'مباع' والعميل إلى 'مُحوّل'. عقد الإيجار يحوّل الوحدة إلى 'مؤجر' والعميل إلى 'مستأجر نشط' ويفعّل عقد الإيجار المرتبط. عند الإلغاء أو الإبطال: تعود الوحدة إلى 'متاح' ويتم إنهاء عقد الإيجار المرتبط.", en: "A contract goes through four states: Draft → Sent → Signed, and can be Cancelled or Voided. Draft contracts can be sent, cancelled, or deleted. Sent contracts can be signed or cancelled. Signed contracts can only be voided. On signing: Sale contracts set unit to 'Sold' and customer to 'Converted'. Lease contracts set unit to 'Rented', customer to 'Active Tenant', and activate the linked lease. On cancel/void: the unit returns to 'Available' and the linked lease is terminated." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-8",
+    question: { ar: "كيف أنشئ عقد إيجار متوافق مع إيجار؟", en: "How do I create an Ejar-compliant lease contract?" },
+    answer: { ar: "من المبيعات > العقود، انقر 'عقد جديد' واختر نوع 'إيجار'. ستظهر حقول إيجار: تاريخ البداية والنهاية، دورية الدفع (شهري/ربع سنوي/نصف سنوي/سنوي)، مبلغ الضمان (لا يتجاوز 5%)، التجديد التلقائي، مسؤولية الصيانة، والملاحظات. عند الحفظ، يُنشأ تلقائياً: عقد إيجار مع رقم فريد، جدول أقساط حسب الدورية، وعقد إيجار مربوط بجدول الأقساط.", en: "From Sales > Contracts, click 'New Contract' and select 'Lease' type. Ejar fields appear: start and end dates, payment frequency (monthly/quarterly/semi-annual/annual), security deposit (max 5%), auto-renewal, maintenance responsibility, and notes. On save, the system auto-creates: a contract with a unique number, an installment schedule based on frequency, and a linked lease record with the installment schedule." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-9",
+    question: { ar: "كيف أنشئ عقد بيع متوافق مع وافي؟", en: "How do I create a Wafi-compliant sale contract?" },
+    answer: { ar: "من المبيعات > العقود، انقر 'عقد جديد' واختر نوع 'بيع'. ستظهر حقول وافي: تاريخ التسليم، رقم رخصة وافي، والملاحظات. حساب الضمان يُربط تلقائياً من المشروع. عند توقيع العقد، يتم إيداع مبلغ العقد في حساب الضمان تلقائياً.", en: "From Sales > Contracts, click 'New Contract' and select 'Sale' type. Wafi fields appear: delivery date, Wafi license reference, and notes. The escrow account is auto-linked from the project. When the contract is signed, the contract amount is automatically deposited into the escrow account." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-10",
+    question: { ar: "من يمكنه إلغاء أو إبطال أو حذف العقود؟", en: "Who can cancel, void, or delete contracts?" },
+    answer: { ar: "العمليات التدميرية (إلغاء، إبطال، حذف) تتطلب صلاحية 'contracts:delete' المتاحة لمدير الشركة فقط. العمليات التقدمية (إرسال، توقيع) تتطلب صلاحية 'contracts:write' المتاحة لمدير الشركة ومدير المبيعات ووكيل المبيعات. مديرو المشاريع ومديرو العقارات والمستأجرون يمكنهم عرض العقود فقط. الحذف متاح فقط للعقود في حالة 'مسودة'.", en: "Destructive operations (cancel, void, delete) require 'contracts:delete' permission, available to Company Admin only. Progressive operations (send, sign) require 'contracts:write', available to Company Admin, Sales Manager, and Sales Agent. Project Managers, Property Managers, and Tenants can only view contracts. Deletion is only allowed for 'Draft' contracts." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-11",
+    question: { ar: "كيف أرى العقد المرتبط بوحدة؟", en: "How do I see the contract linked to a unit?" },
+    answer: { ar: "من قسم الوحدات، انقر على زر التفاصيل لأي وحدة مباعة أو مؤجرة. في لوحة التفاصيل، ستجد قسم 'العقد المرتبط' الذي يعرض: نوع العقد (بيع/إيجار)، الحالة (مسودة/مُرسل/موقّع)، اسم العميل، رقم العقد، وزر 'عرض العقد' للانتقال مباشرة لتفاصيل العقد.", en: "From the Units section, click the detail button for any sold or rented unit. In the detail panel, you'll find the 'Linked Contract' section showing: contract type (sale/lease), status (draft/sent/signed), customer name, contract number, and a 'View Contract' button to navigate directly to the contract details." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-12",
+    question: { ar: "كيف أعرض تفاصيل عقد الإيجار (شروط إيجار)؟", en: "How do I view lease contract details (Ejar terms)?" },
+    answer: { ar: "من صفحة تفاصيل العقد (نوع إيجار)، ستجد: القسم الأول — بيانات الأطراف (المؤجر والمستأجر)، القسم الثاني — بيانات الوحدة، القسم الثالث — القيمة المالية، القسم الرابع — شروط الإيجار (الفترة، دورية الدفع، مبلغ الضمان، التجديد التلقائي، مسؤولية الصيانة، فترة الإشعار)، والقسم الخامس — جدول الأقساط (رقم القسط، تاريخ الاستحقاق، المبلغ، الحالة).", en: "From the contract detail page (lease type), you'll find: Section 1 — party details (landlord and tenant), Section 2 — unit details, Section 3 — financial value, Section 4 — lease terms (period, payment frequency, security deposit, auto-renewal, maintenance responsibility, notice period), and Section 5 — payment schedule (installment number, due date, amount, status)." },
+    category: "sales_crm",
+  },
+  {
+    id: "sc-13",
+    question: { ar: "كيف أعرض تفاصيل عقد البيع (شروط وافي)؟", en: "How do I view sale contract details (Wafi terms)?" },
+    answer: { ar: "من صفحة تفاصيل العقد (نوع بيع)، ستجد: القسم الأول — بيانات الأطراف (البائع والمشتري)، القسم الثاني — بيانات الوحدة، القسم الثالث — القيمة المالية، والقسم الرابع — شروط البيع (تاريخ التسليم، رخصة وافي، مرجع حساب الضمان). الشريط الجانبي يعرض رقم العقد والقيمة ومراجع وافي.", en: "From the contract detail page (sale type), you'll find: Section 1 — party details (seller and buyer), Section 2 — unit details, Section 3 — financial value, and Section 4 — sale terms (delivery date, Wafi license, escrow account reference). The sidebar shows the contract number, value, and Wafi references." },
     category: "sales_crm",
   },
   // Site Logs
@@ -345,14 +417,15 @@ export const GUIDE_ITEMS: GuideItem[] = [
   {
     id: "guide-2",
     title: { ar: "إدارة الوحدات", en: "Manage Units" },
-    description: { ar: "كيفية إضافة وتعديل وحذف الوحدات العقارية في المشاريع", en: "How to add, edit, and delete units in projects" },
+    description: { ar: "كيفية إضافة وتعديل وعرض تفاصيل الوحدات العقارية في المشاريع", en: "How to add, edit, and view details of units in projects" },
     module: "units",
     steps: [
-      { ar: "اذهب إلى قسم الوحدات", en: "Go to the Units section" },
-      { ar: "اختر المشروع والمبنى المراد إضافة وحدات له", en: "Select the project and building to add units to" },
-      { ar: "انقر 'إضافة وحدة' وأدخل الرقم، النوع، المساحة، والسعر", en: "Click 'Add Unit' and enter number, type, area, and price" },
-      { ar: "يمكنك تعديل عدة وحدات معاً باستخدام التحديد المتعدد", en: "You can bulk-edit units using multi-select" },
-      { ar: "غيّر حالة الوحدة (متاح، محجوز، مباع) حسب الحاجة", en: "Change unit status (Available, Reserved, Sold) as needed" },
+      { ar: "اذهب إلى قسم الوحدات — ستظهر شبكة بطاقات بجميع الوحدات مع حالتها", en: "Go to the Units section — a card grid shows all units with their status" },
+      { ar: "استخدم الفلاتر: البحث برقم الوحدة، تصفية حسب المشروع، تصفية حسب الحالة", en: "Use filters: search by unit number, filter by project, filter by status" },
+      { ar: "انقر 'إضافة وحدة' وأدخل الرقم، النوع، المبنى، المساحة، وأسعار التكلفة والبيع والإيجار", en: "Click 'Add Unit' and enter number, type, building, area, and cost/selling/rental prices" },
+      { ar: "يمكنك تعديل عدة وحدات معاً باستخدام التحديد المتعدد وشريط الإجراءات", en: "You can bulk-edit units using multi-select and the action bar" },
+      { ar: "انقر زر التفاصيل للوحدة لعرض: المعلومات الأساسية، الملخص المالي، العقد المرتبط، وطلبات الصيانة", en: "Click the detail button to view: basic info, financial summary, linked contract, and maintenance requests" },
+      { ar: "حالة الوحدة تتحدث تلقائياً عند العمليات: مباع عند توقيع عقد بيع، مؤجر عند توقيع عقد إيجار", en: "Unit status auto-updates on operations: Sold when a sale contract is signed, Rented when a lease is signed" },
     ],
   },
   {
@@ -372,14 +445,15 @@ export const GUIDE_ITEMS: GuideItem[] = [
   {
     id: "guide-4",
     title: { ar: "إنشاء عقد إيجار", en: "Create a Lease" },
-    description: { ar: "خطوات إنشاء عقد إيجار جديد مع جدول الأقساط", en: "Steps to create a new lease with installment schedule" },
+    description: { ar: "خطوات إنشاء عقد إيجار جديد مع جدول الأقساط وعقد مرتبط", en: "Steps to create a new lease with installment schedule and linked contract" },
     module: "rentals",
     steps: [
       { ar: "اذهب إلى قسم الإيجارات", en: "Go to the Rentals section" },
       { ar: "انقر 'عقد إيجار جديد'", en: "Click 'New Lease'" },
       { ar: "اختر الوحدة والمستأجر", en: "Select the unit and tenant" },
       { ar: "حدد تاريخ البدء والانتهاء والمبلغ الإجمالي", en: "Set start date, end date, and total amount" },
-      { ar: "سيتم إنشاء جدول الأقساط الشهرية تلقائياً", en: "Monthly installment schedule is auto-generated" },
+      { ar: "سيتم إنشاء جدول الأقساط تلقائياً + عقد إيجار موقّع مرتبط برقم فريد", en: "An installment schedule is auto-generated + a signed linked lease contract with a unique number" },
+      { ar: "ملاحظة: يمكنك أيضاً إنشاء عقد إيجار من المبيعات > العقود مع حقول إيجار الكاملة", en: "Note: You can also create a lease contract from Sales > Contracts with full Ejar fields" },
     ],
   },
   {
@@ -522,7 +596,7 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "انقر زر التحميل على أي بطاقة مستند لتحميله إلى جهازك", en: "Click the download button on any document card to download it" },
     ],
   },
-  // Sales Contracts Guide
+  // Sales Contracts Guides
   {
     id: "guide-15",
     title: { ar: "متابعة عقود المبيعات", en: "Track Sales Contracts" },
@@ -532,8 +606,55 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "اذهب إلى المبيعات > العقود من القائمة الجانبية", en: "Go to Sales > Contracts from the sidebar" },
       { ar: "استخدم أزرار التصفية في الأعلى لاختيار الحالة (الكل، مسودة، مُرسل، موقّع، ملغي)", en: "Use the filter buttons at the top to select status (All, Draft, Sent, Signed, Canceled)" },
       { ar: "استعرض الجدول الذي يعرض بيانات العميل والوحدة ونوع العقد والمبلغ والتاريخ", en: "Browse the table showing customer info, unit, contract type, amount, and date" },
-      { ar: "انقر 'عرض' لفتح صفحة تفاصيل العقد", en: "Click 'View' to open the contract details page" },
-      { ar: "تابع دورة حياة العقد: مسودة ← مُرسل ← موقّع", en: "Follow the contract lifecycle: Draft → Sent → Signed" },
+      { ar: "انقر 'عرض' لفتح صفحة تفاصيل العقد مع الشروط والأطراف", en: "Click 'View' to open the contract details page with terms and parties" },
+      { ar: "تابع دورة حياة العقد: مسودة ← مُرسل ← موقّع. استخدم أزرار الإجراءات لتحريك العقد", en: "Follow the contract lifecycle: Draft → Sent → Signed. Use action buttons to advance the contract" },
+    ],
+  },
+  {
+    id: "guide-22",
+    title: { ar: "إنشاء عقد إيجار (إيجار)", en: "Create an Ejar Lease Contract" },
+    description: { ar: "خطوات إنشاء عقد إيجار متوافق مع نظام إيجار السعودي", en: "Steps to create a lease contract compliant with the Saudi Ejar system" },
+    module: "sales",
+    steps: [
+      { ar: "اذهب إلى المبيعات > العقود وانقر 'عقد جديد'", en: "Go to Sales > Contracts and click 'New Contract'" },
+      { ar: "اختر نوع العقد: 'إيجار' — ستظهر حقول إيجار الإضافية", en: "Select contract type: 'Lease' — Ejar-specific fields will appear" },
+      { ar: "اختر العميل (المستأجر) والوحدة، وأدخل مبلغ الإيجار الإجمالي", en: "Select the customer (tenant) and unit, and enter the total lease amount" },
+      { ar: "حدد تاريخ البداية والنهاية — هذه حقول إلزامية لعقود الإيجار", en: "Set start and end dates — these are mandatory for lease contracts" },
+      { ar: "اختر دورية الدفع: شهري، ربع سنوي، نصف سنوي، أو سنوي", en: "Select payment frequency: monthly, quarterly, semi-annual, or annual" },
+      { ar: "أدخل مبلغ الضمان (اختياري — لا يتجاوز 5% من قيمة العقد حسب نظام إيجار)", en: "Enter security deposit (optional — max 5% of contract value per Ejar regulation)" },
+      { ar: "حدد التجديد التلقائي (نعم/لا) ومسؤولية الصيانة (المؤجر/المستأجر)", en: "Set auto-renewal (yes/no) and maintenance responsibility (landlord/tenant)" },
+      { ar: "انقر 'إنشاء' — يُنشأ العقد مع جدول أقساط تلقائي ورقم عقد فريد", en: "Click 'Create' — the contract is created with an auto-generated installment schedule and unique contract number" },
+    ],
+  },
+  {
+    id: "guide-23",
+    title: { ar: "إنشاء عقد بيع (وافي)", en: "Create a Wafi Sale Contract" },
+    description: { ar: "خطوات إنشاء عقد بيع متوافق مع نظام وافي للبيع على الخارطة", en: "Steps to create a sale contract compliant with the Wafi off-plan sales system" },
+    module: "sales",
+    steps: [
+      { ar: "اذهب إلى المبيعات > العقود وانقر 'عقد جديد'", en: "Go to Sales > Contracts and click 'New Contract'" },
+      { ar: "اختر نوع العقد: 'بيع' — ستظهر حقول وافي", en: "Select contract type: 'Sale' — Wafi-specific fields will appear" },
+      { ar: "اختر العميل (المشتري) والوحدة، وأدخل مبلغ البيع", en: "Select the customer (buyer) and unit, and enter the sale amount" },
+      { ar: "حدد تاريخ التسليم المتوقع", en: "Set the expected delivery date" },
+      { ar: "أدخل رقم رخصة وافي (اختياري)", en: "Enter the Wafi license reference (optional)" },
+      { ar: "أضف أي ملاحظات خاصة بالعقد", en: "Add any contract-specific notes" },
+      { ar: "انقر 'إنشاء' — يُنشأ العقد برقم فريد (مثل SALE-2026-0001)", en: "Click 'Create' — the contract is created with a unique number (e.g., SALE-2026-0001)" },
+      { ar: "عند توقيع العقد لاحقاً، يتم إيداع المبلغ تلقائياً في حساب الضمان", en: "When the contract is signed later, the amount is auto-deposited into the escrow account" },
+    ],
+  },
+  {
+    id: "guide-24",
+    title: { ar: "إدارة دورة حياة العقد", en: "Manage Contract Lifecycle" },
+    description: { ar: "كيفية تحريك العقد عبر مراحله: إرسال، توقيع، إلغاء، إبطال، حذف", en: "How to advance a contract through its stages: send, sign, cancel, void, delete" },
+    module: "sales",
+    steps: [
+      { ar: "افتح صفحة تفاصيل العقد من المبيعات > العقود > عرض", en: "Open the contract detail page from Sales > Contracts > View" },
+      { ar: "العقد 'مسودة': يمكنك النقر على 'إرسال' أو 'إلغاء' أو 'حذف' (يحتاج صلاحية حذف)", en: "For 'Draft': click 'Send', 'Cancel', or 'Delete' (delete requires delete permission)" },
+      { ar: "العقد 'مُرسل': يمكنك النقر على 'توقيع' أو 'إلغاء'", en: "For 'Sent': click 'Sign' or 'Cancel'" },
+      { ar: "العقد 'موقّع': يمكنك النقر على 'إبطال' فقط (يعكس جميع التأثيرات)", en: "For 'Signed': only 'Void' is available (reverses all effects)" },
+      { ar: "عند توقيع عقد بيع: الوحدة ← مباع، العميل ← مُحوّل، إيداع في الضمان", en: "When signing a sale contract: unit → Sold, customer → Converted, escrow deposit" },
+      { ar: "عند توقيع عقد إيجار: الوحدة ← مؤجر، العميل ← مستأجر نشط، الإيجار ← نشط", en: "When signing a lease contract: unit → Rented, customer → Active Tenant, lease → Active" },
+      { ar: "عند الإلغاء أو الإبطال: الوحدة ← متاح، العميل ← مؤهل (إن لم يكن له عقود أخرى)", en: "On cancel/void: unit → Available, customer → Qualified (if no other active contracts)" },
     ],
   },
   // Rental Payments Guide

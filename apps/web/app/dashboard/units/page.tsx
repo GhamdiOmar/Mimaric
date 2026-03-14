@@ -24,10 +24,10 @@ import {
 } from "@phosphor-icons/react";
 import { Button, Badge, Input, SARAmount, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
-import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit, getUnitFinancialSummary } from "../../actions/units";
+import { getUnitsWithBuildings, massUpdateUnits, createUnit, getBuildings, deleteUnit, getUnitFinancialSummary, getActiveContractForUnit } from "../../actions/units";
 import { getMaintenanceForUnit } from "../../actions/maintenance";
 import { getAllInventoryItems, getGlobalInventoryStats } from "../../actions/inventory";
-import { Wrench, X, Eye, ShoppingCart, House, Spinner as SpinnerIcon } from "@phosphor-icons/react";
+import { Wrench, X, Eye, ShoppingCart, House, Spinner as SpinnerIcon, Receipt } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -94,6 +94,8 @@ function AdvancedUnitMatrixPage() {
     buildingId: "",
     area: "",
     price: "",
+    markupPrice: "",
+    rentalPrice: "",
     status: "AVAILABLE"
   });
 
@@ -112,6 +114,7 @@ function AdvancedUnitMatrixPage() {
   const [detailUnit, setDetailUnit] = React.useState<any>(null);
   const [detailMaintenance, setDetailMaintenance] = React.useState<any[]>([]);
   const [detailFinancials, setDetailFinancials] = React.useState<any>(null);
+  const [detailContract, setDetailContract] = React.useState<any>(null);
   const [loadingDetail, setLoadingDetail] = React.useState(false);
 
   const maintenanceStatusLabels: Record<string, { ar: string; en: string; variant: string }> = {
@@ -126,14 +129,17 @@ function AdvancedUnitMatrixPage() {
   async function openUnitDetail(unit: any) {
     setDetailUnit(unit);
     setDetailFinancials(null);
+    setDetailContract(null);
     setLoadingDetail(true);
     try {
-      const [maint, fin] = await Promise.all([
+      const [maint, fin, contract] = await Promise.all([
         getMaintenanceForUnit(unit.id),
         getUnitFinancialSummary(unit.id).catch(() => null),
+        getActiveContractForUnit(unit.id).catch(() => null),
       ]);
       setDetailMaintenance(maint);
       setDetailFinancials(fin);
+      setDetailContract(contract);
     } catch (e) {
       console.error(e);
       setDetailMaintenance([]);
@@ -220,6 +226,8 @@ function AdvancedUnitMatrixPage() {
         ...newUnit,
         area: newUnit.area ? parseFloat(newUnit.area) : undefined,
         price: newUnit.price ? parseFloat(newUnit.price) : undefined,
+        markupPrice: newUnit.markupPrice ? parseFloat(newUnit.markupPrice) : undefined,
+        rentalPrice: newUnit.rentalPrice ? parseFloat(newUnit.rentalPrice) : undefined,
       });
       setUnits(prev => [...prev, unit]);
       setShowAddModal(false);
@@ -229,6 +237,8 @@ function AdvancedUnitMatrixPage() {
         buildingId: buildings[0]?.id || "",
         area: "",
         price: "",
+        markupPrice: "",
+        rentalPrice: "",
         status: "AVAILABLE"
       });
     } catch (err) {
@@ -761,16 +771,28 @@ function AdvancedUnitMatrixPage() {
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</span>
-                  <p className="text-sm"><Badge variant={detailUnit.status?.toLowerCase() as any} className="text-[10px]">{unitStatusLabels[detailUnit.status]?.[lang] ?? detailUnit.status}</Badge></p>
+                  <div className="text-sm mt-0.5"><Badge variant={detailUnit.status?.toLowerCase() as any} className="text-[10px]">{unitStatusLabels[detailUnit.status]?.[lang] ?? detailUnit.status}</Badge></div>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المساحة" : "Area"}</span>
                   <p className="text-sm font-bold text-primary">{detailUnit.area ? `${detailUnit.area} م²` : "—"}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "السعر" : "Price"}</span>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "سعر التكلفة" : "Cost Price"}</span>
                   <p className="text-sm font-bold text-primary">
                     <SARAmount value={detailUnit.price} size={12} />
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "سعر البيع" : "Selling Price"}</span>
+                  <p className="text-sm font-bold text-secondary">
+                    {detailUnit.markupPrice ? <SARAmount value={detailUnit.markupPrice} size={12} /> : "—"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "سعر الإيجار" : "Rental Price"}</span>
+                  <p className="text-sm font-bold text-primary">
+                    {detailUnit.rentalPrice ? <SARAmount value={detailUnit.rentalPrice} size={12} /> : "—"}
                   </p>
                 </div>
               </div>
@@ -800,6 +822,46 @@ function AdvancedUnitMatrixPage() {
                         <SARAmount value={detailFinancials.netIncome} size={10} compact />
                       </p>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Contract Info */}
+              {detailContract && (
+                <div className="border-t border-border pt-4">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2 mb-3">
+                    <Receipt size={14} />
+                    {lang === "ar" ? "العقد المرتبط" : "Linked Contract"}
+                  </h3>
+                  <div className="p-3 rounded-md bg-muted/30 border border-border space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-neutral">{lang === "ar" ? "النوع" : "Type"}</span>
+                      <Badge variant="draft" className="text-[10px]">{detailContract.type === "SALE" ? (lang === "ar" ? "بيع" : "Sale") : (lang === "ar" ? "إيجار" : "Lease")}</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral">{lang === "ar" ? "الحالة" : "Status"}</span>
+                      <Badge variant={detailContract.status === "SIGNED" ? "available" : "reserved"} className="text-[10px]">
+                        {detailContract.status === "DRAFT" ? (lang === "ar" ? "مسودة" : "Draft") : detailContract.status === "SENT" ? (lang === "ar" ? "مُرسل" : "Sent") : (lang === "ar" ? "موقّع" : "Signed")}
+                      </Badge>
+                    </div>
+                    {detailContract.customer?.name && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral">{lang === "ar" ? "العميل" : "Customer"}</span>
+                        <span className="font-bold text-primary">{detailContract.customer.name}</span>
+                      </div>
+                    )}
+                    {detailContract.contractNumber && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral">{lang === "ar" ? "رقم العقد" : "Contract No."}</span>
+                        <span className="font-bold text-primary font-dm-sans">{detailContract.contractNumber}</span>
+                      </div>
+                    )}
+                    <Link href={`/dashboard/sales/contracts/${detailContract.id}`}>
+                      <Button variant="secondary" size="sm" className="gap-1 text-[10px] w-full mt-1">
+                        <Eye size={12} />
+                        {lang === "ar" ? "عرض العقد" : "View Contract"}
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               )}
@@ -928,7 +990,7 @@ function AdvancedUnitMatrixPage() {
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                        <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
-                       <Input 
+                       <Input
                          type="number"
                          value={newUnit.area}
                          onChange={(e) => setNewUnit({...newUnit, area: e.target.value})}
@@ -936,11 +998,31 @@ function AdvancedUnitMatrixPage() {
                        />
                     </div>
                     <div className="space-y-1">
-                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "السعر" : "Price"}</label>
-                       <Input 
+                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "سعر التكلفة" : "Cost Price"}</label>
+                       <Input
                          type="number"
                          value={newUnit.price}
                          onChange={(e) => setNewUnit({...newUnit, price: e.target.value})}
+                         placeholder="0.00"
+                       />
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "سعر البيع" : "Selling Price"}</label>
+                       <Input
+                         type="number"
+                         value={newUnit.markupPrice}
+                         onChange={(e) => setNewUnit({...newUnit, markupPrice: e.target.value})}
+                         placeholder="0.00"
+                       />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "سعر الإيجار" : "Rental Price"}</label>
+                       <Input
+                         type="number"
+                         value={newUnit.rentalPrice}
+                         onChange={(e) => setNewUnit({...newUnit, rentalPrice: e.target.value})}
                          placeholder="0.00"
                        />
                     </div>

@@ -5,6 +5,21 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 
+async function generateContractNumber(
+  organizationId: string
+): Promise<string> {
+  const year = new Date().getFullYear();
+  const count = await db.contract.count({
+    where: {
+      type: "LEASE",
+      customer: { organizationId },
+      createdAt: { gte: new Date(`${year}-01-01`) },
+    },
+  });
+  const seq = String(count + 1).padStart(4, "0");
+  return `LEASE-${year}-${seq}`;
+}
+
 export async function createLease(data: {
   unitId: string;
   customerId: string;
@@ -34,7 +49,9 @@ export async function createLease(data: {
   const endDate = new Date(data.endDate);
   const installmentAmount = Math.round((data.totalAmount / data.installmentCount) * 100) / 100;
 
-  // Create lease + installments in transaction
+  const contractNumber = await generateContractNumber(session.organizationId);
+
+  // Create lease + installments + linked contract in transaction
   const lease = await db.$transaction(async (tx: any) => {
     const newLease = await tx.lease.create({
       data: {
@@ -63,6 +80,23 @@ export async function createLease(data: {
 
     await tx.rentInstallment.createMany({ data: installments });
 
+    // Create linked Contract record
+    await tx.contract.create({
+      data: {
+        customerId: data.customerId,
+        unitId: data.unitId,
+        type: "LEASE",
+        amount: data.totalAmount,
+        userId: session.userId,
+        status: "SIGNED",
+        signedAt: new Date(),
+        contractNumber,
+        leaseId: newLease.id,
+        paymentFrequency: data.installmentCount <= 1 ? "ANNUAL" : data.installmentCount <= 4 ? "QUARTERLY" : "MONTHLY",
+        noticePeriodDays: 60,
+      },
+    });
+
     // Update unit status to RENTED
     await tx.unit.update({
       where: { id: data.unitId },
@@ -82,6 +116,7 @@ export async function createLease(data: {
 
   revalidatePath("/dashboard/rentals");
   revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/sales/contracts");
   return JSON.parse(JSON.stringify(lease));
 }
 

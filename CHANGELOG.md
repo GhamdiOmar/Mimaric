@@ -1,5 +1,84 @@
 # Changelog — Mimaric PropTech
 
+## [1.2.0] — 2026-03-14
+
+### Added — Saudi Ejar Contract Compliance
+
+- **Ejar-compliant lease contracts** — Create lease contracts with mandatory Ejar fields: start/end dates, payment frequency (monthly/quarterly/semi-annual/annual), security deposit (capped at 5% per regulation), auto-renewal toggle, maintenance responsibility (landlord/tenant), and 60-day default notice period
+- **Auto-generated installment schedules** — Lease contracts automatically create a linked `Lease` record with installment schedule based on selected payment frequency
+- **Contract-lease linking** — Contracts with `type: LEASE` auto-create a linked lease with `leaseId` FK, bidirectional navigation between contract and lease
+
+### Added — Saudi Wafi Off-Plan Sale Compliance
+
+- **Wafi-compliant sale contracts** — Create sale contracts with Wafi fields: expected delivery date, Wafi license reference, and escrow account reference
+- **Auto-escrow deposits** — Signing a sale contract auto-deposits the contract amount into the project's escrow account (`BUYER_DEPOSIT` transaction)
+- **Auto-escrow reversals** — Voiding a signed contract auto-records a `REVERSAL` transaction in the escrow account
+
+### Added — Contract Lifecycle State Machine
+
+- **Contract status transitions** — Full state machine: `DRAFT → SENT → SIGNED`, with `CANCELLED` from DRAFT/SENT and `VOID` from SIGNED
+- **Auto-generated contract numbers** — Unique numbers per type: `SALE-2026-XXXX` and `LEASE-2026-XXXX` with random 4-char suffix
+- **Lifecycle side-effects on signing** — Sale contracts: unit → SOLD, customer → CONVERTED. Lease contracts: unit → RENTED, customer → ACTIVE_TENANT, lease → ACTIVE
+- **Lifecycle side-effects on cancel/void** — Unit → AVAILABLE, lease → TERMINATED (if linked), escrow reversal (if signed sale)
+- **Delete contract** — Hard-delete for DRAFT contracts only, cascades to linked lease and installments
+
+### Added — Contract Detail Page
+
+- **Bilingual party labels** — المؤجر/المستأجر (Landlord/Tenant) for leases, البائع/المشتري (Seller/Buyer) for sales
+- **Lease Terms section** — Displays period, payment frequency, security deposit, auto-renewal, maintenance responsibility, and notice period
+- **Sale Terms section** — Displays delivery date, Wafi license reference, and escrow account reference
+- **Payment Schedule table** — Installment-by-installment view with number, due date, amount, and status (paid/unpaid/overdue)
+- **Notes section** with contract notes display
+- **Sidebar contract info card** — Contract number, value, Ejar ID placeholder, Wafi/escrow references
+
+### Added — Contracts List Page with Create Modal
+
+- **Full contracts table** — Customer (name + phone), unit (number + building), contract type badge (بيع/إيجار), amount in SAR, Hijri + Gregorian dates, status badge
+- **Status filter tabs** — All, Draft, Sent, Signed, Cancelled with counts
+- **Create contract modal** — Dynamic form switching between Sale and Lease types, Ejar/Wafi field groups, customer/unit selectors
+- **Empty state** with CTA to create first contract
+
+### Added — Contract RBAC Permissions
+
+- **Progressive vs destructive permission split** — `contracts:write` for create/send/sign (Company Admin, Sales Manager, Sales Agent), `contracts:delete` for cancel/void/delete (Company Admin only)
+- **SALES_AGENT** granted `contracts:write` — Agents can draft contracts for their leads
+- **SALES_MANAGER** granted `leases:read` + `leases:write` — Handle both sale and lease workflows
+- **PROPERTY_MANAGER** granted `contracts:read` — Visibility into lease contracts for property management
+- **TENANT** granted `contracts:read` — Ejar regulation requires tenant transparency into their own contracts
+
+### Added — Unit-Contract Bridge
+
+- **`getActiveContractForUnit()` server action** — Finds the active contract (DRAFT/SENT/SIGNED) linked to any unit
+- **Linked Contract section in unit detail panel** — Shows contract type badge, status badge, customer name, contract number, and "View Contract" navigation button
+- **Financial summary in unit detail** — Rent collected, sale revenue, maintenance costs, and net income per unit
+
+### Added — Reservation-to-Contract Flow Enhancement
+
+- **Inventory-source reservations** — New reservation wizard supports "From Inventory" source for off-plan items alongside "From Units"
+- **4-step reservation wizard** — Source selection → customer/unit → payment details → confirmation
+
+### Added — Help Center Content Expansion (v1.2.0)
+
+- **14 new FAQ items** — Ejar compliance (1), Wafi compliance (1), contract lifecycle (1), Ejar lease creation (1), Wafi sale creation (1), contract RBAC (1), unit-contract linking (1), lease detail page (1), sale detail page (1), unit financial summary (1), escrow accounts (1), contract permissions RBAC (1), installment tracking update (1), unit status tracking update (1)
+- **4 new step-by-step guides** — Create Ejar Lease Contract (8 steps), Create Wafi Sale Contract (8 steps), Manage Contract Lifecycle (7 steps), updated Track Sales Contracts
+- **Updated 4 existing items** — Unit management guide, lease creation guide, contracts FAQ, installments FAQ
+- Total: 58 FAQs (was 44) and 25 guides (was 21) — comprehensive coverage of all contract workflows
+
+### Fixed
+
+- **Hydration error** — `<Badge>` (renders `<div>`) was nested inside `<p>` tags in unit detail panel, changed to `<div>` wrapper
+- **Prisma client stale after schema push** — `npx prisma generate` required after adding Contract–Lease relation fields
+
+### Schema Changes
+
+- Added `contractNumber` (String, unique) to `Contract` model
+- Added `leaseId` (String, optional FK) to `Contract` model with 1:1 relation to `Lease`
+- Added `paymentFrequency` (PaymentFrequency enum), `securityDeposit` (Decimal), `autoRenewal` (Boolean), `maintenanceResponsibility` (MaintenanceResponsibility enum), `noticePeriodDays` (Int), `deliveryDate` (DateTime), `wafiLicenseRef` (String), `escrowRef` (String), `notes` (String) to `Contract`
+- Added `PaymentFrequency` enum: `MONTHLY`, `QUARTERLY`, `SEMI_ANNUAL`, `ANNUAL`
+- Added `MaintenanceResponsibility` enum: `LANDLORD`, `TENANT`
+
+---
+
 ## [1.1.0] — 2026-03-14
 
 ### Added — Planning-to-Execution Lifecycle Bridge

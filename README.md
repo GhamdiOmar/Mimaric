@@ -38,18 +38,18 @@ A single Arabic-first platform that unifies every stage of the property lifecycl
 | **Land Acquisition** | End-to-end pipeline: Identify → Review → Acquire → Convert to Project, with interactive map picker and due diligence |
 | **Planning OS** | GIS-integrated subdivision planning with scenarios, feasibility analysis, compliance checking, and "Promote to Project" workflow |
 | **Projects** | Development project management with 14-stage lifecycle stepper, P&L financials tab, building/tower management, and Balady document uploads |
-| **Unit Matrix** | Track units across buildings — area, price, type (شقة/فيلا/مكتب), availability — with bulk editing and SAR currency display |
+| **Unit Matrix** | Track units across buildings — area, price, type (شقة/فيلا/مكتب), availability — with bulk editing, SAR currency display, unit detail panel with financial summary (P&L) and linked contract info |
 | **Customer CRM** | Unified customer database with Kanban pipeline (New → Interested → Qualified → Viewing → Reserved) and list view |
 | **Reservations** | Temporary unit holds linked to customers with expiry management |
-| **Contracts** | Sale and lease contract generation with bilingual templates, status tracking, and document uploads |
-| **Rentals** | Full tenancy lifecycle — lease creation wizard, installment schedules, rent collection, Ejar integration readiness |
+| **Contracts** | Full contract lifecycle (Draft → Sent → Signed → Cancel/Void) with Saudi Ejar lease compliance (payment frequency, deposit cap, auto-renewal, notice period) and Wafi off-plan sale compliance (delivery date, license ref, escrow). Auto-generated contract numbers, installment schedules, and escrow deposits |
+| **Rentals** | Full tenancy lifecycle — lease creation wizard, auto-generated installment schedules linked to Ejar-compliant contracts, rent collection with overdue tracking |
 | **Finance** | Payment tracking, installment schedules, VAT calculation (ZATCA-compliant), revenue KPIs |
 | **Maintenance** | CMMS work order management with status workflow (Open → Assigned → In Progress → On Hold → Resolved → Closed), SLA tracking, technician assignment, and cost tracking |
 | **Preventive Maintenance** | Frequency-based scheduling (daily to annual), auto work-order generation, category tagging across 10 maintenance types |
 | **Reports** | Excel/PDF export for occupancy, financial, maintenance, lease, and customer reports with date range filtering |
 | **Site Logs** | Construction progress tracking per project with timestamped entries |
 | **Notifications** | In-app notification bell with unread counts, mark-all-read, and admin alerts for join requests and permission changes |
-| **Help Center** | Searchable FAQ (38 items, 7 categories) and 19 step-by-step guides (bilingual), support ticket system with threaded messages, permission request workflow |
+| **Help Center** | Searchable FAQ (58 items, 8 categories) and 25 step-by-step guides (bilingual), support ticket system with threaded messages, permission request workflow |
 | **Billing** | SaaS subscription management — 3-tier plans (Lite/Professional/Enterprise), monthly/annual billing, coupon codes, invoice history with VAT, payment method storage |
 | **Platform Admin** | Admin hub for managing subscription plans, monitoring all organization subscriptions, creating coupons, and viewing platform-wide invoices and revenue |
 | **Settings** | Organization profile (MOC-aligned), team management with email invitations, user preferences, security settings, and audit log viewer |
@@ -109,15 +109,15 @@ Every data access, PII read, export, login, and modification is logged with user
 | **System Admin** | Full platform + all org access | Yes | Yes | Yes | Yes |
 | **System Support** | Platform ops, ticket management | Yes | Yes | Yes | Yes |
 | **Company Admin** | Full org control, no platform access | Yes | Yes | Yes | Yes |
-| **Sales Manager** | CRM, contracts, reservations, customer PII | Yes | Yes | No | No |
-| **Sales Agent** | CRM, reservations (no PII, no export) | No | No | No | No |
-| **Project Manager** | Projects, units, site logs | No | No | No | No |
-| **Property Manager** | Rentals, maintenance, tenant management | No | No | No | No |
+| **Sales Manager** | CRM, contracts (write), leases, reservations, customer PII | Yes | Yes | No | No |
+| **Sales Agent** | CRM, contracts (write), reservations (no PII, no export) | No | No | No | No |
+| **Project Manager** | Projects, units, contracts (read), site logs | No | No | No | No |
+| **Property Manager** | Rentals, maintenance, contracts (read), tenant management | No | No | No | No |
 | **Finance Officer** | Payments, reporting, financial data | No | No | Yes | No |
 | **Technician** | Maintenance work orders only | No | No | No | No |
 | **Engineering Consultant** | Wafi milestone certification | No | No | No | No |
 | **Buyer** | Purchase tracking, documents | No | No | No | No |
-| **Tenant** | Lease viewing, maintenance requests | No | No | No | No |
+| **Tenant** | Lease viewing, contracts (read), maintenance requests | No | No | No | No |
 | **User** | Basic access, profile management | No | No | No | No |
 
 13 roles with granular permission mapping. Sidebar navigation and data access are automatically filtered based on role permissions.
@@ -234,6 +234,9 @@ mimaric/
 │       │   │   └── settings/       # Team, security, audit logs
 │       │   └── actions/            # Server actions (data layer)
 │       │       ├── auth.ts         # Registration, login
+│       │       ├── contracts.ts    # Contract CRUD, lifecycle transitions, escrow
+│       │       ├── leases.ts       # Lease creation with linked contracts
+│       │       ├── units.ts        # Unit CRUD, contract linking, financials
 │       │       ├── onboarding.ts   # Onboarding wizard + CR lookup
 │       │       ├── invitations.ts  # Team invitation management
 │       │       ├── join-requests.ts # CR-based org join requests
@@ -273,9 +276,11 @@ mimaric/
 
 ## Status
 
-**v1.1.0** — Planning-to-execution lifecycle bridge: 14-stage project lifecycle stepper, project P&L financials tab, compliance-gated scenario approval, decision gate routing, post-handover maintenance automation. Full marketing landing page (11 sections, bilingual). Glass morphism design system with backdrop blur, elevation shadows, and gradient mesh backgrounds. Auth page redesign. E2E test suite for Planning OS. Document versioning and 4 new categories (GIS, CAD, Planning, Permit).
+**v1.2.0** — Saudi Ejar & Wafi contract compliance: full contract lifecycle state machine (Draft → Sent → Signed → Cancel/Void), Ejar-compliant lease contracts (payment frequency, 5% deposit cap, auto-renewal, notice period), Wafi sale contracts (delivery date, license ref, escrow deposits), auto-generated contract numbers, installment schedules, progressive/destructive RBAC split. Unit-contract bridge with linked contract info and financial summary in unit detail panel. Help center expanded to 58 FAQs + 25 guides.
 
-**v1.0.0** — SaaS commercialization: 3-tier subscription plans, coupon system, invoice management with VAT, platform admin panel. Centralized bilingual language system, user profile popover, help center (38 FAQs + 19 guides). Wafi compliance and escrow tracking. 13 user roles.
+**v1.1.0** — Planning-to-execution lifecycle bridge: 14-stage project lifecycle stepper, project P&L financials tab, compliance-gated scenario approval, decision gate routing, post-handover maintenance automation. Full marketing landing page (11 sections, bilingual). Glass morphism design system. Auth page redesign. E2E test suite for Planning OS.
+
+**v1.0.0** — SaaS commercialization: 3-tier subscription plans, coupon system, invoice management with VAT, platform admin panel. Centralized bilingual language system, user profile popover, help center. Wafi compliance and escrow tracking. 13 user roles.
 
 **v0.9.0** — Dark mode system, off-plan development (stages 7-12), cross-module awareness, analytics dashboards.
 

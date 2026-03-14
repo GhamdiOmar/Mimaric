@@ -87,6 +87,8 @@ export async function createUnit(data: {
   buildingId: string;
   area?: number;
   price?: number;
+  markupPrice?: number;
+  rentalPrice?: number;
   status?: any;
 }) {
   const session = await requirePermission("units:write");
@@ -113,6 +115,8 @@ export async function createUnit(data: {
     data: {
       ...data,
       price: data.price ? Number(data.price) : undefined,
+      markupPrice: data.markupPrice ? Number(data.markupPrice) : undefined,
+      rentalPrice: data.rentalPrice ? Number(data.rentalPrice) : undefined,
     },
   });
 
@@ -183,6 +187,29 @@ export async function getUnitFinancialSummary(unitId: string) {
     totalMaintenanceCost,
     netIncome: totalRentCollected + saleRevenue - totalMaintenanceCost,
   }));
+}
+
+export async function getActiveContractForUnit(unitId: string) {
+  const session = await requirePermission("units:read");
+
+  const unit = await db.unit.findFirst({
+    where: { id: unitId },
+    include: { building: { include: { project: true } } },
+  });
+  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+    return null;
+  }
+
+  const contract = await db.contract.findFirst({
+    where: {
+      unitId,
+      status: { in: ["DRAFT", "SENT", "SIGNED"] },
+    },
+    include: { customer: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return contract ? JSON.parse(JSON.stringify(contract)) : null;
 }
 
 export async function getCustomersForUnitAction() {

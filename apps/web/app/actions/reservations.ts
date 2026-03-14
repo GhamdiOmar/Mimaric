@@ -19,6 +19,15 @@ export async function createReservation(data: {
   });
   if (!customer) throw new Error("Customer not found");
 
+  // Verify unit belongs to org
+  const unit = await db.unit.findFirst({
+    where: { id: data.unitId },
+    include: { building: { include: { project: true } } },
+  });
+  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+    throw new Error("Unit not found");
+  }
+
   const reservation = await db.reservation.create({
     data: {
       ...data,

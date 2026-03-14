@@ -290,7 +290,9 @@ model Unit {
   buildingId   String
   building     Building      @relation(fields: [buildingId], references: [id])
   area         Float?        // sqm
-  price        Decimal?
+  price        Decimal?      // Base/cost price
+  markupPrice  Decimal?      // Selling price (for sale/reservation)
+  rentalPrice  Decimal?      // Rental price (for lease contracts)
   floor        Int?          // Floor number
   bedrooms     Int?          // Number of bedrooms
   bathrooms    Int?          // Number of bathrooms
@@ -418,9 +420,33 @@ model Contract {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
+  // Contract identification
+  contractNumber            String?         @unique
+
+  // Lease link (type=LEASE only)
+  leaseId                   String?         @unique
+  lease                     Lease?          @relation(fields: [leaseId], references: [id])
+
+  // Ejar fields (type=LEASE)
+  paymentFrequency          RecurrenceType?
+  securityDeposit           Decimal?
+  autoRenewal               Boolean?
+  maintenanceResponsibility String?         // "LANDLORD" or "TENANT"
+  noticePeriodDays          Int?
+
+  // Wafi/Sale fields (type=SALE)
+  deliveryDate              DateTime?
+  wafiLicenseRef            String?
+  escrowAccountRef          String?
+
+  // Shared
+  termsAndConditions        String?
+  notes                     String?
+
   @@index([customerId])
   @@index([unitId])
   @@index([userId])
+  @@index([leaseId])
 }
 
 enum ContractStatus {
@@ -467,6 +493,7 @@ model Lease {
   status         LeaseStatus     @default(DRAFT)
   installments   RentInstallment[]
   ejarContractId String?         // For Ejar integration
+  contract       Contract?       // Linked contract (reverse relation)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
