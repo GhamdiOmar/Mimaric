@@ -52,6 +52,13 @@ const config: Config = {
       boxShadow: {
         card: "var(--shadow-card)",
         raised: "var(--shadow-raised)",
+        glass: "var(--shadow-glass)",
+        'glass-hover': "var(--shadow-glass-hover)",
+        'elevation-1': "var(--elevation-1)",
+        'elevation-2': "var(--elevation-2)",
+        'elevation-3': "var(--elevation-3)",
+        'glow-green': "0 0 20px hsl(148 76% 27% / 0.25), 0 0 40px hsl(148 76% 27% / 0.10)",
+        'glow-gold': "0 0 20px hsl(46 65% 52% / 0.25), 0 0 40px hsl(46 65% 52% / 0.10)",
       },
       borderRadius: {
         lg: "var(--radius-lg)",

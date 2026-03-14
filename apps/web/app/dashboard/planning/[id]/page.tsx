@@ -43,6 +43,7 @@ import { upsertFeasibilityAssumptions } from "../../../actions/feasibility-assum
 import { createPlanningComment, getPlanningComments } from "../../../actions/planning-comments";
 import { createSpatialLayer, toggleLayerVisibility, deleteSpatialLayer } from "../../../actions/spatial-layers";
 import { createPlot, createRoad, createBlock, deletePlot, deleteRoad, deleteBlock } from "../../../actions/subdivision";
+import { convertBaselineToProject } from "../../../actions/planning-conversion";
 
 const SCENARIO_STATUS_CONFIG: Record<string, { label: { ar: string; en: string }; color: string }> = {
   DRAFT: { label: { ar: "مسودة", en: "Draft" }, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
@@ -78,6 +79,9 @@ export default function PlanningWorkspaceDetailPage() {
   const [showNewScenario, setShowNewScenario] = React.useState(false);
   const [showImport, setShowImport] = React.useState(false);
   const [showFeasibility, setShowFeasibility] = React.useState(false);
+
+  // Promote to project
+  const [promoting, setPromoting] = React.useState(false);
 
   // Compliance
   const [complianceResults, setComplianceResults] = React.useState<any[]>([]);
@@ -303,6 +307,31 @@ export default function PlanningWorkspaceDetailPage() {
             <Upload size={14} />
             {lang === "ar" ? "استيراد" : "Import"}
           </button>
+          {workspace.scenarios?.some((s: any) => s.isBaseline && s.status === "APPROVED") && !workspace.projectId && (
+            <button
+              disabled={promoting}
+              onClick={async () => {
+                setPromoting(true);
+                try {
+                  const result = await convertBaselineToProject(workspace.id);
+                  if (result.projectId) {
+                    router.push(`/dashboard/projects/${result.projectId}`);
+                  }
+                } catch (e) {
+                  console.error("Promote failed:", e);
+                } finally {
+                  setPromoting(false);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+              style={{ display: "inline-flex" }}
+            >
+              <CheckCircle size={14} weight="bold" />
+              {promoting
+                ? (lang === "ar" ? "جاري التحويل..." : "Converting...")
+                : (lang === "ar" ? "تحويل إلى مشروع" : "Promote to Project")}
+            </button>
+          )}
           <button
             onClick={() => setShowNewScenario(true)}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
@@ -388,7 +417,7 @@ export default function PlanningWorkspaceDetailPage() {
         {/* ── MAP TAB ── */}
         {activeTab === "map" && (
           <div className="space-y-4">
-            <div className="bg-card border border-border rounded-xl overflow-hidden" style={{ height: "500px" }}>
+            <div className="bg-card border border-border rounded-xl overflow-hidden isolate" style={{ height: "500px" }}>
               <PlanningMapCanvas
                 workspace={workspace}
                 scenario={activeScenario}
@@ -882,10 +911,28 @@ function PlanningMapCanvas({ workspace, scenario, onRefresh, lang }: { workspace
   const [mapReady, setMapReady] = React.useState(false);
 
   React.useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current) return;
+
+    let cancelled = false;
+    const container = mapRef.current;
 
     // Dynamic import of Leaflet + Geoman (client-only)
     import("leaflet").then((L) => {
+      if (cancelled || !container) return;
+
+      // If the container was already initialized (React strict mode double-mount),
+      // remove the old instance and clear Leaflet's internal marker
+      if ((container as any)._leaflet_id) {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+        // Leaflet stores _leaflet_id even after .remove() in some versions — clear it
+        delete (container as any)._leaflet_id;
+        // Clear any leftover child elements from previous map
+        container.innerHTML = "";
+      }
+
       // Fix default icon
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
@@ -898,7 +945,7 @@ function PlanningMapCanvas({ workspace, scenario, onRefresh, lang }: { workspace
       const center: [number, number] = [meta.latitude || 24.7136, meta.longitude || 46.6753];
       const zoom = meta.latitude ? 15 : 6;
 
-      const map = L.map(mapRef.current!, { zoomControl: true }).setView(center, zoom);
+      const map = L.map(container, { zoomControl: true }).setView(center, zoom);
 
       // Basemap layers
       const osmLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -923,6 +970,8 @@ function PlanningMapCanvas({ workspace, scenario, onRefresh, lang }: { workspace
 
       // Try to import Geoman
       import("@geoman-io/leaflet-geoman-free").then(() => {
+        if (cancelled) return;
+
         // Inject Geoman CSS via link tag (dynamic CSS import doesn't work in Next.js)
         if (!document.querySelector('link[data-geoman-css]')) {
           const link = document.createElement("link");
@@ -954,6 +1003,7 @@ function PlanningMapCanvas({ workspace, scenario, onRefresh, lang }: { workspace
     });
 
     return () => {
+      cancelled = true;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

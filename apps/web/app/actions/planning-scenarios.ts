@@ -233,6 +233,19 @@ export async function updateScenarioStatus(
   });
   if (!scenario) throw new Error("Scenario not found");
 
+  // G12: Compliance gate — block approval if compliance failures exist
+  if (status === "APPROVED") {
+    const failedResults = await db.complianceResult.count({
+      where: { scenarioId, status: "FAIL" },
+    });
+    if (failedResults > 0) {
+      throw new Error(
+        `Cannot approve scenario with ${failedResults} compliance failure(s). ` +
+        `Run compliance check and resolve all issues first.`
+      );
+    }
+  }
+
   const updateData: any = {
     status,
     reviewNotes: notes,

@@ -13,7 +13,7 @@ import { getLandDetail, updateLandStatus, getDueDiligence, updateDueDiligenceIte
 import { getConstraints, createConstraint, updateConstraint, deleteConstraint, getConstraintStats } from "../../../actions/constraints";
 import { getFeasibilityAssessments, createFeasibilityAssessment, updateFeasibilityAssessment, getSuitabilityScore } from "../../../actions/feasibility";
 import { getDecisionGates, requestStageTransition, resolveDecisionGate, getStageHistory } from "../../../actions/decision-gates";
-import { createWorkspaceFromLand } from "../../../actions/planning-workspaces";
+import { createWorkspaceFromLand, getLinkedWorkspaces } from "../../../actions/planning-workspaces";
 import MapPicker from "../../../../components/MapPicker";
 
 const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigits: 0 }).format(n);
@@ -121,13 +121,14 @@ export default function LandDetailPage() {
   const [showConstraintModal, setShowConstraintModal] = React.useState(false);
   const [showFeasibilityModal, setShowFeasibilityModal] = React.useState(false);
   const [showGateModal, setShowGateModal] = React.useState(false);
+  const [linkedWorkspace, setLinkedWorkspace] = React.useState<any>(null);
 
   React.useEffect(() => { load(); }, [id]);
 
   async function load() {
     setLoading(true);
     try {
-      const [detail, dd, cons, stats, feasi, score, gateList] = await Promise.all([
+      const [detail, dd, cons, stats, feasi, score, gateList, workspaces] = await Promise.all([
         getLandDetail(id as string),
         getDueDiligence(id as string),
         getConstraints(id as string),
@@ -135,6 +136,7 @@ export default function LandDetailPage() {
         getFeasibilityAssessments(id as string),
         getSuitabilityScore(id as string),
         getStageHistory(id as string),
+        getLinkedWorkspaces(id as string),
       ]);
       setLand(detail);
       setChecklists(dd);
@@ -143,6 +145,7 @@ export default function LandDetailPage() {
       setAssessments(feasi);
       setSuitabilityScore(score);
       setGates(gateList);
+      setLinkedWorkspace(workspaces?.[0] || null);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -211,15 +214,22 @@ export default function LandDetailPage() {
         <button
           onClick={async () => {
             try {
-              const ws = await createWorkspaceFromLand(land.id);
-              router.push(`/dashboard/planning/${ws.id}`);
+              if (linkedWorkspace) {
+                router.push(`/dashboard/planning/${linkedWorkspace.id}`);
+              } else {
+                const ws = await createWorkspaceFromLand(land.id);
+                setLinkedWorkspace(ws);
+                router.push(`/dashboard/planning/${ws.id}`);
+              }
             } catch { /* empty */ }
           }}
           className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors whitespace-nowrap"
           style={{ display: "inline-flex" }}
         >
           <MapPin size={14} />
-          {lang === "ar" ? "فتح في التخطيط" : "Open in Planning"}
+          {linkedWorkspace
+            ? (lang === "ar" ? "متابعة التخطيط" : "Continue Planning")
+            : (lang === "ar" ? "بدء التخطيط" : "Start Planning")}
         </button>
         {suitabilityScore !== null && (
           <div className="text-center">

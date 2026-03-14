@@ -942,6 +942,131 @@ async function main() {
   });
   console.log("Created decision gate");
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BILLING — Plans, Entitlements & Subscriptions
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  console.log("Creating plans & subscriptions...");
+
+  // Helper: upsert plan and ensure entitlements always exist
+  async function upsertPlanWithEntitlements(
+    slug: string,
+    planData: Record<string, unknown>,
+    entitlements: { featureKey: string; type: string; value: string }[],
+  ) {
+    const plan = await prisma.plan.upsert({
+      where: { slug },
+      create: { slug, ...planData } as any,
+      update: planData as any,
+    });
+    // Delete + recreate entitlements to ensure they're always correct
+    await prisma.planEntitlement.deleteMany({ where: { planId: plan.id } });
+    for (const ent of entitlements) {
+      await prisma.planEntitlement.create({ data: { planId: plan.id, ...ent } });
+    }
+    return plan;
+  }
+
+  const starterEntitlements = [
+    { featureKey: "projects.max", type: "LIMIT", value: "3" },
+    { featureKey: "users.max", type: "LIMIT", value: "5" },
+    { featureKey: "units.max", type: "LIMIT", value: "50" },
+    { featureKey: "cmms.access", type: "BOOLEAN", value: "false" },
+    { featureKey: "offplan.access", type: "BOOLEAN", value: "false" },
+    { featureKey: "reports.export", type: "BOOLEAN", value: "false" },
+    { featureKey: "pii.encryption", type: "BOOLEAN", value: "false" },
+    { featureKey: "audit.access", type: "BOOLEAN", value: "false" },
+    { featureKey: "api.access", type: "BOOLEAN", value: "false" },
+    { featureKey: "custom.branding", type: "BOOLEAN", value: "false" },
+    { featureKey: "sla.priority", type: "LIMIT", value: "standard" },
+  ];
+
+  const professionalEntitlements = [
+    { featureKey: "projects.max", type: "LIMIT", value: "25" },
+    { featureKey: "users.max", type: "LIMIT", value: "25" },
+    { featureKey: "units.max", type: "LIMIT", value: "500" },
+    { featureKey: "cmms.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "offplan.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "reports.export", type: "BOOLEAN", value: "true" },
+    { featureKey: "pii.encryption", type: "BOOLEAN", value: "true" },
+    { featureKey: "audit.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "api.access", type: "BOOLEAN", value: "false" },
+    { featureKey: "custom.branding", type: "BOOLEAN", value: "false" },
+    { featureKey: "sla.priority", type: "LIMIT", value: "business" },
+  ];
+
+  const enterpriseEntitlements = [
+    { featureKey: "projects.max", type: "LIMIT", value: "unlimited" },
+    { featureKey: "users.max", type: "LIMIT", value: "unlimited" },
+    { featureKey: "units.max", type: "LIMIT", value: "unlimited" },
+    { featureKey: "cmms.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "offplan.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "reports.export", type: "BOOLEAN", value: "true" },
+    { featureKey: "pii.encryption", type: "BOOLEAN", value: "true" },
+    { featureKey: "audit.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "api.access", type: "BOOLEAN", value: "true" },
+    { featureKey: "custom.branding", type: "BOOLEAN", value: "true" },
+    { featureKey: "sla.priority", type: "LIMIT", value: "premium" },
+  ];
+
+  const starterPlan = await upsertPlanWithEntitlements("starter", {
+    nameEn: "Starter", nameAr: "المبتدئ",
+    descriptionEn: "Perfect for small property managers", descriptionAr: "مثالي لمديري العقارات الصغار",
+    priceMonthly: 0, priceAnnual: 0, trialDays: 0, isPublic: true, isDefault: true, sortOrder: 0,
+  }, starterEntitlements);
+
+  const professionalPlan = await upsertPlanWithEntitlements("professional", {
+    nameEn: "Professional", nameAr: "الاحترافي",
+    descriptionEn: "For growing property management companies", descriptionAr: "لشركات إدارة العقارات المتنامية",
+    priceMonthly: 499, priceAnnual: 4790, trialDays: 14, isPublic: true, isDefault: false, sortOrder: 1,
+  }, professionalEntitlements);
+
+  await upsertPlanWithEntitlements("enterprise", {
+    nameEn: "Enterprise", nameAr: "المؤسسات",
+    descriptionEn: "Full platform access with premium support", descriptionAr: "وصول كامل للمنصة مع دعم متميز",
+    priceMonthly: 1499, priceAnnual: 14390, trialDays: 14, isPublic: true, isDefault: false, sortOrder: 2,
+  }, enterpriseEntitlements);
+
+  // Subscription for Mimaric org (Professional, ACTIVE)
+  const existingSub = await prisma.subscription.findFirst({
+    where: { organizationId: org.id, status: { in: ["ACTIVE", "TRIALING"] } },
+  });
+  if (!existingSub) {
+    await prisma.subscription.create({
+      data: {
+        organizationId: org.id,
+        planId: professionalPlan.id,
+        status: "ACTIVE",
+        billingCycle: "ANNUAL",
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        nextBillingDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        priceAtRenewal: 4790,
+      },
+    });
+  }
+
+  // Subscription for Dummy org (Starter, ACTIVE)
+  const existingDummySub = await prisma.subscription.findFirst({
+    where: { organizationId: dummyOrg.id, status: { in: ["ACTIVE", "TRIALING"] } },
+  });
+  if (!existingDummySub) {
+    await prisma.subscription.create({
+      data: {
+        organizationId: dummyOrg.id,
+        planId: starterPlan.id,
+        status: "ACTIVE",
+        billingCycle: "ANNUAL",
+        currentPeriodStart: new Date(),
+        currentPeriodEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        nextBillingDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        priceAtRenewal: 0,
+      },
+    });
+  }
+
+  console.log("Created plans (Starter, Professional, Enterprise) & subscriptions");
+
   console.log("Seed complete!");
 }
 

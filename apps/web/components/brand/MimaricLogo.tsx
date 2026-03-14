@@ -28,6 +28,7 @@ export function MimaricLogo({
         height={height}
         priority={priority}
         className="object-contain"
+        style={{ width: "auto", height: "auto" }}
       />
     </div>
   );

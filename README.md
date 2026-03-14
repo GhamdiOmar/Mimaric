@@ -33,9 +33,11 @@ A single Arabic-first platform that unifies every stage of the property lifecycl
 
 | Module | What It Does |
 |--------|-------------|
+| **Landing Page** | 11-section bilingual marketing site with glass morphism design, Vision 2030 alignment, tabbed feature showcase, 3-tier pricing, and FAQ |
 | **Dashboard** | Real-time KPI cards and analytics — occupancy rates, land pipeline chart, project status distribution, maintenance cost trends |
 | **Land Acquisition** | End-to-end pipeline: Identify → Review → Acquire → Convert to Project, with interactive map picker and due diligence |
-| **Projects** | Development project management with type, status, location, building/tower management, and Balady document uploads |
+| **Planning OS** | GIS-integrated subdivision planning with scenarios, feasibility analysis, compliance checking, and "Promote to Project" workflow |
+| **Projects** | Development project management with 14-stage lifecycle stepper, P&L financials tab, building/tower management, and Balady document uploads |
 | **Unit Matrix** | Track units across buildings — area, price, type (شقة/فيلا/مكتب), availability — with bulk editing and SAR currency display |
 | **Customer CRM** | Unified customer database with Kanban pipeline (New → Interested → Qualified → Viewing → Reserved) and list view |
 | **Reservations** | Temporary unit holds linked to customers with expiry management |
@@ -124,6 +126,9 @@ Every data access, PII read, export, login, and modification is logged with user
 
 ## Design System
 
+### Glass Morphism Design System
+Layered glass-effect UI with backdrop blur, semi-transparent backgrounds, and elevation shadows. Includes gradient mesh backgrounds for hero sections, glow accents (`--glow-green`, `--glow-gold`), and animations (`float`, `pulse-glow`, `gradient-shift`). Auth pages feature architectural SVG patterns with animated mesh blobs.
+
 ### Dark Mode / Light Mode
 Full theme system with CSS custom properties and `.dark` class toggling. Sidebar stays dark navy in both themes. Charts, buttons, popovers, and all UI elements adapt with dedicated dark overrides.
 
@@ -211,12 +216,14 @@ mimaric/
 │       ├── app/
 │       │   ├── auth/               # Login, register, invitation acceptance
 │       │   │   └── invite/         # Token-based team invitation flow
+│       │   ├── landing/            # Marketing landing page (11 sections, bilingual)
 │       │   ├── dashboard/          # All dashboard modules
 │       │   │   ├── land/           # Land acquisition pipeline
 │       │   │   ├── projects/       # Project & building management
 │       │   │   ├── units/          # Unit matrix
 │       │   │   ├── sales/          # CRM, contracts, reservations
 │       │   │   ├── rentals/        # Lease management & payments
+│       │   │   ├── planning/        # Planning OS — GIS, subdivision, scenarios
 │       │   │   ├── maintenance/    # Work orders & preventive CMMS
 │       │   │   ├── finance/        # Financial overview
 │       │   │   ├── reports/        # Excel/PDF report generation
@@ -234,6 +241,7 @@ mimaric/
 │       │       └── permission-requests.ts # Role upgrade requests
 │       ├── components/
 │       │   ├── charts/             # Dashboard chart components + useChartTheme
+│       │   ├── ProjectLifecycleStepper.tsx # 14-stage visual stepper (5 phase groups)
 │       │   ├── LanguageProvider.tsx # Centralized bilingual context (AR/EN)
 │       │   ├── ThemeProvider.tsx    # Dark/light mode provider
 │       │   └── PasswordStrengthHint.tsx # Reusable password strength UI
@@ -265,7 +273,9 @@ mimaric/
 
 ## Status
 
-**v1.0.0** — SaaS commercialization complete: 3-tier subscription plans, coupon system, invoice management with VAT, platform admin panel. Full dark/light mode polish, centralized bilingual language system, user profile popover, and help center expanded to 38 FAQs + 19 guides covering 95% of platform features. Wafi compliance and escrow tracking added. 13 user roles.
+**v1.1.0** — Planning-to-execution lifecycle bridge: 14-stage project lifecycle stepper, project P&L financials tab, compliance-gated scenario approval, decision gate routing, post-handover maintenance automation. Full marketing landing page (11 sections, bilingual). Glass morphism design system with backdrop blur, elevation shadows, and gradient mesh backgrounds. Auth page redesign. E2E test suite for Planning OS. Document versioning and 4 new categories (GIS, CAD, Planning, Permit).
+
+**v1.0.0** — SaaS commercialization: 3-tier subscription plans, coupon system, invoice management with VAT, platform admin panel. Centralized bilingual language system, user profile popover, help center (38 FAQs + 19 guides). Wafi compliance and escrow tracking. 13 user roles.
 
 **v0.9.0** — Dark mode system, off-plan development (stages 7-12), cross-module awareness, analytics dashboards.
 

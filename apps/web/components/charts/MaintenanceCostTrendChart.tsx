@@ -16,18 +16,18 @@ const fmt = (n: number) => new Intl.NumberFormat("en-SA", { maximumFractionDigit
 const chartConfig = {
   estimated: {
     label: "تقديري",
-    color: "#f59e0b",
+    color: "hsl(46 65% 52%)",
   },
   actual: {
     label: "فعلي",
-    color: "#10b981",
+    color: "hsl(148 76% 27%)",
   },
 } satisfies ChartConfig;
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card shadow-lg border border-border rounded-lg p-3 text-xs" dir="rtl">
+    <div className="bg-card/90 backdrop-blur-xl shadow-elevation-2 border border-border/50 rounded-lg p-3 text-xs" dir="rtl">
       <p className="font-bold text-primary mb-1">{label}</p>
       <div className="space-y-1">
         <p className="text-accent flex items-center gap-1">
@@ -66,12 +66,12 @@ export default function MaintenanceCostTrendChart() {
   return (
     <ChartContainer config={chartConfig} className="h-[280px] w-full">
       <LineChart data={data} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} />
         <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} />
         <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
         <ChartTooltip content={<CustomTooltip />} />
-        <Line type="monotone" dataKey="estimated" stroke="var(--color-estimated)" strokeWidth={2} dot={{ r: 4 }} name="تقديري" />
-        <Line type="monotone" dataKey="actual" stroke="var(--color-actual)" strokeWidth={2} dot={{ r: 4 }} name="فعلي" />
+        <Line type="monotone" dataKey="estimated" stroke="var(--color-estimated)" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--card))" }} name="تقديري" />
+        <Line type="monotone" dataKey="actual" stroke="var(--color-actual)" strokeWidth={2} dot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--card))" }} name="فعلي" />
       </LineChart>
     </ChartContainer>
   );

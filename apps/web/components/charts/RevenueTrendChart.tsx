@@ -30,7 +30,7 @@ const fmt = (n: number) =>
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs">
+    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-elevation-2 border border-border/50 text-xs">
       <p className="font-bold text-primary mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
@@ -41,7 +41,7 @@ function CustomTooltip({ active, payload, label }: any) {
           </span>
         </div>
       ))}
-      <div className="border-t border-border mt-1 pt-1 flex items-center gap-1">
+      <div className="border-t border-border/50 mt-1 pt-1 flex items-center gap-1">
         <span className="text-neutral">الإجمالي:</span>
         <span className="font-bold text-primary flex items-center gap-0.5">
           <RiyalIcon size={12} /> {fmt(payload.reduce((s: number, p: any) => s + p.value, 0))}
@@ -107,15 +107,15 @@ export default function RevenueTrendChart() {
       <AreaChart data={data} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
         <defs>
           <linearGradient id="colorRent" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-rent)" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="var(--color-rent)" stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--color-rent)" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="var(--color-rent)" stopOpacity={0.02} />
           </linearGradient>
           <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="var(--color-sales)" stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--color-sales)" stopOpacity={0.4} />
+            <stop offset="95%" stopColor="var(--color-sales)" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} />
         <XAxis
           dataKey="label"
           tick={{ fontSize: 11 }}

@@ -5,7 +5,11 @@ import { BarChart, Bar, XAxis, YAxis, Cell, LabelList } from "recharts";
 import { getDashboardLandStats } from "../../app/actions/dashboard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@repo/ui";
 
-const COLORS = ["#64748b", "#107840", "#D4AF37"];
+const COLORS = [
+  "hsl(214 32% 50%)",   // muted steel
+  "hsl(148 76% 27%)",   // secondary green
+  "hsl(46 65% 52%)",    // accent gold
+];
 
 const statusLabels: Record<string, { ar: string; en: string }> = {
   identified: { ar: "تم التحديد", en: "Identified" },
@@ -53,7 +57,7 @@ export default function LandPipelineChart() {
           orientation="right"
         />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={28}>
+        <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={28}>
           {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}

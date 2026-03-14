@@ -6,10 +6,10 @@ import { getProjectStatusDistribution } from "../../app/actions/dashboard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@repo/ui";
 
 const STATUS_COLORS: Record<string, string> = {
-  PLANNING: "#6366f1",
-  UNDER_CONSTRUCTION: "#f59e0b",
-  READY: "#10b981",
-  HANDED_OVER: "#64748b",
+  PLANNING: "hsl(200 60% 45%)",
+  UNDER_CONSTRUCTION: "hsl(46 65% 52%)",
+  READY: "hsl(148 76% 27%)",
+  HANDED_OVER: "hsl(214 32% 50%)",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -53,9 +53,9 @@ export default function ProjectStatusChart() {
         <XAxis dataKey="name" tick={{ fontSize: 11 }} tickLine={false} />
         <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
         <ChartTooltip content={<ChartTooltipContent />} />
-        <Bar dataKey="count" radius={[4, 4, 0, 0]} barSize={40}>
+        <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
           {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] ?? "#6b7280"} />
+            <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] ?? "hsl(214 32% 50%)"} />
           ))}
         </Bar>
       </BarChart>

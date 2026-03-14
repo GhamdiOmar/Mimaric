@@ -1,7 +1,7 @@
 # Mimaric — Architecture & Technical Reference
 
 **Platform**: Saudi Real Estate & Facility Management SaaS
-**Last Updated**: 2026-03-09
+**Last Updated**: 2026-03-14
 
 ---
 
@@ -171,7 +171,7 @@ LAND_IDENTIFIED → LAND_UNDER_REVIEW → LAND_ACQUIRED
 
 | Model | Purpose | Key Fields |
 |-------|---------|------------|
-| **Document** | File tracking | name, url, type, category (6 types), size, version, projectId/customerId/unitId/buildingId |
+| **Document** | File tracking | name, url, type, category (10 types), size, version, projectId/customerId/unitId/buildingId |
 | **DocumentVersion** | Version history | documentId, versionNumber, url, size, uploadedBy, changeNote |
 | **AuditLog** | PDPL Article 32 compliance | userId, action (8 types), resource, resourceId, metadata, ipAddress |
 
@@ -280,7 +280,7 @@ lib/auth-helpers.ts ← Session retrieval + permission check helpers
 
 **Pattern**: `"use server"` → `requirePermission()` → `session.organizationId` filtering → Prisma query → `JSON.parse(JSON.stringify())` for Decimal serialization
 
-### All 39 Server Action Files
+### All 44 Server Action Files
 
 | File | Permission | Key Functions |
 |------|-----------|---------------|
@@ -323,10 +323,21 @@ lib/auth-helpers.ts ← Session retrieval + permission check helpers
 | **inventory.ts** | inventory:* | CRUD, `generateInventoryFromPlots()`, `releaseInventory()`, stats |
 | **pricing.ts** | pricing:* | Rule CRUD, `calculatePrice()`, `bulkCalculatePrices()`, summary |
 | **launch-waves.ts** | launch:* | Wave CRUD, `launchWave()`, `closeWave()`, analytics |
+| **planning-workspaces.ts** | — | `getLinkedWorkspaces()` for workspace detection |
+| **planning-scenarios.ts** | — | Scenario approval with compliance gate enforcement |
+| **inventory-handoff.ts** | inventory:* | `convertInventoryToUnits()` — off-plan to delivery conversion |
+| **plot-conversion.ts** | projects:* | `generateBuildingsFromPlots()` — subdivision to buildings |
+| **post-handover.ts** | maintenance:* | `setupPostHandoverMaintenance()` — auto preventive plans |
 
 ---
 
 ## Pages & Routes
+
+### Landing Page (`/landing/`)
+
+| Route | Description |
+|-------|-------------|
+| `/landing` | 11-section bilingual marketing page: Header, Hero, LogoBar, Features, Vision 2030, HowItWorks, Stats, Pricing, FAQ, FinalCTA, Footer |
 
 ### Auth Routes (`/auth/`)
 
@@ -356,9 +367,15 @@ lib/auth-helpers.ts ← Session retrieval + permission check helpers
 |-------|-------------|
 | `/dashboard/projects` | Project list |
 | `/dashboard/projects/new` | Create project form |
-| `/dashboard/projects/[id]` | Project detail — 11 tabs: Overview, Buildings, Documents, Maintenance, Concepts, Subdivision, Approvals, Infrastructure, Inventory, Pricing, Launch |
+| `/dashboard/projects/[id]` | Project detail — 12 tabs: Overview, Buildings, Documents, Financials, Maintenance, Concepts, Subdivision, Approvals, Infrastructure, Inventory, Pricing, Launch |
 | `/dashboard/projects/[id]/site-logs` | Construction site log entries |
 | `/dashboard/projects/[id]/subdivision/[planId]` | Subdivision plan detail — 4 sub-tabs: Plots, Blocks, Roads, Utility Corridors |
+
+#### Planning OS
+| Route | Description |
+|-------|-------------|
+| `/dashboard/planning` | Planning workspace list with search and status filters |
+| `/dashboard/planning/[id]` | Workspace detail — 7 tabs: Map, Scenarios, Compliance, Feasibility, Comparison, Comments, Import |
 
 #### Units
 | Route | Description |
@@ -441,6 +458,7 @@ lib/auth-helpers.ts ← Session retrieval + permission check helpers
 | **MapPicker** | Interactive Leaflet map for lat/lng selection (readonly mode available) |
 | **MapInner** | Leaflet map core (dynamic import, no SSR) |
 | **PasswordStrengthHint** | Real-time password strength feedback (NIST SP 800-63B) |
+| **ProjectLifecycleStepper** | 14-stage lifecycle stepper across 5 phase groups (Land/Design/Authority/Off-Plan/Execution) |
 | **MimaricLogo** | Brand logo SVG |
 
 ### Chart Components (`apps/web/components/charts/`)

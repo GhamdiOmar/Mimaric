@@ -1,5 +1,103 @@
 # Changelog — Mimaric PropTech
 
+## [1.1.0] — 2026-03-14
+
+### Added — Planning-to-Execution Lifecycle Bridge
+
+- **Project Lifecycle Stepper** — Visual 14-stage stepper spanning 5 phase groups (Land → Design → Authority → Off-Plan → Execution) with bilingual labels and color-coded progress
+- **"Promote to Project" button** — Planning workspaces with approved baseline scenarios can convert directly into active projects
+- **"Generate from Plan" button** — Auto-create buildings and units from approved subdivision plots via `generateBuildingsFromPlots()`
+- **"Convert Sold to Units" button** — Transform sold off-plan inventory items into delivered Unit records with contracts via `convertInventoryToUnits()`
+- **Linked Workspace Detection** — Land and project detail pages detect existing planning workspaces and show "Continue Planning" / "View Planning" instead of duplicating
+
+### Added — Project Financials (P&L)
+
+- **Financials tab** on project detail — Total Costs, Total Revenue, Net P&L summary cards
+- **Cost breakdown** — Land acquisition cost, development/infrastructure costs, maintenance costs
+- **Revenue breakdown** — Sale revenue from signed contracts, rental income, off-plan sold inventory value
+- **`getProjectFinancials()` server action** — Aggregates financial data across land, infrastructure, contracts, installments, maintenance, and inventory
+
+### Added — Decision Gate & Compliance Enforcement
+
+- **Compliance gate for scenario approval** — Blocks approval if any `ComplianceResult` has `result: "FAIL"` with descriptive error
+- **Decision gate routing** — Project status transitions now route through `requestStageTransition()` instead of direct updates
+- **Post-handover maintenance setup** — On transition to `HANDED_OVER`, auto-creates 5 default preventive maintenance plans (HVAC, Plumbing, Electrical, Fire Safety, General) for every unit
+
+### Added — Landing Page
+
+- **11-section bilingual marketing page** — Header, Hero, LogoBar, Features, Vision 2030, HowItWorks, Stats, Pricing, FAQ, FinalCTA, Footer
+- **Glass morphism hero** with animated trust badges (Vision 2030, Balady, ZATCA, Wafi), mesh gradient background, and architectural SVG pattern
+- **Tabbed feature showcase** — 5 tabs (Projects, Sales, Rentals, Maintenance, Finance) with checklists and screenshots
+- **3-tier pricing display** — Starter (free), Professional (SAR 499/mo), Enterprise (SAR 1,499/mo) with annual toggle
+- **100+ bilingual translation keys** covering all landing page content
+
+### Added — Glass Morphism Design System
+
+- **CSS custom properties** — Glass backgrounds, borders, blur levels (light/standard/heavy) with dark mode overrides
+- **Gradient mesh** (`mesh-bg`) with radial gradients for hero/dark sections
+- **Glass utilities** (`.glass`, `.glass-heavy`) with backdrop-filter blur, borders, and shadows
+- **Elevation system** (`--elevation-1/2/3`) replacing flat shadows
+- **Glow effects** (`--glow-green`, `--glow-gold`) for accent highlights
+- **New animations** — `float`, `pulse-glow`, `gradient-shift`, `mesh-drift`
+- **Shadow utilities** added to Tailwind config — `glass`, `glass-hover`, `elevation-1/2/3`, `glow-green`, `glow-gold`
+
+### Added — Auth Page Redesign
+
+- Brand panel uses `mesh-bg` gradient with architectural SVG pattern overlay
+- Floating gradient mesh blobs with animation
+- Form cards use glass styling (`rounded-2xl border bg-card/80 backdrop-blur-sm`)
+- ThemeToggle added to login and register pages
+- Error messages styled with `bg-destructive/5`
+
+### Added — New Server Actions
+
+- `inventory-handoff.ts` — `convertInventoryToUnits()` for off-plan to delivery conversion
+- `plot-conversion.ts` — `generateBuildingsFromPlots()` for subdivision-to-building generation
+- `post-handover.ts` — `setupPostHandoverMaintenance()` for auto-creating preventive plans
+- `finance.ts` — `getProjectFinancials()` for project-level P&L aggregation
+- `projects.ts` — `uploadDocumentVersion()` for document version management
+- `planning-workspaces.ts` — `getLinkedWorkspaces()` for workspace detection
+- `contracts.ts` — Auto-post to escrow on sale contract signing
+
+### Added — E2E Testing
+
+- **Planning Page Object Model** — Methods for workspace list, detail, map, scenarios, compliance, and feasibility tabs
+- **16 Playwright test cases** — 7 workspace list tests + 9 workspace detail tests
+- **E2E seed script** (`scripts/e2e-seed.ts`) — Full 17-phase lifecycle simulation with land, planning, subdivision, buildings, units, CRM, contracts, leases, construction, handover, and maintenance
+
+### Added — Document Management Enhancements
+
+- Category filter dropdown with funnel icon
+- Version column with expandable version history
+- Upload new version inline per document row
+- 4 new document categories: GIS, CAD, Planning, Permit
+
+### Changed — UI Improvements
+
+- **Dashboard layout** — Sidebar gradient background, active nav inset glow, glass topbar
+- **KPI Cards** — Backdrop blur, semi-transparent background, hover lift effect
+- **All 5 chart components** — Colors aligned to HSL design tokens, glass-styled tooltips, reduced grid opacity
+- **Dialog component** — Fixed positioning with `translate: "-50% -50%"` style attribute
+- **MimaricLogo** — Added `width: auto, height: auto` to prevent layout shift
+- **Dashboard spacing** — Increased from `space-y-8` to `space-y-10`
+
+### Fixed
+
+- Leaflet map double-mount in React strict mode (check `_leaflet_id`, cleanup old instance)
+- `createLandParcel()` passing empty strings instead of `undefined` for optional fields
+- Map z-index stacking with `isolate` class on container
+
+### Schema Changes
+
+- Added `GIS`, `CAD`, `PLANNING`, `PERMIT` to `DocCategory` enum
+
+### Seed Data
+
+- 3 SaaS plans with 11 entitlements each (Starter/Professional/Enterprise)
+- Active subscriptions for main and dummy organizations
+
+---
+
 ## [1.0.0] — 2026-03-10
 
 ### Added — SaaS Commercialization Layer

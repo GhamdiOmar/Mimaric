@@ -19,7 +19,7 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs">
+    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-elevation-2 border border-border/50 text-xs">
       <p className="font-bold text-primary mb-1">{d.name}</p>
       <div className="space-y-0.5">
         <p className="text-neutral">إجمالي الوحدات: <span className="font-bold text-primary">{d.total}</span></p>

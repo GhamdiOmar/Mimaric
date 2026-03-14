@@ -37,7 +37,7 @@ function KPICard({
     return (
       <div
         className={cn(
-          "rounded-lg border border-border bg-card p-5 space-y-3",
+          "rounded-lg border border-border/50 bg-card/80 p-5 space-y-3 backdrop-blur-sm",
           className
         )}
         {...props}
@@ -55,7 +55,7 @@ function KPICard({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border bg-card p-5 shadow-card transition-shadow hover:shadow-raised",
+        "rounded-lg border border-border/50 bg-card/80 p-5 shadow-elevation-1 backdrop-blur-sm transition-all duration-300 hover:shadow-elevation-2 hover:-translate-y-0.5",
         className
       )}
       {...props}

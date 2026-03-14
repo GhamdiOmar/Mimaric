@@ -242,6 +242,31 @@ export async function createWorkspaceFromProject(projectId: string) {
   });
 }
 
+// ─── Linked Workspaces Query ─────────────────────────────────────────────────
+
+export async function getLinkedWorkspaces(projectId: string) {
+  const session = await requirePermission("planning:read");
+  const orgId = session.organizationId;
+
+  const workspaces = await db.planningWorkspace.findMany({
+    where: {
+      organizationId: orgId,
+      OR: [{ projectId }, { landRecordId: projectId }],
+    },
+    select: {
+      id: true,
+      name: true,
+      nameArabic: true,
+      status: true,
+      updatedAt: true,
+      _count: { select: { scenarios: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(workspaces));
+}
+
 // ─── Dashboard Stats ─────────────────────────────────────────────────────────
 
 export async function getPlanningDashboardStats() {

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Globe, Buildings, ArrowRight, ArrowLeft, Spinner, Eye, EyeSlash } from "@phosphor-icons/react";
 import { MimaricLogo } from "../../../components/brand/MimaricLogo";
+import { ThemeToggle } from "../../../components/ThemeToggle";
 import { loginAction } from "../../actions/auth";
 
 export default function LoginPage() {
@@ -51,7 +52,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     setLoading(true);
     setError(null);
-    
+
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
@@ -90,15 +91,26 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Brand Visual Panel - Left (Desktop) */}
-      <div className="relative hidden w-full bg-primary lg:flex lg:w-1/2 xl:w-5/12 overflow-hidden shadow-2xl">
-        {/* PCB Geometric Pattern Overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.05]" 
-          style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 10 L10 40 L40 40' stroke='white' fill='none'/%3E%3Ccircle cx='40' cy='40' r='2' fill='white'/%3E%3Cpath d='M60 10 L60 20 L80 20' stroke='white' fill='none'/%3E%3Ccircle cx='80' cy='20' r='2' fill='white'/%3E%3C/svg%3E")` 
-          }} 
-        />
-        
+      <div className="relative hidden w-full mesh-bg lg:flex lg:w-1/2 xl:w-5/12 overflow-hidden shadow-2xl">
+        {/* Architectural pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.04]">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="arch-login" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <rect x="10" y="10" width="100" height="100" stroke="white" strokeWidth="0.5" fill="none" rx="4" />
+                <rect x="30" y="30" width="60" height="60" stroke="white" strokeWidth="0.3" fill="none" rx="2" />
+                <line x1="60" y1="10" x2="60" y2="110" stroke="white" strokeWidth="0.3" />
+                <line x1="10" y1="60" x2="110" y2="60" stroke="white" strokeWidth="0.3" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#arch-login)" />
+          </svg>
+        </div>
+
+        {/* Floating gradient mesh blobs */}
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-secondary/15 blur-[80px] animate-mesh-drift" />
+        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-accent/10 blur-[60px] animate-mesh-drift" style={{ animationDelay: "-10s" }} />
+
         <div className="relative z-20 flex h-full flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-3">
              <MimaricLogo width={180} variant="dark" priority />
@@ -109,8 +121,8 @@ export default function LoginPage() {
               {lang === "ar" ? "أهلاً بك في ميماريك" : "Welcome to Mimaric"}
             </h1>
             <p className="text-lg text-white/80 max-w-md font-primary">
-              {lang === "ar" 
-                ? "أتمتة وإدارة العقارات بذكاء وفق أرقى المعايير السعودية." 
+              {lang === "ar"
+                ? "أتمتة وإدارة العقارات بذكاء وفق أرقى المعايير السعودية."
                 : "Real estate automation and management with Saudi-first standards."}
             </p>
           </div>
@@ -130,105 +142,112 @@ export default function LoginPage() {
       <div className="flex w-full flex-1 flex-col bg-background lg:w-1/2 xl:w-7/12">
         {/* Top bar with Lang Toggle */}
         <div className="flex items-center justify-between p-6 lg:px-12">
-          <div className="lg:hidden">
-             <MimaricLogo width={100} />
+          <div className="lg:hidden dark:brightness-0 dark:invert">
+             <MimaricLogo width={120} />
           </div>
-          
-          <button 
-            onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="flex items-center gap-2 text-sm font-medium text-neutral hover:text-primary transition-colors"
-          >
-            <Globe size={20} />
-            <span>{lang === "ar" ? "English" : "العربية"}</span>
-          </button>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button
+              onClick={() => setLang(lang === "ar" ? "en" : "ar")}
+              className="flex items-center gap-2 text-sm font-medium text-neutral hover:text-primary transition-colors"
+            >
+              <Globe size={20} />
+              <span>{lang === "ar" ? "English" : "العربية"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Main Content */}
         <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-6 pb-12 lg:px-12 lg:pt-0">
-          <div className="mb-8 text-start">
-            <h2 className="text-2xl font-bold text-primary">
-              {lang === "ar" ? "تسجيل الدخول" : "Login"}
-            </h2>
-            <p className="mt-2 text-sm text-neutral font-dm-sans">
-              {lang === "ar" 
-                ? "أدخل بياناتك للوصول إلى لوحة التحكم" 
-                : "Enter your credentials to access your dashboard"}
-            </p>
-          </div>
-
-          {/* Form */}
-          <div className="space-y-5">
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
-                {lang === "ar" ? "البريد الإلكتروني" : "Email"}
-              </label>
-              <Input
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
-                disabled={loading}
-              />
+          <div className="rounded-2xl border border-border/50 bg-card/80 p-8 shadow-elevation-1 backdrop-blur-sm dark:bg-card/50">
+            <div className="mb-8 text-start">
+              <h2 className="text-2xl font-bold text-primary">
+                {lang === "ar" ? "تسجيل الدخول" : "Login"}
+              </h2>
+              <p className="mt-2 text-sm text-neutral font-dm-sans">
+                {lang === "ar"
+                  ? "أدخل بياناتك للوصول إلى لوحة التحكم"
+                  : "Enter your credentials to access your dashboard"}
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
+            {/* Form */}
+            <div className="space-y-5">
+              {error && (
+                <div className="p-3 bg-destructive/5 border border-destructive/20 text-destructive text-sm rounded-lg">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
-                  {lang === "ar" ? "كلمة المرور" : "Password"}
+                  {lang === "ar" ? "البريد الإلكتروني" : "Email"}
                 </label>
-                <Link href="/auth/forgot-password" title="title text" className="text-xs font-semibold text-primary/70 hover:text-primary">
-                  {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
-                </Link>
-              </div>
-              <div className="relative">
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
                   disabled={loading}
+                  className="focus:border-secondary/40 focus:ring-secondary/10"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
-                </button>
               </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                    {lang === "ar" ? "كلمة المرور" : "Password"}
+                  </label>
+                  <Link href="/auth/forgot-password" title="title text" className="text-xs font-semibold text-primary/70 hover:text-primary">
+                    {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
+                    disabled={loading}
+                    className="focus:border-secondary/40 focus:ring-secondary/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                className="w-full cursor-pointer hover:bg-primary-deep transition-all active:scale-[0.98] disabled:opacity-50"
+                onClick={handleLogin}
+                disabled={loading || !email || !password || rateLimitSeconds > 0}
+              >
+                {loading ? (
+                  <Spinner className="animate-spin" />
+                ) : (
+                  <>
+                    {lang === "ar" ? "تسجيل الدخول" : "Login"}
+                    {lang === "ar" ? <ArrowLeft className="mr-2 icon-directional" /> : <ArrowRight className="ml-2 icon-directional" />}
+                  </>
+                )}
+              </Button>
             </div>
 
-            <Button 
-              className="w-full cursor-pointer hover:bg-primary-deep transition-all active:scale-[0.98] disabled:opacity-50" 
-              onClick={handleLogin}
-              disabled={loading || !email || !password || rateLimitSeconds > 0}
-            >
-              {loading ? (
-                <Spinner className="animate-spin" />
-              ) : (
-                <>
-                  {lang === "ar" ? "تسجيل الدخول" : "Login"}
-                  {lang === "ar" ? <ArrowLeft className="mr-2 icon-directional" /> : <ArrowRight className="ml-2 icon-directional" />}
-                </>
-              )}
-            </Button>
+            <p className="mt-8 text-center text-sm text-neutral font-dm-sans">
+              {lang === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
+              <Link href="/auth/register" className="font-semibold text-primary hover:underline">
+                {lang === "ar" ? "إنشاء حساب جديد" : "Register now"}
+              </Link>
+            </p>
           </div>
-
-          <p className="mt-8 text-center text-sm text-neutral font-dm-sans">
-            {lang === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
-            <Link href="/auth/register" className="font-semibold text-primary hover:underline">
-              {lang === "ar" ? "إنشاء حساب جديد" : "Register now"}
-            </Link>
-          </p>
         </div>
       </div>
     </div>

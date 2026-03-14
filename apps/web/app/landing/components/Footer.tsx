@@ -1,0 +1,111 @@
+"use client";
+
+import Link from "next/link";
+import { t as translations } from "../translations";
+
+export default function Footer({
+  lang,
+  onToggleLang,
+}: {
+  lang: "ar" | "en";
+  onToggleLang: () => void;
+}) {
+  const t = translations[lang];
+
+  const columns = [
+    {
+      title: t.product,
+      links: [
+        { label: t.features, href: "#features" },
+        { label: t.pricing, href: "#pricing" },
+        { label: t.vision2030, href: "#vision2030" },
+      ],
+    },
+    {
+      title: t.company,
+      links: [
+        { label: t.aboutUs, href: "#" },
+        { label: t.careers, href: "#" },
+        { label: t.blog, href: "#" },
+      ],
+    },
+    {
+      title: t.legal,
+      links: [
+        { label: t.termsOfService, href: "#" },
+        { label: t.privacyPolicy, href: "#" },
+      ],
+    },
+    {
+      title: t.support,
+      links: [
+        { label: t.helpCenter, href: "#" },
+        { label: t.documentation, href: "#" },
+        { label: t.status, href: "#" },
+      ],
+    },
+  ];
+
+  return (
+    <footer className="border-t border-border bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+        <div className="grid gap-8 lg:grid-cols-6">
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/Mimaric_Official_Logo_transparent.png"
+              alt="Mimaric"
+              className="h-8 w-auto dark:brightness-0 dark:invert"
+            />
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {t.tagline}
+            </p>
+
+            {/* Language toggle */}
+            <button
+              onClick={onToggleLang}
+              className="mt-4 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "English" : "العربية"}
+            </button>
+
+            {/* Made in Saudi badge */}
+            <p className="mt-4 text-xs text-muted-foreground/60">
+              {t.madeInSaudi}
+            </p>
+          </div>
+
+          {/* Link columns */}
+          {columns.map((col) => (
+            <div key={col.title}>
+              <h4 className="text-sm font-semibold text-primary dark:text-white">
+                {col.title}
+              </h4>
+              <ul className="mt-4 space-y-3">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary dark:hover:text-white"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom bar */}
+        <div className="mt-12 border-t border-border pt-8">
+          <p className="text-center text-xs text-muted-foreground/60">
+            &copy; {new Date().getFullYear()} Mimaric. {t.allRightsReserved}
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}

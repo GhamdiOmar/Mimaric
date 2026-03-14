@@ -164,7 +164,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const sidebarContent = (
     <>
       {/* Logo Section */}
-      <div className="flex h-16 items-center px-4 border-b border-white/5">
+      <div className="flex h-16 items-center px-4 border-b border-white/8">
         <div className="flex items-center gap-3 overflow-hidden">
           {isCollapsed && !mobileOpen ? (
             <div className="min-w-[40px] flex justify-center">
@@ -189,8 +189,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-all group relative min-h-[44px]",
                 isActive
-                  ? "bg-secondary/15 text-white border-inline-start-4 border-secondary pr-2"
-                  : "text-white/55 hover:bg-white/5 hover:text-white/90"
+                  ? "bg-secondary/10 text-white border-inline-start-4 border-secondary pr-2 backdrop-blur-sm shadow-[inset_0_0_20px_hsl(148_76%_27%/0.05)]"
+                  : "text-white/55 hover:bg-white/8 hover:text-white/90"
               )}
               aria-current={isActive ? "page" : undefined}
             >
@@ -210,7 +210,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* User & Additional Info Section */}
-      <div className="border-t border-white/10 p-3 space-y-1">
+      <div className="border-t border-white/8 p-3 space-y-1">
         {/* Desktop collapse toggle (hidden on mobile) */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
@@ -248,7 +248,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Sidebar — Desktop: sticky, Mobile: drawer overlay */}
       <aside
         className={cn(
-          "fixed inset-y-0 z-50 flex flex-col bg-sidebar-bg text-white shadow-xl transition-all duration-300 ease-in-out",
+          "fixed inset-y-0 z-50 flex flex-col bg-gradient-to-b from-sidebar-bg to-sidebar-deep text-white shadow-xl transition-all duration-300 ease-in-out",
           /* Desktop */
           "lg:sticky lg:top-0 lg:h-screen",
           isCollapsed ? "lg:w-[68px]" : "lg:w-[256px]",
@@ -273,7 +273,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <main className="flex flex-1 flex-col transition-all duration-300 min-w-0">
         {/* Topbar */}
-        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-card px-4 sm:px-6">
+        <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border/50 bg-card/80 backdrop-blur-md px-4 sm:px-6">
           <div className="flex items-center gap-3">
             {/* D1: Mobile hamburger */}
             <button

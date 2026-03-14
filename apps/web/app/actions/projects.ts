@@ -196,6 +196,7 @@ export async function getProjectDetail(projectId: string) {
         orderBy: { createdAt: "asc" },
       },
       documents: {
+        include: { versions: { orderBy: { versionNumber: "desc" } } },
         orderBy: { createdAt: "desc" },
       },
       _count: {
@@ -308,6 +309,61 @@ export async function registerProjectDocument(data: {
 
   revalidatePath(`/dashboard/projects/${data.projectId}`);
   return JSON.parse(JSON.stringify(document));
+}
+
+export async function uploadDocumentVersion(data: {
+  documentId: string;
+  url: string;
+  size?: number;
+  changeNote?: string;
+}) {
+  const session = await requirePermission("documents:write");
+
+  const doc = await db.document.findFirst({
+    where: { id: data.documentId, organizationId: session.organizationId },
+  });
+  if (!doc) throw new Error("Document not found");
+
+  const nextVersion = doc.version + 1;
+
+  // Archive current version
+  await db.documentVersion.create({
+    data: {
+      documentId: data.documentId,
+      versionNumber: doc.version,
+      url: doc.url,
+      size: doc.size,
+      uploadedBy: doc.userId,
+      changeNote: data.changeNote || `Version ${doc.version}`,
+    },
+  });
+
+  // Update document to new version
+  await db.document.update({
+    where: { id: data.documentId },
+    data: {
+      url: data.url,
+      size: data.size,
+      version: nextVersion,
+      userId: session.userId,
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Document",
+    resourceId: data.documentId,
+    metadata: { version: nextVersion, changeNote: data.changeNote },
+    organizationId: session.organizationId,
+  });
+
+  if (doc.projectId) {
+    revalidatePath(`/dashboard/projects/${doc.projectId}`);
+  }
+  return { version: nextVersion };
 }
 
 export async function deleteProjectDocument(documentId: string) {

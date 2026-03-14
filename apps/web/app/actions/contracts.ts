@@ -111,6 +111,32 @@ export async function updateContractStatus(
       where: { id: contract.customerId },
       data: { status: "CONVERTED" },
     });
+
+    // G11: Auto-post to escrow if project has an escrow account
+    try {
+      const unit = await db.unit.findUnique({
+        where: { id: contract.unitId },
+        include: { building: { select: { projectId: true } } },
+      });
+      if (unit?.building?.projectId) {
+        const escrow = await db.escrowAccount.findFirst({
+          where: { projectId: unit.building.projectId },
+        });
+        if (escrow) {
+          await db.escrowTransaction.create({
+            data: {
+              escrowAccountId: escrow.id,
+              type: "BUYER_DEPOSIT",
+              amount: contract.amount,
+              description: `Sale contract signed — Unit ${unit.number}`,
+              status: "PROCESSED",
+            },
+          });
+        }
+      }
+    } catch {
+      // Escrow posting is best-effort — don't block contract signing
+    }
   }
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Contract", resourceId: contractId, metadata: { newStatus: status }, organizationId: session.organizationId });

@@ -24,6 +24,8 @@ import {
   SealCheck,
   XCircle,
   ShieldCheck,
+  ClockCounterClockwise,
+  FunnelSimple,
 } from "@phosphor-icons/react";
 import { Button, Badge, SARAmount } from "@repo/ui";
 import {
@@ -34,6 +36,7 @@ import {
   deleteBuilding,
   registerProjectDocument,
   deleteProjectDocument,
+  uploadDocumentVersion,
 } from "../../../actions/projects";
 import { getMaintenanceForProject } from "../../../actions/maintenance";
 import { getConceptPlans, createConceptPlan, selectConceptPlan, deleteConceptPlan } from "../../../actions/concept-plans";
@@ -46,8 +49,14 @@ import { getPricingRules, createPricingRule, updatePricingRule, deletePricingRul
 import { getLaunchWaves, createLaunchWave, updateLaunchWave, deleteLaunchWave, launchWave, closeWave, getWaveAnalytics } from "../../../actions/launch-waves";
 import { getLaunchReadinessChecklist, getSalesTracking } from "../../../actions/launch";
 import { getPricingAnalytics, getWavePerformance } from "../../../actions/analytics";
-import { createWorkspaceFromProject } from "../../../actions/planning-workspaces";
+import { createWorkspaceFromProject, getLinkedWorkspaces } from "../../../actions/planning-workspaces";
+import { requestStageTransition } from "../../../actions/decision-gates";
+import { getProjectFinancials } from "../../../actions/finance";
+import { convertInventoryToUnits } from "../../../actions/inventory-handoff";
+import { setupPostHandoverMaintenance } from "../../../actions/post-handover";
 import { Wrench, HardHat, Package, CurrencyDollar, Rocket, Lightning, Drop, WifiHigh, Broadcast, Car, CloudRain, Tree, Wall, SignIn as SignIcon, Lamp, ToggleRight, Play, Stop, Compass } from "@phosphor-icons/react";
+import { generateBuildingsFromPlots } from "../../../actions/plot-conversion";
+import { ProjectLifecycleStepper } from "../../../../components/ProjectLifecycleStepper";
 import { formatDualDate } from "../../../../lib/hijri";
 import MapPicker from "../../../../components/MapPicker";
 import { UploadButton } from "../../../../lib/uploadthing";
@@ -95,6 +104,10 @@ const docCategoryLabels: Record<string, { ar: string; en: string }> = {
   CONTRACT: { ar: "عقد", en: "Contract" },
   MARKETING: { ar: "تسويق", en: "Marketing" },
   FINANCE: { ar: "مالي", en: "Finance" },
+  GIS: { ar: "نظام معلومات جغرافية", en: "GIS" },
+  CAD: { ar: "تصميم AutoCAD", en: "CAD" },
+  PLANNING: { ar: "تخطيط", en: "Planning" },
+  PERMIT: { ar: "تصريح", en: "Permit" },
 };
 
 export default function ProjectDetailPage() {
@@ -103,7 +116,7 @@ export default function ProjectDetailPage() {
   const { lang } = useLanguage();
   const [project, setProject] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState<"overview" | "buildings" | "documents" | "maintenance" | "concepts" | "subdivision" | "approvals" | "infrastructure" | "inventory" | "pricing" | "launch" | "readiness" | "map" | "analytics">("overview");
+  const [activeTab, setActiveTab] = React.useState<"overview" | "buildings" | "documents" | "maintenance" | "concepts" | "subdivision" | "approvals" | "infrastructure" | "inventory" | "pricing" | "launch" | "readiness" | "map" | "analytics" | "financials">("overview");
   const [maintenanceRequests, setMaintenanceRequests] = React.useState<any[]>([]);
   const [loadingMaintenance, setLoadingMaintenance] = React.useState(false);
 
@@ -139,22 +152,35 @@ export default function ProjectDetailPage() {
   const [analyticsData, setAnalyticsData] = React.useState<{ pricing: any; waves: any; sales: any } | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = React.useState(false);
 
+  // Project financials (G10b)
+  const [projectFinancials, setProjectFinancials] = React.useState<any>(null);
+  const [loadingFinancials, setLoadingFinancials] = React.useState(false);
+
+  // Linked planning workspace
+  const [linkedWorkspace, setLinkedWorkspace] = React.useState<any>(null);
+
   // Building form state
   const [showBuildingForm, setShowBuildingForm] = React.useState(false);
   const [editingBuildingId, setEditingBuildingId] = React.useState<string | null>(null);
   const [buildingForm, setBuildingForm] = React.useState({ name: "", numberOfFloors: "", buildingAreaSqm: "", buildingType: "residential" });
   const [savingBuilding, setSavingBuilding] = React.useState(false);
 
-  // Document upload
+  // Document upload & filter
   const [uploadCategory, setUploadCategory] = React.useState("LEGAL");
+  const [docFilterCategory, setDocFilterCategory] = React.useState("ALL");
+  const [versionUploadDocId, setVersionUploadDocId] = React.useState<string | null>(null);
 
   React.useEffect(() => { load(); }, [id]);
 
   async function load() {
     setLoading(true);
     try {
-      const data = await getProjectDetail(id as string);
+      const [data, workspaces] = await Promise.all([
+        getProjectDetail(id as string),
+        getLinkedWorkspaces(id as string).catch(() => []),
+      ]);
       setProject(data);
+      setLinkedWorkspace(workspaces?.[0] || null);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
@@ -217,9 +243,46 @@ export default function ProjectDetailPage() {
 
   async function handleStatusChange(newStatus: string) {
     try {
-      await updateProject(id as string, { status: newStatus });
+      // G7: Route status transitions through decision gates
+      await requestStageTransition({
+        projectId: id as string,
+        toStage: newStatus,
+        notes: `Requested transition to ${statusMap[newStatus]?.en || newStatus}`,
+      });
+      // The gate was auto-approved (or created as pending)
       await load();
-    } catch (e) { console.error(e); }
+    } catch (e: any) {
+      // Fallback: if decision gate system fails (e.g. transition not in valid map),
+      // fall back to direct update for legacy statuses
+      if (e?.message?.includes("Invalid stage transition")) {
+        try {
+          await updateProject(id as string, { status: newStatus });
+          await load();
+        } catch (e2) { console.error(e2); }
+      } else {
+        console.error(e);
+        alert(e?.message || "Status transition failed");
+      }
+    }
+
+    // G8: If transitioning to HANDED_OVER, offer maintenance setup
+    if (newStatus === "HANDED_OVER") {
+      const doSetup = confirm(
+        lang === "ar"
+          ? "هل تريد إعداد خطط الصيانة الوقائية لجميع الوحدات؟"
+          : "Set up preventive maintenance plans for all units?"
+      );
+      if (doSetup) {
+        try {
+          const result = await setupPostHandoverMaintenance(id as string);
+          alert(
+            lang === "ar"
+              ? `تم إنشاء ${result.plansCreated} خطة صيانة لـ ${result.unitsProcessed} وحدة`
+              : `Created ${result.plansCreated} maintenance plans for ${result.unitsProcessed} units`
+          );
+        } catch (e) { console.error(e); }
+      }
+    }
   }
 
   if (loading) return <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>;
@@ -361,6 +424,15 @@ export default function ProjectDetailPage() {
     finally { setLoadingAnalytics(false); }
   }
 
+  async function loadFinancials() {
+    setLoadingFinancials(true);
+    try {
+      const data = await getProjectFinancials(id as string);
+      setProjectFinancials(data);
+    } catch (e) { console.error(e); }
+    finally { setLoadingFinancials(false); }
+  }
+
   function handleTabChange(tabId: typeof activeTab) {
     setActiveTab(tabId);
     if (tabId === "maintenance" && maintenanceRequests.length === 0) loadMaintenance();
@@ -374,6 +446,7 @@ export default function ProjectDetailPage() {
     if (tabId === "readiness" && readinessChecklist.length === 0) loadReadiness();
     if (tabId === "map" && mapInventory.length === 0) loadMapInventory();
     if (tabId === "analytics" && !analyticsData) loadAnalytics();
+    if (tabId === "financials" && !projectFinancials) loadFinancials();
   }
 
   // Determine if project is in the off-plan lifecycle
@@ -385,6 +458,7 @@ export default function ProjectDetailPage() {
     { id: "buildings" as const, label: { ar: "المباني", en: "Buildings" } },
     { id: "documents" as const, label: { ar: "الوثائق", en: "Documents" } },
     { id: "maintenance" as const, label: { ar: "الصيانة", en: "Maintenance" } },
+    { id: "financials" as const, label: { ar: "المالية", en: "Financials" } },
     ...(isOffPlan ? [
       { id: "concepts" as const, label: { ar: "المخطط المبدئي", en: "Concepts" } },
       { id: "subdivision" as const, label: { ar: "التقسيم", en: "Subdivision" } },
@@ -423,13 +497,20 @@ export default function ProjectDetailPage() {
             className="gap-2"
             onClick={async () => {
               try {
-                const ws = await createWorkspaceFromProject(id as string);
-                router.push(`/dashboard/planning/${ws.id}`);
+                if (linkedWorkspace) {
+                  router.push(`/dashboard/planning/${linkedWorkspace.id}`);
+                } else {
+                  const ws = await createWorkspaceFromProject(id as string);
+                  setLinkedWorkspace(ws);
+                  router.push(`/dashboard/planning/${ws.id}`);
+                }
               } catch { /* permission denied — button hidden for non-planners */ }
             }}
           >
             <Compass size={14} />
-            {lang === "ar" ? "فتح في التخطيط" : "Open in Planning"}
+            {linkedWorkspace
+              ? (lang === "ar" ? "عرض التخطيط" : "View Planning")
+              : (lang === "ar" ? "فتح في التخطيط" : "Open in Planning")}
           </Button>
           <Link href={`/dashboard/units?project=${id}`}>
             <Button variant="secondary" size="sm" className="gap-2">
@@ -501,6 +582,9 @@ export default function ProjectDetailPage() {
       {/* ─── Overview Tab ─── */}
       {activeTab === "overview" && (
         <div className="space-y-6">
+          {/* Lifecycle Stepper */}
+          <ProjectLifecycleStepper currentStatus={project.status} lang={lang} />
+
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
@@ -572,20 +656,45 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-neutral">
               {project.buildings?.length ?? 0} {lang === "ar" ? "مبنى" : "buildings"} • {totalUnits} {lang === "ar" ? "وحدة" : "units"}
             </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="gap-2"
-              onClick={() => {
-                setEditingBuildingId(null);
-                setBuildingForm({ name: "", numberOfFloors: "", buildingAreaSqm: "", buildingType: "residential" });
-                setShowBuildingForm(true);
-              }}
-             
-            >
-              <Plus size={16} />
-              {lang === "ar" ? "إضافة مبنى" : "Add Building"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {subdivisionPlans.length > 0 && (project.buildings?.length ?? 0) === 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="gap-2"
+                  onClick={async () => {
+                    try {
+                      const plan = subdivisionPlans[0];
+                      const result = await generateBuildingsFromPlots(id as string, plan.id);
+                      alert(lang === "ar"
+                        ? `تم إنشاء ${result.buildingsCreated} مبنى و ${result.unitsCreated} وحدة`
+                        : `Created ${result.buildingsCreated} buildings and ${result.unitsCreated} units`);
+                      await load();
+                    } catch (e: any) {
+                      console.error(e);
+                      alert(e?.message || "Error generating buildings");
+                    }
+                  }}
+                  style={{ display: "inline-flex" }}
+                >
+                  <Lightning size={16} />
+                  {lang === "ar" ? "إنشاء من المخطط" : "Generate from Plan"}
+                </Button>
+              )}
+              <Button
+                variant="secondary"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  setEditingBuildingId(null);
+                  setBuildingForm({ name: "", numberOfFloors: "", buildingAreaSqm: "", buildingType: "residential" });
+                  setShowBuildingForm(true);
+                }}
+              >
+                <Plus size={16} />
+                {lang === "ar" ? "إضافة مبنى" : "Add Building"}
+              </Button>
+            </div>
           </div>
 
           {/* Building Form */}
@@ -780,12 +889,28 @@ export default function ProjectDetailPage() {
       )}
 
       {/* ─── Documents Tab ─── */}
-      {activeTab === "documents" && (
+      {activeTab === "documents" && (() => {
+        const allDocs = project.documents || [];
+        const filteredDocs = docFilterCategory === "ALL" ? allDocs : allDocs.filter((d: any) => d.category === docFilterCategory);
+        return (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
-              {project.documents?.length ?? 0} {lang === "ar" ? "وثيقة" : "documents"}
-            </p>
+          {/* Toolbar: filter + upload */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-neutral">
+                {filteredDocs.length} {lang === "ar" ? "وثيقة" : "documents"}
+                {docFilterCategory !== "ALL" && ` (${docCategoryLabels[docFilterCategory]?.[lang]})`}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <FunnelSimple size={14} className="text-neutral" />
+                <select value={docFilterCategory} onChange={(e) => setDocFilterCategory(e.target.value)} className="border border-border rounded-md px-2 py-1 text-xs bg-card">
+                  <option value="ALL">{lang === "ar" ? "الكل" : "All"}</option>
+                  {Object.entries(docCategoryLabels).map(([k, v]) => (
+                    <option key={k} value={k}>{v[lang]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="flex items-center gap-3">
               <select value={uploadCategory} onChange={(e) => setUploadCategory(e.target.value)} className="border border-border rounded-md px-3 py-1.5 text-xs bg-card">
                 {Object.entries(docCategoryLabels).map(([k, v]) => (
@@ -812,7 +937,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {(!project.documents || project.documents.length === 0) ? (
+          {filteredDocs.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
               <FileText size={48} className="text-neutral/30 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد وثائق" : "No Documents"}</h3>
@@ -826,44 +951,103 @@ export default function ProjectDetailPage() {
                     <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الاسم" : "Name"}</th>
                     <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Type"}</th>
                     <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التصنيف" : "Category"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الإصدار" : "Version"}</th>
                     <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
                     <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {project.documents.map((doc: any) => (
-                    <tr key={doc.id} className="border-b border-border last:border-0 hover:bg-muted/10">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <FileText size={16} className="text-secondary min-w-[16px]" />
-                          <span className="font-medium text-primary truncate max-w-[200px]">{doc.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-neutral text-xs uppercase">{doc.type}</td>
-                      <td className="px-4 py-3">
-                        <Badge variant="draft" className="text-[10px]">{docCategoryLabels[doc.category]?.[lang] ?? doc.category}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(doc.createdAt, lang)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm">
-                              <DownloadSimple size={14} />
+                  {filteredDocs.map((doc: any) => (
+                    <React.Fragment key={doc.id}>
+                      <tr className="border-b border-border last:border-0 hover:bg-muted/10">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <FileText size={16} className="text-secondary min-w-[16px]" />
+                            <span className="font-medium text-primary truncate max-w-[200px]">{doc.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-neutral text-xs uppercase">{doc.type}</td>
+                        <td className="px-4 py-3">
+                          <Badge variant="draft" className="text-[10px]">{docCategoryLabels[doc.category]?.[lang] ?? doc.category}</Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            className="flex items-center gap-1 text-xs text-primary hover:underline"
+                            style={{ display: "inline-flex" }}
+                            onClick={() => setVersionUploadDocId(versionUploadDocId === doc.id ? null : doc.id)}
+                          >
+                            <span className="font-bold">v{doc.version || 1}</span>
+                            {(doc.versions?.length > 0) && (
+                              <ClockCounterClockwise size={12} className="text-neutral" />
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(doc.createdAt, lang)}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1">
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                              <Button variant="ghost" size="sm">
+                                <DownloadSimple size={14} />
+                              </Button>
+                            </a>
+                            <UploadButton
+                              endpoint="projectDocumentUploader"
+                              onClientUploadComplete={async (res: any) => {
+                                if (res?.[0]) {
+                                  await uploadDocumentVersion({
+                                    documentId: doc.id,
+                                    url: res[0].url ?? res[0].ufsUrl,
+                                    size: res[0].size,
+                                    changeNote: `v${(doc.version || 1) + 1}`,
+                                  });
+                                  await load();
+                                }
+                              }}
+                              onUploadError={(error: Error) => console.error(error.message)}
+                              appearance={{
+                                button: "bg-transparent hover:bg-muted text-neutral hover:text-primary h-7 w-7 p-0 rounded-md flex items-center justify-center",
+                                allowedContent: "hidden",
+                              }}
+                              content={{
+                                button: <CloudArrowUp size={14} />,
+                              }}
+                            />
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)}>
+                              <Trash size={14} />
                             </Button>
-                          </a>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)}>
-                            <Trash size={14} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
+                          </div>
+                        </td>
+                      </tr>
+                      {/* Version history expand */}
+                      {versionUploadDocId === doc.id && doc.versions?.length > 0 && (
+                        doc.versions.map((v: any) => (
+                          <tr key={v.id} className="bg-muted/20 border-b border-border last:border-0">
+                            <td className="px-4 py-2 ps-10" colSpan={2}>
+                              <span className="text-xs text-neutral">{v.changeNote || `v${v.versionNumber}`}</span>
+                            </td>
+                            <td className="px-4 py-2" colSpan={2}>
+                              <span className="text-[10px] text-neutral">v{v.versionNumber}</span>
+                            </td>
+                            <td className="px-4 py-2 text-xs text-neutral">{formatDualDate(v.createdAt, lang)}</td>
+                            <td className="px-4 py-2">
+                              <a href={v.url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="ghost" size="sm">
+                                  <DownloadSimple size={12} />
+                                </Button>
+                              </a>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* ─── Concept Plans Tab ─── */}
       {activeTab === "concepts" && (
@@ -1365,10 +1549,30 @@ export default function ProjectDetailPage() {
                   <Package size={14} />{lang === "ar" ? "توليد من القطع" : "Generate from Plots"}
                 </button>
               )}
+              {/* G9: Convert sold inventory to units for handover */}
+              {inventoryStats && inventoryStats.sold > 0 && ["READY", "HANDED_OVER"].includes(project?.status) && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const result = await convertInventoryToUnits(id as string);
+                      alert(lang === "ar"
+                        ? `تم إنشاء ${result.unitsCreated} وحدة و ${result.contractsCreated} عقد`
+                        : `Created ${result.unitsCreated} units and ${result.contractsCreated} contracts`);
+                      await load();
+                      loadInventory();
+                    } catch (e: any) {
+                      console.error(e);
+                      alert(e?.message || "Conversion failed");
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-all"
+                >
+                  <HardHat size={14} />{lang === "ar" ? "تحويل المباع إلى وحدات" : "Convert Sold to Units"}
+                </button>
+              )}
               <button
                 onClick={() => setShowInventoryModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-               
               >
                 <Plus size={14} />{lang === "ar" ? "إضافة يدوياً" : "Add Item"}
               </button>
@@ -1952,6 +2156,71 @@ export default function ProjectDetailPage() {
                   </table>
                 </div>
               )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ─── Financials Tab (G10b) ─── */}
+      {activeTab === "financials" && (
+        <div className="space-y-6">
+          {loadingFinancials ? (
+            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+          ) : !projectFinancials ? (
+            <p className="text-center text-neutral py-12">{lang === "ar" ? "لا توجد بيانات مالية" : "No financial data"}</p>
+          ) : (
+            <>
+              {/* P&L Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-card rounded-md shadow-card border border-border p-4">
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "إجمالي التكاليف" : "Total Costs"}</span>
+                  <p className="text-lg font-bold text-destructive mt-1"><SARAmount value={projectFinancials.totalCosts} size={14} /></p>
+                </div>
+                <div className="bg-card rounded-md shadow-card border border-border p-4">
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}</span>
+                  <p className="text-lg font-bold text-secondary mt-1"><SARAmount value={projectFinancials.totalRevenue} size={14} /></p>
+                </div>
+                <div className={`bg-card rounded-md shadow-card border border-border p-4 ${projectFinancials.netPL >= 0 ? "border-secondary/30" : "border-destructive/30"}`}>
+                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "صافي الربح/الخسارة" : "Net P&L"}</span>
+                  <p className={`text-lg font-bold mt-1 ${projectFinancials.netPL >= 0 ? "text-secondary" : "text-destructive"}`}>
+                    <SARAmount value={projectFinancials.netPL} size={14} />
+                  </p>
+                </div>
+              </div>
+
+              {/* Cost Breakdown */}
+              <div className="bg-card rounded-md shadow-card border border-border p-5">
+                <h3 className="text-xs font-bold uppercase text-neutral mb-4">{lang === "ar" ? "تفصيل التكاليف" : "Cost Breakdown"}</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: lang === "ar" ? "تكلفة الأرض" : "Land Cost", value: projectFinancials.landCost },
+                    { label: lang === "ar" ? "تكلفة التطوير" : "Development Cost", value: projectFinancials.developmentCost },
+                    { label: lang === "ar" ? "تكاليف الصيانة" : "Maintenance Costs", value: projectFinancials.maintenanceCosts },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <span className="text-sm text-neutral">{item.label}</span>
+                      <span className="text-sm font-bold text-primary"><SARAmount value={item.value} size={11} /></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Revenue Breakdown */}
+              <div className="bg-card rounded-md shadow-card border border-border p-5">
+                <h3 className="text-xs font-bold uppercase text-neutral mb-4">{lang === "ar" ? "تفصيل الإيرادات" : "Revenue Breakdown"}</h3>
+                <div className="space-y-3">
+                  {[
+                    { label: lang === "ar" ? "إيرادات المبيعات" : "Sale Revenue", value: projectFinancials.saleRevenue },
+                    { label: lang === "ar" ? "دخل الإيجارات" : "Rental Income", value: projectFinancials.rentalIncome },
+                    { label: lang === "ar" ? "مبيعات ما قبل البناء" : "Off-Plan Sold", value: projectFinancials.offPlanSoldValue },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <span className="text-sm text-neutral">{item.label}</span>
+                      <span className="text-sm font-bold text-secondary"><SARAmount value={item.value} size={11} /></span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </>
           )}
         </div>

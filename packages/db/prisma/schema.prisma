@@ -545,6 +545,10 @@ enum DocCategory {
   CONTRACT
   MARKETING
   FINANCE
+  GIS
+  CAD
+  PLANNING
+  PERMIT
 }
 
 // ─── Maintenance Request ──────────────────────────────────────────────────────
