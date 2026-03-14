@@ -154,14 +154,14 @@ function InnerNewReservationPage() {
           customerId: selectedCustomerId,
           unitId: effectiveUnitId || "inventory-placeholder",
           amount: effectiveDeposit,
-          expiresAt: new Date(expiryDate).toISOString(),
+          expiresAt: new Date(expiryDate || "").toISOString(),
         });
       } else {
         await createReservation({
           customerId: selectedCustomerId,
           unitId: effectiveUnitId,
           amount: effectiveDeposit,
-          expiresAt: new Date(expiryDate),
+          expiresAt: new Date(expiryDate || ""),
         });
       }
       router.push("/dashboard/sales/reservations");
@@ -672,7 +672,7 @@ function InnerNewReservationPage() {
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-neutral">{lang === "ar" ? "تاريخ الانتهاء" : "Expiry"}</span>
-                <span className="font-bold text-primary">{new Date(expiryDate).toLocaleDateString("ar-SA")}</span>
+                <span className="font-bold text-primary">{new Date(expiryDate || "").toLocaleDateString("ar-SA")}</span>
               </div>
               <div className="pt-4 border-t border-border flex justify-between items-center">
                 <span className="font-bold text-primary">{lang === "ar" ? "إجمالي مبلغ الحجز" : "Total Deposit"}</span>

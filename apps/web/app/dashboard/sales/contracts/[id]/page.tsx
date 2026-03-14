@@ -168,8 +168,8 @@ export default function ContractDetailPage() {
     );
   }
 
-  const config = statusConfig[contract.status] || statusConfig.DRAFT;
-  const StatusIcon = config.icon;
+  const config = statusConfig[contract.status] ?? statusConfig.DRAFT!;
+  const StatusIcon = config!.icon;
   const typeLabel = typeLabels[contract.type] || { ar: contract.type, en: contract.type };
   const nextStatuses = VALID_TRANSITIONS[contract.status] || [];
 
@@ -414,15 +414,15 @@ export default function ContractDetailPage() {
                       </TableHeader>
                       <TableBody>
                         {contract.lease.installments.map((inst: any, idx: number) => {
-                          const instConfig = installmentStatusConfig[inst.status] || installmentStatusConfig.UNPAID;
+                          const instConfig = installmentStatusConfig[inst.status] ?? installmentStatusConfig.UNPAID!;
                           return (
                             <TableRow key={inst.id}>
                               <TableCell className="text-xs font-bold text-neutral">{idx + 1}</TableCell>
                               <TableCell className="text-xs">{formatDualDate(inst.dueDate, lang)}</TableCell>
                               <TableCell><SARAmount value={Number(inst.amount)} size={11} /></TableCell>
                               <TableCell>
-                                <Badge variant={instConfig.variant as any} className="text-[10px]">
-                                  {instConfig.label[lang]}
+                                <Badge variant={instConfig!.variant as any} className="text-[10px]">
+                                  {instConfig!.label[lang]}
                                 </Badge>
                               </TableCell>
                             </TableRow>
@@ -492,9 +492,9 @@ export default function ContractDetailPage() {
             <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">
               {lang === "ar" ? "حالة المستند" : "Document Status"}
             </h3>
-            <Badge variant={config.variant as any} className="px-3 py-1 text-xs gap-1 mb-4">
+            <Badge variant={config!.variant as any} className="px-3 py-1 text-xs gap-1 mb-4">
               <StatusIcon size={14} />
-              {config.label[lang]}
+              {config!.label[lang]}
             </Badge>
 
             <div className="space-y-3 mt-4">

@@ -370,7 +370,7 @@ export async function updateContractStatus(
             await db.escrowTransaction.create({
               data: {
                 escrowAccountId: escrow.id,
-                type: "REVERSAL",
+                type: "REFUND",
                 amount: contract.amount,
                 description: `Contract voided — Unit ${unit.number}`,
                 status: "PROCESSED",
