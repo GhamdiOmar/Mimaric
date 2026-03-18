@@ -6,13 +6,13 @@ import {
   ArrowLeft,
   ArrowRight,
   Receipt,
-  CurrencyCircleDollar,
-  CheckCircle,
-  Warning,
-  CaretLeft,
-  CaretRight,
+  CircleDollarSign,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
   FileText,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -135,7 +135,7 @@ export default function AdminPaymentsPage() {
     {
       label: { ar: "إجمالي الإيرادات", en: "Total Revenue" },
       value: formatCurrency(totalRevenue, lang),
-      icon: CurrencyCircleDollar,
+      icon: CircleDollarSign,
       color: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-100 dark:bg-emerald-900/30",
     },
@@ -149,14 +149,14 @@ export default function AdminPaymentsPage() {
     {
       label: { ar: "مدفوعة", en: "Paid" },
       value: paidCount.toString(),
-      icon: CheckCircle,
+      icon: CheckCircle2,
       color: "text-emerald-600 dark:text-emerald-400",
       bg: "bg-emerald-100 dark:bg-emerald-900/30",
     },
     {
       label: { ar: "متأخرة", en: "Overdue" },
       value: overdueCount.toString(),
-      icon: Warning,
+      icon: AlertTriangle,
       color: "text-red-600 dark:text-red-400",
       bg: "bg-red-100 dark:bg-red-900/30",
     },
@@ -172,9 +172,9 @@ export default function AdminPaymentsPage() {
       {/* Back link */}
       <Link
         href="/dashboard/admin"
-        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors font-primary"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
       >
-        <BackArrow size={16} />
+        <BackArrow className="h-4 w-4" />
         {lang === "ar" ? "إدارة المنصة" : "Platform Administration"}
       </Link>
 
@@ -182,13 +182,13 @@ export default function AdminPaymentsPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-            <Receipt size={28} weight="duotone" />
+            <Receipt className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-primary font-primary">
+            <h1 className="text-2xl font-bold text-primary">
               {lang === "ar" ? "الفواتير والمدفوعات" : "Invoices & Payments"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 font-primary">
+            <p className="text-sm text-muted-foreground mt-1">
               {lang === "ar"
                 ? "عرض جميع الفواتير والمعاملات المالية عبر جميع المنظمات"
                 : "View all invoices and payment transactions across all organizations"}
@@ -207,13 +207,13 @@ export default function AdminPaymentsPage() {
             <div
               className={`h-11 w-11 rounded-md ${stat.bg} flex items-center justify-center ${stat.color}`}
             >
-              <stat.icon size={24} weight="duotone" />
+              <stat.icon className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground font-primary">
+              <p className="text-sm text-muted-foreground">
                 {stat.label[lang]}
               </p>
-              <p className="text-xl font-bold text-foreground font-primary mt-0.5">
+              <p className="text-xl font-bold text-foreground mt-0.5">
                 {stat.value}
               </p>
             </div>
@@ -229,8 +229,8 @@ export default function AdminPaymentsPage() {
           </div>
         ) : invoices.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <Receipt size={48} weight="duotone" className="mb-4 opacity-40" />
-            <p className="font-primary">
+            <Receipt className="h-12 w-12 mb-4 opacity-40" />
+            <p className="">
               {lang === "ar" ? "لا توجد فواتير" : "No invoices found"}
             </p>
           </div>
@@ -238,31 +238,31 @@ export default function AdminPaymentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "رقم الفاتورة" : "Invoice #"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "المنظمة" : "Organization"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "الخطة" : "Plan"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "الحالة" : "Status"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "المبلغ" : "Subtotal"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "الضريبة" : "VAT"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "الإجمالي" : "Total"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "تاريخ الإصدار" : "Issued"}
                 </TableHead>
-                <TableHead className="font-primary">
+                <TableHead className="">
                   {lang === "ar" ? "تاريخ الاستحقاق" : "Due Date"}
                 </TableHead>
               </TableRow>
@@ -275,7 +275,7 @@ export default function AdminPaymentsPage() {
                     <TableCell className="font-mono text-xs text-foreground">
                       {invoice.invoiceNumber}
                     </TableCell>
-                    <TableCell className="font-primary text-foreground">
+                    <TableCell className="text-foreground">
                       {lang === "ar"
                         ? invoice.organization?.nameArabic ||
                           invoice.organization?.name ||
@@ -284,14 +284,14 @@ export default function AdminPaymentsPage() {
                           invoice.organization?.nameArabic ||
                           "-"}
                     </TableCell>
-                    <TableCell className="font-primary text-foreground">
+                    <TableCell className="text-foreground">
                       {lang === "ar"
                         ? invoice.subscription?.plan?.nameAr ?? "-"
                         : invoice.subscription?.plan?.nameEn ?? "-"}
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium font-primary ${sc.className}`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${sc.className}`}
                       >
                         {sc.label[lang]}
                       </span>
@@ -305,10 +305,10 @@ export default function AdminPaymentsPage() {
                     <TableCell className="font-mono text-xs font-semibold text-foreground">
                       {formatCurrency(invoice.total, lang)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground font-primary text-xs">
+                    <TableCell className="text-muted-foreground text-xs">
                       {formatDate(invoice.issuedAt, lang)}
                     </TableCell>
-                    <TableCell className="text-muted-foreground font-primary text-xs">
+                    <TableCell className="text-muted-foreground text-xs">
                       {formatDate(invoice.dueDate, lang)}
                     </TableCell>
                   </TableRow>
@@ -321,7 +321,7 @@ export default function AdminPaymentsPage() {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <p className="text-sm text-muted-foreground font-primary">
+            <p className="text-sm text-muted-foreground">
               {lang === "ar"
                 ? `صفحة ${page} من ${totalPages} (${total} فاتورة)`
                 : `Page ${page} of ${totalPages} (${total} invoices)`}
@@ -334,7 +334,7 @@ export default function AdminPaymentsPage() {
                 disabled={page <= 1}
 
               >
-                <CaretLeft size={16} className="rtl:rotate-180" />
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
                 {lang === "ar" ? "السابق" : "Previous"}
               </Button>
               <Button
@@ -345,7 +345,7 @@ export default function AdminPaymentsPage() {
 
               >
                 {lang === "ar" ? "التالي" : "Next"}
-                <CaretRight size={16} className="rtl:rotate-180" />
+                <ChevronRight className="h-4 w-4 rtl:rotate-180" />
               </Button>
             </div>
           </div>

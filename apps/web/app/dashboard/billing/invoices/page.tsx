@@ -4,13 +4,13 @@ import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Receipt,
-  DownloadSimple,
+  Download,
   ArrowLeft,
   ArrowRight,
-  CaretLeft,
-  CaretRight,
+  ChevronLeft,
+  ChevronRight,
   Eye,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -121,7 +121,7 @@ export default function InvoicesPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           <button className="p-1.5 rounded-md hover:bg-muted" title={t.download}>
-                            <DownloadSimple className="w-4 h-4" />
+                            <Download className="w-4 h-4" />
                           </button>
                         </div>
                       </TableCell>
@@ -145,7 +145,7 @@ export default function InvoicesPage() {
                     onClick={() => setPage(page - 1)}
 
                   >
-                    {lang === "ar" ? <CaretRight className="w-4 h-4" /> : <CaretLeft className="w-4 h-4" />}
+                    {lang === "ar" ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
                   </Button>
                   <span className="text-sm">{page} / {data.totalPages}</span>
                   <Button
@@ -155,7 +155,7 @@ export default function InvoicesPage() {
                     onClick={() => setPage(page + 1)}
 
                   >
-                    {lang === "ar" ? <CaretLeft className="w-4 h-4" /> : <CaretRight className="w-4 h-4" />}
+                    {lang === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </Button>
                 </div>
               </div>

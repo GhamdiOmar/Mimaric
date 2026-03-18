@@ -1,32 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { SARAmount, KPICard, SkeletonKPICard, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
-import {
-  Buildings,
-  TrendUp,
-  Users,
-  Handshake,
-  Clock,
-  CurrencyCircleDollar,
-  MapPin,
-  Wrench,
-  HardHat,
-  Rocket,
-  Package,
-  ChartBar,
-  Compass,
-  CheckCircle,
-  Stack,
-  Star,
-} from "@phosphor-icons/react";
+import { Building2, TrendingUp, FileText, Wrench } from "lucide-react";
+import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
+import { useLanguage } from "../../components/LanguageProvider";
+import { useSession } from "../../components/SimpleSessionProvider";
 import { getDashboardStats, getDashboardLandStats, getDashboardOffPlanStats } from "../actions/dashboard";
 import { getDashboardPlanningStats } from "../actions/planning-reports";
 import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
 import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
-import LandPipelineChart from "../../components/charts/LandPipelineChart";
 import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
 import MaintenanceCostTrendChart from "../../components/charts/MaintenanceCostTrendChart";
+import { ActionItems } from "../../components/dashboard/ActionItems";
+import { QuickActions } from "../../components/dashboard/QuickActions";
+import { MetricsTabs } from "../../components/dashboard/MetricsTabs";
 
 type DashboardStats = {
   totalUnits: number;
@@ -38,6 +25,8 @@ type DashboardStats = {
 };
 
 export default function DashboardPage() {
+  const { lang } = useLanguage();
+  const { data: session } = useSession();
   const [stats, setStats] = React.useState<DashboardStats | null>(null);
   const [landStats, setLandStats] = React.useState<any>(null);
   const [offPlanStats, setOffPlanStats] = React.useState<any>(null);
@@ -55,149 +44,152 @@ export default function DashboardPage() {
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
+  const userName = session?.user?.name ?? (lang === "ar" ? "مستخدم" : "User");
 
-  const kpiData = [
-    { label: "إجمالي الوحدات", value: stats ? formatNumber(stats.totalUnits) : "—", icon: <Buildings size={20} weight="duotone" />, color: "primary" as const },
-    { label: "نسبة الإشغال", value: stats ? `${stats.occupancyRate}%` : "—", icon: <TrendUp size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "الإيجارات المحصلة", value: stats ? <SARAmount value={stats.totalRentCollected} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "عقود نشطة", value: stats ? formatNumber(stats.activeLeases) : "—", icon: <Handshake size={20} weight="duotone" />, color: "accent" as const },
-    { label: "طلبات صيانة", value: stats ? formatNumber(stats.openMaintenanceCount) : "—", icon: <Clock size={20} weight="duotone" />, color: "warning" as const },
-    { label: "العملاء الجدد", value: stats ? `+${formatNumber(stats.newCustomersThisMonth)}` : "—", icon: <Users size={20} weight="duotone" />, color: "secondary" as const },
-  ];
-
-  const landKpiData = [
-    { label: "الأراضي", value: landStats ? landStats.totalParcels : "—", icon: <MapPin size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "المشاريع النشطة", value: landStats ? landStats.activeProjects : "—", icon: <HardHat size={20} weight="duotone" />, color: "primary" as const },
-    { label: "قيمة المحفظة", value: landStats ? <SARAmount value={landStats.portfolioValue} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "تكاليف الصيانة", value: landStats ? <SARAmount value={landStats.maintenanceCostsThisMonth} compact size={18} /> : "—", icon: <Wrench size={20} weight="duotone" />, color: "accent" as const },
-  ];
-
-  const offPlanKpiData = [
-    { label: "مشاريع البيع على الخارطة", value: offPlanStats ? offPlanStats.totalOffPlanProjects : "—", icon: <Rocket size={20} weight="duotone" />, color: "primary" as const },
-    { label: "إجمالي المخزون", value: offPlanStats ? offPlanStats.totalInventory : "—", icon: <Package size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "معدل التحويل", value: offPlanStats ? `${offPlanStats.conversionRate}%` : "—", icon: <ChartBar size={20} weight="duotone" />, color: "accent" as const },
-    { label: "قيمة المبيعات", value: offPlanStats ? <SARAmount value={offPlanStats.pipelineValue} compact size={18} /> : "—", icon: <CurrencyCircleDollar size={20} weight="duotone" />, color: "secondary" as const },
-  ];
-
-  const planningKpiData = [
-    { label: "مساحات العمل", value: planningStats ? planningStats.totalWorkspaces : "—", icon: <Compass size={20} weight="duotone" />, color: "primary" as const },
-    { label: "مساحات نشطة", value: planningStats ? planningStats.activeWorkspaces : "—", icon: <Stack size={20} weight="duotone" />, color: "secondary" as const },
-    { label: "سيناريوهات معتمدة", value: planningStats ? planningStats.approvedBaselines : "—", icon: <Star size={20} weight="duotone" />, color: "accent" as const },
-    { label: "معدل الامتثال", value: planningStats ? `${planningStats.avgComplianceScore}%` : "—", icon: <CheckCircle size={20} weight="duotone" />, color: planningStats?.avgComplianceScore >= 70 ? "secondary" as const : "warning" as const },
-  ];
+  // Greeting based on time of day
+  const hour = new Date().getHours();
+  const greeting = lang === "ar"
+    ? hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء الخير"
+    : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="space-y-10">
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        {loading
-          ? Array.from({ length: 6 }).map((_, i) => <SkeletonKPICard key={i} />)
-          : kpiData.map((kpi, idx) => (
-              <KPICard
-                key={idx}
-                label={kpi.label}
-                value={kpi.value}
-                icon={kpi.icon}
-                accentColor={kpi.color}
-              />
-            ))
-        }
+    <div className="space-y-8">
+      {/* Greeting — glass card */}
+      <div className="glass rounded-xl p-6">
+        <h1 className="text-2xl font-bold text-foreground">
+          {greeting}، {userName}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </p>
       </div>
 
-      {/* Land & Projects KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {!landStats
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPICard key={i} />)
-          : landKpiData.map((kpi, idx) => (
-              <KPICard
-                key={`land-${idx}`}
-                label={kpi.label}
-                value={kpi.value}
-                icon={kpi.icon}
-                accentColor={kpi.color}
-              />
-            ))
-        }
+      {/* Primary KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          label={lang === "ar" ? "الإيجارات المحصلة" : "Rent Collected"}
+          value={loading ? "—" : <SARAmount value={stats?.totalRentCollected ?? 0} compact size={20} />}
+          subtitle={lang === "ar" ? "إجمالي الإيرادات المحصلة من عقود الإيجار النشطة" : "Total revenue collected from active lease contracts"}
+          icon={<TrendingUp className="h-[18px] w-[18px]" />}
+          accentColor="secondary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "نسبة الإشغال" : "Occupancy Rate"}
+          value={loading ? "—" : `${stats?.occupancyRate ?? 0}%`}
+          subtitle={lang === "ar" ? "نسبة الوحدات المؤجرة من إجمالي الوحدات المتاحة" : "Percentage of leased units vs total available"}
+          icon={<Building2 className="h-[18px] w-[18px]" />}
+          accentColor="primary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "عقود نشطة" : "Active Leases"}
+          value={loading ? "—" : formatNumber(stats?.activeLeases ?? 0)}
+          subtitle={lang === "ar" ? "عقود الإيجار السارية حالياً في المحفظة" : "Currently active lease agreements in portfolio"}
+          icon={<FileText className="h-[18px] w-[18px]" />}
+          accentColor="accent"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "طلبات صيانة مفتوحة" : "Open Maintenance"}
+          value={loading ? "—" : formatNumber(stats?.openMaintenanceCount ?? 0)}
+          subtitle={lang === "ar" ? "طلبات الصيانة التي تنتظر المعالجة أو قيد التنفيذ" : "Maintenance requests pending or in progress"}
+          icon={<Wrench className="h-[18px] w-[18px]" />}
+          accentColor={stats && stats.openMaintenanceCount > 10 ? "warning" : "info"}
+          loading={loading}
+        />
       </div>
 
-      {/* Off-Plan Development KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {!offPlanStats
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonKPICard key={i} />)
-          : offPlanKpiData.map((kpi, idx) => (
-              <KPICard
-                key={`offplan-${idx}`}
-                label={kpi.label}
-                value={kpi.value}
-                icon={kpi.icon}
-                accentColor={kpi.color}
-              />
-            ))
-        }
-      </div>
+      {/* Main content: 2/3 + 1/3 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Charts */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">
+                {lang === "ar" ? "تحليل الإيرادات" : "Revenue Trend"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-[300px]">
+              <RevenueTrendChart />
+            </CardContent>
+          </Card>
 
-      {/* Planning OS KPI Cards */}
-      {planningStats && planningStats.totalWorkspaces > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {planningKpiData.map((kpi, idx) => (
-            <KPICard
-              key={`planning-${idx}`}
-              label={kpi.label}
-              value={kpi.value}
-              icon={kpi.icon}
-              accentColor={kpi.color}
-            />
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">
+                  {lang === "ar" ? "توزيع الإشغال" : "Occupancy Distribution"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-[280px]">
+                <OccupancyDonutChart />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">
+                  {lang === "ar" ? "حالات المشاريع" : "Project Status"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="h-[280px]">
+                <ProjectStatusChart />
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      )}
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="min-h-[400px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-bold text-primary">تحليل الإيرادات (آخر 6 أشهر)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RevenueTrendChart />
-          </CardContent>
-        </Card>
-        <Card className="min-h-[400px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-bold text-primary">توزيع الإشغال حسب المشروع</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <OccupancyDonutChart />
-          </CardContent>
-        </Card>
+        {/* Right: Actions + Quick Links */}
+        <div className="space-y-6">
+          <ActionItems
+            items={[
+              {
+                type: "overdue",
+                label: lang === "ar" ? "مدفوعات متأخرة" : "Overdue Payments",
+                count: 0, // Will be populated from real data
+                href: "/dashboard/finance",
+              },
+              {
+                type: "expiring",
+                label: lang === "ar" ? "عقود تنتهي قريبا" : "Expiring Contracts",
+                count: 0,
+                href: "/dashboard/sales/contracts",
+              },
+              {
+                type: "pending",
+                label: lang === "ar" ? "طلبات صيانة معلقة" : "Pending Maintenance",
+                count: stats?.openMaintenanceCount ?? 0,
+                href: "/dashboard/maintenance",
+              },
+            ]}
+          />
+          <QuickActions />
+        </div>
       </div>
 
-      {/* Land & Project Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="min-h-[400px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-bold text-primary">مسار استحواذ الأراضي</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LandPipelineChart />
-          </CardContent>
-        </Card>
-        <Card className="min-h-[400px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-bold text-primary">توزيع حالات المشاريع</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectStatusChart />
-          </CardContent>
-        </Card>
-        <Card className="min-h-[400px]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-bold text-primary">تكاليف الصيانة (آخر 6 أشهر)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <MaintenanceCostTrendChart />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Secondary Metrics in tabs */}
+      <MetricsTabs
+        landStats={landStats}
+        offPlanStats={offPlanStats}
+        planningStats={planningStats}
+      />
+
+      {/* Maintenance Cost Trend */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">
+            {lang === "ar" ? "تكاليف الصيانة" : "Maintenance Costs"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[280px]">
+          <MaintenanceCostTrendChart />
+        </CardContent>
+      </Card>
     </div>
   );
 }

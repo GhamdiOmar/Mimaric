@@ -5,16 +5,16 @@ import * as React from "react";
 import {
   ArrowLeft,
   CreditCard,
-  CaretLeft,
-  CaretRight,
+  ChevronLeft,
+  ChevronRight,
   Users,
-  CheckCircle,
+  CheckCircle2,
   Clock,
-  Warning,
+  AlertTriangle,
   XCircle,
   Pause,
   Receipt,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -71,12 +71,12 @@ const statusColors: Record<string, string> = {
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
-  TRIALING: <Clock size={14} />,
-  ACTIVE: <CheckCircle size={14} />,
-  PAST_DUE: <Warning size={14} />,
-  CANCELED: <XCircle size={14} />,
-  UNPAID: <XCircle size={14} />,
-  PAUSED: <Pause size={14} />,
+  TRIALING: <Clock className="h-3.5 w-3.5" />,
+  ACTIVE: <CheckCircle2 className="h-3.5 w-3.5" />,
+  PAST_DUE: <AlertTriangle className="h-3.5 w-3.5" />,
+  CANCELED: <XCircle className="h-3.5 w-3.5" />,
+  UNPAID: <XCircle className="h-3.5 w-3.5" />,
+  PAUSED: <Pause className="h-3.5 w-3.5" />,
 };
 
 // ─── Translations ───────────────────────────────────────────────────────────
@@ -247,7 +247,7 @@ export default function AdminSubscriptionsPage() {
           href="/dashboard/admin"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft className="h-4 w-4" />
           {t.back}
         </Link>
       </div>
@@ -256,7 +256,7 @@ export default function AdminSubscriptionsPage() {
       <div>
         <div className="flex items-center gap-3 mb-1">
           <div className="p-2 rounded-lg bg-primary/10">
-            <CreditCard size={24} className="text-primary" />
+            <CreditCard className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t.title}</h1>
@@ -269,35 +269,35 @@ export default function AdminSubscriptionsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Users size={16} className="text-muted-foreground" />
+            <Users className="h-4 w-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">{t.total}</span>
           </div>
           <p className="text-2xl font-bold text-foreground">{stats.total}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle size={16} className="text-green-600 dark:text-green-400" />
+            <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
             <span className="text-xs text-muted-foreground">{t.active}</span>
           </div>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Clock size={16} className="text-blue-600 dark:text-blue-400" />
+            <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span className="text-xs text-muted-foreground">{t.trialing}</span>
           </div>
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.trialing}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <Warning size={16} className="text-amber-600 dark:text-amber-400" />
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             <span className="text-xs text-muted-foreground">{t.pastDue}</span>
           </div>
           <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.pastDue}</p>
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
-            <XCircle size={16} className="text-red-600 dark:text-red-400" />
+            <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
             <span className="text-xs text-muted-foreground">{t.canceled}</span>
           </div>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.canceled}</p>
@@ -330,7 +330,7 @@ export default function AdminSubscriptionsPage() {
             ) : subscriptions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-16 text-center">
-                  <Receipt size={40} className="mx-auto mb-3 text-muted-foreground/30" />
+                  <Receipt className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
                   <p className="text-muted-foreground font-medium">{t.noSubscriptions}</p>
                   <p className="text-xs text-muted-foreground mt-1">{t.noSubscriptionsDesc}</p>
                 </TableCell>
@@ -402,7 +402,7 @@ export default function AdminSubscriptionsPage() {
               onClick={() => setPage(page - 1)}
              
             >
-              <CaretLeft size={14} className="me-1" />
+              <ChevronLeft className="h-3.5 w-3.5 me-1" />
               {t.prev}
             </Button>
             <Button
@@ -413,7 +413,7 @@ export default function AdminSubscriptionsPage() {
              
             >
               {t.next}
-              <CaretRight size={14} className="ms-1" />
+              <ChevronRight className="h-3.5 w-3.5 ms-1" />
             </Button>
           </div>
         </div>

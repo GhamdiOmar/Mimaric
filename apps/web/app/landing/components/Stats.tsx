@@ -1,6 +1,6 @@
 "use client";
 
-import { Star } from "@phosphor-icons/react";
+import { Star } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function Stats({ lang }: { lang: "ar" | "en" }) {
@@ -34,51 +34,37 @@ export default function Stats({ lang }: { lang: "ar" | "en" }) {
   return (
     <section className="bg-background py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Badge */}
-        <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-secondary/20 bg-secondary/5 px-4 py-1.5">
-            <div className="h-2 w-2 rounded-full bg-secondary" />
-            <span className="text-sm font-medium text-secondary">
-              {t.statsTitle}
-            </span>
-          </div>
-        </div>
-
-        <h2 className="mt-6 text-center text-3xl font-bold text-primary dark:text-white sm:text-4xl">
+        <h2 className="text-center text-3xl font-bold text-primary dark:text-white sm:text-4xl">
           {t.statsTitle}
         </h2>
 
         {/* Stats grid */}
-        <div className="mt-12 grid grid-cols-2 gap-8 lg:grid-cols-4">
+        <div className="mt-12 grid grid-cols-2 gap-6 lg:grid-cols-4">
           {stats.map(({ value, label }) => (
             <div
               key={label}
-              className="rounded-2xl border border-border/50 bg-card/80 p-6 text-center shadow-elevation-1 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-elevation-2 dark:bg-card/50"
+              className="rounded-2xl border border-border/50 bg-card/80 p-6 text-center shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-md dark:bg-card/50"
             >
-              <p className="font-dm-sans text-4xl font-bold text-primary dark:text-white sm:text-5xl">
+              <p className="text-3xl font-bold text-primary dark:text-white sm:text-4xl">
                 {value}
               </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {label}
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">{label}</p>
             </div>
           ))}
         </div>
 
         {/* Testimonials */}
-        <div className="mt-20 grid gap-8 md:grid-cols-3">
+        <div className="mt-20 grid gap-6 md:grid-cols-3">
           {testimonials.map(({ quote, author, role }) => (
             <div
               key={author}
-              className="rounded-2xl border border-border/50 bg-card/80 p-6 shadow-elevation-1 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-elevation-2 dark:bg-card/50"
+              className="rounded-2xl border border-border/50 bg-card/80 p-6 shadow-sm backdrop-blur-sm transition-shadow duration-300 hover:shadow-md dark:bg-card/50"
             >
-              <div className="flex gap-1">
+              <div className="flex gap-0.5">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star
                     key={s}
-                    size={16}
-                    weight="fill"
-                    className="text-accent"
+                    className="h-4 w-4 fill-amber-500 text-amber-500"
                   />
                 ))}
               </div>
@@ -89,9 +75,7 @@ export default function Stats({ lang }: { lang: "ar" | "en" }) {
                 <p className="font-semibold text-primary dark:text-white">
                   {author}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {role}
-                </p>
+                <p className="text-sm text-muted-foreground">{role}</p>
               </div>
             </div>
           ))}

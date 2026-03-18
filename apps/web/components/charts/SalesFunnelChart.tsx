@@ -33,20 +33,20 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
-    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs space-y-1">
+    <div className="bg-card p-3 rounded-md shadow-lg border border-border text-xs space-y-1">
       <p className="font-bold text-primary mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-neutral">{p.name}:</span>
+          <span className="text-muted-foreground">{p.name}:</span>
           <span className="font-bold text-primary">{fmt(p.value)}</span>
         </div>
       ))}
       {d?.revenue > 0 && (
         <div className="border-t border-border mt-1 pt-1 flex items-center gap-1">
-          <span className="text-neutral">الإيرادات:</span>
+          <span className="text-muted-foreground">الإيرادات:</span>
           <span className="font-bold text-primary flex items-center gap-0.5">
-            <RiyalIcon size={10} /> {fmt(d.revenue)}
+            <RiyalIcon className="h-2.5 w-2.5" /> {fmt(d.revenue)}
           </span>
         </div>
       )}
@@ -85,7 +85,7 @@ export default function SalesFunnelChart({ projectId }: { projectId: string }) {
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">
         لا توجد بيانات مبيعات بعد
       </div>
     );

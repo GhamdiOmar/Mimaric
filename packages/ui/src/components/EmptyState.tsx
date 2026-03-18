@@ -6,6 +6,7 @@ export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  compact?: boolean;
 }
 
 function EmptyState({
@@ -13,29 +14,40 @@ function EmptyState({
   title,
   description,
   action,
+  compact = false,
   className,
   ...props
 }: EmptyStateProps) {
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center text-center py-12 px-6",
+        "flex flex-col items-center justify-center text-center",
+        compact ? "py-6 px-4" : "py-16 px-6",
         className
       )}
       {...props}
     >
       {icon && (
-        <div className="mb-4 text-muted-foreground/50" aria-hidden="true">
+        <div className={cn(
+          "text-muted-foreground/40",
+          compact ? "mb-2" : "mb-4"
+        )} aria-hidden="true">
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+      <h3 className={cn(
+        "font-semibold text-foreground",
+        compact ? "text-sm mb-0.5" : "text-base mb-1"
+      )}>{title}</h3>
       {description && (
-        <p className="text-sm text-muted-foreground max-w-sm mb-4">
+        <p className={cn(
+          "text-muted-foreground max-w-sm",
+          compact ? "text-xs mb-2" : "text-sm mb-4"
+        )}>
           {description}
         </p>
       )}
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className={compact ? "mt-1" : "mt-2"}>{action}</div>}
     </div>
   );
 }

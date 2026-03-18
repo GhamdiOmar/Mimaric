@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, Plus, SealCheck } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  Plus,
+  BadgeCheck,
+} from "lucide-react";
 import { Button, Badge } from "@repo/ui";
 import { useLanguage } from "../../../../../../components/LanguageProvider";
 import {
@@ -104,7 +109,7 @@ export default function PriceListVersionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -114,12 +119,12 @@ export default function PriceListVersionsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)} style={{ display: "inline-flex" }}>
-            <ArrowLeft size={16} /> {t.back}
+            <ArrowLeft className="h-4 w-4" /> {t.back}
           </Button>
           <h1 className="text-2xl font-bold">{t.title}</h1>
         </div>
         <Button onClick={handleCreate} disabled={creating} style={{ display: "inline-flex" }}>
-          <Plus size={16} className="mr-2" /> {t.create}
+          <Plus className="h-4 w-4 mr-2" /> {t.create}
         </Button>
       </div>
 
@@ -147,7 +152,7 @@ export default function PriceListVersionsPage() {
               <div>
                 {(v.status === "DRAFT_PRICE_LIST" || v.status === "PENDING_PRICE_APPROVAL") && (
                   <Button size="sm" onClick={() => handleApprove(v.id)} style={{ display: "inline-flex" }}>
-                    <SealCheck size={16} className="mr-1" /> {t.approve}
+                    <BadgeCheck className="h-4 w-4 mr-1" /> {t.approve}
                   </Button>
                 )}
               </div>

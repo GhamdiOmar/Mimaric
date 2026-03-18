@@ -4,23 +4,24 @@ import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Plus,
-  Buildings,
+  Building2,
   MapPin,
-  CheckCircle,
+  CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Trash,
-  Spinner,
-  PencilSimple,
+  Trash2,
+  Loader2,
+  Pencil,
   FileText,
-  CloudArrowUp,
-  MapTrifold,
-} from "@phosphor-icons/react";
+  CloudUpload,
+  Map,
+} from "lucide-react";
 import { Button } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { createProject, registerProjectDocument } from "../../../actions/projects";
 import { getAcquiredLands, updateLandStatus } from "../../../actions/land";
 import { useRouter } from "next/navigation";
+import { UnsavedChangesGuard } from "../../../../components/unsaved-changes-guard";
 import MapPicker from "../../../../components/MapPicker";
 import { UploadButton } from "../../../../lib/uploadthing";
 
@@ -130,8 +131,8 @@ export default function NewProjectPage() {
     estimatedValueSar: "",
   });
 
-  // Step 2: Buildings
-  const [buildings, setBuildings] = React.useState<BuildingDraft[]>([]);
+  // Step 2: Building2
+  const [buildings, setBuilding2] = React.useState<BuildingDraft[]>([]);
   const [showBuildingForm, setShowBuildingForm] = React.useState(false);
   const [editingBuilding, setEditingBuilding] = React.useState<string | null>(null);
   const [buildingForm, setBuildingForm] = React.useState({
@@ -159,7 +160,7 @@ export default function NewProjectPage() {
   function handleAddBuilding() {
     if (!buildingForm.name) return;
     if (editingBuilding) {
-      setBuildings((prev) =>
+      setBuilding2((prev) =>
         prev.map((b) =>
           b.id === editingBuilding
             ? {
@@ -175,7 +176,7 @@ export default function NewProjectPage() {
       );
       setEditingBuilding(null);
     } else {
-      setBuildings((prev) => [
+      setBuilding2((prev) => [
         ...prev,
         {
           id: crypto.randomUUID(),
@@ -204,7 +205,7 @@ export default function NewProjectPage() {
   }
 
   function handleDeleteBuilding(id: string) {
-    setBuildings((prev) => prev.filter((b) => b.id !== id));
+    setBuilding2((prev) => prev.filter((b) => b.id !== id));
   }
 
   // Upload handler
@@ -299,15 +300,18 @@ export default function NewProjectPage() {
   const inputClass =
     "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
+  const isDirty = formData.name.trim().length > 0 || buildings.length > 0;
+
   return (
     <div className="max-w-4xl mx-auto space-y-10 py-6 animate-in fade-in duration-500">
+      <UnsavedChangesGuard isDirty={isDirty} />
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2">
         <div>
           <h1 className="text-2xl font-bold text-primary">
             {lang === "ar" ? "إضافة مشروع جديد" : "Add New Project"}
           </h1>
-          <p className="text-sm text-neutral mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar"
               ? "ابدأ رحلة تطوير عقاري جديدة مع ميماريك."
               : "Start a new property development journey with Mimaric."}
@@ -329,15 +333,15 @@ export default function NewProjectPage() {
                   "h-8 w-8 rounded-full border-2 flex items-center justify-center transition-all duration-300",
                   i <= currentStep
                     ? "bg-secondary border-secondary text-white"
-                    : "bg-card border-border text-neutral"
+                    : "bg-card border-border text-muted-foreground"
                 )}
               >
-                {i < currentStep ? <CheckCircle size={20} weight="fill" /> : i + 1}
+                {i < currentStep ? <CheckCircle2 className="h-5 w-5" /> : i + 1}
               </div>
               <span
                 className={cn(
                   "absolute top-10 left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-bold uppercase tracking-widest",
-                  i === currentStep ? "text-primary" : "text-neutral/50"
+                  i === currentStep ? "text-primary" : "text-muted-foreground/50"
                 )}
               >
                 {step.label[lang]}
@@ -356,12 +360,12 @@ export default function NewProjectPage() {
               {availableLands.length > 0 && (
                 <div className="border border-secondary/30 bg-secondary/5 rounded-md p-5 space-y-3">
                   <div className="flex items-center gap-2">
-                    <MapTrifold size={18} className="text-secondary" />
+                    <Map className="h-[18px] w-[18px] text-secondary" />
                     <h4 className="text-xs font-bold text-secondary">
                       {lang === "ar" ? "استيراد من أرض مُستحوذ عليها" : "Import from Acquired Land"}
                     </h4>
                   </div>
-                  <p className="text-[10px] text-neutral">
+                  <p className="text-[10px] text-muted-foreground">
                     {lang === "ar"
                       ? "اختر أرضًا لتعبئة بيانات المشروع تلقائيًا من بيانات الأرض."
                       : "Select a land to auto-fill project data from the land record."}
@@ -386,13 +390,13 @@ export default function NewProjectPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">
+                  <label className="text-xs font-bold text-muted-foreground">
                     {lang === "ar" ? "اسم المشروع *" : "Project Name *"}
                   </label>
                   <input name="name" value={formData.name} onChange={handleInputChange} placeholder={lang === "ar" ? "مثال: مجمع الأرجوان" : "e.g. Al Arjuan Compound"} className={inputClass} required />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">
+                  <label className="text-xs font-bold text-muted-foreground">
                     {lang === "ar" ? "نوع المشروع" : "Project Type"}
                   </label>
                   <select name="type" value={formData.type} onChange={handleInputChange} className={inputClass}>
@@ -415,14 +419,14 @@ export default function NewProjectPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`h-10 w-10 rounded-md flex items-center justify-center ${isOffPlan ? "bg-secondary/20 text-secondary" : "bg-muted text-neutral/40"}`}>
-                      <MapTrifold size={22} weight="duotone" />
+                    <div className={`h-10 w-10 rounded-md flex items-center justify-center ${isOffPlan ? "bg-secondary/20 text-secondary" : "bg-muted text-muted-foreground/40"}`}>
+                      <Map className="h-[22px] w-[22px]" />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-primary">
                         {lang === "ar" ? "مشروع بيع على الخارطة" : "Off-Plan Development Project"}
                       </p>
-                      <p className="text-[10px] text-neutral mt-0.5">
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
                         {lang === "ar"
                           ? "تفعيل مراحل التطوير: التقسيم، الموافقات، البنية التحتية، المخزون، التسعير، والإطلاق"
                           : "Enable development stages: subdivision, approvals, infrastructure, inventory, pricing, and launch"}
@@ -444,7 +448,7 @@ export default function NewProjectPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral">
+                <label className="text-xs font-bold text-muted-foreground">
                   {lang === "ar" ? "وصف المشروع" : "Description"}
                 </label>
                 <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full p-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all min-h-[80px]" />
@@ -456,33 +460,33 @@ export default function NewProjectPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المنطقة" : "Region"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المنطقة" : "Region"}</label>
                   <input name="region" value={formData.region} onChange={handleInputChange} className={inputClass} placeholder={lang === "ar" ? "منطقة الرياض" : "Riyadh Region"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المدينة" : "City"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المدينة" : "City"}</label>
                   <input name="city" value={formData.city} onChange={handleInputChange} className={inputClass} placeholder={lang === "ar" ? "الرياض" : "Riyadh"} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الحي" : "District"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الحي" : "District"}</label>
                   <input name="district" value={formData.district} onChange={handleInputChange} className={inputClass} placeholder={lang === "ar" ? "الملقا" : "Al Malqa"} />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الشارع" : "Street"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الشارع" : "Street"}</label>
                   <input name="streetName" value={formData.streetName} onChange={handleInputChange} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الرمز البريدي" : "Postal Code"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الرمز البريدي" : "Postal Code"}</label>
                   <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} className={inputClass} maxLength={5} />
                 </div>
               </div>
 
               {/* Map */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-neutral flex items-center gap-2">
-                  <MapPin size={14} />
+                <label className="text-xs font-bold text-muted-foreground flex items-center gap-2">
+                  <MapPin className="h-3.5 w-3.5" />
                   {lang === "ar" ? "حدد الموقع على الخريطة" : "Select Location on Map"}
                 </label>
                 <MapPicker
@@ -493,7 +497,7 @@ export default function NewProjectPage() {
                   zoom={6}
                 />
                 {formData.latitude && formData.longitude && (
-                  <p className="text-[10px] text-neutral" dir="ltr">
+                  <p className="text-[10px] text-muted-foreground" dir="ltr">
                     {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
                   </p>
                 )}
@@ -505,25 +509,25 @@ export default function NewProjectPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الصك" : "Deed #"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم الصك" : "Deed #"}</label>
                   <input name="deedNumber" value={formData.deedNumber} onChange={handleInputChange} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم القطعة" : "Parcel #"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم القطعة" : "Parcel #"}</label>
                   <input name="parcelNumber" value={formData.parcelNumber} onChange={handleInputChange} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم المخطط" : "Plot #"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم المخطط" : "Plot #"}</label>
                   <input name="plotNumber" value={formData.plotNumber} onChange={handleInputChange} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم البلك" : "Block #"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم البلك" : "Block #"}</label>
                   <input name="blockNumber" value={formData.blockNumber} onChange={handleInputChange} className={inputClass} />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاستخدام" : "Land Use"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الاستخدام" : "Land Use"}</label>
                   <select name="landUse" value={formData.landUse} onChange={handleInputChange} className={inputClass}>
                     <option value="">—</option>
                     {landUseOptions.map((o) => (
@@ -532,23 +536,23 @@ export default function NewProjectPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
                   <input name="totalAreaSqm" type="number" value={formData.totalAreaSqm} onChange={handleInputChange} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "القيمة التقديرية (ر.س)" : "Est. Value (SAR)"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "القيمة التقديرية (ر.س)" : "Est. Value (SAR)"}</label>
                   <input name="estimatedValueSar" type="number" value={formData.estimatedValueSar} onChange={handleInputChange} className={inputClass} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* ─── Step 2: Buildings ─── */}
+          {/* ─── Step 2: Building2 ─── */}
           {currentStep === 1 && (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-primary">
-                  {lang === "ar" ? "المباني / الأبراج" : "Buildings & Towers"}
+                  {lang === "ar" ? "المباني / الأبراج" : "Building2 & Towers"}
                 </h3>
                 <Button
                   variant="secondary"
@@ -561,7 +565,7 @@ export default function NewProjectPage() {
                   }}
                  
                 >
-                  <Plus size={16} />
+                  <Plus className="h-4 w-4" />
                   {lang === "ar" ? "إضافة مبنى" : "Add Building"}
                 </Button>
               </div>
@@ -576,11 +580,11 @@ export default function NewProjectPage() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-neutral">{lang === "ar" ? "اسم المبنى *" : "Building Name *"}</label>
+                      <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "اسم المبنى *" : "Building Name *"}</label>
                       <input value={buildingForm.name} onChange={(e) => setBuildingForm({ ...buildingForm, name: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مبنى أ" : "Building A"} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-neutral">{lang === "ar" ? "نوع المبنى" : "Building Type"}</label>
+                      <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "نوع المبنى" : "Building Type"}</label>
                       <select value={buildingForm.buildingType} onChange={(e) => setBuildingForm({ ...buildingForm, buildingType: e.target.value })} className={inputClass}>
                         {buildingTypeOptions.map((o) => (
                           <option key={o.value} value={o.value}>{o[lang]}</option>
@@ -588,15 +592,15 @@ export default function NewProjectPage() {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-neutral">{lang === "ar" ? "عدد الأدوار" : "Floors"}</label>
+                      <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "عدد الأدوار" : "Floors"}</label>
                       <input type="number" value={buildingForm.numberOfFloors} onChange={(e) => setBuildingForm({ ...buildingForm, numberOfFloors: e.target.value })} className={inputClass} min="1" />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
+                      <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
                       <input type="number" value={buildingForm.buildingAreaSqm} onChange={(e) => setBuildingForm({ ...buildingForm, buildingAreaSqm: e.target.value })} className={inputClass} />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-neutral">{lang === "ar" ? "عدد الوحدات" : "Unit Count"}</label>
+                      <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "عدد الوحدات" : "Unit Count"}</label>
                       <input type="number" value={buildingForm.unitCount} onChange={(e) => setBuildingForm({ ...buildingForm, unitCount: e.target.value })} className={inputClass} min="0" />
                     </div>
                   </div>
@@ -614,9 +618,9 @@ export default function NewProjectPage() {
               {/* Building List */}
               {buildings.length === 0 && !showBuildingForm && (
                 <div className="bg-muted/10 border border-dashed border-border rounded-md p-12 text-center">
-                  <Buildings size={48} className="text-neutral/30 mx-auto mb-3" />
-                  <p className="text-sm text-neutral">{lang === "ar" ? "لم يتم إضافة مباني بعد" : "No buildings added yet"}</p>
-                  <p className="text-xs text-neutral/60 mt-1">{lang === "ar" ? "أضف المباني والأبراج التابعة للمشروع" : "Add buildings and towers for this project"}</p>
+                  <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">{lang === "ar" ? "لم يتم إضافة مباني بعد" : "No buildings added yet"}</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">{lang === "ar" ? "أضف المباني والأبراج التابعة للمشروع" : "Add buildings and towers for this project"}</p>
                 </div>
               )}
               <div className="space-y-3">
@@ -624,11 +628,11 @@ export default function NewProjectPage() {
                   <div key={b.id} className="flex items-center justify-between p-4 border border-border rounded-md bg-card hover:shadow-sm transition-all">
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
-                        <Buildings size={24} />
+                        <Building2 className="h-6 w-6" />
                       </div>
                       <div>
                         <p className="text-sm font-bold text-primary">{b.name}</p>
-                        <p className="text-[10px] text-neutral">
+                        <p className="text-[10px] text-muted-foreground">
                           {buildingTypeOptions.find((o) => o.value === b.buildingType)?.[lang] ?? b.buildingType}
                           {" • "}{b.numberOfFloors} {lang === "ar" ? "أدوار" : "floors"}
                           {b.buildingAreaSqm ? ` • ${fmt(b.buildingAreaSqm)} م²` : ""}
@@ -638,10 +642,10 @@ export default function NewProjectPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="sm" onClick={() => handleEditBuilding(b)}>
-                        <PencilSimple size={14} />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDeleteBuilding(b.id)} className="text-red-500 hover:text-red-700">
-                        <Trash size={14} />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -656,7 +660,7 @@ export default function NewProjectPage() {
               <h3 className="text-sm font-bold text-primary">
                 {lang === "ar" ? "وثائق بلدي والمستندات" : "Balady Documents & Files"}
               </h3>
-              <p className="text-xs text-neutral">
+              <p className="text-xs text-muted-foreground">
                 {lang === "ar"
                   ? "ارفع الوثائق المتعلقة بالمشروع مثل رخصة البناء، مخططات الموقع، صكوك الملكية، وتقارير التربة."
                   : "Upload project-related documents such as building permits, site plans, title deeds, and soil reports."}
@@ -665,8 +669,8 @@ export default function NewProjectPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Upload Area */}
                 <div className="border border-dashed border-secondary/40 bg-secondary/5 rounded-md p-8 flex flex-col items-center justify-center gap-3">
-                  <CloudArrowUp size={40} className="text-secondary/60" />
-                  <p className="text-xs text-neutral text-center">
+                  <CloudUpload className="h-10 w-10 text-secondary/60" />
+                  <p className="text-xs text-muted-foreground text-center">
                     {lang === "ar" ? "ارفع الملفات (PDF، صور، Excel، Word)" : "Upload files (PDF, images, Excel, Word)"}
                   </p>
                   <UploadButton
@@ -680,7 +684,7 @@ export default function NewProjectPage() {
                     content={{
                       button: (
                         <div className="flex items-center gap-2">
-                          <CloudArrowUp size={14} weight="fill" />
+                          <CloudUpload className="h-3.5 w-3.5" />
                           {lang === "ar" ? "اختر ملفات" : "Choose Files"}
                         </div>
                       ),
@@ -690,7 +694,7 @@ export default function NewProjectPage() {
 
                 {/* Category Info */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-neutral">{lang === "ar" ? "أنواع الوثائق المطلوبة" : "Required Document Types"}</p>
+                  <p className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "أنواع الوثائق المطلوبة" : "Required Document Types"}</p>
                   {[
                     { ar: "رخصة البناء", en: "Building Permit" },
                     { ar: "صك الملكية", en: "Title Deed" },
@@ -699,8 +703,8 @@ export default function NewProjectPage() {
                     { ar: "شهادة إتمام البناء", en: "Completion Certificate" },
                     { ar: "مخطط الموقع العام", en: "Site Plan" },
                   ].map((doc, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs text-neutral">
-                      <FileText size={14} className="text-secondary min-w-[14px]" />
+                    <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <FileText className="h-3.5 w-3.5 text-secondary min-w-[14px]" />
                       {doc[lang]}
                     </div>
                   ))}
@@ -714,14 +718,14 @@ export default function NewProjectPage() {
                   {documents.map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-3 bg-muted/10 border border-border rounded-md">
                       <div className="flex items-center gap-3">
-                        <FileText size={18} className="text-secondary" />
+                        <FileText className="h-[18px] w-[18px] text-secondary" />
                         <div>
                           <p className="text-xs font-bold text-primary">{doc.name}</p>
-                          <p className="text-[10px] text-neutral">{doc.type.toUpperCase()}{doc.size ? ` • ${(doc.size / 1024).toFixed(0)} KB` : ""}</p>
+                          <p className="text-[10px] text-muted-foreground">{doc.type.toUpperCase()}{doc.size ? ` • ${(doc.size / 1024).toFixed(0)} KB` : ""}</p>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => setDocuments((prev) => prev.filter((_, idx) => idx !== i))}>
-                        <Trash size={14} />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   ))}
@@ -765,20 +769,20 @@ export default function NewProjectPage() {
                 )}
               </div>
 
-              {/* Buildings */}
+              {/* Building2 */}
               <div className="bg-muted/10 border border-border rounded-md p-5 space-y-3">
                 <h4 className="text-xs font-bold text-secondary uppercase tracking-widest">
-                  {lang === "ar" ? "المباني" : "Buildings"} ({buildings.length})
+                  {lang === "ar" ? "المباني" : "Building2"} ({buildings.length})
                 </h4>
                 {buildings.length === 0 ? (
-                  <p className="text-xs text-neutral">{lang === "ar" ? "لم يتم إضافة مباني" : "No buildings added"}</p>
+                  <p className="text-xs text-muted-foreground">{lang === "ar" ? "لم يتم إضافة مباني" : "No buildings added"}</p>
                 ) : (
                   <div className="space-y-2">
                     {buildings.map((b) => (
                       <div key={b.id} className="flex items-center gap-3 text-xs">
-                        <Buildings size={16} className="text-primary" />
+                        <Building2 className="h-4 w-4 text-primary" />
                         <span className="font-bold text-primary">{b.name}</span>
-                        <span className="text-neutral">
+                        <span className="text-muted-foreground">
                           {b.numberOfFloors} {lang === "ar" ? "أدوار" : "floors"}
                           {b.buildingAreaSqm ? ` • ${fmt(b.buildingAreaSqm)} م²` : ""}
                           {b.unitCount ? ` • ${b.unitCount} ${lang === "ar" ? "وحدة" : "units"}` : ""}
@@ -795,12 +799,12 @@ export default function NewProjectPage() {
                   {lang === "ar" ? "الوثائق" : "Documents"} ({documents.length})
                 </h4>
                 {documents.length === 0 ? (
-                  <p className="text-xs text-neutral">{lang === "ar" ? "لم يتم رفع وثائق" : "No documents uploaded"}</p>
+                  <p className="text-xs text-muted-foreground">{lang === "ar" ? "لم يتم رفع وثائق" : "No documents uploaded"}</p>
                 ) : (
                   <div className="space-y-1">
                     {documents.map((doc, i) => (
                       <div key={i} className="flex items-center gap-2 text-xs">
-                        <FileText size={14} className="text-secondary" />
+                        <FileText className="h-3.5 w-3.5 text-secondary" />
                         <span className="text-primary">{doc.name}</span>
                       </div>
                     ))}
@@ -814,19 +818,19 @@ export default function NewProjectPage() {
         {/* Footer Actions */}
         <div className="flex items-center justify-between pt-8 px-2">
           <Button variant="ghost" onClick={prevStep} disabled={currentStep === 0 || loading} className="gap-2">
-            <ArrowRight size={18} />
+            <ArrowRight className="h-[18px] w-[18px]" />
             {lang === "ar" ? "السابق" : "Previous"}
           </Button>
 
           {currentStep === steps.length - 1 ? (
             <Button onClick={handleCreateProject} disabled={loading || !formData.name} className="gap-2 bg-secondary hover:bg-green-bright transition-colors px-10">
-              {loading ? <Spinner className="animate-spin" size={18} /> : <CheckCircle size={20} weight="fill" />}
+              {loading ? <Loader2 className="h-[18px] w-[18px] animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
               {lang === "ar" ? "اعتماد المشروع" : "Approve Project"}
             </Button>
           ) : (
             <Button onClick={nextStep} className="gap-2 px-10">
               {lang === "ar" ? "التالي" : "Next"}
-              <ArrowLeft size={18} />
+              <ArrowLeft className="h-[18px] w-[18px]" />
             </Button>
           )}
         </div>
@@ -838,7 +842,7 @@ export default function NewProjectPage() {
 function ReviewField({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[10px] text-neutral uppercase font-bold">{label}</p>
+      <p className="text-[10px] text-muted-foreground uppercase font-bold">{label}</p>
       <p className="text-sm text-primary font-medium">{value || "—"}</p>
     </div>
   );

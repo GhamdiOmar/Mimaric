@@ -6,13 +6,13 @@ import {
   Tag,
   Plus,
   Clock,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
-  Warning,
-  Spinner,
-  Buildings,
+  AlertTriangle,
+  Loader2,
+  Building2,
   User,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import {
   SARAmount,
   Button,
@@ -31,9 +31,9 @@ import { formatDualDate } from "../../../../lib/hijri";
 
 const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string; icon: any }> = {
   PENDING: { label: { ar: "قيد الانتظار", en: "Pending" }, variant: "reserved", icon: Clock },
-  CONFIRMED: { label: { ar: "مؤكد", en: "Confirmed" }, variant: "available", icon: CheckCircle },
+  CONFIRMED: { label: { ar: "مؤكد", en: "Confirmed" }, variant: "available", icon: CheckCircle2 },
   CANCELLED: { label: { ar: "ملغي", en: "Cancelled" }, variant: "sold", icon: XCircle },
-  EXPIRED: { label: { ar: "منتهي", en: "Expired" }, variant: "sold", icon: Warning },
+  EXPIRED: { label: { ar: "منتهي", en: "Expired" }, variant: "sold", icon: AlertTriangle },
 };
 
 export default function ReservationsPage() {
@@ -72,13 +72,13 @@ export default function ReservationsPage() {
           <h1 className="text-2xl font-bold text-primary">
             {lang === "ar" ? "الحجوزات" : "Reservations"}
           </h1>
-          <p className="text-sm text-neutral mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar" ? "إدارة جميع حجوزات الوحدات العقارية" : "Manage all unit reservations"}
           </p>
         </div>
         <Link href="/dashboard/sales/reservations/new">
           <Button size="sm" className="gap-2">
-            <Plus size={16} />
+            <Plus className="h-4 w-4" />
             {lang === "ar" ? "حجز جديد" : "New Reservation"}
           </Button>
         </Link>
@@ -86,20 +86,20 @@ export default function ReservationsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <Spinner className="animate-spin text-primary" size={32} />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : reservations.length === 0 ? (
         <Card className="p-12 text-center">
-          <Tag size={48} className="text-neutral mx-auto mb-4" />
+          <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">
             {lang === "ar" ? "لا توجد حجوزات" : "No Reservations"}
           </h3>
-          <p className="text-sm text-neutral mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar" ? "ابدأ بإنشاء حجز جديد لوحدة عقارية" : "Start by creating a new unit reservation"}
           </p>
           <Link href="/dashboard/sales/reservations/new">
             <Button className="mt-4 gap-2">
-              <Plus size={16} />
+              <Plus className="h-4 w-4" />
               {lang === "ar" ? "حجز جديد" : "New Reservation"}
             </Button>
           </Link>
@@ -140,25 +140,25 @@ export default function ReservationsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-primary font-bold text-xs">
-                          {res.customer?.name?.charAt(0) || <User size={14} />}
+                          {res.customer?.name?.charAt(0) || <User className="h-3.5 w-3.5" />}
                         </div>
                         <div>
                           <p className="font-bold text-primary text-sm">{res.customer?.name}</p>
-                          <p className="text-xs text-neutral" dir="ltr">{res.customer?.phone}</p>
+                          <p className="text-xs text-muted-foreground" dir="ltr">{res.customer?.phone}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Buildings size={14} className="text-neutral" />
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="text-sm">{res.unit?.number || "—"}</span>
                       </div>
-                      <p className="text-xs text-neutral">{res.unit?.building?.name}</p>
+                      <p className="text-xs text-muted-foreground">{res.unit?.building?.name}</p>
                     </TableCell>
                     <TableCell>
                       <SARAmount value={Number(res.amount)} size={12} className="font-bold" />
                     </TableCell>
-                    <TableCell className="text-xs text-neutral">
+                    <TableCell className="text-xs text-muted-foreground">
                       {formatDualDate(res.expiresAt, lang)}
                       {isExpired && (
                         <span className="block text-red-500 text-[10px] font-bold mt-0.5">
@@ -168,7 +168,7 @@ export default function ReservationsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={config.variant as any} className="gap-1 text-xs">
-                        <StatusIcon size={12} />
+                        <StatusIcon className="h-3 w-3" />
                         {config.label[lang]}
                       </Badge>
                     </TableCell>

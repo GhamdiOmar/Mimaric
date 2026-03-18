@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, Phone, Envelope, Chat, MapPin, Note, Handshake, ArrowUp } from "@phosphor-icons/react";
+import { ArrowLeft, Loader2, Phone, Mail, MessageCircle, MapPin, StickyNote, Handshake, ArrowUp } from "lucide-react";
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import { useLanguage } from "../../../../../components/LanguageProvider";
 import {
@@ -67,13 +67,13 @@ const LABELS = {
 };
 
 const ACTIVITY_ICONS: Record<string, React.ReactNode> = {
-  CALL: <Phone size={14} />,
-  EMAIL: <Envelope size={14} />,
-  SMS: <Chat size={14} />,
-  VISIT: <MapPin size={14} />,
-  NOTE: <Note size={14} />,
-  PROMISE: <Handshake size={14} />,
-  ESCALATION: <ArrowUp size={14} />,
+  CALL: <Phone className="h-3.5 w-3.5" />,
+  EMAIL: <Mail className="h-3.5 w-3.5" />,
+  SMS: <MessageCircle className="h-3.5 w-3.5" />,
+  VISIT: <MapPin className="h-3.5 w-3.5" />,
+  NOTE: <StickyNote className="h-3.5 w-3.5" />,
+  PROMISE: <Handshake className="h-3.5 w-3.5" />,
+  ESCALATION: <ArrowUp className="h-3.5 w-3.5" />,
 };
 
 export default function CollectionCaseDetailPage() {
@@ -135,7 +135,7 @@ export default function CollectionCaseDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -146,7 +146,7 @@ export default function CollectionCaseDetailPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/finance/collections")} style={{ display: "inline-flex" }}>
-          <ArrowLeft size={16} /> {t.back}
+          <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
         <h1 className="text-2xl font-bold">{t.title}</h1>
       </div>
@@ -180,7 +180,7 @@ export default function CollectionCaseDetailPage() {
         </Button>
         {caseData.status !== "SETTLED" && caseData.status !== "LEGAL" && (
           <Button variant="ghost" onClick={() => handleStatusChange("ESCALATED")} style={{ display: "inline-flex" }}>
-            <ArrowUp size={16} className="mr-1" /> {t.escalate}
+            <ArrowUp className="h-4 w-4 mr-1" /> {t.escalate}
           </Button>
         )}
         {caseData.status !== "SETTLED" && (

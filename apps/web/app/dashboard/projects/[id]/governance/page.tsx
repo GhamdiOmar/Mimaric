@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, CheckCircle, XCircle, PaperPlaneTilt, SealCheck, Lightning } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Send,
+  BadgeCheck,
+  Zap,
+} from "lucide-react";
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import { useLanguage } from "../../../../../components/LanguageProvider";
 import { ReadinessBadge } from "../../../../../components/readiness-badge";
@@ -125,7 +133,7 @@ export default function GovernancePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -145,7 +153,7 @@ export default function GovernancePage() {
           onClick={() => router.push(`/dashboard/projects/${projectId}`)}
           style={{ display: "inline-flex" }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft className="h-4 w-4" />
           {t.back}
         </Button>
         <div>
@@ -175,8 +183,8 @@ export default function GovernancePage() {
                       ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
                       : "bg-muted text-muted-foreground"
                   }`}>
-                    {isPast && <CheckCircle size={16} weight="fill" />}
-                    {isActive && <Lightning size={16} weight="fill" />}
+                    {isPast && <CheckCircle2 className="h-4 w-4" />}
+                    {isActive && <Zap className="h-4 w-4" />}
                     {stepLabel}
                   </div>
                   {idx < STEP_ORDER.length - 1 && (
@@ -205,7 +213,7 @@ export default function GovernancePage() {
               <code className="rounded bg-muted px-3 py-1.5 text-lg font-mono font-bold">
                 {project.projectCode}
               </code>
-              <SealCheck size={20} className="text-green-600" weight="fill" />
+              <BadgeCheck className="h-5 w-5 text-green-600" />
             </div>
           ) : (
             <Button
@@ -243,7 +251,7 @@ export default function GovernancePage() {
               disabled={actionLoading}
               style={{ display: "inline-flex" }}
             >
-              <PaperPlaneTilt size={16} className="mr-2" />
+              <Send className="h-4 w-4 mr-2" />
               {t.submit}
             </Button>
           )}
@@ -256,7 +264,7 @@ export default function GovernancePage() {
                 className="bg-green-600 hover:bg-green-700"
                 style={{ display: "inline-flex" }}
               >
-                <CheckCircle size={16} className="mr-2" />
+                <CheckCircle2 className="h-4 w-4 mr-2" />
                 {t.approve}
               </Button>
 
@@ -267,7 +275,7 @@ export default function GovernancePage() {
                   disabled={actionLoading}
                   style={{ display: "inline-flex" }}
                 >
-                  <XCircle size={16} className="mr-2" />
+                  <XCircle className="h-4 w-4 mr-2" />
                   {t.reject}
                 </Button>
               ) : (
@@ -301,7 +309,7 @@ export default function GovernancePage() {
               className="bg-green-600 hover:bg-green-700"
               style={{ display: "inline-flex" }}
             >
-              <Lightning size={16} className="mr-2" />
+              <Zap className="h-4 w-4 mr-2" />
               {t.activate}
             </Button>
           )}
@@ -312,7 +320,7 @@ export default function GovernancePage() {
               disabled={actionLoading}
               style={{ display: "inline-flex" }}
             >
-              <PaperPlaneTilt size={16} className="mr-2" />
+              <Send className="h-4 w-4 mr-2" />
               {t.submit}
             </Button>
           )}

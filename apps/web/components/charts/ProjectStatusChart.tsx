@@ -44,8 +44,8 @@ export default function ProjectStatusChart() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-neutral text-sm">جاري التحميل...</div>;
-  if (data.length === 0) return <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">لا توجد مشاريع</div>;
+  if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">جاري التحميل...</div>;
+  if (data.length === 0) return <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">لا توجد مشاريع</div>;
 
   return (
     <ChartContainer config={chartConfig} className="h-[280px] w-full">

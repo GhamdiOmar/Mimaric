@@ -2,6 +2,7 @@
 
 import { db } from "@repo/db";
 import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 // ─── Approval Submissions ───────────────────────────────────────────────────
 
@@ -355,6 +356,13 @@ export async function addFollowUpTask(
     },
   });
 
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "CREATE", resource: "ApprovalFollowUp", resourceId: followUp.id,
+    metadata: { submissionId, task: data.task },
+    organizationId: session.organizationId,
+  });
+
   return JSON.parse(JSON.stringify(followUp));
 }
 
@@ -375,6 +383,14 @@ export async function updateFollowUpStatus(
       status: status as any,
       completedAt: status === "COMPLETED" ? new Date() : undefined,
     },
+  });
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "UPDATE", resource: "ApprovalFollowUp", resourceId: followUpId,
+    before: { status: followUp.status },
+    after: { status },
+    organizationId: session.organizationId,
   });
 
   return JSON.parse(JSON.stringify(updated));

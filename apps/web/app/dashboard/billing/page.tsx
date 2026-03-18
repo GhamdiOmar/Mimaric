@@ -1,20 +1,23 @@
 "use client";
 
-import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   CreditCard,
   Receipt,
-  ArrowsClockwise,
-  CheckCircle,
-  Warning,
-  CaretRight,
+  AlertTriangle,
+  ChevronRight,
   Crown,
-  CalendarBlank,
-  CurrencyCircleDollar,
-} from "@phosphor-icons/react";
-import { Button, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
+} from "lucide-react";
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  PageIntro,
+} from "@repo/ui";
 import Link from "next/link";
+import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
 import {
   getCurrentSubscription,
@@ -72,30 +75,30 @@ export default function BillingDashboardPage() {
   return (
     <div className="space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t.title}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{t.subtitle}</p>
-        </div>
-        {can("billing:write") && (
-          <Link href="/dashboard/billing/plans">
-            <Button>
-              <Crown className="w-4 h-4 me-2" />
-              {t.changePlan}
-            </Button>
-          </Link>
-        )}
-      </div>
+      <PageIntro
+        title={t.title}
+        description={t.subtitle}
+        actions={
+          can("billing:write") ? (
+            <Link href="/dashboard/billing/plans">
+              <Button style={{ display: "inline-flex" }}>
+                <Crown className="w-4 h-4 me-2" />
+                {t.changePlan}
+              </Button>
+            </Link>
+          ) : undefined
+        }
+      />
 
       {/* Grace Period Banner */}
       {subscription?.status === "PAST_DUE" && (
         <div className="flex items-center gap-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-          <Warning className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+          <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
           <div className="flex-1">
             <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">{t.pastDueBanner}</p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">{t.pastDueDescription}</p>
           </div>
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" style={{ display: "inline-flex" }}>
             {t.updatePayment}
           </Button>
         </div>
@@ -106,13 +109,13 @@ export default function BillingDashboardPage() {
         <CardHeader className="border-b">
           <div className="flex items-center gap-2 mb-4">
             <Crown className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">{t.currentPlan}</h2>
+            <CardTitle className="text-lg">{t.currentPlan}</CardTitle>
           </div>
           {subscription ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <p className="text-sm text-muted-foreground">{t.plan}</p>
-                <p className="text-xl font-bold mt-1">
+                <p className="text-xl font-bold text-foreground mt-1">
                   {lang === "ar" ? subscription.plan.nameAr : subscription.plan.nameEn}
                 </p>
                 <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[subscription.status] ?? ""}`}>
@@ -121,7 +124,7 @@ export default function BillingDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t.billingCycle}</p>
-                <p className="text-lg font-semibold mt-1">
+                <p className="text-lg font-semibold text-foreground mt-1">
                   {t.cycles[subscription.billingCycle as keyof typeof t.cycles] ?? subscription.billingCycle}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -132,7 +135,7 @@ export default function BillingDashboardPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{t.price}</p>
-                <p className="text-lg font-semibold mt-1">
+                <p className="text-lg font-semibold text-foreground mt-1">
                   {Number(subscription.priceAtRenewal ?? 0).toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}
                   <span className="text-sm font-normal text-muted-foreground">
                     /{subscription.billingCycle === "ANNUAL" ? t.year : t.month}
@@ -150,7 +153,7 @@ export default function BillingDashboardPage() {
               <Crown className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground">{t.noSubscription}</p>
               <Link href="/dashboard/billing/plans">
-                <Button className="mt-4">{t.choosePlan}</Button>
+                <Button className="mt-4" style={{ display: "inline-flex" }}>{t.choosePlan}</Button>
               </Link>
             </div>
           )}
@@ -164,7 +167,7 @@ export default function BillingDashboardPage() {
           <CardHeader className="border-b flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">{t.paymentMethods}</h2>
+              <CardTitle className="text-lg">{t.paymentMethods}</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
@@ -175,7 +178,7 @@ export default function BillingDashboardPage() {
                     <div className="flex items-center gap-3">
                       <CreditCard className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium">
+                        <p className="text-sm font-medium text-foreground">
                           {pm.brand?.toUpperCase()} •••• {pm.lastFourDigits}
                         </p>
                         <p className="text-xs text-muted-foreground">
@@ -202,10 +205,10 @@ export default function BillingDashboardPage() {
           <CardHeader className="border-b flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <Receipt className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">{t.recentInvoices}</h2>
+              <CardTitle className="text-lg">{t.recentInvoices}</CardTitle>
             </div>
             <Link href="/dashboard/billing/invoices" className="text-sm text-primary hover:underline flex items-center gap-1">
-              {t.viewAll} <CaretRight className="w-3 h-3" />
+              {t.viewAll} <ChevronRight className="w-3 h-3" />
             </Link>
           </CardHeader>
           <CardContent className="pt-6">
@@ -214,13 +217,13 @@ export default function BillingDashboardPage() {
                 {invoices.map((inv: any) => (
                   <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg border">
                     <div>
-                      <p className="text-sm font-medium">{inv.invoiceNumber}</p>
+                      <p className="text-sm font-medium text-foreground">{inv.invoiceNumber}</p>
                       <p className="text-xs text-muted-foreground">
                         {inv.issuedAt ? new Date(inv.issuedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US") : "—"}
                       </p>
                     </div>
                     <div className="text-end">
-                      <p className="text-sm font-semibold">
+                      <p className="text-sm font-semibold text-foreground">
                         {Number(inv.total).toLocaleString(lang === "ar" ? "ar-SA" : "en-US")} {t.sar}
                       </p>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${

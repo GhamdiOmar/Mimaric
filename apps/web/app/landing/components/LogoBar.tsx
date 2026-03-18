@@ -1,15 +1,15 @@
 "use client";
 
-import { Buildings, House, CurrencyCircleDollar } from "@phosphor-icons/react";
+import { Building2, Home, CircleDollarSign } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function LogoBar({ lang }: { lang: "ar" | "en" }) {
   const t = translations[lang];
 
   const stats = [
-    { value: "500+", label: t.projectsManaged, icon: Buildings },
-    { value: "10,000+", label: t.unitsTracked, icon: House },
-    { value: "50M+", label: t.sarProcessed, icon: CurrencyCircleDollar },
+    { value: "500+", label: t.projectsManaged, icon: Building2 },
+    { value: "10,000+", label: t.unitsTracked, icon: Home },
+    { value: "50M+", label: t.sarProcessed, icon: CircleDollarSign },
   ];
 
   const placeholderLogos = [
@@ -21,18 +21,18 @@ export default function LogoBar({ lang }: { lang: "ar" | "en" }) {
   ];
 
   return (
-    <section id="social-proof" className="border-y border-border bg-muted/30 py-12 dark:bg-muted/10">
+    <section id="social-proof" className="border-y border-border bg-muted/30 py-10 dark:bg-muted/10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <p className="text-center text-sm font-medium text-muted-foreground">
           {t.trustedBy}
         </p>
 
         {/* Logo placeholder row */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 sm:gap-10">
           {placeholderLogos.map((name) => (
             <div
               key={name}
-              className="flex h-10 items-center rounded-md border border-border/50 bg-card/60 px-5 text-xs font-medium text-muted-foreground backdrop-blur-sm"
+              className="flex h-9 items-center rounded border border-border/40 bg-card/50 px-4 text-xs font-medium text-muted-foreground"
             >
               {name}
             </div>
@@ -40,16 +40,12 @@ export default function LogoBar({ lang }: { lang: "ar" | "en" }) {
         </div>
 
         {/* Stats */}
-        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {stats.map(({ value, label, icon: Icon }) => (
             <div key={label} className="text-center">
               <div className="flex items-center justify-center gap-2">
-                <Icon
-                  size={28}
-                  weight="duotone"
-                  className="text-secondary"
-                />
-                <span className="font-dm-sans text-3xl font-bold text-primary dark:text-white">
+                <Icon className="h-5 w-5 text-primary" />
+                <span className="text-2xl font-bold text-primary dark:text-white sm:text-3xl">
                   {value}
                 </span>
               </div>

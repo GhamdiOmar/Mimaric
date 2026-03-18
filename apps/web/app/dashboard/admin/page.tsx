@@ -7,9 +7,9 @@ import {
   Users,
   Tag,
   Receipt,
-  CaretRight,
-  GearSix,
-} from "@phosphor-icons/react";
+  ChevronRight,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 
 const sections = [
@@ -63,13 +63,13 @@ export default function SystemAdminPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-2">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-            <GearSix size={28} weight="duotone" />
+            <Settings className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-primary font-primary">
+            <h1 className="text-2xl font-bold text-primary">
               {lang === "ar" ? "إدارة المنصة" : "Platform Administration"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 font-primary">
+            <p className="text-sm text-muted-foreground mt-1">
               {lang === "ar"
                 ? "إدارة الخطط والاشتراكات والكوبونات"
                 : "Manage plans, subscriptions, and coupons"}
@@ -82,20 +82,19 @@ export default function SystemAdminPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {sections.map((section) => (
           <Link key={section.href} href={section.href} className="group">
-            <div className="bg-card rounded-md shadow-card border border-border p-8 hover:shadow-raised hover:border-primary/30 hover:scale-[1.01] transition-all duration-200 h-full flex flex-col">
+            <div className="bg-card rounded-md shadow-card border border-border p-8 hover:shadow-lg hover:border-primary/30 hover:scale-[1.01] transition-all duration-200 h-full flex flex-col">
               <div className="flex items-start justify-between">
                 <div className="h-14 w-14 rounded-md bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-200">
-                  <section.icon size={32} weight="duotone" />
+                  <section.icon className="h-8 w-8" />
                 </div>
-                <CaretRight
-                  size={20}
-                  className="text-muted-foreground group-hover:text-primary transition-colors duration-200 rtl:rotate-180"
+                <ChevronRight
+                  className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors duration-200 rtl:rotate-180"
                 />
               </div>
-              <h3 className="text-lg font-bold text-foreground font-primary mt-6">
+              <h3 className="text-lg font-bold text-foreground mt-6">
                 {section.label[lang]}
               </h3>
-              <p className="text-sm text-muted-foreground mt-2 font-primary flex-1 leading-relaxed">
+              <p className="text-sm text-muted-foreground mt-2 flex-1 leading-relaxed">
                 {section.desc[lang]}
               </p>
             </div>

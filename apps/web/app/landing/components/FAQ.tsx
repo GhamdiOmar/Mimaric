@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CaretDown } from "@phosphor-icons/react";
+import { ChevronDown } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function FAQ({ lang }: { lang: "ar" | "en" }) {
@@ -26,28 +26,30 @@ export default function FAQ({ lang }: { lang: "ar" | "en" }) {
           {t.faqTitle}
         </h2>
 
-        <div className="mt-12 divide-y divide-border">
+        <div className="mt-12 space-y-2">
           {faqs.map(({ q, a }, i) => (
-            <div key={i} className="py-5 transition-colors rounded-lg hover:bg-muted/30">
+            <div
+              key={i}
+              className="rounded-lg border border-border/50 bg-card/50 dark:bg-card/30"
+            >
               <button
                 onClick={() => setOpen(open === i ? null : i)}
-                className="flex w-full items-center justify-between gap-4 px-2 text-start"
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-start"
                 style={{ display: "flex" }}
               >
                 <span className="text-base font-semibold text-primary dark:text-white">
                   {q}
                 </span>
-                <CaretDown
-                  size={20}
-                  className={`shrink-0 text-muted-foreground transition-transform ${
+                <ChevronDown
+                  className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${
                     open === i ? "rotate-180" : ""
                   }`}
                 />
               </button>
               {open === i && (
-                <p className="mt-3 px-2 leading-relaxed text-muted-foreground">
-                  {a}
-                </p>
+                <div className="px-5 pb-4">
+                  <p className="leading-relaxed text-muted-foreground">{a}</p>
+                </div>
               )}
             </div>
           ))}

@@ -2,8 +2,8 @@
 
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
-import { Users, Tag, Receipt, Package, TrendUp, CurrencyCircleDollar, ChartBar, ArrowRight } from "@phosphor-icons/react";
-import { Button, Badge, SARAmount, Card } from "@repo/ui";
+import { Users, Tag, Receipt, Package, TrendingUp, CircleDollarSign, BarChart3, ArrowRight } from "lucide-react";
+import { Button, Badge, SARAmount, Card, PageIntro, KPICard } from "@repo/ui";
 import Link from "next/link";
 import { getSalesStats, getOffPlanSalesStats } from "../../actions/sales";
 
@@ -31,29 +31,61 @@ export default function SalesPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
-      <div className="px-2">
-        <h1 className="text-2xl font-bold text-primary font-primary">
-          {lang === "ar" ? "محرك المبيعات" : "Sales Engine"}
-        </h1>
-        <p className="text-sm text-neutral mt-1 font-primary">
-          {lang === "ar" ? "إدارة دورة المبيعات الكاملة من العميل المحتمل إلى العقد النهائي." : "Manage the full sales pipeline from customer to final contract."}
-        </p>
+      <PageIntro
+        title={lang === "ar" ? "المبيعات" : "Sales"}
+        description={lang === "ar" ? "إدارة دورة المبيعات الكاملة من العميل المحتمل إلى العقد النهائي." : "Manage the full sales pipeline from customer to final contract."}
+      />
+
+      {/* KPI Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          label={lang === "ar" ? "إجمالي العملاء" : "Total Customers"}
+          value={stats.customerCount}
+          subtitle={lang === "ar" ? "جميع العملاء المسجلين في المنصة" : "All registered customers in the platform"}
+          icon={<Users className="h-[18px] w-[18px]" />}
+          accentColor="primary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "الحجوزات النشطة" : "Active Reservations"}
+          value={stats.reservationCount}
+          subtitle={lang === "ar" ? "حجوزات الوحدات قيد المعالجة" : "Unit reservations being processed"}
+          icon={<Tag className="h-[18px] w-[18px]" />}
+          accentColor="warning"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "العقود الموقعة" : "Signed Contracts"}
+          value={stats.contractCount}
+          subtitle={lang === "ar" ? "عقود البيع المكتملة والنشطة" : "Completed and active sales contracts"}
+          icon={<Receipt className="h-[18px] w-[18px]" />}
+          accentColor="secondary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "إيرادات على الخارطة" : "Off-Plan Revenue"}
+          value={offPlanStats ? <SARAmount value={offPlanStats.soldValue || 0} size={11} compact /> : "—"}
+          subtitle={lang === "ar" ? "إجمالي قيمة المبيعات على الخارطة" : "Total off-plan sales value"}
+          icon={<CircleDollarSign className="h-[18px] w-[18px]" />}
+          accentColor="info"
+          loading={loading}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {salesModules.map((mod) => (
           <Link key={mod.href} href={mod.href} className="group">
-            <Card className="p-8 hover:shadow-raised hover:border-secondary/30 transition-all h-full flex flex-col">
+            <Card className="p-8 hover:shadow-lg hover:border-secondary/30 transition-all h-full flex flex-col">
               <div className="h-12 w-12 rounded-md bg-secondary/10 flex items-center justify-center text-secondary mb-6 group-hover:bg-secondary group-hover:text-white transition-all">
-                <mod.icon size={28} />
+                <mod.icon className="h-7 w-7" />
               </div>
-              <h3 className="text-lg font-bold text-primary font-primary">{mod.label[lang]}</h3>
-              <p className="text-xs text-neutral mt-1 font-primary flex-1">{mod.desc[lang]}</p>
+              <h3 className="text-lg font-bold text-foreground">{mod.label[lang]}</h3>
+              <p className="text-xs text-muted-foreground mt-1 flex-1">{mod.desc[lang]}</p>
               <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
                 <Badge variant="available" className={`bg-secondary/5 text-secondary border-secondary/20 text-[10px] ${loading ? "animate-pulse" : ""}`}>
                   {mod.count} {lang === "ar" ? "سجل" : "records"}
                 </Badge>
-                <span className="text-xs text-neutral group-hover:text-secondary transition-colors font-primary">{lang === "ar" ? "عرض" : "View"} →</span>
+                <span className="text-xs text-muted-foreground group-hover:text-secondary transition-colors">{lang === "ar" ? "عرض" : "View"} →</span>
               </div>
             </Card>
           </Link>
@@ -65,14 +97,14 @@ export default function SalesPage() {
         <div className="space-y-4 px-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-md bg-accent/15 flex items-center justify-center">
-                <Package size={18} className="text-accent" weight="duotone" />
+              <div className="h-8 w-8 rounded-md bg-amber-500/15 flex items-center justify-center">
+                <Package className="h-4.5 w-4.5 text-amber-500" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-primary font-primary">
+                <h2 className="text-base font-bold text-foreground">
                   {lang === "ar" ? "مسار مبيعات على الخارطة" : "Off-Plan Sales Pipeline"}
                 </h2>
-                <p className="text-[10px] text-neutral">
+                <p className="text-[10px] text-muted-foreground">
                   {lang === "ar" ? "تحويل المخزون العقاري إلى مبيعات" : "Converting inventory into sales"}
                 </p>
               </div>
@@ -80,7 +112,7 @@ export default function SalesPage() {
             <Link href="/dashboard/units?tab=inventory">
               <Button variant="secondary" size="sm" className="gap-2 text-[10px]">
                 {lang === "ar" ? "عرض المخزون" : "View Inventory"}
-                <ArrowRight size={12} />
+                <ArrowRight className="h-3 w-3" />
               </Button>
             </Link>
           </div>
@@ -90,14 +122,14 @@ export default function SalesPage() {
             <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-primary/10 flex items-center justify-center">
-                  <CurrencyCircleDollar size={16} className="text-primary" weight="duotone" />
+                  <CircleDollarSign className="h-4 w-4 text-primary" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {lang === "ar" ? "قيمة المسار" : "Pipeline Value"}
                 </span>
               </div>
-              <p className="text-lg font-bold text-primary"><SARAmount value={offPlanStats.pipelineValue} size={11} compact /></p>
-              <p className="text-[10px] text-neutral mt-1">
+              <p className="text-lg font-bold text-foreground"><SARAmount value={offPlanStats.pipelineValue} size={11} compact /></p>
+              <p className="text-[10px] text-muted-foreground mt-1">
                 {offPlanStats.available + offPlanStats.reserved} {lang === "ar" ? "عنصر نشط" : "active items"}
               </p>
             </Card>
@@ -106,14 +138,14 @@ export default function SalesPage() {
             <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-amber-500/10 flex items-center justify-center">
-                  <Tag size={16} className="text-amber-600" weight="duotone" />
+                  <Tag className="h-4 w-4 text-amber-600" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {lang === "ar" ? "قيمة المحجوز" : "Reserved Value"}
                 </span>
               </div>
               <p className="text-lg font-bold text-amber-600"><SARAmount value={offPlanStats.reservedValue} size={11} compact /></p>
-              <p className="text-[10px] text-neutral mt-1">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 {offPlanStats.reserved} {lang === "ar" ? "محجوز" : "reserved"}
               </p>
             </Card>
@@ -122,14 +154,14 @@ export default function SalesPage() {
             <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-secondary/10 flex items-center justify-center">
-                  <ChartBar size={16} className="text-secondary" weight="duotone" />
+                  <BarChart3 className="h-4 w-4 text-secondary" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {lang === "ar" ? "قيمة المباع" : "Sold Value"}
                 </span>
               </div>
               <p className="text-lg font-bold text-secondary"><SARAmount value={offPlanStats.soldValue} size={11} compact /></p>
-              <p className="text-[10px] text-neutral mt-1">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 {offPlanStats.sold} {lang === "ar" ? "مباع" : "sold"}
               </p>
             </Card>
@@ -138,9 +170,9 @@ export default function SalesPage() {
             <Card className="rounded-lg p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-7 w-7 rounded-md bg-info/10 flex items-center justify-center">
-                  <TrendUp size={16} className="text-info" weight="duotone" />
+                  <TrendingUp className="h-4 w-4 text-info" />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   {lang === "ar" ? "معدل التحويل" : "Conversion Rate"}
                 </span>
               </div>

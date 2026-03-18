@@ -2,18 +2,19 @@
 
 import { useState } from "react";
 import {
-  Buildings,
-  Storefront,
-  House,
+  Building2,
+  Store,
+  Home,
   Wrench,
-  CurrencyCircleDollar,
-  CheckCircle,
-} from "@phosphor-icons/react";
+  CircleDollarSign,
+  Check,
+  type LucideIcon,
+} from "lucide-react";
 import { t as translations } from "../translations";
 
 type FeatureTab = {
   id: string;
-  icon: typeof Buildings;
+  icon: LucideIcon;
   title: string;
   desc: string;
   features: string[];
@@ -25,7 +26,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
   const tabs: FeatureTab[] = [
     {
       id: "projects",
-      icon: Buildings,
+      icon: Building2,
       title: t.projectManagement,
       desc: t.projectManagementDesc,
       features: [
@@ -37,7 +38,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
     },
     {
       id: "sales",
-      icon: Storefront,
+      icon: Store,
       title: t.salesOffplan,
       desc: t.salesOffplanDesc,
       features: [
@@ -49,7 +50,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
     },
     {
       id: "rentals",
-      icon: House,
+      icon: Home,
       title: t.rentalManagement,
       desc: t.rentalManagementDesc,
       features: [
@@ -73,7 +74,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
     },
     {
       id: "finance",
-      icon: CurrencyCircleDollar,
+      icon: CircleDollarSign,
       title: t.financeBilling,
       desc: t.financeBillingDesc,
       features: [
@@ -103,21 +104,21 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
         </div>
 
         {/* Tabs */}
-        <div className="mt-12 flex flex-wrap justify-center gap-2 sm:gap-3">
+        <div className="mt-10 flex flex-wrap justify-center gap-2">
           {tabs.map((tab, i) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActive(i)}
-                className={`flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium transition-all sm:px-5 ${
+                className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 ${
                   active === i
-                    ? "bg-primary text-primary-foreground shadow-md dark:bg-secondary dark:text-white"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:shadow-sm"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
                 style={{ display: "inline-flex" }}
               >
-                <Icon size={18} weight={active === i ? "fill" : "regular"} />
+                <Icon className="h-[18px] w-[18px]" />
                 <span className="hidden sm:inline">{tab.title}</span>
               </button>
             );
@@ -125,16 +126,12 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
         </div>
 
         {/* Content */}
-        <div className="mt-12 grid items-center gap-12 lg:grid-cols-2">
+        <div className="mt-8 grid items-center gap-12 lg:grid-cols-2">
           {/* Text side */}
           <div className={lang === "ar" ? "lg:order-2" : "lg:order-1"}>
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary/10">
-                <ActiveIcon
-                  size={24}
-                  weight="duotone"
-                  className="text-secondary"
-                />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <ActiveIcon className="h-6 w-6 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-primary dark:text-white">
                 {activeTab.title}
@@ -146,11 +143,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
             <ul className="mt-6 space-y-3">
               {activeTab.features.map((f) => (
                 <li key={f} className="flex items-start gap-3">
-                  <CheckCircle
-                    size={20}
-                    weight="fill"
-                    className="mt-0.5 shrink-0 text-secondary"
-                  />
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
                   <span className="text-foreground/80">{f}</span>
                 </li>
               ))}
@@ -159,7 +152,7 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
 
           {/* Screenshot side */}
           <div className={lang === "ar" ? "lg:order-1" : "lg:order-2"}>
-            <div className="overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-muted/50 to-muted shadow-elevation-2 dark:from-card dark:to-card/80">
+            <div className="overflow-hidden rounded-2xl border border-border bg-muted shadow-sm dark:bg-card">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={`/assets/screenshots/${activeTab.id}.png`}

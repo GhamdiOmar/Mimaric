@@ -27,14 +27,14 @@ const chartConfig = {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card/90 backdrop-blur-xl shadow-elevation-2 border border-border/50 rounded-lg p-3 text-xs" dir="rtl">
+    <div className="bg-card/90 backdrop-blur-xl shadow-md border border-border/50 rounded-lg p-3 text-xs" dir="rtl">
       <p className="font-bold text-primary mb-1">{label}</p>
       <div className="space-y-1">
-        <p className="text-accent flex items-center gap-1">
-          تقديري: <RiyalIcon size={10} /> {fmt(payload[0]?.value ?? 0)}
+        <p className="text-amber-500 flex items-center gap-1">
+          تقديري: <RiyalIcon className="h-2.5 w-2.5" /> {fmt(payload[0]?.value ?? 0)}
         </p>
         <p className="text-secondary flex items-center gap-1">
-          فعلي: <RiyalIcon size={10} /> {fmt(payload[1]?.value ?? 0)}
+          فعلي: <RiyalIcon className="h-2.5 w-2.5" /> {fmt(payload[1]?.value ?? 0)}
         </p>
       </div>
     </div>
@@ -59,9 +59,9 @@ export default function MaintenanceCostTrendChart() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-neutral text-sm">جاري التحميل...</div>;
+  if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">جاري التحميل...</div>;
   if (data.every((d) => d.estimated === 0 && d.actual === 0))
-    return <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">لا توجد بيانات</div>;
+    return <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">لا توجد بيانات</div>;
 
   return (
     <ChartContainer config={chartConfig} className="h-[280px] w-full">

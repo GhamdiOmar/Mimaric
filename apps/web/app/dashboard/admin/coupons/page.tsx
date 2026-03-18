@@ -8,15 +8,15 @@ import {
   ArrowLeft,
   ArrowRight,
   Percent,
-  CurrencyCircleDollar,
-  CalendarBlank,
+  CircleDollarSign,
+  Calendar,
   X,
-  CheckCircle,
-  WarningCircle,
+  CheckCircle2,
+  AlertCircle,
   Ticket,
   Users,
   ListChecks,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import {
   Button,
   Card,
@@ -414,16 +414,16 @@ export default function CouponManagementPage() {
           }`}
         >
           {toast.type === "success" ? (
-            <CheckCircle size={18} weight="fill" />
+            <CheckCircle2 className="h-[18px] w-[18px]" />
           ) : (
-            <WarningCircle size={18} weight="fill" />
+            <AlertCircle className="h-[18px] w-[18px]" />
           )}
           {toast.message}
           <button
             onClick={() => setToast(null)}
             className="ms-2 hover:opacity-70"
           >
-            <X size={14} />
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
@@ -434,7 +434,7 @@ export default function CouponManagementPage() {
           href="/dashboard/admin"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <BackArrow size={16} />
+          <BackArrow className="h-4 w-4" />
           {labels.back}
         </Link>
       </div>
@@ -443,13 +443,13 @@ export default function CouponManagementPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-            <Tag size={28} weight="duotone" />
+            <Tag className="h-7 w-7" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground font-primary">
+            <h1 className="text-2xl font-bold text-foreground">
               {labels.title}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1 font-primary">
+            <p className="text-sm text-muted-foreground mt-1">
               {labels.subtitle}
             </p>
           </div>
@@ -461,7 +461,7 @@ export default function CouponManagementPage() {
           }}
          
         >
-          <Plus size={18} className="me-2" />
+          <Plus className="h-[18px] w-[18px] me-2" />
           {labels.createCoupon}
         </Button>
       </div>
@@ -470,9 +470,7 @@ export default function CouponManagementPage() {
       {coupons.length === 0 ? (
         <div className="rounded-xl border border-border bg-card shadow-sm p-12 text-center">
           <Ticket
-            size={48}
-            weight="duotone"
-            className="text-muted-foreground/30 mx-auto mb-4"
+            className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4"
           />
           <p className="text-lg font-semibold text-foreground">
             {labels.noCoupons}
@@ -488,7 +486,7 @@ export default function CouponManagementPage() {
             className="mt-6"
            
           >
-            <Plus size={18} className="me-2" />
+            <Plus className="h-[18px] w-[18px] me-2" />
             {labels.createCoupon}
           </Button>
         </div>
@@ -540,9 +538,9 @@ export default function CouponManagementPage() {
                     <TableCell>
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         {coupon.type === "PERCENTAGE" ? (
-                          <Percent size={14} />
+                          <Percent className="h-3.5 w-3.5" />
                         ) : (
-                          <CurrencyCircleDollar size={14} />
+                          <CircleDollarSign className="h-3.5 w-3.5" />
                         )}
                         {coupon.type === "PERCENTAGE"
                           ? labels.percentage
@@ -612,7 +610,7 @@ export default function CouponManagementPage() {
                     {/* Redemptions */}
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Users size={14} />
+                        <Users className="h-3.5 w-3.5" />
                         <span>{formatRedemptions(coupon)}</span>
                       </div>
                     </TableCell>
@@ -620,7 +618,7 @@ export default function CouponManagementPage() {
                     {/* Valid Until */}
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <CalendarBlank size={14} />
+                        <Calendar className="h-3.5 w-3.5" />
                         <span>{formatDate(coupon.validUntil)}</span>
                       </div>
                     </TableCell>
@@ -670,9 +668,9 @@ export default function CouponManagementPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-card rounded-t-xl z-10">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-                  <Tag size={20} weight="duotone" />
+                  <Tag className="h-5 w-5" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground font-primary">
+                <h2 className="text-lg font-bold text-foreground">
                   {labels.modalTitle}
                 </h2>
               </div>
@@ -680,7 +678,7 @@ export default function CouponManagementPage() {
                 onClick={() => setShowModal(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
               >
-                <X size={20} />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -854,8 +852,7 @@ export default function CouponManagementPage() {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">
                     <ListChecks
-                      size={16}
-                      className="inline-block me-1 -mt-0.5"
+                      className="h-4 w-4 inline-block me-1 -mt-0.5"
                     />
                     {labels.planRestriction}
                   </label>
@@ -877,7 +874,7 @@ export default function CouponManagementPage() {
                           }`}
                         >
                           {isSelected && (
-                            <CheckCircle size={14} weight="fill" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           )}
                           {lang === "ar" ? plan.nameAr : plan.nameEn}
                         </button>
@@ -909,7 +906,7 @@ export default function CouponManagementPage() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle size={18} className="me-2" />
+                    <CheckCircle2 className="h-[18px] w-[18px] me-2" />
                     {labels.save}
                   </>
                 )}

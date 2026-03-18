@@ -6,15 +6,15 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   Globe,
-  Buildings,
+  Building2,
   ArrowRight,
   ArrowLeft,
-  Spinner,
+  Loader2,
   ShieldCheck,
-  Warning,
+  AlertTriangle,
   Eye,
-  EyeSlash,
-} from "@phosphor-icons/react";
+  EyeOff,
+} from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { MimaricLogo } from "../../../../components/brand/MimaricLogo";
 import { PasswordStrengthHint } from "../../../../components/PasswordStrengthHint";
@@ -139,12 +139,12 @@ export default function InviteAcceptPage() {
         <div className="relative z-20 flex h-full flex-col justify-between p-12 text-white">
           <MimaricLogo width={180} variant="dark" priority />
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white font-primary">
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white">
               {lang === "ar"
                 ? "انضم إلى فريقك على ميماريك"
                 : "Join Your Team on Mimaric"}
             </h1>
-            <p className="text-lg text-white/80 max-w-md font-primary">
+            <p className="text-lg text-white/80 max-w-md">
               {lang === "ar"
                 ? "تعاون مع فريقك لإدارة عقاراتك بكفاءة واحترافية."
                 : "Collaborate with your team to manage properties efficiently and professionally."}
@@ -155,7 +155,7 @@ export default function InviteAcceptPage() {
           </p>
         </div>
         <div className="absolute -bottom-10 -right-20 opacity-10 transform rotate-3">
-          <Buildings size={400} weight="thin" className="text-secondary" />
+          <Building2 className="h-[400px] w-[400px] text-secondary" />
         </div>
       </div>
 
@@ -167,9 +167,9 @@ export default function InviteAcceptPage() {
           </div>
           <button
             onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-            className="flex items-center gap-2 text-sm font-medium text-neutral hover:text-primary transition-colors"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
-            <Globe size={20} />
+            <Globe className="h-5 w-5" />
             <span>{lang === "ar" ? "English" : "العربية"}</span>
           </button>
         </div>
@@ -178,8 +178,8 @@ export default function InviteAcceptPage() {
           {/* Loading State */}
           {fetching && (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
-              <Spinner size={40} className="animate-spin text-primary" />
-              <p className="text-sm text-neutral font-dm-sans">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground font-dm-sans">
                 {lang === "ar"
                   ? "جاري تحميل الدعوة..."
                   : "Loading invitation..."}
@@ -191,13 +191,13 @@ export default function InviteAcceptPage() {
           {!fetching && inviteError && (
             <div className="flex flex-col items-center justify-center gap-6 py-20 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
-                <Warning size={32} className="text-red-500" />
+                <AlertTriangle className="h-8 w-8 text-red-500" />
               </div>
               <div className="space-y-2">
-                <h2 className="text-xl font-bold text-primary font-primary">
+                <h2 className="text-xl font-bold text-primary">
                   {inviteError[lang]}
                 </h2>
-                <p className="text-sm text-neutral font-dm-sans">
+                <p className="text-sm text-muted-foreground font-dm-sans">
                   {lang === "ar"
                     ? "يرجى التواصل مع مسؤول الفريق للحصول على دعوة جديدة."
                     : "Please contact your team administrator for a new invitation."}
@@ -218,10 +218,10 @@ export default function InviteAcceptPage() {
           {!fetching && invitation && !inviteError && (
             <>
               <div className="mb-8 text-center">
-                <h2 className="text-2xl font-bold text-primary font-primary">
+                <h2 className="text-2xl font-bold text-primary">
                   {lang === "ar" ? "قبول الدعوة" : "Accept Invitation"}
                 </h2>
-                <p className="mt-2 text-sm text-neutral font-dm-sans">
+                <p className="mt-2 text-sm text-muted-foreground font-dm-sans">
                   {lang === "ar"
                     ? "أكمل بياناتك للانضمام إلى الفريق"
                     : "Complete your details to join the team"}
@@ -232,8 +232,7 @@ export default function InviteAcceptPage() {
               <div className="mb-6 rounded-lg border border-secondary/20 bg-secondary/5 p-4">
                 <div className="flex items-start gap-3">
                   <ShieldCheck
-                    size={24}
-                    className="mt-0.5 shrink-0 text-secondary"
+                    className="h-6 w-6 mt-0.5 shrink-0 text-secondary"
                   />
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-primary font-dm-sans">
@@ -241,7 +240,7 @@ export default function InviteAcceptPage() {
                         ? `لقد تمت دعوتك للانضمام إلى ${invitation.orgName} بصفة ${roleLang}`
                         : `You've been invited to join ${invitation.orgName} as ${roleLang}`}
                     </p>
-                    <p className="text-xs text-neutral font-dm-sans">
+                    <p className="text-xs text-muted-foreground font-dm-sans">
                       {lang === "ar"
                         ? `بواسطة ${invitation.inviterName}`
                         : `Invited by ${invitation.inviterName}`}
@@ -259,7 +258,7 @@ export default function InviteAcceptPage() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                     {lang === "ar" ? "الاسم الكامل" : "Full Name"}
                   </label>
                   <Input
@@ -273,7 +272,7 @@ export default function InviteAcceptPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                     {lang === "ar" ? "البريد الإلكتروني" : "Email"}
                   </label>
                   <Input
@@ -285,7 +284,7 @@ export default function InviteAcceptPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                     {lang === "ar" ? "كلمة المرور" : "Password"}
                   </label>
                   <div className="relative">
@@ -298,10 +297,10 @@ export default function InviteAcceptPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                       tabIndex={-1}
                     >
-                      {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                     </button>
                   </div>
                   <PasswordStrengthHint
@@ -321,7 +320,7 @@ export default function InviteAcceptPage() {
                   />
                   <label
                     htmlFor="terms"
-                    className="text-xs text-neutral leading-relaxed font-dm-sans"
+                    className="text-xs text-muted-foreground leading-relaxed font-dm-sans"
                   >
                     {lang === "ar"
                       ? "أوافق على شروط الخدمة وسياسة الخصوصية الخاصة بـ Mimaric"
@@ -336,7 +335,7 @@ export default function InviteAcceptPage() {
                   disabled={loading || !name || !password || !agreed}
                 >
                   {loading ? (
-                    <Spinner className="animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
                     <>
                       {lang === "ar" ? "قبول والانضمام" : "Accept & Join"}
@@ -350,7 +349,7 @@ export default function InviteAcceptPage() {
                 </Button>
               </div>
 
-              <p className="mt-6 text-center text-sm text-neutral font-dm-sans">
+              <p className="mt-6 text-center text-sm text-muted-foreground font-dm-sans">
                 {lang === "ar" ? "لديك حساب بالفعل؟" : "Already have an account?"}{" "}
                 <Link
                   href="/auth/login"

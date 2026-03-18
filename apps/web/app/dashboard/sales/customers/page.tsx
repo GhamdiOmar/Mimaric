@@ -4,26 +4,33 @@ import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Plus,
-  DotsThreeVertical,
+  MoreVertical,
   User,
+  Users,
+  UserPlus,
+  UserCheck,
+  TrendingUp,
   Phone,
-  Envelope,
+  Mail,
   Calendar,
-  Funnel,
-  ArrowsDownUp,
-  MagnifyingGlass,
-  Spinner,
-  DownloadSimple,
-  FilePdf,
+  Filter,
+  Search,
+  Loader2,
+  Download,
+  FileText,
   Eye,
-  EyeSlash
-} from "@phosphor-icons/react";
+  EyeOff,
+} from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import {
+  PageIntro,
+  FilterBar,
+  StatusBadge,
   Badge,
   Button,
   Input,
   Card,
+  KPICard,
   Table,
   TableHeader,
   TableBody,
@@ -41,7 +48,7 @@ const customerStatuses = [
   { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-blue-500" },
   { id: "INTERESTED", label: { ar: "مهتم", en: "Interested" }, color: "bg-indigo-500" },
   { id: "QUALIFIED", label: { ar: "مؤهل", en: "Qualified" }, color: "bg-secondary" },
-  { id: "VIEWING", label: { ar: "معاينة", en: "Viewing" }, color: "bg-accent" },
+  { id: "VIEWING", label: { ar: "معاينة", en: "Viewing" }, color: "bg-amber-500" },
   { id: "RESERVED", label: { ar: "محجوز", en: "Reserved" }, color: "bg-amber-500" },
 ];
 
@@ -68,6 +75,7 @@ export default function CustomersPage() {
   const [expandedCustomer, setExpandedCustomer] = React.useState<string | null>(null);
   const [customerUnits, setCustomerUnits] = React.useState<any[]>([]);
   const [loadingUnits, setLoadingUnits] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
   const { can } = usePermissions();
   const hasPiiAccess = can("customers:read_pii");
 
@@ -173,10 +181,21 @@ export default function CustomersPage() {
     }
   };
 
+  // Filtered customers based on search
+  const filteredCustomers = React.useMemo(() => {
+    if (!searchValue.trim()) return customers;
+    const q = searchValue.toLowerCase();
+    return customers.filter(c =>
+      c.name?.toLowerCase().includes(q) ||
+      c.phone?.toLowerCase().includes(q) ||
+      c.email?.toLowerCase().includes(q)
+    );
+  }, [customers, searchValue]);
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <Spinner className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -184,89 +203,131 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6 overflow-hidden">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">
-            {lang === "ar" ? "إدارة العملاء المحتملين" : "Customer Management"}
-          </h1>
-          <p className="text-sm text-neutral font-dm-sans mt-1">
-            {lang === "ar" ? "تتبع وتحويل العملاء المحتملين إلى مبيعات ناجحة" : "Track and convert potential customers into successful sales"}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {can("customers:export") && (
-            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-secondary/15 hover:border-secondary/50 hover:text-secondary" onClick={handleExportExcel}>
-              <DownloadSimple size={16} />
-              {lang === "ar" ? "Excel" : "Excel"}
-            </Button>
-          )}
-          {can("customers:export") && (
-            <Button variant="secondary" size="sm" className="gap-1.5 hover:bg-destructive/15 hover:border-destructive/50 hover:text-destructive" onClick={handleExportPDF}>
-              <FilePdf size={16} />
-              {lang === "ar" ? "PDF" : "PDF"}
-            </Button>
-          )}
-          {hasPiiAccess && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className={cn("gap-1.5 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700", showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+      <PageIntro
+        title={lang === "ar" ? "العملاء" : "Customers"}
+        description={lang === "ar" ? "إدارة العلاقات مع العملاء ومتابعة حالاتهم عبر دورة البيع والإيجار" : "Manage customer relationships and track their journey through sales and leasing"}
+        actions={
+          <>
+            {can("customers:write") && (
+              <Button
+                variant="primary"
+                size="sm"
+                style={{ display: "inline-flex" }}
+                onClick={() => {
+                  setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
+                  setShowOptionalFields(false);
+                  setShowAddModal(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                {lang === "ar" ? "إضافة عميل" : "Add Customer"}
+              </Button>
+            )}
+            {can("customers:export") && (
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportExcel}>
+                <Download className="h-4 w-4" />
+                {lang === "ar" ? "تصدير" : "Export"}
+              </Button>
+            )}
+            {can("customers:export") && (
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportPDF}>
+                <FileText className="h-4 w-4" />
+                PDF
+              </Button>
+            )}
+            {hasPiiAccess && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+                style={{ display: "inline-flex" }}
+                onClick={() => setShowPii(!showPii)}
+              >
+                {showPii ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPii ? (lang === "ar" ? "إخفاء" : "Hide PII") : (lang === "ar" ? "كشف" : "PII")}
+              </Button>
+            )}
+          </>
+        }
+      />
 
-              onClick={() => setShowPii(!showPii)}
-            >
-              {showPii ? <EyeSlash size={16} /> : <Eye size={16} />}
-              {showPii ? (lang === "ar" ? "إخفاء" : "Hide PII") : (lang === "ar" ? "كشف" : "PII")}
-            </Button>
-          )}
-          <Button variant="secondary" size="sm" className="gap-1.5">
-            <Funnel size={16} />
-            {lang === "ar" ? "تصفية" : "Filter"}
-          </Button>
-          {can("customers:write") && (
-          <Button size="sm" className="gap-1.5 bg-secondary hover:bg-secondary/90 text-white shadow-lg shadow-secondary/20 transition-all hover:scale-105 active:scale-95 px-4 h-8" onClick={() => {
-            setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
-            setShowOptionalFields(false);
-            setShowAddModal(true);
-          }}>
-            <Plus size={18} weight="bold" />
-            {lang === "ar" ? "إضافة عميل" : "Add Customer"}
-          </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
-          <div className="relative w-full sm:w-80 group">
-            <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-primary transition-colors" />
-            <Input
-              placeholder={lang === "ar" ? "بحث بالاسم، الجوال أو البريد..." : "Search by name, phone or email..."}
-              className="pr-10 h-10 border-muted bg-muted/20"
+      {/* KPIs */}
+      {(() => {
+        const totalCustomers = customers.length;
+        const now = new Date();
+        const newThisMonth = customers.filter((c) => {
+          const d = new Date(c.createdAt);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }).length;
+        const qualifiedLeads = customers.filter((c) => c.status === "QUALIFIED").length;
+        const converted = customers.filter((c) => c.status === "RESERVED").length;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KPICard
+              label={lang === "ar" ? "إجمالي العملاء" : "Total Customers"}
+              value={totalCustomers}
+              subtitle={lang === "ar" ? "جميع العملاء المسجلين في النظام" : "All registered customers in the system"}
+              icon={<Users className="h-[18px] w-[18px]" />}
+              accentColor="secondary"
+              loading={loading}
+            />
+            <KPICard
+              label={lang === "ar" ? "عملاء هذا الشهر" : "New This Month"}
+              value={newThisMonth}
+              subtitle={lang === "ar" ? "العملاء المضافون خلال الشهر الحالي" : "Customers added during the current month"}
+              icon={<UserPlus className="h-[18px] w-[18px]" />}
+              accentColor="secondary"
+              loading={loading}
+            />
+            <KPICard
+              label={lang === "ar" ? "عملاء مؤهلون" : "Qualified Leads"}
+              value={qualifiedLeads}
+              subtitle={lang === "ar" ? "العملاء الذين اجتازوا مرحلة التأهيل" : "Customers who passed the qualification stage"}
+              icon={<UserCheck className="h-[18px] w-[18px]" />}
+              accentColor="accent"
+              loading={loading}
+            />
+            <KPICard
+              label={lang === "ar" ? "محوّلون" : "Converted"}
+              value={converted}
+              subtitle={lang === "ar" ? "العملاء الذين أتمّوا الحجز أو التعاقد" : "Customers who completed reservation or contract"}
+              icon={<TrendingUp className="h-[18px] w-[18px]" />}
+              accentColor="secondary"
+              loading={loading}
             />
           </div>
+        );
+      })()}
 
-          <div className="flex items-center gap-2 bg-muted p-1 rounded-sm">
-            <button
-              onClick={() => setViewMode("kanban")}
-              className={cn(
-                "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-                viewMode === "kanban" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
-              )}
-            >
-              {lang === "ar" ? "لوحة كانبان" : "Kanban"}
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
-                viewMode === "list" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
-              )}
-            >
-              {lang === "ar" ? "قائمة" : "List"}
-            </button>
-          </div>
-        </div>
+      {/* Filter / Search Bar */}
+      <Card className="p-4">
+        <FilterBar
+          searchPlaceholder={lang === "ar" ? "بحث بالاسم، الجوال أو البريد..." : "Search by name, phone or email..."}
+          searchValue={searchValue}
+          onSearchChange={setSearchValue}
+          actions={
+            <div className="flex items-center gap-2 bg-muted p-1 rounded-sm">
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
+                  viewMode === "kanban" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-primary"
+                )}
+              >
+                {lang === "ar" ? "لوحة كانبان" : "Kanban"}
+              </button>
+              <button
+                onClick={() => setViewMode("list")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-bold rounded-[4px] transition-all",
+                  viewMode === "list" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-primary"
+                )}
+              >
+                {lang === "ar" ? "قائمة" : "List"}
+              </button>
+            </div>
+          }
+        />
       </Card>
 
       {/* Kanban Board */}
@@ -280,22 +341,22 @@ export default function CustomersPage() {
                   <div className={cn("h-2 w-2 rounded-full", status.color)} />
                   <h3 className="text-sm font-bold text-primary">{status.label[lang]}</h3>
                   <Badge variant="available" className="bg-muted text-neutral-foreground font-bold px-1.5 py-0 h-5">
-                    {customers.filter(l => l.status === status.id).length}
+                    {filteredCustomers.filter(l => l.status === status.id).length}
                   </Badge>
                 </div>
-                <button className="text-neutral hover:text-primary">
-                  <DotsThreeVertical size={20} />
+                <button className="text-muted-foreground hover:text-primary">
+                  <MoreVertical className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Column Content */}
               <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-2 rounded-md bg-muted/30 border border-dashed border-muted">
-                {customers
+                {filteredCustomers
                   .filter((customer) => customer.status === status.id)
                   .map((customer) => (
                     <Card
                       key={customer.id}
-                      className="group flex flex-col gap-3 p-4 hover:shadow-raised hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
+                      className="group flex flex-col gap-3 p-4 hover:shadow-lg hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing"
                     >
                       <div className="flex justify-between items-start">
                         <h4 className="text-sm font-bold text-primary group-hover:text-secondary transition-colors truncate">
@@ -308,32 +369,32 @@ export default function CustomersPage() {
 
                       <div className="space-y-1.5">
                         {customer.nationalId && hasPiiAccess && (
-                          <div className="flex items-center gap-2 text-xs text-neutral">
-                            <User size={14} className="text-neutral/60" />
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <User className="h-3.5 w-3.5 text-muted-foreground/60" />
                             <span className="font-dm-sans" dir="ltr">{showPii ? customer.nationalId : maskNationalId(customer.nationalId)}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-xs text-neutral">
-                          <Phone size={14} className="text-neutral/60" />
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground/60" />
                           <span className="font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
                         </div>
                         {customer.email && (
-                          <div className="flex items-center gap-2 text-xs text-neutral">
-                            <Envelope size={14} className="text-neutral/60" />
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground/60" />
                             <span className="truncate max-w-[180px] font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
                           </div>
                         )}
                       </div>
 
                       <div className="mt-2 pt-3 border-t border-muted flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-[10px] text-neutral/60">
-                          <Calendar size={12} />
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60">
+                          <Calendar className="h-3 w-3" />
                           <span>{formatDualDate(customer.createdAt, lang)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleCustomerUnits(customer.id); }}
-                            className={cn("text-[10px] font-bold transition-colors", expandedCustomer === customer.id ? "text-secondary" : "text-neutral/60 hover:text-primary")}
+                            className={cn("text-[10px] font-bold transition-colors", expandedCustomer === customer.id ? "text-secondary" : "text-muted-foreground/60 hover:text-primary")}
                           >
                             {lang === "ar" ? "الوحدات" : "Units"}
                           </button>
@@ -351,9 +412,9 @@ export default function CustomersPage() {
                       {expandedCustomer === customer.id && (
                         <div className="mt-2 pt-2 border-t border-muted/50">
                           {loadingUnits ? (
-                            <p className="text-[10px] text-neutral text-center py-2">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</p>
+                            <p className="text-[10px] text-muted-foreground text-center py-2">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</p>
                           ) : customerUnits.length === 0 ? (
-                            <p className="text-[10px] text-neutral/60 text-center py-1">{lang === "ar" ? "لا توجد وحدات مرتبطة" : "No linked units"}</p>
+                            <p className="text-[10px] text-muted-foreground/60 text-center py-1">{lang === "ar" ? "لا توجد وحدات مرتبطة" : "No linked units"}</p>
                           ) : (
                             <div className="space-y-1">
                               {customerUnits.map((cu: any, idx: number) => (
@@ -375,9 +436,9 @@ export default function CustomersPage() {
                     setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: status.id });
                     setShowAddModal(true);
                   }}
-                  className="flex items-center justify-center gap-2 rounded-md border border-dashed border-muted py-3 text-xs text-neutral hover:bg-card hover:text-primary hover:border-primary/20 transition-all"
+                  className="flex items-center justify-center gap-2 rounded-md border border-dashed border-muted py-3 text-xs text-muted-foreground hover:bg-card hover:text-primary hover:border-primary/20 transition-all"
                 >
-                  <Plus size={14} />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>{lang === "ar" ? "إضافة عميل هنا" : "Add customer here"}</span>
                 </button>
               </div>
@@ -413,39 +474,41 @@ export default function CustomersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.map((customer) => (
+              {filteredCustomers.map((customer) => (
                 <TableRow key={customer.id} className="group">
                   <TableCell>
                     <div className="text-sm font-bold text-primary">{customer.name}</div>
                     {customer.nameArabic && customer.nameArabic !== customer.name && (
-                      <div className="text-[10px] text-neutral/60">{customer.nameArabic}</div>
+                      <div className="text-[10px] text-muted-foreground/60">{customer.nameArabic}</div>
                     )}
                   </TableCell>
                   {hasPiiAccess && (
-                  <TableCell className="text-xs text-neutral font-dm-sans" dir="ltr">
+                  <TableCell className="text-xs text-muted-foreground font-dm-sans" dir="ltr">
                     {customer.nationalId ? (showPii ? customer.nationalId : maskNationalId(customer.nationalId)) : "—"}
                   </TableCell>
                   )}
                   <TableCell>
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-neutral font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
-                      <span className="text-xs text-neutral/60 font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
+                      <span className="text-xs text-muted-foreground font-dm-sans" dir="ltr">{hasPiiAccess ? (showPii ? customer.phone : maskPhone(customer.phone)) : customer.phone}</span>
+                      <span className="text-xs text-muted-foreground/60 font-dm-sans">{hasPiiAccess ? (showPii ? customer.email : maskEmail(customer.email)) : customer.email}</span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={customer.status.toLowerCase() as any}>
-                      {customerStatuses.find(s => s.id === customer.status)?.label[lang]}
-                    </Badge>
+                    <StatusBadge
+                      entityType="customer"
+                      status={customer.status}
+                      label={customerStatuses.find(s => s.id === customer.status)?.label[lang]}
+                    />
                   </TableCell>
-                  <TableCell className="text-xs text-neutral">
+                  <TableCell className="text-xs text-muted-foreground">
                     {customer.source || "Direct"}
                   </TableCell>
-                  <TableCell className="text-xs text-neutral font-dm-sans">
+                  <TableCell className="text-xs text-muted-foreground font-dm-sans">
                     {formatDualDate(customer.createdAt, lang)}
                   </TableCell>
                   <TableCell className="text-end">
-                    <button className="p-1 text-neutral hover:text-primary transition-colors">
-                      <DotsThreeVertical size={18} />
+                    <button className="p-1 text-muted-foreground hover:text-primary transition-colors">
+                      <MoreVertical className="h-4 w-4" />
                     </button>
                   </TableCell>
                 </TableRow>
@@ -466,7 +529,7 @@ export default function CustomersPage() {
               <div className="space-y-4">
                  {/* Required Fields */}
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم الكامل" : "Full Name"} <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الاسم الكامل" : "Full Name"} <span className="text-red-500">*</span></label>
                     <Input
                       value={newCustomer.name}
                       onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
@@ -475,7 +538,7 @@ export default function CustomersPage() {
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الجوال" : "Phone Number"} <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم الجوال" : "Phone Number"} <span className="text-red-500">*</span></label>
                     <Input
                       value={newCustomer.phone}
                       onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
@@ -485,7 +548,7 @@ export default function CustomersPage() {
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "رقم الهوية / الإقامة" : "National ID / Iqama"} <span className="text-red-500">*</span></label>
+                    <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "رقم الهوية / الإقامة" : "National ID / Iqama"} <span className="text-red-500">*</span></label>
                     <Input
                       value={newCustomer.nationalId}
                       onChange={(e) => setNewCustomer({...newCustomer, nationalId: e.target.value})}
@@ -493,11 +556,11 @@ export default function CustomersPage() {
                       dir="ltr"
                       maxLength={10}
                     />
-                    <p className="text-[10px] text-neutral/60">{lang === "ar" ? "١٠ أرقام، يبدأ بـ 1 أو 2" : "10 digits, starts with 1 or 2"}</p>
+                    <p className="text-[10px] text-muted-foreground/60">{lang === "ar" ? "١٠ أرقام، يبدأ بـ 1 أو 2" : "10 digits, starts with 1 or 2"}</p>
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "البريد الإلكتروني" : "Email"}</label>
+                    <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "البريد الإلكتروني" : "Email"}</label>
                     <Input
                       value={newCustomer.email}
                       onChange={(e) => setNewCustomer({...newCustomer, email: e.target.value})}
@@ -507,7 +570,7 @@ export default function CustomersPage() {
                  </div>
 
                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الحالة" : "Status"}</label>
+                    <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الحالة" : "Status"}</label>
                     <select
                       value={newCustomer.status}
                       onChange={(e) => setNewCustomer({...newCustomer, status: e.target.value})}
@@ -532,7 +595,7 @@ export default function CustomersPage() {
                  {showOptionalFields && (
                    <div className="space-y-4 p-4 bg-muted/20 rounded-md border border-border animate-in fade-in duration-200">
                      <div className="space-y-1">
-                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الاسم بالعربي" : "Name in Arabic"}</label>
+                       <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الاسم بالعربي" : "Name in Arabic"}</label>
                        <Input
                          value={newCustomer.nameArabic}
                          onChange={(e) => setNewCustomer({...newCustomer, nameArabic: e.target.value})}
@@ -543,7 +606,7 @@ export default function CustomersPage() {
 
                      <div className="grid grid-cols-2 gap-3">
                        <div className="space-y-1">
-                         <label className="text-xs font-bold text-neutral">{lang === "ar" ? "نوع الشخص" : "Person Type"}</label>
+                         <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "نوع الشخص" : "Person Type"}</label>
                          <select
                            value={newCustomer.personType}
                            onChange={(e) => setNewCustomer({...newCustomer, personType: e.target.value})}
@@ -559,7 +622,7 @@ export default function CustomersPage() {
                        </div>
 
                        <div className="space-y-1">
-                         <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الجنس" : "Gender"}</label>
+                         <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الجنس" : "Gender"}</label>
                          <select
                            value={newCustomer.gender}
                            onChange={(e) => setNewCustomer({...newCustomer, gender: e.target.value})}
@@ -573,7 +636,7 @@ export default function CustomersPage() {
                      </div>
 
                      <div className="space-y-1">
-                       <label className="text-xs font-bold text-neutral">{lang === "ar" ? "الجنسية" : "Nationality"}</label>
+                       <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الجنسية" : "Nationality"}</label>
                        <Input
                          value={newCustomer.nationality}
                          onChange={(e) => setNewCustomer({...newCustomer, nationality: e.target.value})}
@@ -585,11 +648,11 @@ export default function CustomersPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-8">
-                 <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving}>
+                 <Button variant="secondary" onClick={() => setShowAddModal(false)} disabled={saving} style={{ display: "inline-flex" }}>
                     {lang === "ar" ? "إلغاء" : "Cancel"}
                  </Button>
-                 <Button onClick={handleAddCustomer} disabled={saving || !newCustomer.name || !newCustomer.phone || !newCustomer.nationalId} className="gap-2">
-                    {saving && <Spinner className="h-4 w-4 animate-spin text-white" />}
+                 <Button onClick={handleAddCustomer} disabled={saving || !newCustomer.name || !newCustomer.phone || !newCustomer.nationalId} className="gap-2" style={{ display: "inline-flex" }}>
+                    {saving && <Loader2 className="h-4 w-4 animate-spin text-white" />}
                     {lang === "ar" ? "حفظ البيانات" : "Save Customer"}
                  </Button>
               </div>

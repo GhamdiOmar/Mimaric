@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus, GearSix, ChartLineUp } from "@phosphor-icons/react";
+import { UserPlus, Settings, TrendingUp } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function HowItWorks({ lang }: { lang: "ar" | "en" }) {
@@ -14,13 +14,13 @@ export default function HowItWorks({ lang }: { lang: "ar" | "en" }) {
       desc: t.step1Desc,
     },
     {
-      icon: GearSix,
+      icon: Settings,
       num: "2",
       title: t.step2Title,
       desc: t.step2Desc,
     },
     {
-      icon: ChartLineUp,
+      icon: TrendingUp,
       num: "3",
       title: t.step3Title,
       desc: t.step3Desc,
@@ -41,26 +41,19 @@ export default function HowItWorks({ lang }: { lang: "ar" | "en" }) {
 
         <div className="relative mt-16">
           {/* Connecting line */}
-          <div className="absolute top-16 hidden h-0.5 bg-gradient-to-r from-secondary/0 via-secondary/30 to-secondary/0 sm:inset-x-0 sm:block" />
+          <div className="absolute top-14 hidden h-px bg-border sm:inset-x-0 sm:block" />
 
           <div className="grid gap-12 sm:grid-cols-3 sm:gap-8">
             {steps.map(({ icon: Icon, num, title, desc }) => (
               <div key={num} className="relative text-center">
-                {/* Step number badge */}
-                <div className="relative mx-auto flex h-16 w-16 items-center justify-center">
-                  <div className="absolute inset-0 rounded-full bg-secondary/10" />
-                  <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-lg font-bold text-white shadow-lg shadow-secondary/30">
-                    {num}
-                  </div>
+                {/* Step number badge — single circle */}
+                <div className="relative z-10 mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-white shadow-sm">
+                  {num}
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-border/50 bg-card/80 p-6 shadow-elevation-1 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevation-2 dark:bg-card/50">
+                <div className="mt-6 rounded-2xl border border-border/50 bg-card/80 p-6 shadow-sm backdrop-blur-sm dark:bg-card/50">
                   <div className="flex justify-center">
-                    <Icon
-                      size={32}
-                      weight="duotone"
-                      className="text-primary dark:text-white"
-                    />
+                    <Icon className="h-7 w-7 text-primary dark:text-white" />
                   </div>
                   <h3 className="mt-4 text-xl font-bold text-primary dark:text-white">
                     {title}

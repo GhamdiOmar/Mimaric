@@ -5,29 +5,45 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Spinner,
-  Buildings,
+  Loader2,
+  Building2,
   MapPin,
   Plus,
-  PencilSimple,
-  Trash,
+  Pencil,
+  Trash2,
   FileText,
-  CloudArrowUp,
-  ClipboardText,
+  Upload,
+  ClipboardList,
   Eye,
-  DownloadSimple,
-  CheckCircle,
+  Download,
+  CheckCircle2,
   Star,
-  GridFour,
-  Stamp,
-  Circle,
-  SealCheck,
-  XCircle,
+  LayoutGrid,
   ShieldCheck,
-  ClockCounterClockwise,
-  FunnelSimple,
-} from "@phosphor-icons/react";
-import { Button, Badge, SARAmount } from "@repo/ui";
+  XCircle,
+  Shield,
+  History,
+  Filter,
+  Compass,
+  Wrench,
+  HardHat,
+  Package,
+  DollarSign,
+  Rocket,
+  Zap,
+  Droplets,
+  Wifi,
+  Car,
+  CloudRain,
+  TreePine,
+  Fence,
+  Signpost,
+  Lamp,
+  ToggleRight,
+  Play,
+  Square,
+} from "lucide-react";
+import { Button, Badge, SARAmount, Card } from "@repo/ui";
 import {
   getProjectDetail,
   updateProject,
@@ -54,7 +70,7 @@ import { requestStageTransition } from "../../../actions/decision-gates";
 import { getProjectFinancials } from "../../../actions/finance";
 import { convertInventoryToUnits } from "../../../actions/inventory-handoff";
 import { setupPostHandoverMaintenance } from "../../../actions/post-handover";
-import { Wrench, HardHat, Package, CurrencyDollar, Rocket, Lightning, Drop, WifiHigh, Broadcast, Car, CloudRain, Tree, Wall, SignIn as SignIcon, Lamp, ToggleRight, Play, Stop, Compass } from "@phosphor-icons/react";
+/* Lucide icons imported above — Phosphor removed in Phase 6 */
 import { generateBuildingsFromPlots } from "../../../actions/plot-conversion";
 import { ProjectLifecycleStepper } from "../../../../components/ProjectLifecycleStepper";
 import { formatDualDate } from "../../../../lib/hijri";
@@ -285,8 +301,8 @@ export default function ProjectDetailPage() {
     }
   }
 
-  if (loading) return <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>;
-  if (!project) return <div className="text-center py-20 text-neutral">لم يتم العثور على المشروع</div>;
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (!project) return <div className="text-center py-20 text-muted-foreground">لم يتم العثور على المشروع</div>;
 
   const status = statusMap[project.status] ?? { ar: project.status, en: project.status, variant: "draft" };
   const type = typeLabels[project.type] ?? { ar: project.type, en: project.type };
@@ -303,9 +319,9 @@ export default function ProjectDetailPage() {
   };
 
   const maintenancePriorityLabels: Record<string, { ar: string; en: string; color: string }> = {
-    LOW: { ar: "منخفض", en: "Low", color: "text-neutral" },
+    LOW: { ar: "منخفض", en: "Low", color: "text-muted-foreground" },
     MEDIUM: { ar: "متوسط", en: "Medium", color: "text-primary" },
-    HIGH: { ar: "عالي", en: "High", color: "text-accent" },
+    HIGH: { ar: "عالي", en: "High", color: "text-amber-500" },
     URGENT: { ar: "عاجل", en: "Urgent", color: "text-red-600" },
   };
 
@@ -478,19 +494,19 @@ export default function ProjectDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/projects")}>
-          <ArrowLeft size={18} />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-primary">{project.name}</h1>
+            <h1 className="text-2xl font-bold text-foreground truncate">{project.name}</h1>
             <Badge variant={status.variant as any} className="text-xs">{status[lang]}</Badge>
           </div>
-          <p className="text-sm text-neutral mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {type[lang]}
             {project.city || project.district ? ` • ${[project.district, project.city].filter(Boolean).join("، ")}` : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Button
             variant="secondary"
             size="sm"
@@ -507,38 +523,38 @@ export default function ProjectDetailPage() {
               } catch { /* permission denied — button hidden for non-planners */ }
             }}
           >
-            <Compass size={14} />
+            <Compass className="h-3.5 w-3.5" />
             {linkedWorkspace
               ? (lang === "ar" ? "عرض التخطيط" : "View Planning")
               : (lang === "ar" ? "فتح في التخطيط" : "Open in Planning")}
           </Button>
           <Link href={`/dashboard/units?project=${id}`}>
             <Button variant="secondary" size="sm" className="gap-2">
-              <Buildings size={14} />
+              <Building2 className="h-3.5 w-3.5" />
               {lang === "ar" ? "عرض الوحدات" : "View Units"}
             </Button>
           </Link>
           <Link href={`/dashboard/projects/${id}/governance`}>
             <Button variant="secondary" size="sm" className="gap-2">
-              <SealCheck size={14} />
+              <ShieldCheck className="h-3.5 w-3.5" />
               {lang === "ar" ? "الحوكمة" : "Governance"}
             </Button>
           </Link>
           <Link href={`/dashboard/projects/${id}/tree`}>
             <Button variant="secondary" size="sm" className="gap-2">
-              <GridFour size={14} />
+              <LayoutGrid className="h-3.5 w-3.5" />
               {lang === "ar" ? "هيكل المشروع" : "Project Tree"}
             </Button>
           </Link>
           <Link href={`/dashboard/projects/${id}/site-logs`}>
             <Button variant="secondary" size="sm" className="gap-2">
-              <ClipboardText size={14} />
+              <ClipboardList className="h-3.5 w-3.5" />
               {lang === "ar" ? "سجلات الموقع" : "Site Logs"}
             </Button>
           </Link>
           <Link href={`/dashboard/projects/${id}/wafi`}>
             <Button variant="success" size="sm" className="gap-2">
-              <ShieldCheck size={14} />
+              <Shield className="h-3.5 w-3.5" />
               {lang === "ar" ? "امتثال وافي" : "Wafi Compliance"}
             </Button>
           </Link>
@@ -547,31 +563,37 @@ export default function ProjectDetailPage() {
 
       {/* Status Actions */}
       {project.status === "PLANNING" && (
-        <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
-          <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("UNDER_CONSTRUCTION")} className="gap-2">
-            <CheckCircle size={14} />
-            {lang === "ar" ? "بدء الإنشاء" : "Start Construction"}
-          </Button>
-        </div>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
+            <Button size="sm" onClick={() => handleStatusChange("UNDER_CONSTRUCTION")} className="gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {lang === "ar" ? "بدء الإنشاء" : "Start Construction"}
+            </Button>
+          </div>
+        </Card>
       )}
       {project.status === "UNDER_CONSTRUCTION" && (
-        <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
-          <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("READY")} className="gap-2">
-            <CheckCircle size={14} />
-            {lang === "ar" ? "جاهز للتسليم" : "Mark Ready"}
-          </Button>
-        </div>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
+            <Button size="sm" onClick={() => handleStatusChange("READY")} className="gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {lang === "ar" ? "جاهز للتسليم" : "Mark Ready"}
+            </Button>
+          </div>
+        </Card>
       )}
       {project.status === "READY" && (
-        <div className="flex items-center gap-3 bg-card rounded-md shadow-card border border-border p-4">
-          <span className="text-xs text-neutral flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
-          <Button size="sm" onClick={() => handleStatusChange("HANDED_OVER")} className="gap-2">
-            <CheckCircle size={14} />
-            {lang === "ar" ? "تم التسليم" : "Mark Handed Over"}
-          </Button>
-        </div>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground flex-1">{lang === "ar" ? "تحويل حالة المشروع:" : "Transition project status:"}</span>
+            <Button size="sm" onClick={() => handleStatusChange("HANDED_OVER")} className="gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {lang === "ar" ? "تم التسليم" : "Mark Handed Over"}
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Tabs */}
@@ -582,8 +604,8 @@ export default function ProjectDetailPage() {
             onClick={() => handleTabChange(tab.id)}
             className={`px-5 py-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap shrink-0 ${
               activeTab === tab.id
-                ? "border-primary text-primary"
-                : "border-transparent text-neutral hover:text-primary"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {tab.label[lang]}
@@ -605,9 +627,9 @@ export default function ProjectDetailPage() {
               { label: lang === "ar" ? "المباني" : "Buildings", value: `${project.buildings?.length ?? 0}` },
               { label: lang === "ar" ? "الوحدات" : "Units", value: `${totalUnits}` },
             ].map((item, i) => (
-              <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                <span className="text-[10px] font-bold uppercase text-neutral">{item.label}</span>
-                <p className="text-lg font-bold text-primary mt-1">{item.value}</p>
+              <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground">{item.label}</span>
+                <p className="text-lg font-bold text-foreground mt-1">{item.value}</p>
               </div>
             ))}
           </div>
@@ -615,7 +637,7 @@ export default function ProjectDetailPage() {
           {/* Extra Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-neutral">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 {lang === "ar" ? "بيانات الأرض" : "Land Data"}
               </h4>
               <div className="grid grid-cols-2 gap-3">
@@ -632,27 +654,27 @@ export default function ProjectDetailPage() {
               </div>
               {project.description && (
                 <div className="pt-3 border-t border-border">
-                  <p className="text-xs text-neutral">{project.description}</p>
+                  <p className="text-xs text-muted-foreground">{project.description}</p>
                 </div>
               )}
             </div>
 
             {/* Map */}
             <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                <MapPin size={14} />
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <MapPin className="h-3.5 w-3.5" />
                 {lang === "ar" ? "الموقع" : "Location"}
               </h4>
               {project.latitude && project.longitude ? (
                 <>
                   <MapPicker latitude={project.latitude} longitude={project.longitude} readonly height="220px" zoom={14} />
-                  <p className="text-[10px] text-neutral" dir="ltr">
+                  <p className="text-[10px] text-muted-foreground" dir="ltr">
                     {project.latitude.toFixed(6)}, {project.longitude.toFixed(6)}
                   </p>
                 </>
               ) : (
-                <div className="flex items-center justify-center h-[220px] bg-muted/10 rounded-md text-neutral text-sm">
-                  <MapPin size={24} className="opacity-30 ml-2" />
+                <div className="flex items-center justify-center h-[220px] bg-muted/10 rounded-md text-muted-foreground text-sm">
+                  <MapPin className="h-6 w-6 opacity-30 ml-2" />
                   {lang === "ar" ? "لم يتم تحديد الموقع" : "No location set"}
                 </div>
               )}
@@ -665,7 +687,7 @@ export default function ProjectDetailPage() {
       {activeTab === "buildings" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {project.buildings?.length ?? 0} {lang === "ar" ? "مبنى" : "buildings"} • {totalUnits} {lang === "ar" ? "وحدة" : "units"}
             </p>
             <div className="flex items-center gap-2">
@@ -689,7 +711,7 @@ export default function ProjectDetailPage() {
                   }}
                   style={{ display: "inline-flex" }}
                 >
-                  <Lightning size={16} />
+                  <Zap className="h-4 w-4" />
                   {lang === "ar" ? "إنشاء من المخطط" : "Generate from Plan"}
                 </Button>
               )}
@@ -703,7 +725,7 @@ export default function ProjectDetailPage() {
                   setShowBuildingForm(true);
                 }}
               >
-                <Plus size={16} />
+                <Plus className="h-4 w-4" />
                 {lang === "ar" ? "إضافة مبنى" : "Add Building"}
               </Button>
             </div>
@@ -717,11 +739,11 @@ export default function ProjectDetailPage() {
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "اسم المبنى *" : "Building Name *"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "اسم المبنى *" : "Building Name *"}</label>
                   <input value={buildingForm.name} onChange={(e) => setBuildingForm({ ...buildingForm, name: e.target.value })} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "نوع المبنى" : "Type"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "نوع المبنى" : "Type"}</label>
                   <select value={buildingForm.buildingType} onChange={(e) => setBuildingForm({ ...buildingForm, buildingType: e.target.value })} className={inputClass}>
                     {Object.entries(buildingTypeLabels).map(([k, v]) => (
                       <option key={k} value={k}>{v[lang]}</option>
@@ -729,17 +751,17 @@ export default function ProjectDetailPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "عدد الأدوار" : "Floors"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "عدد الأدوار" : "Floors"}</label>
                   <input type="number" value={buildingForm.numberOfFloors} onChange={(e) => setBuildingForm({ ...buildingForm, numberOfFloors: e.target.value })} className={inputClass} min="1" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-neutral">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
+                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
                   <input type="number" value={buildingForm.buildingAreaSqm} onChange={(e) => setBuildingForm({ ...buildingForm, buildingAreaSqm: e.target.value })} className={inputClass} />
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <Button size="sm" onClick={handleSaveBuilding} disabled={!buildingForm.name || savingBuilding}>
-                  {savingBuilding ? <Spinner size={14} className="animate-spin" /> : null}
+                  {savingBuilding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                   {editingBuildingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إضافة" : "Add")}
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => { setShowBuildingForm(false); setEditingBuildingId(null); }}>
@@ -752,22 +774,22 @@ export default function ProjectDetailPage() {
           {/* Building Cards */}
           {(!project.buildings || project.buildings.length === 0) && !showBuildingForm && (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Buildings size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد مباني" : "No Buildings"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أضف أول مبنى للمشروع" : "Add the first building to this project"}</p>
+              <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد مباني" : "No Buildings"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أضف أول مبنى للمشروع" : "Add the first building to this project"}</p>
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {project.buildings?.map((b: any) => (
-              <div key={b.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
+              <div key={b.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-lg transition-all">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
-                      <Buildings size={24} />
+                      <Building2 className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-primary">{b.name}</p>
-                      <p className="text-[10px] text-neutral">
+                      <p className="text-sm font-bold text-foreground">{b.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
                         {buildingTypeLabels[b.buildingType]?.[lang] ?? b.buildingType ?? "—"}
                       </p>
                     </div>
@@ -788,25 +810,25 @@ export default function ProjectDetailPage() {
                       }}
                      
                     >
-                      <PencilSimple size={14} />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteBuilding(b.id)}>
-                      <Trash size={14} />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 text-xs">
                   <div>
-                    <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "أدوار" : "Floors"}</p>
-                    <p className="font-bold text-primary">{b.numberOfFloors ?? "—"}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "أدوار" : "Floors"}</p>
+                    <p className="font-bold text-foreground">{b.numberOfFloors ?? "—"}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "المساحة" : "Area"}</p>
-                    <p className="font-bold text-primary">{b.buildingAreaSqm ? `${fmt(b.buildingAreaSqm)} م²` : "—"}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "المساحة" : "Area"}</p>
+                    <p className="font-bold text-foreground">{b.buildingAreaSqm ? `${fmt(b.buildingAreaSqm)} م²` : "—"}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "وحدات" : "Units"}</p>
-                    <p className="font-bold text-primary">{b.units?.length ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "وحدات" : "Units"}</p>
+                    <p className="font-bold text-foreground">{b.units?.length ?? 0}</p>
                   </div>
                 </div>
               </div>
@@ -822,13 +844,13 @@ export default function ProjectDetailPage() {
           {!loadingMaintenance && maintenanceRequests.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: lang === "ar" ? "مفتوحة" : "Open", value: maintenanceRequests.filter((m: any) => m.status === "OPEN").length, color: "text-accent" },
+                { label: lang === "ar" ? "مفتوحة" : "Open", value: maintenanceRequests.filter((m: any) => m.status === "OPEN").length, color: "text-amber-500" },
                 { label: lang === "ar" ? "قيد التنفيذ" : "In Progress", value: maintenanceRequests.filter((m: any) => ["IN_PROGRESS", "ASSIGNED"].includes(m.status)).length, color: "text-primary" },
                 { label: lang === "ar" ? "تم الحل" : "Resolved", value: maintenanceRequests.filter((m: any) => ["RESOLVED", "CLOSED"].includes(m.status)).length, color: "text-secondary" },
-                { label: lang === "ar" ? "الإجمالي" : "Total", value: maintenanceRequests.length, color: "text-neutral" },
+                { label: lang === "ar" ? "الإجمالي" : "Total", value: maintenanceRequests.length, color: "text-muted-foreground" },
               ].map((kpi, i) => (
-                <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{kpi.label}</span>
                   <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                 </div>
               ))}
@@ -836,12 +858,12 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {maintenanceRequests.length} {lang === "ar" ? "طلب صيانة" : "maintenance requests"}
             </p>
             <Link href="/dashboard/maintenance">
               <Button variant="secondary" size="sm" className="gap-2">
-                <Wrench size={14} />
+                <Wrench className="h-3.5 w-3.5" />
                 {lang === "ar" ? "إدارة الصيانة" : "Manage Maintenance"}
               </Button>
             </Link>
@@ -849,47 +871,47 @@ export default function ProjectDetailPage() {
 
           {loadingMaintenance ? (
             <div className="flex justify-center py-12">
-              <Spinner className="animate-spin text-primary" size={24} />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : maintenanceRequests.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Wrench size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد طلبات صيانة" : "No Maintenance Requests"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "لا توجد طلبات صيانة مرتبطة بهذا المشروع" : "No maintenance requests linked to this project"}</p>
+              <Wrench className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد طلبات صيانة" : "No Maintenance Requests"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "لا توجد طلبات صيانة مرتبطة بهذا المشروع" : "No maintenance requests linked to this project"}</p>
             </div>
           ) : (
             <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border">
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "العنوان" : "Title"}</th>
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الوحدة" : "Unit"}</th>
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الأولوية" : "Priority"}</th>
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المُعيَّن" : "Assigned"}</th>
-                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "العنوان" : "Title"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الأولوية" : "Priority"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الحالة" : "Status"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "المُعيَّن" : "Assigned"}</th>
+                    <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "التاريخ" : "Date"}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {maintenanceRequests.map((m: any) => {
                     const mStatus = maintenanceStatusLabels[m.status] ?? { ar: m.status, en: m.status, variant: "draft" };
-                    const mPriority = maintenancePriorityLabels[m.priority] ?? { ar: m.priority, en: m.priority, color: "text-neutral" };
+                    const mPriority = maintenancePriorityLabels[m.priority] ?? { ar: m.priority, en: m.priority, color: "text-muted-foreground" };
                     return (
                       <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/10">
                         <td className="px-4 py-3">
-                          <Link href={`/dashboard/maintenance/${m.id}`} className="font-medium text-primary hover:text-secondary transition-colors">
+                          <Link href={`/dashboard/maintenance/${m.id}`} className="font-medium text-foreground hover:text-secondary transition-colors">
                             {m.title}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-xs text-neutral">{m.unit?.number} — {m.unit?.building?.name}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{m.unit?.number} — {m.unit?.building?.name}</td>
                         <td className="px-4 py-3">
                           <span className={`text-xs font-bold ${mPriority.color}`}>{mPriority[lang]}</span>
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant={mStatus.variant as any} className="text-[10px]">{mStatus[lang]}</Badge>
                         </td>
-                        <td className="px-4 py-3 text-xs text-neutral">{m.assignedTo?.name ?? "—"}</td>
-                        <td className="px-4 py-3 text-xs text-neutral">{new Date(m.createdAt).toLocaleDateString("en-SA")}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{m.assignedTo?.name ?? "—"}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(m.createdAt).toLocaleDateString("en-SA")}</td>
                       </tr>
                     );
                   })}
@@ -909,12 +931,12 @@ export default function ProjectDetailPage() {
           {/* Toolbar: filter + upload */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <p className="text-sm text-neutral">
+              <p className="text-sm text-muted-foreground">
                 {filteredDocs.length} {lang === "ar" ? "وثيقة" : "documents"}
                 {docFilterCategory !== "ALL" && ` (${docCategoryLabels[docFilterCategory]?.[lang]})`}
               </p>
               <div className="flex items-center gap-1.5">
-                <FunnelSimple size={14} className="text-neutral" />
+                <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 <select value={docFilterCategory} onChange={(e) => setDocFilterCategory(e.target.value)} className="border border-border rounded-md px-2 py-1 text-xs bg-card">
                   <option value="ALL">{lang === "ar" ? "الكل" : "All"}</option>
                   {Object.entries(docCategoryLabels).map(([k, v]) => (
@@ -940,7 +962,7 @@ export default function ProjectDetailPage() {
                 content={{
                   button: (
                     <div className="flex items-center gap-2">
-                      <CloudArrowUp size={14} weight="fill" />
+                      <Upload className="h-3.5 w-3.5" />
                       {lang === "ar" ? "رفع وثيقة" : "Upload"}
                     </div>
                   ),
@@ -951,21 +973,21 @@ export default function ProjectDetailPage() {
 
           {filteredDocs.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <FileText size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد وثائق" : "No Documents"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "ارفع وثائق بلدي والمستندات المطلوبة" : "Upload Balady documents and required files"}</p>
+              <FileText className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد وثائق" : "No Documents"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "ارفع وثائق بلدي والمستندات المطلوبة" : "Upload Balady documents and required files"}</p>
             </div>
           ) : (
             <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border">
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الاسم" : "Name"}</th>
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Type"}</th>
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التصنيف" : "Category"}</th>
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "الإصدار" : "Version"}</th>
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral">{lang === "ar" ? "التاريخ" : "Date"}</th>
-                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-neutral"></th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "الاسم" : "Name"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "النوع" : "Type"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "التصنيف" : "Category"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "الإصدار" : "Version"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "التاريخ" : "Date"}</th>
+                    <th className="px-4 py-3 text-start text-xs font-bold uppercase text-muted-foreground"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -974,11 +996,11 @@ export default function ProjectDetailPage() {
                       <tr className="border-b border-border last:border-0 hover:bg-muted/10">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <FileText size={16} className="text-secondary min-w-[16px]" />
-                            <span className="font-medium text-primary truncate max-w-[200px]">{doc.name}</span>
+                            <FileText className="h-4 w-4 text-secondary min-w-[16px]" />
+                            <span className="font-medium text-foreground truncate max-w-[200px]">{doc.name}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-neutral text-xs uppercase">{doc.type}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs uppercase">{doc.type}</td>
                         <td className="px-4 py-3">
                           <Badge variant="draft" className="text-[10px]">{docCategoryLabels[doc.category]?.[lang] ?? doc.category}</Badge>
                         </td>
@@ -990,16 +1012,16 @@ export default function ProjectDetailPage() {
                           >
                             <span className="font-bold">v{doc.version || 1}</span>
                             {(doc.versions?.length > 0) && (
-                              <ClockCounterClockwise size={12} className="text-neutral" />
+                              <History className="h-3 w-3 text-muted-foreground" />
                             )}
                           </button>
                         </td>
-                        <td className="px-4 py-3 text-xs text-neutral">{formatDualDate(doc.createdAt, lang)}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{formatDualDate(doc.createdAt, lang)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <a href={doc.url} target="_blank" rel="noopener noreferrer">
                               <Button variant="ghost" size="sm">
-                                <DownloadSimple size={14} />
+                                <Download className="h-3.5 w-3.5" />
                               </Button>
                             </a>
                             <UploadButton
@@ -1017,15 +1039,15 @@ export default function ProjectDetailPage() {
                               }}
                               onUploadError={(error: Error) => console.error(error.message)}
                               appearance={{
-                                button: "bg-transparent hover:bg-muted text-neutral hover:text-primary h-7 w-7 p-0 rounded-md flex items-center justify-center",
+                                button: "bg-transparent hover:bg-muted text-muted-foreground hover:text-primary h-7 w-7 p-0 rounded-md flex items-center justify-center",
                                 allowedContent: "hidden",
                               }}
                               content={{
-                                button: <CloudArrowUp size={14} />,
+                                button: <Upload className="h-3.5 w-3.5" />,
                               }}
                             />
                             <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteDoc(doc.id)}>
-                              <Trash size={14} />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </td>
@@ -1035,16 +1057,16 @@ export default function ProjectDetailPage() {
                         doc.versions.map((v: any) => (
                           <tr key={v.id} className="bg-muted/20 border-b border-border last:border-0">
                             <td className="px-4 py-2 ps-10" colSpan={2}>
-                              <span className="text-xs text-neutral">{v.changeNote || `v${v.versionNumber}`}</span>
+                              <span className="text-xs text-muted-foreground">{v.changeNote || `v${v.versionNumber}`}</span>
                             </td>
                             <td className="px-4 py-2" colSpan={2}>
-                              <span className="text-[10px] text-neutral">v{v.versionNumber}</span>
+                              <span className="text-[10px] text-muted-foreground">v{v.versionNumber}</span>
                             </td>
-                            <td className="px-4 py-2 text-xs text-neutral">{formatDualDate(v.createdAt, lang)}</td>
+                            <td className="px-4 py-2 text-xs text-muted-foreground">{formatDualDate(v.createdAt, lang)}</td>
                             <td className="px-4 py-2">
                               <a href={v.url} target="_blank" rel="noopener noreferrer">
                                 <Button variant="ghost" size="sm">
-                                  <DownloadSimple size={12} />
+                                  <Download className="h-3 w-3" />
                                 </Button>
                               </a>
                             </td>
@@ -1065,28 +1087,28 @@ export default function ProjectDetailPage() {
       {activeTab === "concepts" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {conceptPlans.length} {lang === "ar" ? "مخطط مبدئي" : "concept plans"}
             </p>
             <Button size="sm" className="gap-2" onClick={() => setShowConceptModal(true)}>
-              <Plus size={14} />{lang === "ar" ? "إضافة مخطط" : "Add Concept"}
+              <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة مخطط" : "Add Concept"}
             </Button>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : conceptPlans.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <GridFour size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد مخططات مبدئية" : "No Concept Plans"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أنشئ بدائل تصميمية لمقارنتها" : "Create design alternatives for comparison"}</p>
+              <LayoutGrid className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد مخططات مبدئية" : "No Concept Plans"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أنشئ بدائل تصميمية لمقارنتها" : "Create design alternatives for comparison"}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {conceptPlans.map((cp: any) => {
                 const statusColors: Record<string, string> = {
-                  DRAFT: "bg-muted text-neutral",
-                  UNDER_REVIEW: "bg-accent/15 text-amber-700",
+                  DRAFT: "bg-muted text-muted-foreground",
+                  UNDER_REVIEW: "bg-amber-500/15 text-amber-700",
                   APPROVED: "bg-secondary/15 text-secondary",
                   REJECTED: "bg-destructive/15 text-destructive",
                 };
@@ -1094,9 +1116,9 @@ export default function ProjectDetailPage() {
                   <div key={cp.id} className={`bg-card rounded-md shadow-card border ${cp.isSelected ? "border-secondary border-2" : "border-border"} p-5`}>
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        {cp.isSelected && <Star size={16} weight="fill" className="text-secondary" />}
-                        <span className="text-sm font-bold text-primary">{cp.name}</span>
-                        <Badge className={`text-[10px] ${statusColors[cp.status] ?? "bg-muted text-neutral"}`}>
+                        {cp.isSelected && <Star className="h-4 w-4 text-secondary" />}
+                        <span className="text-sm font-bold text-foreground">{cp.name}</span>
+                        <Badge className={`text-[10px] ${statusColors[cp.status] ?? "bg-muted text-muted-foreground"}`}>
                           {cp.status === "DRAFT" ? (lang === "ar" ? "مسودة" : "Draft") :
                            cp.status === "UNDER_REVIEW" ? (lang === "ar" ? "مراجعة" : "Review") :
                            cp.status === "APPROVED" ? (lang === "ar" ? "معتمد" : "Approved") :
@@ -1112,31 +1134,31 @@ export default function ProjectDetailPage() {
                             onClick={async () => { await selectConceptPlan(cp.id); loadConceptPlans(); }}
                            
                           >
-                            <Star size={14} />{lang === "ar" ? "اختيار" : "Select"}
+                            <Star className="h-3.5 w-3.5" />{lang === "ar" ? "اختيار" : "Select"}
                           </Button>
                         )}
                         <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50" onClick={async () => { await deleteConceptPlan(cp.id); loadConceptPlans(); }}>
-                          <Trash size={14} />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>
-                    {cp.description && <p className="text-xs text-neutral mb-3">{cp.description}</p>}
+                    {cp.description && <p className="text-xs text-muted-foreground mb-3">{cp.description}</p>}
                     <div className="grid grid-cols-3 gap-3 text-xs">
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "القطع" : "Plots"}</p>
-                        <p className="font-bold text-primary">{cp.totalPlots ?? "—"}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "القطع" : "Plots"}</p>
+                        <p className="font-bold text-foreground">{cp.totalPlots ?? "—"}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">GFA</p>
-                        <p className="font-bold text-primary">{cp.totalGfaSqm ? `${fmt(cp.totalGfaSqm)} م²` : "—"}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">GFA</p>
+                        <p className="font-bold text-foreground">{cp.totalGfaSqm ? `${fmt(cp.totalGfaSqm)} م²` : "—"}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">FAR</p>
-                        <p className="font-bold text-primary">{cp.farRatio ?? "—"}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">FAR</p>
+                        <p className="font-bold text-foreground">{cp.farRatio ?? "—"}</p>
                       </div>
                     </div>
                     {cp.openSpacePct && (
-                      <div className="mt-2 text-xs text-neutral">
+                      <div className="mt-2 text-xs text-muted-foreground">
                         {lang === "ar" ? "المساحات المفتوحة:" : "Open Space:"} {cp.openSpacePct}%
                       </div>
                     )}
@@ -1161,68 +1183,68 @@ export default function ProjectDetailPage() {
       {activeTab === "subdivision" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {subdivisionPlans.length} {lang === "ar" ? "مخطط تقسيم" : "subdivision plans"}
             </p>
             <Button size="sm" className="gap-2" onClick={() => setShowSubdivisionModal(true)}>
-              <Plus size={14} />{lang === "ar" ? "إضافة مخطط" : "Add Plan"}
+              <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة مخطط" : "Add Plan"}
             </Button>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : subdivisionPlans.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <GridFour size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد مخططات تقسيم" : "No Subdivision Plans"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أنشئ مخطط تقسيم للأرض" : "Create a subdivision plan for the land"}</p>
+              <LayoutGrid className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد مخططات تقسيم" : "No Subdivision Plans"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أنشئ مخطط تقسيم للأرض" : "Create a subdivision plan for the land"}</p>
             </div>
           ) : (
             <div className="space-y-4">
               {subdivisionPlans.map((sp: any) => {
                 const planStatusColors: Record<string, string> = {
-                  DRAFT: "bg-muted text-neutral",
-                  UNDER_REVIEW: "bg-accent/15 text-amber-700",
+                  DRAFT: "bg-muted text-muted-foreground",
+                  UNDER_REVIEW: "bg-amber-500/15 text-amber-700",
                   APPROVED: "bg-secondary/15 text-secondary",
-                  SUPERSEDED: "bg-neutral/15 text-neutral",
+                  SUPERSEDED: "bg-neutral/15 text-muted-foreground",
                 };
                 return (
                   <div key={sp.id} className="bg-card rounded-md shadow-card border border-border p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-primary">{sp.name}</span>
-                          <Badge className={`text-[10px] ${planStatusColors[sp.status] ?? "bg-muted text-neutral"}`}>
+                          <span className="text-sm font-bold text-foreground">{sp.name}</span>
+                          <Badge className={`text-[10px] ${planStatusColors[sp.status] ?? "bg-muted text-muted-foreground"}`}>
                             v{sp.version} · {sp.status === "DRAFT" ? (lang === "ar" ? "مسودة" : "Draft") :
                              sp.status === "UNDER_REVIEW" ? (lang === "ar" ? "مراجعة" : "Review") :
                              sp.status === "APPROVED" ? (lang === "ar" ? "معتمد" : "Approved") :
                              (lang === "ar" ? "ملغى" : "Superseded")}
                           </Badge>
                         </div>
-                        {sp.nameArabic && <p className="text-xs text-neutral mt-0.5">{sp.nameArabic}</p>}
+                        {sp.nameArabic && <p className="text-xs text-muted-foreground mt-0.5">{sp.nameArabic}</p>}
                       </div>
                       <Link href={`/dashboard/projects/${id}/subdivision/${sp.id}`}>
                         <Button variant="secondary" size="sm" className="text-xs gap-1">
-                          <Eye size={14} />{lang === "ar" ? "عرض" : "View"}
+                          <Eye className="h-3.5 w-3.5" />{lang === "ar" ? "عرض" : "View"}
                         </Button>
                       </Link>
                     </div>
                     <div className="grid grid-cols-4 gap-3 text-xs">
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "القطع" : "Plots"}</p>
-                        <p className="font-bold text-primary">{sp._count?.plots ?? sp.plotCount ?? 0}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "القطع" : "Plots"}</p>
+                        <p className="font-bold text-foreground">{sp._count?.plots ?? sp.plotCount ?? 0}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "البلكات" : "Blocks"}</p>
-                        <p className="font-bold text-primary">{sp._count?.blocks ?? sp.blockCount ?? 0}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "البلكات" : "Blocks"}</p>
+                        <p className="font-bold text-foreground">{sp._count?.blocks ?? sp.blockCount ?? 0}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "الطرق" : "Roads"}</p>
-                        <p className="font-bold text-primary">{sp._count?.roads ?? 0}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "الطرق" : "Roads"}</p>
+                        <p className="font-bold text-foreground">{sp._count?.roads ?? 0}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "المساحة" : "Area"}</p>
-                        <p className="font-bold text-primary">{sp.totalAreaSqm ? `${fmt(sp.totalAreaSqm)} م²` : "—"}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "المساحة" : "Area"}</p>
+                        <p className="font-bold text-foreground">{sp.totalAreaSqm ? `${fmt(sp.totalAreaSqm)} م²` : "—"}</p>
                       </div>
                     </div>
                   </div>
@@ -1246,30 +1268,30 @@ export default function ProjectDetailPage() {
       {activeTab === "approvals" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {approvalSubmissions.length} {lang === "ar" ? "طلب موافقة" : "approval submissions"}
             </p>
             <Button size="sm" className="gap-2" onClick={() => setShowApprovalModal(true)}>
-              <Plus size={14} />{lang === "ar" ? "تقديم طلب" : "New Submission"}
+              <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "تقديم طلب" : "New Submission"}
             </Button>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : approvalSubmissions.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Stamp size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد طلبات موافقة" : "No Approvals"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "قدّم طلبات للجهات الحكومية" : "Submit applications to authorities"}</p>
+              <ShieldCheck className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد طلبات موافقة" : "No Approvals"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "قدّم طلبات للجهات الحكومية" : "Submit applications to authorities"}</p>
             </div>
           ) : (
             <div className="space-y-4">
               {approvalSubmissions.map((sub: any) => {
                 const approvalStatusConfig: Record<string, { ar: string; en: string; color: string }> = {
-                  DRAFT_APPROVAL: { ar: "مسودة", en: "Draft", color: "bg-muted text-neutral" },
+                  DRAFT_APPROVAL: { ar: "مسودة", en: "Draft", color: "bg-muted text-muted-foreground" },
                   SUBMITTED: { ar: "مقدّم", en: "Submitted", color: "bg-info/15 text-info" },
-                  UNDER_REVIEW_APPROVAL: { ar: "قيد المراجعة", en: "Under Review", color: "bg-accent/15 text-amber-700" },
-                  APPROVED_WITH_CONDITIONS: { ar: "موافق بشروط", en: "Conditional", color: "bg-accent/15 text-amber-700" },
+                  UNDER_REVIEW_APPROVAL: { ar: "قيد المراجعة", en: "Under Review", color: "bg-amber-500/15 text-amber-700" },
+                  APPROVED_WITH_CONDITIONS: { ar: "موافق بشروط", en: "Conditional", color: "bg-amber-500/15 text-amber-700" },
                   APPROVED_FINAL: { ar: "موافق", en: "Approved", color: "bg-secondary/15 text-secondary" },
                   REJECTED_APPROVAL: { ar: "مرفوض", en: "Rejected", color: "bg-destructive/15 text-destructive" },
                   RESUBMISSION_REQUIRED: { ar: "يحتاج إعادة تقديم", en: "Resubmission", color: "bg-warning/15 text-warning" },
@@ -1290,11 +1312,11 @@ export default function ProjectDetailPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-bold text-primary">{sub.authority}</span>
+                          <span className="text-sm font-bold text-foreground">{sub.authority}</span>
                           <Badge className={`text-[10px] ${sc.color}`}>{sc[lang]}</Badge>
-                          <Badge className="text-[10px] bg-muted text-neutral">{typeLabel[lang]}</Badge>
+                          <Badge className="text-[10px] bg-muted text-muted-foreground">{typeLabel[lang]}</Badge>
                         </div>
-                        <div className="text-xs text-neutral">
+                        <div className="text-xs text-muted-foreground">
                           {sub.referenceNumber && <span>#{sub.referenceNumber} · </span>}
                           {lang === "ar" ? "مراجعة" : "Rev"} {sub.revisionNumber}
                           {sub.submittedAt && <span> · {new Date(sub.submittedAt).toLocaleDateString("ar-SA")}</span>}
@@ -1308,7 +1330,7 @@ export default function ProjectDetailPage() {
                             onClick={async () => { await submitApproval(sub.id); loadApprovals(); }}
                            
                           >
-                            <SealCheck size={12} />{lang === "ar" ? "تقديم" : "Submit"}
+                            <ShieldCheck className="h-3 w-3" />{lang === "ar" ? "تقديم" : "Submit"}
                           </Button>
                         )}
                         {sub.status === "DRAFT_APPROVAL" && (
@@ -1319,12 +1341,12 @@ export default function ProjectDetailPage() {
                             onClick={async () => { await deleteApprovalSubmission(sub.id); loadApprovals(); }}
                            
                           >
-                            <Trash size={14} />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-neutral mt-2">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
                       <span>{sub._count?.comments ?? 0} {lang === "ar" ? "تعليق" : "comments"}</span>
                       <span>{sub._count?.conditions ?? 0} {lang === "ar" ? "شرط" : "conditions"}</span>
                     </div>
@@ -1355,10 +1377,10 @@ export default function ProjectDetailPage() {
                 { label: lang === "ar" ? "الجاهزية الكلية" : "Overall Score", value: `${infraScore.overallScore}%`, color: infraScore.overallScore >= 70 ? "text-secondary" : infraScore.overallScore >= 40 ? "text-amber-600" : "text-destructive" },
                 { label: lang === "ar" ? "مكتملة" : "Completed", value: infraScore.completed, color: "text-secondary" },
                 { label: lang === "ar" ? "قيد التنفيذ" : "In Progress", value: infraScore.inProgress, color: "text-primary" },
-                { label: lang === "ar" ? "متأخرة" : "Delayed", value: infraScore.delayed, color: infraScore.delayed > 0 ? "text-destructive" : "text-neutral" },
+                { label: lang === "ar" ? "متأخرة" : "Delayed", value: infraScore.delayed, color: infraScore.delayed > 0 ? "text-destructive" : "text-muted-foreground" },
               ].map((kpi, i) => (
-                <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{kpi.label}</span>
                   <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                 </div>
               ))}
@@ -1366,7 +1388,7 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {infraItems.length} {lang === "ar" ? "فئة بنية تحتية" : "infrastructure categories"}
             </p>
             <button
@@ -1374,35 +1396,35 @@ export default function ProjectDetailPage() {
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
              
             >
-              <Plus size={14} />{lang === "ar" ? "إضافة فئة" : "Add Category"}
+              <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة فئة" : "Add Category"}
             </button>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : infraItems.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <HardHat size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد بنية تحتية" : "No Infrastructure"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أضف فئات البنية التحتية لتتبع الجاهزية" : "Add infrastructure categories to track readiness"}</p>
+              <HardHat className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد بنية تحتية" : "No Infrastructure"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أضف فئات البنية التحتية لتتبع الجاهزية" : "Add infrastructure categories to track readiness"}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {infraItems.map((item: any) => {
                 const infraCategoryLabels: Record<string, { ar: string; en: string; icon: React.ReactNode }> = {
-                  ELECTRICITY_INFRA: { ar: "الكهرباء", en: "Electricity", icon: <Lightning size={18} /> },
-                  WATER_INFRA: { ar: "المياه", en: "Water", icon: <Drop size={18} /> },
-                  SEWAGE_INFRA: { ar: "الصرف الصحي", en: "Sewage", icon: <Drop size={18} /> },
-                  TELECOM_INFRA: { ar: "الاتصالات", en: "Telecom", icon: <WifiHigh size={18} /> },
-                  ROADS_INFRA: { ar: "الطرق", en: "Roads", icon: <Car size={18} /> },
-                  STORMWATER_INFRA: { ar: "تصريف الأمطار", en: "Stormwater", icon: <CloudRain size={18} /> },
-                  LANDSCAPING_INFRA: { ar: "التشجير", en: "Landscaping", icon: <Tree size={18} /> },
-                  FENCING_INFRA: { ar: "التسوير", en: "Fencing", icon: <Wall size={18} /> },
-                  SIGNAGE_INFRA: { ar: "اللوحات", en: "Signage", icon: <SignIcon size={18} /> },
-                  STREET_LIGHTING: { ar: "إنارة الشوارع", en: "Street Lighting", icon: <Lamp size={18} /> },
+                  ELECTRICITY_INFRA: { ar: "الكهرباء", en: "Electricity", icon: <Zap className="h-[18px] w-[18px]" /> },
+                  WATER_INFRA: { ar: "المياه", en: "Water", icon: <Droplets className="h-[18px] w-[18px]" /> },
+                  SEWAGE_INFRA: { ar: "الصرف الصحي", en: "Sewage", icon: <Droplets className="h-[18px] w-[18px]" /> },
+                  TELECOM_INFRA: { ar: "الاتصالات", en: "Telecom", icon: <Wifi className="h-[18px] w-[18px]" /> },
+                  ROADS_INFRA: { ar: "الطرق", en: "Roads", icon: <Car className="h-[18px] w-[18px]" /> },
+                  STORMWATER_INFRA: { ar: "تصريف الأمطار", en: "Stormwater", icon: <CloudRain className="h-[18px] w-[18px]" /> },
+                  LANDSCAPING_INFRA: { ar: "التشجير", en: "Landscaping", icon: <TreePine className="h-[18px] w-[18px]" /> },
+                  FENCING_INFRA: { ar: "التسوير", en: "Fencing", icon: <Fence className="h-[18px] w-[18px]" /> },
+                  SIGNAGE_INFRA: { ar: "اللوحات", en: "Signage", icon: <Signpost className="h-[18px] w-[18px]" /> },
+                  STREET_LIGHTING: { ar: "إنارة الشوارع", en: "Street Lighting", icon: <Lamp className="h-[18px] w-[18px]" /> },
                 };
                 const infraStatusConfig: Record<string, { ar: string; en: string; color: string; bgColor: string }> = {
-                  NOT_STARTED: { ar: "لم تبدأ", en: "Not Started", color: "text-neutral", bgColor: "bg-muted" },
+                  NOT_STARTED: { ar: "لم تبدأ", en: "Not Started", color: "text-muted-foreground", bgColor: "bg-muted" },
                   DESIGN_PHASE: { ar: "مرحلة التصميم", en: "Design", color: "text-info", bgColor: "bg-info/15" },
                   TENDERING: { ar: "المناقصة", en: "Tendering", color: "text-purple-600", bgColor: "bg-purple-100" },
                   IN_PROGRESS_INFRA: { ar: "قيد التنفيذ", en: "In Progress", color: "text-primary", bgColor: "bg-primary/15" },
@@ -1410,18 +1432,18 @@ export default function ProjectDetailPage() {
                   COMPLETED_INFRA: { ar: "مكتمل", en: "Completed", color: "text-secondary", bgColor: "bg-secondary/15" },
                   DELAYED: { ar: "متأخر", en: "Delayed", color: "text-destructive", bgColor: "bg-destructive/15" },
                 };
-                const cat = (infraCategoryLabels[item.category] ?? { ar: item.category, en: item.category, icon: <HardHat size={18} /> });
+                const cat = (infraCategoryLabels[item.category] ?? { ar: item.category, en: item.category, icon: <HardHat className="h-[18px] w-[18px]" /> });
                 const st = (infraStatusConfig[item.status] ?? infraStatusConfig.NOT_STARTED)!;
                 const score = item.readinessScore ?? 0;
                 return (
-                  <div key={item.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
+                  <div key={item.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-lg transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                           {cat.icon}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-primary">{cat[lang]}</p>
+                          <p className="text-sm font-bold text-foreground">{cat[lang]}</p>
                           <Badge className={`text-[10px] ${st.bgColor} ${st.color}`}>{st[lang]}</Badge>
                         </div>
                       </div>
@@ -1450,7 +1472,7 @@ export default function ProjectDetailPage() {
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[10px] font-bold rounded-md bg-secondary/10 text-secondary hover:bg-secondary/20 active:bg-secondary/30 transition-all"
                            
                           >
-                            <CheckCircle size={12} />{lang === "ar" ? "تقدّم" : "Advance"}
+                            <CheckCircle2 className="h-3 w-3" />{lang === "ar" ? "تقدّم" : "Advance"}
                           </button>
                         )}
                         <button
@@ -1458,15 +1480,15 @@ export default function ProjectDetailPage() {
                           className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
                          
                         >
-                          <Trash size={14} />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
                     {/* Progress bar */}
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-neutral">{lang === "ar" ? "الجاهزية" : "Readiness"}</span>
-                        <span className={`font-bold ${score >= 70 ? "text-secondary" : score >= 40 ? "text-amber-600" : "text-neutral"}`}>{score}%</span>
+                        <span className="text-muted-foreground">{lang === "ar" ? "الجاهزية" : "Readiness"}</span>
+                        <span className={`font-bold ${score >= 70 ? "text-secondary" : score >= 40 ? "text-amber-600" : "text-muted-foreground"}`}>{score}%</span>
                       </div>
                       <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                         <div
@@ -1478,16 +1500,16 @@ export default function ProjectDetailPage() {
                     {/* Meta */}
                     <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
                       {item.contractor && (
-                        <div><span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "المقاول" : "Contractor"}</span><p className="text-primary font-medium">{item.contractor}</p></div>
+                        <div><span className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "المقاول" : "Contractor"}</span><p className="text-foreground font-medium">{item.contractor}</p></div>
                       )}
                       {item.targetDate && (
-                        <div><span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "التاريخ المستهدف" : "Target"}</span><p className="text-primary font-medium">{new Date(item.targetDate).toLocaleDateString("en-SA")}</p></div>
+                        <div><span className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "التاريخ المستهدف" : "Target"}</span><p className="text-foreground font-medium">{new Date(item.targetDate).toLocaleDateString("en-SA")}</p></div>
                       )}
                       {item.estimatedCostSar && (
-                        <div><span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</span><p className="text-primary font-medium"><SARAmount value={Number(item.estimatedCostSar)} size={11} /></p></div>
+                        <div><span className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</span><p className="text-foreground font-medium"><SARAmount value={Number(item.estimatedCostSar)} size={11} /></p></div>
                       )}
                       {item.wave && (
-                        <div><span className="text-[10px] text-neutral uppercase font-bold">{lang === "ar" ? "الموجة" : "Wave"}</span><p className="text-primary font-medium">{item.wave}</p></div>
+                        <div><span className="text-[10px] text-muted-foreground uppercase font-bold">{lang === "ar" ? "الموجة" : "Wave"}</span><p className="text-foreground font-medium">{item.wave}</p></div>
                       )}
                     </div>
                   </div>
@@ -1518,10 +1540,10 @@ export default function ProjectDetailPage() {
                 { label: lang === "ar" ? "متاح" : "Available", value: inventoryStats.available, color: "text-secondary" },
                 { label: lang === "ar" ? "محجوز" : "Reserved", value: inventoryStats.reserved, color: "text-amber-600" },
                 { label: lang === "ar" ? "مباع" : "Sold", value: inventoryStats.sold, color: "text-info" },
-                { label: lang === "ar" ? "لم تُطلق" : "Unreleased", value: inventoryStats.unreleased, color: "text-neutral" },
+                { label: lang === "ar" ? "لم تُطلق" : "Unreleased", value: inventoryStats.unreleased, color: "text-muted-foreground" },
               ].map((kpi, i) => (
-                <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{kpi.label}</span>
                   <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                 </div>
               ))}
@@ -1529,7 +1551,7 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {inventoryItems.length} {lang === "ar" ? "عنصر مخزون" : "inventory items"}
             </p>
             <div className="flex items-center gap-2">
@@ -1543,7 +1565,7 @@ export default function ProjectDetailPage() {
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-secondary text-white hover:bg-secondary/90 active:bg-secondary/80 transition-all"
                  
                 >
-                  <Rocket size={14} />{lang === "ar" ? `إطلاق (${selectedInvItems.size})` : `Release (${selectedInvItems.size})`}
+                  <Rocket className="h-3.5 w-3.5" />{lang === "ar" ? `إطلاق (${selectedInvItems.size})` : `Release (${selectedInvItems.size})`}
                 </button>
               )}
               {subdivisionPlans.length > 0 && (
@@ -1555,10 +1577,10 @@ export default function ProjectDetailPage() {
                       loadInventory();
                     }
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 active:bg-amber-500/40 transition-all"
                  
                 >
-                  <Package size={14} />{lang === "ar" ? "توليد من القطع" : "Generate from Plots"}
+                  <Package className="h-3.5 w-3.5" />{lang === "ar" ? "توليد من القطع" : "Generate from Plots"}
                 </button>
               )}
               {/* G9: Convert sold inventory to units for handover */}
@@ -1579,30 +1601,30 @@ export default function ProjectDetailPage() {
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-all"
                 >
-                  <HardHat size={14} />{lang === "ar" ? "تحويل المباع إلى وحدات" : "Convert Sold to Units"}
+                  <HardHat className="h-3.5 w-3.5" />{lang === "ar" ? "تحويل المباع إلى وحدات" : "Convert Sold to Units"}
                 </button>
               )}
               <Link href={`/dashboard/projects/${id}/inventory/import`}>
-                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
-                  <CloudArrowUp size={14} />{lang === "ar" ? "استيراد CSV" : "Import CSV"}
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 active:bg-amber-500/40 transition-all">
+                  <Upload className="h-3.5 w-3.5" />{lang === "ar" ? "استيراد CSV" : "Import CSV"}
                 </button>
               </Link>
               <button
                 onClick={() => setShowInventoryModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
               >
-                <Plus size={14} />{lang === "ar" ? "إضافة يدوياً" : "Add Item"}
+                <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة يدوياً" : "Add Item"}
               </button>
             </div>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : inventoryItems.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Package size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا يوجد مخزون" : "No Inventory"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أنشئ عناصر المخزون من مخطط التقسيم أو يدوياً" : "Generate inventory from subdivision plots or add manually"}</p>
+              <Package className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا يوجد مخزون" : "No Inventory"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أنشئ عناصر المخزون من مخطط التقسيم أو يدوياً" : "Generate inventory from subdivision plots or add manually"}</p>
             </div>
           ) : (
             <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
@@ -1623,19 +1645,19 @@ export default function ProjectDetailPage() {
                         className="w-3.5 h-3.5 accent-secondary"
                       />
                     </th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الرقم" : "#"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Type"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المساحة" : "Area"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "السعر" : "Price"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المرحلة" : "Phase"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
-                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-neutral"></th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الرقم" : "#"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "النوع" : "Type"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "المساحة" : "Area"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "السعر" : "Price"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "المرحلة" : "Phase"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الحالة" : "Status"}</th>
+                    <th className="px-3 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {inventoryItems.map((item: any) => {
                     const invStatusConfig: Record<string, { ar: string; en: string; color: string }> = {
-                      UNRELEASED: { ar: "لم تُطلق", en: "Unreleased", color: "bg-muted text-neutral" },
+                      UNRELEASED: { ar: "لم تُطلق", en: "Unreleased", color: "bg-muted text-muted-foreground" },
                       AVAILABLE_INV: { ar: "متاح", en: "Available", color: "bg-secondary/15 text-secondary" },
                       RESERVED_INV: { ar: "محجوز", en: "Reserved", color: "bg-amber-100 text-amber-700" },
                       SOLD_INV: { ar: "مباع", en: "Sold", color: "bg-info/15 text-info" },
@@ -1669,11 +1691,11 @@ export default function ProjectDetailPage() {
                             />
                           )}
                         </td>
-                        <td className="px-3 py-3 font-medium text-primary">{item.itemNumber}</td>
+                        <td className="px-3 py-3 font-medium text-foreground">{item.itemNumber}</td>
                         <td className="px-3 py-3 text-xs">{pt[lang]}</td>
                         <td className="px-3 py-3 text-xs">{item.areaSqm ? `${fmt(item.areaSqm)} م²` : "—"}</td>
                         <td className="px-3 py-3 text-xs">{item.finalPriceSar ? <SARAmount value={Number(item.finalPriceSar)} size={11} /> : item.basePriceSar ? <SARAmount value={Number(item.basePriceSar)} size={11} /> : "—"}</td>
-                        <td className="px-3 py-3 text-xs text-neutral">{item.releasePhase ?? "—"}</td>
+                        <td className="px-3 py-3 text-xs text-muted-foreground">{item.releasePhase ?? "—"}</td>
                         <td className="px-3 py-3"><Badge className={`text-[10px] ${ist.color}`}>{ist[lang]}</Badge></td>
                         <td className="px-3 py-3">
                           {item.status === "UNRELEASED" && (
@@ -1682,7 +1704,7 @@ export default function ProjectDetailPage() {
                               className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
                              
                             >
-                              <Trash size={14} />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           )}
                         </td>
@@ -1714,11 +1736,11 @@ export default function ProjectDetailPage() {
               {[
                 { label: lang === "ar" ? "قواعد نشطة" : "Active Rules", value: pricingSummary.activeRules, color: "text-secondary" },
                 { label: lang === "ar" ? "عناصر مسعّرة" : "Priced Items", value: pricingSummary.pricedItems, color: "text-primary" },
-                { label: lang === "ar" ? "غير مسعّرة" : "Unpriced", value: pricingSummary.unpricedItems, color: pricingSummary.unpricedItems > 0 ? "text-amber-600" : "text-neutral" },
+                { label: lang === "ar" ? "غير مسعّرة" : "Unpriced", value: pricingSummary.unpricedItems, color: pricingSummary.unpricedItems > 0 ? "text-amber-600" : "text-muted-foreground" },
                 { label: lang === "ar" ? "متوسط سعر م²" : "Avg SAR/sqm", value: pricingSummary.avgPricePerSqm ? <SARAmount value={pricingSummary.avgPricePerSqm} size={14} /> : "—", color: "text-info" },
               ].map((kpi, i) => (
-                <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{kpi.label}</span>
                   <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                 </div>
               ))}
@@ -1726,7 +1748,7 @@ export default function ProjectDetailPage() {
           )}
 
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {pricingRules.length} {lang === "ar" ? "قاعدة تسعير" : "pricing rules"}
             </p>
             <div className="flex items-center gap-2">
@@ -1736,37 +1758,37 @@ export default function ProjectDetailPage() {
                   loadPricing();
                   loadInventory();
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 active:bg-amber-500/40 transition-all"
                
               >
-                <CurrencyDollar size={14} />{lang === "ar" ? "حساب الأسعار" : "Calculate All"}
+                <DollarSign className="h-3.5 w-3.5" />{lang === "ar" ? "حساب الأسعار" : "Calculate All"}
               </button>
               <Link href={`/dashboard/projects/${id}/pricing/versions`}>
-                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
-                  <ClockCounterClockwise size={14} />{lang === "ar" ? "إصدارات الأسعار" : "Price Versions"}
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 active:bg-amber-500/40 transition-all">
+                  <History className="h-3.5 w-3.5" />{lang === "ar" ? "إصدارات الأسعار" : "Price Versions"}
                 </button>
               </Link>
               <Link href={`/dashboard/projects/${id}/pricing/change-requests`}>
-                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
-                  <FunnelSimple size={14} />{lang === "ar" ? "طلبات تعديل الأسعار" : "Price Change Requests"}
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-amber-500/20 text-amber-700 hover:bg-amber-500/30 active:bg-amber-500/40 transition-all">
+                  <Filter className="h-3.5 w-3.5" />{lang === "ar" ? "طلبات تعديل الأسعار" : "Price Change Requests"}
                 </button>
               </Link>
               <button
                 onClick={() => setShowPricingModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
               >
-                <Plus size={14} />{lang === "ar" ? "إضافة قاعدة" : "Add Rule"}
+                <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة قاعدة" : "Add Rule"}
               </button>
             </div>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : pricingRules.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <CurrencyDollar size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد قواعد تسعير" : "No Pricing Rules"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أضف قواعد لحساب أسعار المخزون تلقائياً" : "Add rules to auto-calculate inventory prices"}</p>
+              <DollarSign className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد قواعد تسعير" : "No Pricing Rules"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أضف قواعد لحساب أسعار المخزون تلقائياً" : "Add rules to auto-calculate inventory prices"}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -1779,7 +1801,7 @@ export default function ProjectDetailPage() {
                   PHASE_PREMIUM: { ar: "علاوة مرحلة", en: "Phase Premium", color: "bg-purple-100 text-purple-700" },
                   BLOCK_ADJUSTMENT: { ar: "تعديل بلك", en: "Block Adjustment", color: "bg-orange-100 text-orange-700" },
                   PRODUCT_TYPE_PREMIUM: { ar: "علاوة نوع منتج", en: "Product Type", color: "bg-cyan-100 text-cyan-700" },
-                  CUSTOM_PRICING: { ar: "تسعير مخصص", en: "Custom", color: "bg-muted text-neutral" },
+                  CUSTOM_PRICING: { ar: "تسعير مخصص", en: "Custom", color: "bg-muted text-muted-foreground" },
                 };
                 const rt = (ruleTypeLabels[rule.type] ?? ruleTypeLabels.CUSTOM_PRICING)!;
                 return (
@@ -1788,12 +1810,12 @@ export default function ProjectDetailPage() {
                       <div className="flex items-center gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-bold text-primary">{rule.name}</span>
+                            <span className="text-sm font-bold text-foreground">{rule.name}</span>
                             <Badge className={`text-[10px] ${rt.color}`}>{rt[lang]}</Badge>
-                            {!rule.isActive && <Badge className="text-[10px] bg-muted text-neutral">{lang === "ar" ? "معطّل" : "Disabled"}</Badge>}
+                            {!rule.isActive && <Badge className="text-[10px] bg-muted text-muted-foreground">{lang === "ar" ? "معطّل" : "Disabled"}</Badge>}
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-neutral">
-                            {rule.factor && <span>{lang === "ar" ? "المعامل:" : "Factor:"} <strong className="text-primary">{rule.type === "BASE_PRICE_PER_SQM" ? `${fmt(rule.factor)} SAR/م²` : `×${rule.factor}`}</strong></span>}
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            {rule.factor && <span>{lang === "ar" ? "المعامل:" : "Factor:"} <strong className="text-foreground">{rule.type === "BASE_PRICE_PER_SQM" ? `${fmt(rule.factor)} SAR/م²` : `×${rule.factor}`}</strong></span>}
                             {rule.fixedAmountSar && <span>{lang === "ar" ? "مبلغ ثابت:" : "Fixed:"} <SARAmount value={Number(rule.fixedAmountSar)} size={11} /></span>}
                             <span>{lang === "ar" ? "الأولوية:" : "Priority:"} {rule.priority}</span>
                           </div>
@@ -1809,14 +1831,14 @@ export default function ProjectDetailPage() {
                           }`}
                          
                         >
-                          <ToggleRight size={12} />{rule.isActive ? (lang === "ar" ? "تعطيل" : "Disable") : (lang === "ar" ? "تفعيل" : "Enable")}
+                          <ToggleRight className="h-3 w-3" />{rule.isActive ? (lang === "ar" ? "تعطيل" : "Disable") : (lang === "ar" ? "تفعيل" : "Enable")}
                         </button>
                         <button
                           onClick={async () => { await deletePricingRule(rule.id); loadPricing(); }}
                           className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
                          
                         >
-                          <Trash size={14} />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1841,7 +1863,7 @@ export default function ProjectDetailPage() {
       {activeTab === "launch" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-neutral">
+            <p className="text-sm text-muted-foreground">
               {launchWaves.length} {lang === "ar" ? "موجة إطلاق" : "launch waves"}
             </p>
             <button
@@ -1849,38 +1871,38 @@ export default function ProjectDetailPage() {
               className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
              
             >
-              <Plus size={14} />{lang === "ar" ? "إضافة موجة" : "Add Wave"}
+              <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة موجة" : "Add Wave"}
             </button>
           </div>
 
           {loadingOffPlan ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : launchWaves.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Rocket size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد موجات إطلاق" : "No Launch Waves"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أنشئ موجات لإطلاق المخزون على مراحل" : "Create waves to release inventory in phases"}</p>
+              <Rocket className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد موجات إطلاق" : "No Launch Waves"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أنشئ موجات لإطلاق المخزون على مراحل" : "Create waves to release inventory in phases"}</p>
             </div>
           ) : (
             <div className="space-y-4">
               {launchWaves.map((wave: any) => {
                 const waveStatusConfig: Record<string, { ar: string; en: string; color: string; actionLabel?: { ar: string; en: string } }> = {
-                  PLANNED: { ar: "مخطط", en: "Planned", color: "bg-muted text-neutral", actionLabel: { ar: "تجهيز", en: "Ready" } },
+                  PLANNED: { ar: "مخطط", en: "Planned", color: "bg-muted text-muted-foreground", actionLabel: { ar: "تجهيز", en: "Ready" } },
                   READY_WAVE: { ar: "جاهز", en: "Ready", color: "bg-amber-100 text-amber-700", actionLabel: { ar: "إطلاق", en: "Launch" } },
                   LAUNCHED: { ar: "مُطلق", en: "Launched", color: "bg-secondary/15 text-secondary", actionLabel: { ar: "إغلاق", en: "Close" } },
-                  CLOSED_WAVE: { ar: "مُغلق", en: "Closed", color: "bg-neutral/15 text-neutral" },
+                  CLOSED_WAVE: { ar: "مُغلق", en: "Closed", color: "bg-neutral/15 text-muted-foreground" },
                 };
                 const ws = (waveStatusConfig[wave.status] ?? waveStatusConfig.PLANNED)!;
                 return (
-                  <div key={wave.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
+                  <div key={wave.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-lg transition-all">
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">{wave.waveNumber}</div>
-                          <span className="text-sm font-bold text-primary">{wave.name ?? `${lang === "ar" ? "الموجة" : "Wave"} ${wave.waveNumber}`}</span>
+                          <span className="text-sm font-bold text-foreground">{wave.name ?? `${lang === "ar" ? "الموجة" : "Wave"} ${wave.waveNumber}`}</span>
                           <Badge className={`text-[10px] ${ws.color}`}>{ws[lang]}</Badge>
                         </div>
-                        <div className="flex items-center gap-4 text-xs text-neutral mt-1">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                           {wave.plannedDate && <span>{lang === "ar" ? "التاريخ:" : "Date:"} {new Date(wave.plannedDate).toLocaleDateString("en-SA")}</span>}
                           {wave.inventoryCount && <span>{wave.inventoryCount} {lang === "ar" ? "عنصر" : "items"}</span>}
                           {wave.totalValueSar && <span><SARAmount value={Number(wave.totalValueSar)} size={11} /></span>}
@@ -1894,7 +1916,7 @@ export default function ProjectDetailPage() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 active:bg-amber-200 transition-all"
                            
                           >
-                            <CheckCircle size={12} />{lang === "ar" ? "تجهيز" : "Mark Ready"}
+                            <CheckCircle2 className="h-3 w-3" />{lang === "ar" ? "تجهيز" : "Mark Ready"}
                           </button>
                         )}
                         {wave.status === "READY_WAVE" && (
@@ -1903,16 +1925,16 @@ export default function ProjectDetailPage() {
                             className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-secondary text-white hover:bg-secondary/90 active:bg-secondary/80 transition-all"
                            
                           >
-                            <Play size={12} weight="fill" />{lang === "ar" ? "إطلاق" : "Launch"}
+                            <Play className="h-3 w-3" />{lang === "ar" ? "إطلاق" : "Launch"}
                           </button>
                         )}
                         {wave.status === "LAUNCHED" && (
                           <button
                             onClick={async () => { await closeWave(wave.id); loadWaves(); }}
-                            className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-neutral/10 text-neutral hover:bg-neutral/20 active:bg-neutral/30 transition-all"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-bold rounded-md bg-neutral/10 text-muted-foreground hover:bg-neutral/20 active:bg-neutral/30 transition-all"
                            
                           >
-                            <Stop size={12} weight="fill" />{lang === "ar" ? "إغلاق" : "Close"}
+                            <Square className="h-3 w-3" />{lang === "ar" ? "إغلاق" : "Close"}
                           </button>
                         )}
                         {wave.status !== "LAUNCHED" && wave.status !== "CLOSED_WAVE" && (
@@ -1921,12 +1943,12 @@ export default function ProjectDetailPage() {
                             className="inline-flex items-center p-1.5 rounded-md text-red-500 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-all"
                            
                           >
-                            <Trash size={14} />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
                     </div>
-                    {wave.notes && <p className="text-xs text-neutral mt-2 border-t border-border pt-2">{wave.notes}</p>}
+                    {wave.notes && <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">{wave.notes}</p>}
                   </div>
                 );
               })}
@@ -1948,12 +1970,12 @@ export default function ProjectDetailPage() {
       {activeTab === "readiness" && (
         <div className="space-y-6">
           {loadingReadiness ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : readinessChecklist.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <CheckCircle size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد بيانات" : "No Data"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "لم يتم تحميل قائمة الجاهزية" : "Readiness checklist not loaded"}</p>
+              <CheckCircle2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد بيانات" : "No Data"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "لم يتم تحميل قائمة الجاهزية" : "Readiness checklist not loaded"}</p>
             </div>
           ) : (
             <>
@@ -1964,8 +1986,8 @@ export default function ProjectDetailPage() {
                   <div className={`rounded-md p-5 border ${allPassed ? "bg-secondary/10 border-secondary/30" : "bg-amber-50 border-amber-200"}`}>
                     <div className="flex items-center gap-3">
                       {allPassed
-                        ? <SealCheck size={28} weight="duotone" className="text-secondary" />
-                        : <XCircle size={28} weight="duotone" className="text-amber-600" />
+                        ? <ShieldCheck className="h-7 w-7 text-secondary" />
+                        : <XCircle className="h-7 w-7 text-amber-600" />
                       }
                       <div>
                         <p className={`text-lg font-bold ${allPassed ? "text-secondary" : "text-amber-700"}`}>
@@ -1974,7 +1996,7 @@ export default function ProjectDetailPage() {
                             : (lang === "ar" ? "المشروع غير جاهز للإطلاق" : "Project Not Ready for Launch")
                           }
                         </p>
-                        <p className="text-sm text-neutral mt-0.5">
+                        <p className="text-sm text-muted-foreground mt-0.5">
                           {readinessChecklist.filter((i: any) => i.passed).length}/{readinessChecklist.length} {lang === "ar" ? "متطلب مكتمل" : "prerequisites met"}
                         </p>
                       </div>
@@ -1986,15 +2008,15 @@ export default function ProjectDetailPage() {
               {/* Checklist */}
               <div className="space-y-3">
                 {readinessChecklist.map((item: any) => (
-                  <div key={item.id} className="bg-card rounded-md shadow-card border border-border p-4 flex items-center justify-between hover:shadow-raised transition-all">
+                  <div key={item.id} className="bg-card rounded-md shadow-card border border-border p-4 flex items-center justify-between hover:shadow-lg transition-all">
                     <div className="flex items-center gap-3">
                       {item.passed
-                        ? <CheckCircle size={24} weight="fill" className="text-secondary" />
-                        : <XCircle size={24} weight="fill" className="text-destructive" />
+                        ? <CheckCircle2 className="h-6 w-6 text-secondary" />
+                        : <XCircle className="h-6 w-6 text-destructive" />
                       }
                       <div>
-                        <p className="text-sm font-bold text-primary">{lang === "ar" ? item.labelAr : item.label}</p>
-                        <p className="text-xs text-neutral mt-0.5">{lang === "ar" ? item.detailAr : item.detail}</p>
+                        <p className="text-sm font-bold text-foreground">{lang === "ar" ? item.labelAr : item.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{lang === "ar" ? item.detailAr : item.detail}</p>
                       </div>
                     </div>
                     {!item.passed && item.fixTab && (
@@ -2018,12 +2040,12 @@ export default function ProjectDetailPage() {
       {activeTab === "map" && (
         <div className="space-y-6">
           {loadingMap ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : mapInventory.length === 0 ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <GridFour size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا يوجد مخزون" : "No Inventory"}</h3>
-              <p className="text-sm text-neutral mt-1">{lang === "ar" ? "أنشئ عناصر مخزون أولاً" : "Create inventory items first"}</p>
+              <LayoutGrid className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا يوجد مخزون" : "No Inventory"}</h3>
+              <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أنشئ عناصر مخزون أولاً" : "Create inventory items first"}</p>
             </div>
           ) : (
             <>
@@ -2037,7 +2059,7 @@ export default function ProjectDetailPage() {
                 ].map((s) => (
                   <div key={s.label} className="flex items-center gap-1.5">
                     <div className={`w-3 h-3 rounded-sm ${s.color}`} />
-                    <span className="text-neutral">{s.label}</span>
+                    <span className="text-muted-foreground">{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -2064,9 +2086,9 @@ export default function ProjectDetailPage() {
                   const sc = statusColor[item.status] ?? statusColor.UNRELEASED;
                   const sl = (statusLabel[item.status] ?? statusLabel.UNRELEASED)!;
                   return (
-                    <div key={item.id} className={`rounded-md border-2 p-3 ${sc} transition-all hover:shadow-raised`}>
-                      <p className="text-xs font-bold text-primary">{item.itemNumber}</p>
-                      <p className="text-[10px] text-neutral mt-0.5">{item.areaSqm ? `${Number(item.areaSqm).toLocaleString()} م²` : "—"}</p>
+                    <div key={item.id} className={`rounded-md border-2 p-3 ${sc} transition-all hover:shadow-lg`}>
+                      <p className="text-xs font-bold text-foreground">{item.itemNumber}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.areaSqm ? `${Number(item.areaSqm).toLocaleString()} م²` : "—"}</p>
                       {item.finalPriceSar || item.basePriceSar ? (
                         <p className="text-xs font-bold mt-1"><SARAmount value={Number(item.finalPriceSar ?? item.basePriceSar)} size={10} /></p>
                       ) : null}
@@ -2084,11 +2106,11 @@ export default function ProjectDetailPage() {
       {activeTab === "analytics" && (
         <div className="space-y-6">
           {loadingAnalytics ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : !analyticsData ? (
             <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-              <Star size={48} className="text-neutral/30 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد بيانات" : "No Data"}</h3>
+              <Star className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "لا توجد بيانات" : "No Data"}</h3>
             </div>
           ) : (
             <>
@@ -2103,11 +2125,11 @@ export default function ProjectDetailPage() {
                     value: analyticsData.waves?.length > 0
                       ? `${Math.round(analyticsData.waves.reduce((s: number, w: any) => s + w.conversionRate, 0) / analyticsData.waves.length)}%`
                       : "—",
-                    color: "text-accent",
+                    color: "text-amber-500",
                   },
                 ].map((kpi, i) => (
-                  <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-                    <span className="text-[10px] font-bold uppercase text-neutral">{kpi.label}</span>
+                  <div key={i} className="rounded-md border border-border bg-card shadow-card p-4">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground">{kpi.label}</span>
                     <p className={`text-xl font-bold mt-1 ${kpi.color}`}>{kpi.value}</p>
                   </div>
                 ))}
@@ -2117,26 +2139,26 @@ export default function ProjectDetailPage() {
               {analyticsData.waves?.length > 0 && (
                 <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
                   <div className="p-4 border-b border-border">
-                    <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "أداء الموجات" : "Wave Performance"}</h3>
+                    <h3 className="text-sm font-bold text-foreground">{lang === "ar" ? "أداء الموجات" : "Wave Performance"}</h3>
                   </div>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border">
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الموجة" : "Wave"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الإجمالي" : "Total"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "متاح" : "Available"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "محجوز" : "Reserved"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "مباع" : "Sold"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "التحويل" : "Conv."}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الموجة" : "Wave"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الحالة" : "Status"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الإجمالي" : "Total"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "متاح" : "Available"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "محجوز" : "Reserved"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "مباع" : "Sold"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "التحويل" : "Conv."}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {analyticsData.waves.map((wave: any) => (
                         <tr key={wave.waveNumber} className="border-b border-border last:border-0 hover:bg-muted/10">
-                          <td className="px-4 py-3 font-bold text-primary">{lang === "ar" ? wave.nameArabic ?? wave.name : wave.name}</td>
+                          <td className="px-4 py-3 font-bold text-foreground">{lang === "ar" ? wave.nameArabic ?? wave.name : wave.name}</td>
                           <td className="px-4 py-3">
-                            <Badge className={`text-[10px] ${wave.status === "LAUNCHED" ? "bg-secondary/15 text-secondary" : wave.status === "PLANNED" ? "bg-muted text-neutral" : "bg-info/15 text-info"}`}>{wave.status}</Badge>
+                            <Badge className={`text-[10px] ${wave.status === "LAUNCHED" ? "bg-secondary/15 text-secondary" : wave.status === "PLANNED" ? "bg-muted text-muted-foreground" : "bg-info/15 text-info"}`}>{wave.status}</Badge>
                           </td>
                           <td className="px-4 py-3">{wave.total}</td>
                           <td className="px-4 py-3 text-secondary font-medium">{wave.released - wave.reserved - wave.sold}</td>
@@ -2154,27 +2176,27 @@ export default function ProjectDetailPage() {
               {analyticsData.pricing?.byProductType?.length > 0 && (
                 <div className="bg-card rounded-md shadow-card border border-border overflow-hidden">
                   <div className="p-4 border-b border-border">
-                    <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "التسعير حسب النوع" : "Pricing by Product Type"}</h3>
+                    <h3 className="text-sm font-bold text-foreground">{lang === "ar" ? "التسعير حسب النوع" : "Pricing by Product Type"}</h3>
                   </div>
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border">
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Type"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "العدد" : "Count"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "متوسط / م²" : "Avg/sqm"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "أقل" : "Min"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "أعلى" : "Max"}</th>
-                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "إجمالي القيمة" : "Total Value"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "النوع" : "Type"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "العدد" : "Count"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "متوسط / م²" : "Avg/sqm"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "أقل" : "Min"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "أعلى" : "Max"}</th>
+                        <th className="px-4 py-3 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "إجمالي القيمة" : "Total Value"}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {analyticsData.pricing.byProductType.map((pt: any) => (
                         <tr key={pt.type} className="border-b border-border last:border-0 hover:bg-muted/10">
-                          <td className="px-4 py-3 font-bold text-primary">{pt.type.replace(/_/g, " ")}</td>
+                          <td className="px-4 py-3 font-bold text-foreground">{pt.type.replace(/_/g, " ")}</td>
                           <td className="px-4 py-3">{pt.count}</td>
                           <td className="px-4 py-3"><SARAmount value={pt.avgPricePerSqm} size={11} /></td>
-                          <td className="px-4 py-3 text-xs text-neutral"><SARAmount value={pt.minPricePerSqm} size={10} /></td>
-                          <td className="px-4 py-3 text-xs text-neutral"><SARAmount value={pt.maxPricePerSqm} size={10} /></td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground"><SARAmount value={pt.minPricePerSqm} size={10} /></td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground"><SARAmount value={pt.maxPricePerSqm} size={10} /></td>
                           <td className="px-4 py-3 font-bold"><SARAmount value={pt.totalValue} size={11} /></td>
                         </tr>
                       ))}
@@ -2191,23 +2213,23 @@ export default function ProjectDetailPage() {
       {activeTab === "financials" && (
         <div className="space-y-6">
           {loadingFinancials ? (
-            <div className="flex justify-center py-12"><Spinner className="animate-spin text-primary" size={24} /></div>
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
           ) : !projectFinancials ? (
-            <p className="text-center text-neutral py-12">{lang === "ar" ? "لا توجد بيانات مالية" : "No financial data"}</p>
+            <p className="text-center text-muted-foreground py-12">{lang === "ar" ? "لا توجد بيانات مالية" : "No financial data"}</p>
           ) : (
             <>
               {/* P&L Summary */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "إجمالي التكاليف" : "Total Costs"}</span>
+                <div className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "إجمالي التكاليف" : "Total Costs"}</span>
                   <p className="text-lg font-bold text-destructive mt-1"><SARAmount value={projectFinancials.totalCosts} size={14} /></p>
                 </div>
-                <div className="bg-card rounded-md shadow-card border border-border p-4">
-                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}</span>
+                <div className="rounded-md border border-border bg-card shadow-card p-4">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}</span>
                   <p className="text-lg font-bold text-secondary mt-1"><SARAmount value={projectFinancials.totalRevenue} size={14} /></p>
                 </div>
                 <div className={`bg-card rounded-md shadow-card border border-border p-4 ${projectFinancials.netPL >= 0 ? "border-secondary/30" : "border-destructive/30"}`}>
-                  <span className="text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "صافي الربح/الخسارة" : "Net P&L"}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "صافي الربح/الخسارة" : "Net P&L"}</span>
                   <p className={`text-lg font-bold mt-1 ${projectFinancials.netPL >= 0 ? "text-secondary" : "text-destructive"}`}>
                     <SARAmount value={projectFinancials.netPL} size={14} />
                   </p>
@@ -2216,7 +2238,7 @@ export default function ProjectDetailPage() {
 
               {/* Cost Breakdown */}
               <div className="bg-card rounded-md shadow-card border border-border p-5">
-                <h3 className="text-xs font-bold uppercase text-neutral mb-4">{lang === "ar" ? "تفصيل التكاليف" : "Cost Breakdown"}</h3>
+                <h3 className="text-xs font-bold uppercase text-muted-foreground mb-4">{lang === "ar" ? "تفصيل التكاليف" : "Cost Breakdown"}</h3>
                 <div className="space-y-3">
                   {[
                     { label: lang === "ar" ? "تكلفة الأرض" : "Land Cost", value: projectFinancials.landCost },
@@ -2224,8 +2246,8 @@ export default function ProjectDetailPage() {
                     { label: lang === "ar" ? "تكاليف الصيانة" : "Maintenance Costs", value: projectFinancials.maintenanceCosts },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                      <span className="text-sm text-neutral">{item.label}</span>
-                      <span className="text-sm font-bold text-primary"><SARAmount value={item.value} size={11} /></span>
+                      <span className="text-sm text-muted-foreground">{item.label}</span>
+                      <span className="text-sm font-bold text-foreground"><SARAmount value={item.value} size={11} /></span>
                     </div>
                   ))}
                 </div>
@@ -2233,7 +2255,7 @@ export default function ProjectDetailPage() {
 
               {/* Revenue Breakdown */}
               <div className="bg-card rounded-md shadow-card border border-border p-5">
-                <h3 className="text-xs font-bold uppercase text-neutral mb-4">{lang === "ar" ? "تفصيل الإيرادات" : "Revenue Breakdown"}</h3>
+                <h3 className="text-xs font-bold uppercase text-muted-foreground mb-4">{lang === "ar" ? "تفصيل الإيرادات" : "Revenue Breakdown"}</h3>
                 <div className="space-y-3">
                   {[
                     { label: lang === "ar" ? "إيرادات المبيعات" : "Sale Revenue", value: projectFinancials.saleRevenue },
@@ -2241,7 +2263,7 @@ export default function ProjectDetailPage() {
                     { label: lang === "ar" ? "مبيعات ما قبل البناء" : "Off-Plan Sold", value: projectFinancials.offPlanSoldValue },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                      <span className="text-sm text-neutral">{item.label}</span>
+                      <span className="text-sm text-muted-foreground">{item.label}</span>
                       <span className="text-sm font-bold text-secondary"><SARAmount value={item.value} size={11} /></span>
                     </div>
                   ))}
@@ -2287,41 +2309,41 @@ function ConceptPlanModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "مخطط مبدئي جديد" : "New Concept Plan"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "مخطط مبدئي جديد" : "New Concept Plan"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "اسم المخطط *" : "Plan Name *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "اسم المخطط *" : "Plan Name *"}</label>
             <input required value={form.name} onChange={set("name")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الوصف" : "Description"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الوصف" : "Description"}</label>
             <textarea value={form.description} onChange={set("description")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "عدد القطع" : "Total Plots"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "عدد القطع" : "Total Plots"}</label>
               <input type="number" value={form.totalPlots} onChange={set("totalPlots")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "GFA (م²)" : "GFA (sqm)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "GFA (م²)" : "GFA (sqm)"}</label>
               <input type="number" value={form.totalGfaSqm} onChange={set("totalGfaSqm")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "نسبة FAR" : "FAR Ratio"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "نسبة FAR" : "FAR Ratio"}</label>
               <input type="number" step="0.01" value={form.farRatio} onChange={set("farRatio")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المساحات المفتوحة %" : "Open Space %"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المساحات المفتوحة %" : "Open Space %"}</label>
               <input type="number" step="0.1" value={form.openSpacePct} onChange={set("openSpacePct")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2362,37 +2384,37 @@ function SubdivisionPlanModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "مخطط تقسيم جديد" : "New Subdivision Plan"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "مخطط تقسيم جديد" : "New Subdivision Plan"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (إنجليزي) *" : "Name *"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (إنجليزي) *" : "Name *"}</label>
               <input required value={form.name} onChange={set("name")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
               <input value={form.nameArabic} onChange={set("nameArabic")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المساحة الكلية (م²)" : "Total Area"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المساحة الكلية (م²)" : "Total Area"}</label>
               <input type="number" value={form.totalAreaSqm} onChange={set("totalAreaSqm")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "القابلة للتطوير (م²)" : "Developable"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "القابلة للتطوير (م²)" : "Developable"}</label>
               <input type="number" value={form.developableAreaSqm} onChange={set("developableAreaSqm")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المراحل" : "Phases"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المراحل" : "Phases"}</label>
               <input type="number" value={form.numberOfPhases} onChange={set("numberOfPhases")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2442,21 +2464,21 @@ function ApprovalSubmissionModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "طلب موافقة جديد" : "New Approval Submission"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "طلب موافقة جديد" : "New Approval Submission"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الجهة (إنجليزي) *" : "Authority *"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الجهة (إنجليزي) *" : "Authority *"}</label>
               <input required value={form.authority} onChange={set("authority")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder="e.g. Balady" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الجهة (عربي)" : "Authority (Arabic)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الجهة (عربي)" : "Authority (Arabic)"}</label>
               <input value={form.authorityArabic} onChange={set("authorityArabic")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder="مثال: أمانة الرياض" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "نوع الطلب" : "Submission Type"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "نوع الطلب" : "Submission Type"}</label>
             <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
               {approvalTypes.map((t) => (
                 <option key={t.value} value={t.value}>{t.label[lang]}</option>
@@ -2464,13 +2486,13 @@ function ApprovalSubmissionModal({ lang, projectId, onClose, onSuccess }: {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الرقم المرجعي" : "Reference Number"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الرقم المرجعي" : "Reference Number"}</label>
             <input value={form.referenceNumber} onChange={set("referenceNumber")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2525,11 +2547,11 @@ function InfrastructureModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة بنية تحتية" : "Add Infrastructure"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "إضافة بنية تحتية" : "Add Infrastructure"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الفئة *" : "Category *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الفئة *" : "Category *"}</label>
             <select required value={form.category} onChange={set("category")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
               {categories.map((c) => (
                 <option key={c.value} value={c.value}>{c.label[lang]}</option>
@@ -2538,32 +2560,32 @@ function InfrastructureModal({ lang, projectId, onClose, onSuccess }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المقاول" : "Contractor"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المقاول" : "Contractor"}</label>
               <input value={form.contractor} onChange={set("contractor")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التكلفة التقديرية (ر.س)" : "Est. Cost (SAR)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التكلفة التقديرية (ر.س)" : "Est. Cost (SAR)"}</label>
               <input type="number" value={form.estimatedCostSar} onChange={set("estimatedCostSar")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التاريخ المستهدف" : "Target Date"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التاريخ المستهدف" : "Target Date"}</label>
               <input type="date" value={form.targetDate} onChange={set("targetDate")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الموجة" : "Wave"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الموجة" : "Wave"}</label>
               <input type="number" value={form.wave} onChange={set("wave")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
             <textarea value={form.notes} onChange={set("notes")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2626,16 +2648,16 @@ function InventoryModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة عنصر مخزون" : "Add Inventory Item"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "إضافة عنصر مخزون" : "Add Inventory Item"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "رقم العنصر *" : "Item Number *"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "رقم العنصر *" : "Item Number *"}</label>
               <input required value={form.itemNumber} onChange={set("itemNumber")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder="INV-001" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "نوع المنتج *" : "Product Type *"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "نوع المنتج *" : "Product Type *"}</label>
               <select required value={form.productType} onChange={set("productType")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 {productTypes.map((t) => (
                   <option key={t.value} value={t.value}>{t.label[lang]}</option>
@@ -2645,30 +2667,30 @@ function InventoryModal({ lang, projectId, onClose, onSuccess }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (إنجليزي)" : "Label"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (إنجليزي)" : "Label"}</label>
               <input value={form.productLabel} onChange={set("productLabel")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (عربي)" : "Label (Arabic)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (عربي)" : "Label (Arabic)"}</label>
               <input value={form.productLabelArabic} onChange={set("productLabelArabic")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المساحة (م²)" : "Area (sqm)"}</label>
               <input type="number" value={form.areaSqm} onChange={set("areaSqm")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "السعر الأساسي (ر.س)" : "Base Price (SAR)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "السعر الأساسي (ر.س)" : "Base Price (SAR)"}</label>
               <input type="number" value={form.basePriceSar} onChange={set("basePriceSar")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المرحلة" : "Phase"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المرحلة" : "Phase"}</label>
               <input type="number" value={form.releasePhase} onChange={set("releasePhase")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "قناة البيع" : "Channel"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "قناة البيع" : "Channel"}</label>
             <select value={form.channel} onChange={set("channel")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
               {channels.map((c) => (
                 <option key={c.value} value={c.value}>{c.label[lang]}</option>
@@ -2678,7 +2700,7 @@ function InventoryModal({ lang, projectId, onClose, onSuccess }: {
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2731,21 +2753,21 @@ function PricingRuleModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة قاعدة تسعير" : "Add Pricing Rule"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "إضافة قاعدة تسعير" : "Add Pricing Rule"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (إنجليزي) *" : "Name *"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (إنجليزي) *" : "Name *"}</label>
               <input required value={form.name} onChange={set("name")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
               <input value={form.nameArabic} onChange={set("nameArabic")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "نوع القاعدة *" : "Rule Type *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "نوع القاعدة *" : "Rule Type *"}</label>
             <select required value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
               {ruleTypes.map((t) => (
                 <option key={t.value} value={t.value}>{t.label[lang]}</option>
@@ -2754,22 +2776,22 @@ function PricingRuleModal({ lang, projectId, onClose, onSuccess }: {
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المعامل" : "Factor"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المعامل" : "Factor"}</label>
               <input type="number" step="0.01" value={form.factor} onChange={set("factor")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder={form.type === "BASE_PRICE_PER_SQM" ? "3500" : "1.15"} />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "مبلغ ثابت (ر.س)" : "Fixed (SAR)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "مبلغ ثابت (ر.س)" : "Fixed (SAR)"}</label>
               <input type="number" value={form.fixedAmountSar} onChange={set("fixedAmountSar")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الأولوية" : "Priority"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الأولوية" : "Priority"}</label>
               <input type="number" value={form.priority} onChange={set("priority")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2810,37 +2832,37 @@ function LaunchWaveModal({ lang, projectId, onClose, onSuccess }: {
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="bg-card rounded-lg shadow-xl border border-border w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-border">
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "إضافة موجة إطلاق" : "Add Launch Wave"}</h3>
+          <h3 className="text-lg font-bold text-foreground">{lang === "ar" ? "إضافة موجة إطلاق" : "Add Launch Wave"}</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (إنجليزي)" : "Name"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (إنجليزي)" : "Name"}</label>
               <input value={form.name} onChange={set("name")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder="Wave 1" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاسم (عربي)" : "Name (Arabic)"}</label>
               <input value={form.nameArabic} onChange={set("nameArabic")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder="الموجة الأولى" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التاريخ المخطط" : "Planned Date"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التاريخ المخطط" : "Planned Date"}</label>
               <input type="date" value={form.plannedDate} onChange={set("plannedDate")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "عدد العناصر" : "Inventory Count"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "عدد العناصر" : "Inventory Count"}</label>
               <input type="number" value={form.inventoryCount} onChange={set("inventoryCount")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
             <textarea value={form.notes} onChange={set("notes")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -2853,8 +2875,8 @@ function LaunchWaveModal({ lang, projectId, onClose, onSuccess }: {
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (
     <div>
-      <p className="text-[10px] text-neutral uppercase font-bold">{label}</p>
-      <p className="text-sm text-primary font-medium">{value || "—"}</p>
+      <p className="text-[10px] text-muted-foreground uppercase font-bold">{label}</p>
+      <p className="text-sm text-foreground font-medium">{value || "—"}</p>
     </div>
   );
 }

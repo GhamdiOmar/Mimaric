@@ -4,12 +4,12 @@ import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   ArrowRight,
-  PaperPlaneTilt,
+  Send,
   Clock,
   User,
   ShieldCheck,
-  CaretLeft,
-} from "@phosphor-icons/react";
+  ChevronLeft,
+} from "lucide-react";
 import { Button } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
@@ -191,11 +191,11 @@ export default function TicketDetailPage() {
           {lang === "ar" ? (
             <>
               مركز المساعدة
-              <ArrowRight size={14} />
+              <ArrowRight className="h-3.5 w-3.5" />
             </>
           ) : (
             <>
-              <CaretLeft size={14} />
+              <ChevronLeft className="h-3.5 w-3.5" />
               Help Center
             </>
           )}
@@ -218,11 +218,11 @@ export default function TicketDetailPage() {
 
           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
             <span className="flex items-center gap-1">
-              <User size={12} />
+              <User className="h-3 w-3" />
               {ticket.user?.name ?? ticket.user?.email}
             </span>
             <span className="flex items-center gap-1">
-              <Clock size={12} />
+              <Clock className="h-3 w-3" />
               {formatDate(ticket.createdAt)}
             </span>
             <span className={cn(
@@ -235,7 +235,7 @@ export default function TicketDetailPage() {
             </span>
             {ticket.assignee && (
               <span className="flex items-center gap-1">
-                <ShieldCheck size={12} />
+                <ShieldCheck className="h-3 w-3" />
                 {lang === "ar" ? "المسؤول:" : "Assigned:"} {ticket.assignee.name ?? ticket.assignee.email}
               </span>
             )}
@@ -363,7 +363,7 @@ export default function TicketDetailPage() {
                 className="self-end"
                
               >
-                <PaperPlaneTilt size={16} className={lang === "ar" ? "rotate-180" : ""} />
+                <Send className={`h-4 w-4 ${lang === "ar" ? "rotate-180" : ""}`} />
                 <span className="ms-1.5 text-sm">
                   {sending
                     ? (lang === "ar" ? "إرسال..." : "Sending...")

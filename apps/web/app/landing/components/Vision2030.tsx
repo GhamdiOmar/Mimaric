@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  CloudArrowUp,
-  ShieldCheck,
-  TrendUp,
-} from "@phosphor-icons/react";
+import { CloudUpload, ShieldCheck, TrendingUp } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function Vision2030({ lang }: { lang: "ar" | "en" }) {
@@ -12,7 +8,7 @@ export default function Vision2030({ lang }: { lang: "ar" | "en" }) {
 
   const pillars = [
     {
-      icon: CloudArrowUp,
+      icon: CloudUpload,
       title: t.digitalTransformation,
       desc: t.digitalTransformationDesc,
     },
@@ -22,7 +18,7 @@ export default function Vision2030({ lang }: { lang: "ar" | "en" }) {
       desc: t.regulatoryComplianceDesc,
     },
     {
-      icon: TrendUp,
+      icon: TrendingUp,
       title: t.economicDiversification,
       desc: t.economicDiversificationDesc,
     },
@@ -33,16 +29,12 @@ export default function Vision2030({ lang }: { lang: "ar" | "en" }) {
       id="vision2030"
       className="relative overflow-hidden mesh-bg py-20 lg:py-28"
     >
-      {/* Floating gradient blobs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-secondary/10 blur-[100px] animate-mesh-drift" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full bg-accent/5 blur-[80px] animate-mesh-drift" style={{ animationDelay: "-7s" }} />
-
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Vision 2030 badge */}
         <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-secondary/30 bg-secondary/10 px-4 py-1.5">
-            <div className="h-2 w-2 rounded-full bg-green-bright" />
-            <span className="text-sm font-medium text-green-bright">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5">
+            <div className="h-2 w-2 rounded-full bg-primary" />
+            <span className="text-sm font-medium text-primary">
               {t.vision2030}
             </span>
           </div>
@@ -60,10 +52,10 @@ export default function Vision2030({ lang }: { lang: "ar" | "en" }) {
           {pillars.map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="group glass rounded-2xl p-8 transition-all duration-300 hover:border-secondary/30 hover:-translate-y-1"
+              className="group glass rounded-2xl p-8 transition-colors duration-300 hover:border-primary/30"
             >
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary/10 transition-colors group-hover:bg-secondary/20">
-                <Icon size={28} weight="duotone" className="text-green-bright" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 transition-colors group-hover:bg-primary/20">
+                <Icon className="h-6 w-6 text-primary" />
               </div>
               <h3 className="mt-6 text-xl font-bold text-white">{title}</h3>
               <p className="mt-3 leading-relaxed text-white/60">{desc}</p>

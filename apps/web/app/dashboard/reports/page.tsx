@@ -2,21 +2,29 @@
 
 import * as React from "react";
 import {
-  FileText,
-  DownloadSimple,
-  Spinner,
-  CurrencyCircleDollar,
-  Buildings,
+  Download,
+  Loader2,
+  DollarSign,
+  Building2,
   Receipt,
   Wrench,
-  Table,
+  Sheet,
   MapPin,
   HardHat,
   Rocket,
   Stamp,
   Tag,
-} from "@phosphor-icons/react";
-import { Button, Badge } from "@repo/ui";
+  type LucideIcon,
+} from "lucide-react";
+import {
+  Button,
+  Badge,
+  PageIntro,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@repo/ui";
 import {
   getRevenueReport,
   getOccupancyReport,
@@ -51,14 +59,23 @@ function getDefaultDateRange() {
   };
 }
 
-const REPORTS = [
+interface ReportDef {
+  id: string;
+  name: string;
+  nameEn: string;
+  desc: string;
+  type: string;
+  icon: LucideIcon;
+}
+
+const REPORTS: ReportDef[] = [
   {
     id: "revenue",
     name: "تقرير الإيرادات",
     nameEn: "Revenue Report",
     desc: "إجمالي الإيرادات من الإيجارات والمبيعات مع التوزيع الشهري",
     type: "مالي",
-    icon: CurrencyCircleDollar,
+    icon: DollarSign,
   },
   {
     id: "occupancy",
@@ -66,7 +83,7 @@ const REPORTS = [
     nameEn: "Occupancy Report",
     desc: "معدلات الإشغال حسب المشروع والوحدات الشاغرة والمؤجرة",
     type: "تشغيلي",
-    icon: Buildings,
+    icon: Building2,
   },
   {
     id: "collection",
@@ -572,67 +589,87 @@ export default function ReportsPage() {
     }
   }
 
+  const datePickerActions = (
+    <div className="flex items-center gap-3">
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => setStartDate(e.target.value)}
+        className="border border-border rounded-md px-3 py-1.5 text-sm text-foreground bg-card"
+      />
+      <span className="text-muted-foreground text-sm">إلى</span>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => setEndDate(e.target.value)}
+        className="border border-border rounded-md px-3 py-1.5 text-sm text-foreground bg-card"
+      />
+    </div>
+  );
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
-        <div>
-          <h1 className="text-2xl font-bold text-primary font-primary">التقارير والتحليلات</h1>
-          <p className="text-sm text-neutral mt-1 font-primary">عرض وتصدير التقارير التفصيلية لأداء المحفظة العقارية.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-card"
-          />
-          <span className="text-neutral text-sm">إلى</span>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="border border-border rounded-md px-3 py-1.5 text-sm text-primary bg-card"
-          />
-        </div>
-      </div>
+      <PageIntro
+        title="التقارير والتحليلات"
+        description="عرض وتصدير التقارير التفصيلية لأداء المحفظة العقارية."
+        actions={datePickerActions}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {REPORTS.map((report) => (
-          <div key={report.id} className="bg-card rounded-md shadow-card border border-border p-6 hover:shadow-raised hover:border-primary/20 transition-all group">
-            <div className="flex items-start justify-between mb-4">
-              <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
-                <report.icon size={24} />
-              </div>
-              <Badge variant="draft" className="text-[10px] font-bold">{report.type}</Badge>
-            </div>
-            <h3 className="text-sm font-bold text-primary font-primary">{report.name}</h3>
-            <p className="text-[10px] text-neutral font-primary mt-1">{report.desc}</p>
-            <div className="mt-4 pt-4 border-t border-border flex items-center justify-end gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                className="gap-2 text-xs hover:bg-secondary/10 hover:border-secondary/50 hover:text-secondary hover:shadow-sm hover:-translate-y-0.5 transition-all"
-               
-                onClick={() => handleExcel(report.id)}
-                disabled={loadingId !== null}
-              >
-                {loadingId === report.id + "-excel" ? <Spinner size={14} className="animate-spin" /> : <Table size={14} />}
-                Excel
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="gap-2 text-xs hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:shadow-sm hover:-translate-y-0.5 transition-all"
-               
-                onClick={() => handlePDF(report.id)}
-                disabled={loadingId !== null}
-              >
-                {loadingId === report.id + "-pdf" ? <Spinner size={14} className="animate-spin" /> : <DownloadSimple size={14} />}
-                PDF
-              </Button>
-            </div>
-          </div>
-        ))}
+        {REPORTS.map((report) => {
+          const Icon = report.icon;
+          return (
+            <Card
+              key={report.id}
+              className="hover:shadow-lg hover:border-primary/20 transition-all group"
+            >
+              <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
+                <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <Badge variant="draft" className="text-[10px] font-bold">
+                  {report.type}
+                </Badge>
+              </CardHeader>
+              <CardContent className="pb-0">
+                <h3 className="text-sm font-bold text-foreground">{report.name}</h3>
+                <p className="text-[10px] text-muted-foreground mt-1">{report.desc}</p>
+              </CardContent>
+              <CardFooter className="justify-end gap-2 border-t border-border mt-4">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  style={{ display: "inline-flex" }}
+                  className="gap-2 text-xs hover:bg-secondary/10 hover:border-secondary/50 hover:text-secondary hover:shadow-sm hover:-translate-y-0.5 transition-all"
+                  onClick={() => handleExcel(report.id)}
+                  disabled={loadingId !== null}
+                >
+                  {loadingId === report.id + "-excel" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sheet className="h-3.5 w-3.5" />
+                  )}
+                  Excel
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  style={{ display: "inline-flex" }}
+                  className="gap-2 text-xs hover:bg-destructive/10 hover:border-destructive/50 hover:text-destructive hover:shadow-sm hover:-translate-y-0.5 transition-all"
+                  onClick={() => handlePDF(report.id)}
+                  disabled={loadingId !== null}
+                >
+                  {loadingId === report.id + "-pdf" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  PDF
+                </Button>
+              </CardFooter>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

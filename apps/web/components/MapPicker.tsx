@@ -17,7 +17,7 @@ interface MapInnerProps {
 const MapInner = dynamic(() => import("./MapInner"), {
   ssr: false,
   loading: () => (
-    <div className="bg-muted/30 rounded-md flex items-center justify-center text-neutral text-sm" style={{ height: 300 }}>
+    <div className="bg-muted/30 rounded-md flex items-center justify-center text-muted-foreground text-sm" style={{ height: 300 }}>
       جاري تحميل الخريطة...
     </div>
   ),

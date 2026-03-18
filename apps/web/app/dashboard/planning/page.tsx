@@ -5,28 +5,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Plus,
-  MagnifyingGlass,
+  Search,
   Compass,
   MapPin,
-  CalendarBlank,
-  FunnelSimple,
-  Stack,
-  CheckCircle,
+  Calendar,
+  Filter,
+  Layers,
+  CheckCircle2,
   Clock,
   Archive,
-  PencilSimple,
+  Pencil,
   Eye,
-  Trash,
-} from "@phosphor-icons/react";
+  Trash2,
+  Download,
+} from "lucide-react";
+import { PageIntro, Button } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { getPlanningWorkspaces, createPlanningWorkspace, deletePlanningWorkspace } from "../../actions/planning-workspaces";
 import { getAcquiredLands } from "../../actions/land";
 
 const STATUS_CONFIG: Record<string, { label: { ar: string; en: string }; color: string; icon: any }> = {
-  DRAFT: { label: { ar: "مسودة", en: "Draft" }, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300", icon: PencilSimple },
-  ACTIVE: { label: { ar: "نشط", en: "Active" }, color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Stack },
+  DRAFT: { label: { ar: "مسودة", en: "Draft" }, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300", icon: Pencil },
+  ACTIVE: { label: { ar: "نشط", en: "Active" }, color: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300", icon: Layers },
   UNDER_REVIEW: { label: { ar: "قيد المراجعة", en: "Under Review" }, color: "bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300", icon: Clock },
-  APPROVED: { label: { ar: "معتمد", en: "Approved" }, color: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300", icon: CheckCircle },
+  APPROVED: { label: { ar: "معتمد", en: "Approved" }, color: "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300", icon: CheckCircle2 },
   ARCHIVED: { label: { ar: "مؤرشف", en: "Archived" }, color: "bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-400", icon: Archive },
 };
 
@@ -94,33 +96,36 @@ export default function PlanningWorkspacesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
-            <Compass size={28} weight="duotone" className="text-secondary" />
-            {lang === "ar" ? "التخطيط" : "Planning OS"}
-          </h1>
-          <p className="text-sm text-neutral mt-1">
-            {lang === "ar"
-              ? "إدارة مساحات التخطيط والسيناريوهات والامتثال ودراسات الجدوى"
-              : "Manage planning workspaces, scenarios, compliance, and feasibility studies"}
-          </p>
-        </div>
-        <button
-          onClick={async () => {
-            setShowCreate(true);
-            try {
-              const l = await getAcquiredLands();
-              setLands(l);
-            } catch { /* empty */ }
-          }}
-          className="flex items-center gap-2 bg-secondary text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-secondary/90 transition-colors"
-          style={{ display: "inline-flex" }}
-        >
-          <Plus size={18} weight="bold" />
-          {lang === "ar" ? "مساحة عمل جديدة" : "New Workspace"}
-        </button>
-      </div>
+      <PageIntro
+        title={lang === "ar" ? "التخطيط" : "Planning"}
+        description={
+          lang === "ar"
+            ? "التخطيط العمراني وتقسيم الأراضي وتقييم الجدوى"
+            : "Urban planning, subdivision, and feasibility assessment"
+        }
+        actions={
+          <>
+            <Button
+              className="gap-2"
+              onClick={async () => {
+                setShowCreate(true);
+                try {
+                  const l = await getAcquiredLands();
+                  setLands(l);
+                } catch { /* empty */ }
+              }}
+              style={{ display: "inline-flex" }}
+            >
+              <Plus className="h-4 w-4" />
+              {lang === "ar" ? "مساحة عمل جديدة" : "New Workspace"}
+            </Button>
+            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }}>
+              <Download className="h-4 w-4" />
+              {lang === "ar" ? "تصدير" : "Export"}
+            </Button>
+          </>
+        }
+      />
 
       {/* Status Filter Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -134,7 +139,7 @@ export default function PlanningWorkspacesPage() {
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
               statusFilter === tab.key
                 ? "bg-secondary text-white"
-                : "bg-muted text-neutral hover:bg-muted/80"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
             style={{ display: "inline-flex" }}
           >
@@ -150,7 +155,7 @@ export default function PlanningWorkspacesPage() {
 
       {/* Search */}
       <div className="relative">
-        <MagnifyingGlass size={18} className="absolute start-3 top-1/2 -translate-y-1/2 text-neutral" />
+        <Search className="h-[18px] w-[18px] absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           value={search}
@@ -173,9 +178,9 @@ export default function PlanningWorkspacesPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 bg-card border border-border rounded-xl">
-          <Compass size={48} className="mx-auto text-neutral/40 mb-3" />
-          <p className="text-neutral font-medium">{lang === "ar" ? "لا توجد مساحات عمل" : "No workspaces found"}</p>
-          <p className="text-sm text-neutral/60 mt-1">
+          <Compass className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-muted-foreground font-medium">{lang === "ar" ? "لا توجد مساحات عمل" : "No workspaces found"}</p>
+          <p className="text-sm text-muted-foreground/60 mt-1">
             {lang === "ar" ? "ابدأ بإنشاء مساحة عمل تخطيطية جديدة" : "Start by creating a new planning workspace"}
           </p>
         </div>
@@ -200,19 +205,19 @@ export default function PlanningWorkspacesPage() {
                       {lang === "ar" ? (ws.nameArabic || ws.name) : ws.name}
                     </h3>
                     {ws.description && (
-                      <p className="text-xs text-neutral mt-0.5 line-clamp-1">{ws.description}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{ws.description}</p>
                     )}
                   </div>
                   <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConf.color}`}>
-                    <StatusIcon size={12} />
+                    <StatusIcon className="h-3 w-3" />
                     {statusConf.label[lang]}
                   </span>
                 </div>
 
                 {/* Site info */}
                 {(meta.city || meta.region) && (
-                  <div className="flex items-center gap-1.5 text-xs text-neutral mb-3">
-                    <MapPin size={14} />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-3">
+                    <MapPin className="h-3.5 w-3.5" />
                     <span>{[meta.district, meta.city, meta.region].filter(Boolean).join(", ")}</span>
                   </div>
                 )}
@@ -221,29 +226,29 @@ export default function PlanningWorkspacesPage() {
                 <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-border">
                   <div className="text-center">
                     <p className="text-lg font-bold text-primary">{ws._count?.scenarios ?? 0}</p>
-                    <p className="text-[10px] text-neutral">{lang === "ar" ? "سيناريوهات" : "Scenarios"}</p>
+                    <p className="text-[10px] text-muted-foreground">{lang === "ar" ? "سيناريوهات" : "Scenarios"}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-lg font-bold text-secondary">{approvedScenarios}</p>
-                    <p className="text-[10px] text-neutral">{lang === "ar" ? "معتمد" : "Approved"}</p>
+                    <p className="text-[10px] text-muted-foreground">{lang === "ar" ? "معتمد" : "Approved"}</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{ws._count?.spatialStack ?? 0}</p>
-                    <p className="text-[10px] text-neutral">{lang === "ar" ? "طبقات" : "Stack"}</p>
+                    <p className="text-lg font-bold text-primary">{ws._count?.spatialLayers ?? 0}</p>
+                    <p className="text-[10px] text-muted-foreground">{lang === "ar" ? "طبقات" : "Layers"}</p>
                   </div>
                 </div>
 
                 {/* Baseline indicator */}
                 {baselineScenario && (
                   <div className="mt-3 px-2 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-md flex items-center gap-1.5 text-xs text-green-700 dark:text-green-300">
-                    <CheckCircle size={14} weight="fill" />
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                     {lang === "ar" ? `خط أساس: ${baselineScenario.name}` : `Baseline: ${baselineScenario.name}`}
                   </div>
                 )}
 
                 {/* Date */}
-                <div className="flex items-center gap-1 text-[10px] text-neutral/60 mt-3">
-                  <CalendarBlank size={12} />
+                <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60 mt-3">
+                  <Calendar className="h-3 w-3" />
                   {new Date(ws.updatedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-CA")}
                 </div>
               </Link>
@@ -317,7 +322,7 @@ export default function PlanningWorkspacesPage() {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm text-neutral hover:text-primary transition-colors"
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                 style={{ display: "inline-flex" }}
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}

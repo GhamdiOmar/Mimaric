@@ -5,17 +5,17 @@ import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Spinner,
-  CheckCircle,
+  Loader2,
+  CheckCircle2,
   Clock,
-  Warning,
-  PencilSimple,
-  UserCircle,
-  Buildings,
-  CalendarBlank,
-  CurrencyCircleDollar,
+  AlertTriangle,
+  Pencil,
+  CircleUser,
+  Building2,
+  Calendar,
+  CircleDollarSign,
   X,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import { Button, Badge, SARAmount } from "@repo/ui";
 import {
   getMaintenanceRequest,
@@ -47,9 +47,9 @@ const statusLabels: Record<string, { ar: string; en: string; variant: string }> 
 };
 
 const priorityLabels: Record<string, { ar: string; en: string; color: string }> = {
-  LOW: { ar: "منخفض", en: "Low", color: "text-neutral" },
+  LOW: { ar: "منخفض", en: "Low", color: "text-muted-foreground" },
   MEDIUM: { ar: "متوسط", en: "Medium", color: "text-primary" },
-  HIGH: { ar: "عالي", en: "High", color: "text-accent" },
+  HIGH: { ar: "عالي", en: "High", color: "text-amber-500" },
   URGENT: { ar: "عاجل", en: "Urgent", color: "text-red-600" },
 };
 
@@ -146,17 +146,17 @@ export default function MaintenanceDetailPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <Spinner className="animate-spin text-primary" size={32} />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!request) {
-    return <div className="text-center py-20 text-neutral">{lang === "ar" ? "لم يتم العثور على الطلب" : "Request not found"}</div>;
+    return <div className="text-center py-20 text-muted-foreground">{lang === "ar" ? "لم يتم العثور على الطلب" : "Request not found"}</div>;
   }
 
   const status = statusLabels[request.status] ?? { ar: request.status, en: request.status, variant: "draft" };
-  const priority = priorityLabels[request.priority] ?? { ar: request.priority, en: request.priority, color: "text-neutral" };
+  const priority = priorityLabels[request.priority] ?? { ar: request.priority, en: request.priority, color: "text-muted-foreground" };
   const cat = categoryLabels[request.category] ?? { ar: request.category, en: request.category };
   const validTransitions = VALID_TRANSITIONS[request.status] ?? [];
   const isOverdue = request.dueDate && new Date(request.dueDate) < new Date() && !["RESOLVED", "CLOSED"].includes(request.status);
@@ -167,7 +167,7 @@ export default function MaintenanceDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
-          <ArrowLeft size={18} />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
@@ -179,12 +179,12 @@ export default function MaintenanceDetailPage() {
             )}
             {isOverdue && (
               <Badge variant="overdue" className="text-[10px] gap-1">
-                <Warning size={10} />
+                <AlertTriangle className="h-2.5 w-2.5" />
                 {lang === "ar" ? "متأخر" : "Overdue"}
               </Badge>
             )}
           </div>
-          <p className="text-xs text-neutral mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {cat[lang]} • {request.unit?.number} — {request.unit?.building?.name}
             {request.unit?.building?.project?.name && ` (${request.unit.building.project.name})`}
           </p>
@@ -195,14 +195,14 @@ export default function MaintenanceDetailPage() {
       {validTransitions.length > 0 && (() => {
         const statusButtonStyles: Record<string, string> = {
           ASSIGNED: "bg-info/10 text-info border border-info/30 hover:bg-info/20",
-          IN_PROGRESS: "bg-accent/10 text-amber-700 border border-accent/30 hover:bg-accent/20",
+          IN_PROGRESS: "bg-amber-500/10 text-amber-700 border border-amber-500/30 hover:bg-amber-500/20",
           ON_HOLD: "bg-warning/10 text-warning border border-warning/30 hover:bg-warning/20",
           RESOLVED: "bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20",
           CLOSED: "bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20",
         };
         return (
           <div className="bg-card rounded-md shadow-card border border-border p-4 flex items-center gap-3 flex-wrap">
-            <span className="text-xs text-neutral font-bold">{lang === "ar" ? "تحويل الحالة:" : "Transition status:"}</span>
+            <span className="text-xs text-muted-foreground font-bold">{lang === "ar" ? "تحويل الحالة:" : "Transition status:"}</span>
             {validTransitions.map((nextStatus: string) => {
               const nextLabel = statusLabels[nextStatus] ?? { ar: nextStatus, en: nextStatus };
               return (
@@ -216,7 +216,7 @@ export default function MaintenanceDetailPage() {
                  
                   title={nextLabel[lang === "ar" ? "en" : "ar"]}
                 >
-                  {saving ? <Spinner size={12} className="animate-spin" /> : <CheckCircle size={14} />}
+                  {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                   {nextLabel[lang]}
                 </Button>
               );
@@ -229,7 +229,7 @@ export default function MaintenanceDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Details Card */}
         <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-4">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-neutral">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
             {lang === "ar" ? "تفاصيل الطلب" : "Request Details"}
           </h4>
           <div className="grid grid-cols-2 gap-4">
@@ -257,7 +257,7 @@ export default function MaintenanceDetailPage() {
           </div>
           {request.description && (
             <div className="pt-3 border-t border-border">
-              <p className="text-[10px] font-bold uppercase text-neutral mb-1">{lang === "ar" ? "الوصف" : "Description"}</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">{lang === "ar" ? "الوصف" : "Description"}</p>
               <p className="text-sm text-primary">{request.description}</p>
             </div>
           )}
@@ -268,26 +268,26 @@ export default function MaintenanceDetailPage() {
           {/* Assigned To */}
           <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                <UserCircle size={14} />
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <CircleUser className="h-3.5 w-3.5" />
                 {lang === "ar" ? "المُعيَّن" : "Assigned To"}
               </h4>
               <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)}>
-                <PencilSimple size={14} />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
             {request.assignedTo ? (
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <UserCircle size={24} />
+                  <CircleUser className="h-6 w-6" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-primary">{request.assignedTo.name}</p>
-                  <p className="text-[10px] text-neutral">{request.assignedTo.email}</p>
+                  <p className="text-[10px] text-muted-foreground">{request.assignedTo.email}</p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-neutral">{lang === "ar" ? "لم يتم التعيين بعد" : "Not assigned"}</p>
+              <p className="text-sm text-muted-foreground">{lang === "ar" ? "لم يتم التعيين بعد" : "Not assigned"}</p>
             )}
             {showAssign && (
               <div className="pt-3 border-t border-border space-y-2">
@@ -308,12 +308,12 @@ export default function MaintenanceDetailPage() {
           {/* Cost Section */}
           <div className="bg-card rounded-md shadow-card border border-border p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                <CurrencyCircleDollar size={14} />
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <CircleDollarSign className="h-3.5 w-3.5" />
                 {lang === "ar" ? "التكاليف" : "Costs"}
               </h4>
               <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)}>
-                <PencilSimple size={14} />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -342,20 +342,20 @@ export default function MaintenanceDetailPage() {
               <div className="pt-3 border-t border-border space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-neutral">{lang === "ar" ? "التكلفة الفعلية" : "Actual Cost"}</label>
+                    <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "التكلفة الفعلية" : "Actual Cost"}</label>
                     <input type="number" value={actualCost} onChange={(e) => setActualCost(e.target.value)} className={inputClass} placeholder="0.00" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-neutral">{lang === "ar" ? "ساعات العمل" : "Labor Hours"}</label>
+                    <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "ساعات العمل" : "Labor Hours"}</label>
                     <input type="number" value={laborHours} onChange={(e) => setLaborHours(e.target.value)} className={inputClass} placeholder="0" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+                  <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputClass} h-16 py-2`} />
                 </div>
                 <Button size="sm" onClick={handleSaveCost} disabled={saving} className="gap-2">
-                  {saving && <Spinner size={12} className="animate-spin" />}
+                  {saving && <Loader2 className="h-3 w-3 animate-spin" />}
                   {lang === "ar" ? "حفظ" : "Save"}
                 </Button>
               </div>
@@ -367,7 +367,7 @@ export default function MaintenanceDetailPage() {
       {/* Notes */}
       {request.notes && !editingCost && (
         <div className="bg-card rounded-md shadow-card border border-border p-5">
-          <h4 className="text-xs font-bold uppercase tracking-widest text-neutral mb-2">
+          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">
             {lang === "ar" ? "ملاحظات" : "Notes"}
           </h4>
           <p className="text-sm text-primary whitespace-pre-wrap">{request.notes}</p>
@@ -377,10 +377,10 @@ export default function MaintenanceDetailPage() {
       {/* Preventive Plan Link */}
       {request.preventivePlan && (
         <div className="bg-secondary/5 border border-secondary/20 rounded-md p-4 flex items-center gap-3">
-          <CalendarBlank size={20} className="text-secondary" />
+          <Calendar className="h-5 w-5 text-secondary" />
           <div className="flex-1">
             <p className="text-sm font-bold text-primary">{request.preventivePlan.title}</p>
-            <p className="text-[10px] text-neutral">{lang === "ar" ? "هذا الطلب جزء من خطة صيانة وقائية" : "This request is part of a preventive plan"}</p>
+            <p className="text-[10px] text-muted-foreground">{lang === "ar" ? "هذا الطلب جزء من خطة صيانة وقائية" : "This request is part of a preventive plan"}</p>
           </div>
         </div>
       )}
@@ -391,7 +391,7 @@ export default function MaintenanceDetailPage() {
 function InfoRow({ label, value }: { label: string; value: any }) {
   return (
     <div>
-      <p className="text-[10px] text-neutral uppercase font-bold">{label}</p>
+      <p className="text-[10px] text-muted-foreground uppercase font-bold">{label}</p>
       <p className="text-sm text-primary font-medium mt-0.5">{value || "—"}</p>
     </div>
   );

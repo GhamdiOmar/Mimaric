@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, CheckCircle, XCircle, ArrowUp } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  ArrowUp,
+} from "lucide-react";
 import { Button, Badge } from "@repo/ui";
 import { useLanguage } from "../../../../../../components/LanguageProvider";
 import { PaginationControls } from "../../../../../../components/pagination-controls";
@@ -103,7 +109,7 @@ export default function PriceChangeRequestsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -112,7 +118,7 @@ export default function PriceChangeRequestsPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)} style={{ display: "inline-flex" }}>
-          <ArrowLeft size={16} /> {t.back}
+          <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
         <h1 className="text-2xl font-bold">{t.title}</h1>
       </div>
@@ -157,10 +163,10 @@ export default function PriceChangeRequestsPage() {
                       {(req.status === "PENDING_PRICE_CHANGE" || req.status === "ESCALATED_PRICE_CHANGE") && (
                         <div className="flex gap-1">
                           <Button size="sm" variant="ghost" onClick={() => handleReview(req.id, "APPROVED_PRICE_CHANGE")} style={{ display: "inline-flex" }}>
-                            <CheckCircle size={16} className="text-green-600" />
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => handleReview(req.id, "REJECTED_PRICE_CHANGE")} style={{ display: "inline-flex" }}>
-                            <XCircle size={16} className="text-red-600" />
+                            <XCircle className="h-4 w-4 text-red-600" />
                           </Button>
                         </div>
                       )}

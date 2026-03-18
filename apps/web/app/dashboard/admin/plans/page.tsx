@@ -6,16 +6,16 @@ import {
   ArrowLeft,
   ArrowRight,
   Plus,
-  PencilSimple,
+  Pencil,
   Eye,
-  EyeSlash,
+  EyeOff,
   X,
-  FloppyDisk,
-  CurrencyDollar,
-  SortAscending,
-  Warning,
-  CheckCircle,
-} from "@phosphor-icons/react";
+  Save,
+  CircleDollarSign,
+  ArrowUpDown,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 import { Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllPlans, adminUpsertPlan } from "../../../actions/billing";
@@ -327,7 +327,7 @@ export default function AdminPlansPage() {
             onClick={openCreate}
            
           >
-            <Plus className="w-4 h-4" weight="bold" />
+            <Plus className="w-4 h-4" />
             <span className="ms-1.5">{t.addPlan}</span>
           </Button>
         </div>
@@ -343,9 +343,9 @@ export default function AdminPlansPage() {
           }`}
         >
           {feedback.type === "success" ? (
-            <CheckCircle className="w-4 h-4 flex-shrink-0" weight="fill" />
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
           ) : (
-            <Warning className="w-4 h-4 flex-shrink-0" weight="fill" />
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
           )}
           {feedback.message}
         </div>
@@ -354,7 +354,7 @@ export default function AdminPlansPage() {
       {/* Plans table */}
       {plans.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <CurrencyDollar className="w-12 h-12 text-muted-foreground/40 mb-4" />
+          <CircleDollarSign className="w-12 h-12 text-muted-foreground/40 mb-4" />
           <h3 className="text-lg font-semibold text-foreground">
             {t.noPlans}
           </h3>
@@ -366,7 +366,7 @@ export default function AdminPlansPage() {
             onClick={openCreate}
            
           >
-            <Plus className="w-4 h-4" weight="bold" />
+            <Plus className="w-4 h-4" />
             <span className="ms-1.5">{t.addPlan}</span>
           </Button>
         </div>
@@ -459,12 +459,12 @@ export default function AdminPlansPage() {
                     <TableCell className="text-center">
                       {plan.isPublic ? (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                          <Eye className="w-3.5 h-3.5" weight="bold" />
+                          <Eye className="w-3.5 h-3.5" />
                           {t.public}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground">
-                          <EyeSlash className="w-3.5 h-3.5" />
+                          <EyeOff className="w-3.5 h-3.5" />
                           {t.draft}
                         </span>
                       )}
@@ -478,7 +478,7 @@ export default function AdminPlansPage() {
                         onClick={() => openEdit(plan)}
 
                       >
-                        <PencilSimple className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                         <span className="ms-1">{t.edit}</span>
                       </Button>
                     </TableCell>
@@ -528,14 +528,12 @@ export default function AdminPlansPage() {
                   }`}
                 >
                   {feedback.type === "success" ? (
-                    <CheckCircle
+                    <CheckCircle2
                       className="w-4 h-4 flex-shrink-0"
-                      weight="fill"
                     />
                   ) : (
-                    <Warning
+                    <AlertTriangle
                       className="w-4 h-4 flex-shrink-0"
-                      weight="fill"
                     />
                   )}
                   {feedback.message}
@@ -618,7 +616,7 @@ export default function AdminPlansPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FieldGroup label={`${t.monthlyPrice} (${t.sar})`}>
                   <div className="relative">
-                    <CurrencyDollar className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
                       min="0"
@@ -634,7 +632,7 @@ export default function AdminPlansPage() {
                 </FieldGroup>
                 <FieldGroup label={`${t.annualPrice} (${t.sar})`}>
                   <div className="relative">
-                    <CurrencyDollar className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
                       min="0"
@@ -664,7 +662,7 @@ export default function AdminPlansPage() {
                 </FieldGroup>
                 <FieldGroup label={t.sortOrder}>
                   <div className="relative">
-                    <SortAscending className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <ArrowUpDown className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                       type="number"
                       min="0"
@@ -685,7 +683,7 @@ export default function AdminPlansPage() {
                   {form.isPublic ? (
                     <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
                   ) : (
-                    <EyeSlash className="w-5 h-5 text-muted-foreground" />
+                    <EyeOff className="w-5 h-5 text-muted-foreground" />
                   )}
                   <div>
                     <p className="text-sm font-medium text-foreground">
@@ -747,7 +745,7 @@ export default function AdminPlansPage() {
                   </>
                 ) : (
                   <>
-                    <FloppyDisk className="w-4 h-4" weight="bold" />
+                    <Save className="w-4 h-4" />
                     <span className="ms-1.5">{t.save}</span>
                   </>
                 )}

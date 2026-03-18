@@ -4,9 +4,16 @@ import { useLanguage } from "../../../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft, Spinner, Plus, Trash, GridFour, RoadHorizon as RoadIcon,
-  Lightning, Drop, TreeStructure,
-} from "@phosphor-icons/react";
+  ArrowLeft,
+  Loader2,
+  Plus,
+  Trash2,
+  Grid2x2,
+  Route as RoadIcon,
+  Zap,
+  Droplet,
+  Network,
+} from "lucide-react";
 import { Button, Badge } from "@repo/ui";
 import {
   getSubdivisionPlanDetail,
@@ -35,10 +42,10 @@ const UTILITY_TYPE_LABELS: Record<string, { ar: string; en: string }> = {
 };
 
 const PLOT_STATUS_CONFIG: Record<string, { ar: string; en: string; color: string }> = {
-  PLANNED: { ar: "مخطط", en: "Planned", color: "bg-muted text-neutral" },
+  PLANNED: { ar: "مخطط", en: "Planned", color: "bg-muted text-muted-foreground" },
   APPROVED: { ar: "معتمد", en: "Approved", color: "bg-info/15 text-info" },
   AVAILABLE_FOR_SALE: { ar: "متاح للبيع", en: "Available", color: "bg-secondary/15 text-secondary" },
-  RESERVED: { ar: "محجوز", en: "Reserved", color: "bg-accent/15 text-amber-700" },
+  RESERVED: { ar: "محجوز", en: "Reserved", color: "bg-amber-500/15 text-amber-700" },
   SOLD: { ar: "مباع", en: "Sold", color: "bg-primary/15 text-primary" },
   HELD: { ar: "محتجز", en: "Held", color: "bg-warning/15 text-warning" },
 };
@@ -68,8 +75,8 @@ export default function SubdivisionPlanDetailPage() {
     finally { setLoading(false); }
   }
 
-  if (loading) return <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>;
-  if (!plan) return <div className="text-center py-20 text-neutral">{lang === "ar" ? "لم يتم العثور على المخطط" : "Subdivision plan not found"}</div>;
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!plan) return <div className="text-center py-20 text-muted-foreground">{lang === "ar" ? "لم يتم العثور على المخطط" : "Subdivision plan not found"}</div>;
 
   const subTabs = [
     { key: "plots" as const, label: { ar: `القطع (${plan.plots?.length ?? 0})`, en: `Plots (${plan.plots?.length ?? 0})` } },
@@ -83,11 +90,11 @@ export default function SubdivisionPlanDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)}>
-          <ArrowLeft size={18} />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-primary">{plan.name}</h1>
-          <p className="text-sm text-neutral mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {lang === "ar" ? "مخطط تقسيم" : "Subdivision Plan"} · v{plan.version}
             {plan.nameArabic && ` · ${plan.nameArabic}`}
           </p>
@@ -104,7 +111,7 @@ export default function SubdivisionPlanDetailPage() {
           { label: lang === "ar" ? "القابلة للتطوير" : "Developable", value: plan.developableAreaSqm ? `${fmt(plan.developableAreaSqm)} م²` : "—" },
         ].map((item, i) => (
           <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-            <span className="text-[10px] font-bold uppercase text-neutral">{item.label}</span>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">{item.label}</span>
             <p className="text-lg font-bold text-primary mt-1">{item.value}</p>
           </div>
         ))}
@@ -118,7 +125,7 @@ export default function SubdivisionPlanDetailPage() {
               key={tab.key}
               onClick={() => setSubTab(tab.key)}
               className={`px-5 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${
-                subTab === tab.key ? "border-primary text-primary" : "border-transparent text-neutral hover:text-primary"
+                subTab === tab.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-primary"
               }`}
             >
               {tab.label[lang]}
@@ -133,12 +140,12 @@ export default function SubdivisionPlanDetailPage() {
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "القطع" : "Plots"}</h4>
                 <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddPlot(true)}>
-                  <Plus size={14} />{lang === "ar" ? "إضافة قطعة" : "Add Plot"}
+                  <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة قطعة" : "Add Plot"}
                 </Button>
               </div>
               {plan.plots.length === 0 ? (
-                <div className="text-center py-8 text-neutral">
-                  <GridFour size={32} className="mx-auto mb-2 opacity-30" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Grid2x2 className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">{lang === "ar" ? "لا توجد قطع" : "No plots"}</p>
                 </div>
               ) : (
@@ -146,11 +153,11 @@ export default function SubdivisionPlanDetailPage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-muted/30 border-b border-border">
-                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-neutral">#</th>
-                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المساحة" : "Area"}</th>
-                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "المرحلة" : "Phase"}</th>
-                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "النوع" : "Product"}</th>
-                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-neutral">{lang === "ar" ? "الحالة" : "Status"}</th>
+                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-muted-foreground">#</th>
+                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "المساحة" : "Area"}</th>
+                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "المرحلة" : "Phase"}</th>
+                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "النوع" : "Product"}</th>
+                        <th className="px-3 py-2 text-start text-[10px] font-bold uppercase text-muted-foreground">{lang === "ar" ? "الحالة" : "Status"}</th>
                         <th className="px-3 py-2"></th>
                       </tr>
                     </thead>
@@ -165,8 +172,8 @@ export default function SubdivisionPlanDetailPage() {
                             <td className="px-3 py-2 text-xs">{p.productType ?? "—"}</td>
                             <td className="px-3 py-2"><Badge className={`text-[10px] ${sc.color}`}>{sc[lang]}</Badge></td>
                             <td className="px-3 py-2">
-                              <button onClick={async () => { await deletePlot(p.id); load(); }} className="text-neutral hover:text-destructive">
-                                <Trash size={14} />
+                              <button onClick={async () => { await deletePlot(p.id); load(); }} className="text-muted-foreground hover:text-destructive">
+                                <Trash2 className="h-3.5 w-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -188,12 +195,12 @@ export default function SubdivisionPlanDetailPage() {
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "البلكات" : "Blocks"}</h4>
                 <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddBlock(true)}>
-                  <Plus size={14} />{lang === "ar" ? "إضافة بلك" : "Add Block"}
+                  <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة بلك" : "Add Block"}
                 </Button>
               </div>
               {plan.blocks.length === 0 ? (
-                <div className="text-center py-8 text-neutral">
-                  <TreeStructure size={32} className="mx-auto mb-2 opacity-30" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Network className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">{lang === "ar" ? "لا توجد بلكات" : "No blocks"}</p>
                 </div>
               ) : (
@@ -203,10 +210,10 @@ export default function SubdivisionPlanDetailPage() {
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="text-sm font-bold text-primary">{lang === "ar" ? "بلك" : "Block"} {b.blockNumber}</p>
-                          <p className="text-xs text-neutral mt-1">{b.areaSqm ? `${fmt(b.areaSqm)} م²` : "—"} · {b.numberOfPlots ?? 0} {lang === "ar" ? "قطعة" : "plots"}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{b.areaSqm ? `${fmt(b.areaSqm)} م²` : "—"} · {b.numberOfPlots ?? 0} {lang === "ar" ? "قطعة" : "plots"}</p>
                         </div>
-                        <button onClick={async () => { await deleteBlock(b.id); load(); }} className="text-neutral hover:text-destructive">
-                          <Trash size={14} />
+                        <button onClick={async () => { await deleteBlock(b.id); load(); }} className="text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </div>
@@ -225,12 +232,12 @@ export default function SubdivisionPlanDetailPage() {
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "الطرق" : "Roads"}</h4>
                 <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddRoad(true)}>
-                  <Plus size={14} />{lang === "ar" ? "إضافة طريق" : "Add Road"}
+                  <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة طريق" : "Add Road"}
                 </Button>
               </div>
               {plan.roads.length === 0 ? (
-                <div className="text-center py-8 text-neutral">
-                  <RoadIcon size={32} className="mx-auto mb-2 opacity-30" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <RoadIcon className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">{lang === "ar" ? "لا توجد طرق" : "No roads"}</p>
                 </div>
               ) : (
@@ -240,15 +247,15 @@ export default function SubdivisionPlanDetailPage() {
                     return (
                       <div key={r.id} className="flex items-center justify-between border border-border rounded-md p-3">
                         <div className="flex items-center gap-3">
-                          <RoadIcon size={16} className="text-neutral" />
+                          <RoadIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium text-primary">{r.name || typeLabel}</span>
-                          <Badge className="text-[10px] bg-muted text-neutral">{typeLabel}</Badge>
+                          <Badge className="text-[10px] bg-muted text-muted-foreground">{typeLabel}</Badge>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-neutral">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           {r.widthMeters && <span>{r.widthMeters}م عرض</span>}
                           {r.lengthMeters && <span>{fmt(r.lengthMeters)}م طول</span>}
-                          <button onClick={async () => { await deleteRoad(r.id); load(); }} className="text-neutral hover:text-destructive">
-                            <Trash size={14} />
+                          <button onClick={async () => { await deleteRoad(r.id); load(); }} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -268,12 +275,12 @@ export default function SubdivisionPlanDetailPage() {
               <div className="flex justify-between items-center mb-4">
                 <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "ممرات المرافق" : "Utility Corridors"}</h4>
                 <Button size="sm" className="gap-1 text-xs" onClick={() => setShowAddCorridor(true)}>
-                  <Plus size={14} />{lang === "ar" ? "إضافة ممر" : "Add Corridor"}
+                  <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة ممر" : "Add Corridor"}
                 </Button>
               </div>
               {plan.utilityCorridors.length === 0 ? (
-                <div className="text-center py-8 text-neutral">
-                  <Lightning size={32} className="mx-auto mb-2 opacity-30" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <Zap className="h-8 w-8 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">{lang === "ar" ? "لا توجد ممرات مرافق" : "No utility corridors"}</p>
                 </div>
               ) : (
@@ -283,15 +290,15 @@ export default function SubdivisionPlanDetailPage() {
                     return (
                       <div key={c.id} className="flex items-center justify-between border border-border rounded-md p-3">
                         <div className="flex items-center gap-3">
-                          <Lightning size={16} className="text-neutral" />
+                          <Zap className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium text-primary">{c.name || typeLabel}</span>
-                          <Badge className="text-[10px] bg-muted text-neutral">{typeLabel}</Badge>
+                          <Badge className="text-[10px] bg-muted text-muted-foreground">{typeLabel}</Badge>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-neutral">
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           {c.widthMeters && <span>{c.widthMeters}م عرض</span>}
                           {c.lengthMeters && <span>{fmt(c.lengthMeters)}م طول</span>}
-                          <button onClick={async () => { await deleteUtilityCorridor(c.id); load(); }} className="text-neutral hover:text-destructive">
-                            <Trash size={14} />
+                          <button onClick={async () => { await deleteUtilityCorridor(c.id); load(); }} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       </div>
@@ -348,7 +355,7 @@ function AddPlotForm({ lang, planId, blocks, onClose, onSuccess }: {
         </select>
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={saving}>
-            {saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}
+            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
         </div>
@@ -385,7 +392,7 @@ function AddBlockForm({ lang, planId, onClose, onSuccess }: {
         <input required value={form.blockNumber} onChange={set("blockNumber")} placeholder={lang === "ar" ? "رقم البلك *" : "Block # *"} className="border border-border rounded-md px-3 py-2 text-sm" />
         <input type="number" value={form.areaSqm} onChange={set("areaSqm")} placeholder={lang === "ar" ? "المساحة (م²)" : "Area (sqm)"} className="border border-border rounded-md px-3 py-2 text-sm w-32" />
         <input type="number" value={form.numberOfPlots} onChange={set("numberOfPlots")} placeholder={lang === "ar" ? "عدد القطع" : "Plot count"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}</Button>
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>
@@ -424,7 +431,7 @@ function AddRoadForm({ lang, planId, onClose, onSuccess }: {
         </select>
         <input type="number" value={form.widthMeters} onChange={set("widthMeters")} placeholder={lang === "ar" ? "العرض (م)" : "Width (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
         <input type="number" value={form.lengthMeters} onChange={set("lengthMeters")} placeholder={lang === "ar" ? "الطول (م)" : "Length (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}</Button>
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>
@@ -463,7 +470,7 @@ function AddCorridorForm({ lang, planId, onClose, onSuccess }: {
         </select>
         <input type="number" value={form.widthMeters} onChange={set("widthMeters")} placeholder={lang === "ar" ? "العرض (م)" : "Width (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
         <input type="number" value={form.lengthMeters} onChange={set("lengthMeters")} placeholder={lang === "ar" ? "الطول (م)" : "Length (m)"} className="border border-border rounded-md px-3 py-2 text-sm w-28" />
-        <Button type="submit" size="sm" disabled={saving}>{saving ? <Spinner size={14} className="animate-spin" /> : <Plus size={14} />}</Button>
+        <Button type="submit" size="sm" disabled={saving}>{saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}</Button>
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>✕</Button>
       </form>
     </div>

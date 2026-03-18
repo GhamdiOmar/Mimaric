@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircle, Circle, ArrowRight } from "@phosphor-icons/react";
+import {
+  CheckCircle2,
+  Circle,
+  ArrowRight,
+} from "lucide-react";
 
 const LIFECYCLE_STAGES = [
   // Land Phase
@@ -63,10 +67,10 @@ export function ProjectLifecycleStepper({ currentStatus, lang }: ProjectLifecycl
           return (
             <React.Fragment key={group}>
               {gi > 0 && (
-                <ArrowRight size={14} className="text-neutral/40 shrink-0 mx-0.5" />
+                <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mx-0.5" />
               )}
               <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-neutral text-center">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground text-center">
                   {groupLabel}
                 </span>
                 <div className="flex items-center gap-0.5">
@@ -93,11 +97,11 @@ export function ProjectLifecycleStepper({ currentStatus, lang }: ProjectLifecycl
                           }`}
                         >
                           {isComplete ? (
-                            <CheckCircle size={14} weight="fill" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           ) : isCurrent ? (
-                            <Circle size={10} weight="fill" />
+                            <Circle className="h-2.5 w-2.5" />
                           ) : (
-                            <Circle size={10} className="text-neutral/50" />
+                            <Circle className="h-2.5 w-2.5 text-muted-foreground/50" />
                           )}
                         </div>
                         <span
@@ -106,7 +110,7 @@ export function ProjectLifecycleStepper({ currentStatus, lang }: ProjectLifecycl
                               ? "text-secondary"
                               : isCurrent
                                 ? "text-primary font-bold"
-                                : "text-neutral/50"
+                                : "text-muted-foreground/50"
                           }`}
                         >
                           {stage.label[lang]}

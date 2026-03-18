@@ -4,16 +4,13 @@ import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
   UserPlus,
-  Envelope,
+  Mail,
   ShieldCheck,
-  DotsThreeVertical,
   Clock,
-  Trash,
-  UserGear,
-  Funnel,
-  MagnifyingGlass,
-  X
-} from "@phosphor-icons/react";
+  Trash2,
+  UserCog,
+  X,
+} from "lucide-react";
 import {
   Button,
   Input,
@@ -26,6 +23,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  PageHeader,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getTeamMembers, inviteTeamMember, removeTeamMember } from "../../../actions/team";
@@ -111,28 +109,24 @@ export default function TeamManagementPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
-        <div>
-          <h1 className="text-2xl font-bold text-primary font-primary">
-            {lang === "ar" ? "إدارة فريق العمل" : "Team Management"}
-          </h1>
-          <p className="text-sm text-neutral mt-1 font-primary">
-            {lang === "ar" ? "دعوة الموظفين وتعيين الصلاحيات وإدارة أدوار الفريق." : "Invite staff, assign permissions, and manage team roles."}
-          </p>
-        </div>
-        <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors" onClick={() => setShowInvite(true)}>
-          <UserPlus size={18} weight="fill" />
-          {lang === "ar" ? "دعوة عضو جديد" : "Invite Member"}
-        </Button>
-      </div>
+      <PageHeader
+        title={lang === "ar" ? "إدارة فريق العمل" : "Team Management"}
+        description={lang === "ar" ? "دعوة الموظفين وتعيين الصلاحيات وإدارة أدوار الفريق." : "Invite staff, assign permissions, and manage team roles."}
+        actions={
+          <Button size="sm" className="gap-2 bg-secondary hover:bg-green-bright transition-colors" onClick={() => setShowInvite(true)}>
+            <UserPlus className="h-[18px] w-[18px]" />
+            {lang === "ar" ? "دعوة عضو جديد" : "Invite Member"}
+          </Button>
+        }
+      />
 
       {/* Invite Modal */}
       {showInvite && (
         <Card className="border-secondary/30 p-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-primary">{lang === "ar" ? "دعوة عضو جديد" : "Invite New Member"}</h3>
-              <button onClick={() => setShowInvite(false)}><X size={18} className="text-neutral" /></button>
+              <h3 className="text-sm font-bold text-foreground">{lang === "ar" ? "دعوة عضو جديد" : "Invite New Member"}</h3>
+              <button onClick={() => setShowInvite(false)}><X className="h-[18px] w-[18px] text-muted-foreground" /></button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input placeholder={lang === "ar" ? "الاسم" : "Name"} value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
@@ -164,9 +158,9 @@ export default function TeamManagementPage() {
           </TableHeader>
           <TableBody className="divide-y divide-border">
             {loading ? (
-              <TableRow><TableCell colSpan={4} className="py-12 text-center text-neutral text-sm animate-pulse">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="py-12 text-center text-muted-foreground text-sm animate-pulse">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</TableCell></TableRow>
             ) : members.length === 0 ? (
-              <TableRow><TableCell colSpan={4} className="py-12 text-center text-neutral text-sm">{lang === "ar" ? "لا يوجد أعضاء" : "No team members"}</TableCell></TableRow>
+              <TableRow><TableCell colSpan={4} className="py-12 text-center text-muted-foreground text-sm">{lang === "ar" ? "لا يوجد أعضاء" : "No team members"}</TableCell></TableRow>
             ) : members.map((member) => (
               <TableRow key={member.id} className="group">
                 <TableCell>
@@ -175,16 +169,16 @@ export default function TeamManagementPage() {
                       <span className="text-xs font-bold uppercase font-latin">{(member.name ?? "?").split(' ').map(n => n[0]).join('')}</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-primary font-primary">{member.name}</p>
-                      <p className="text-[10px] text-neutral font-latin">{member.email}</p>
+                      <p className="text-sm font-bold text-foreground">{member.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-latin">{member.email}</p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center gap-2">
-                      <UserGear size={16} className="text-neutral" />
-                      <span className="text-xs font-semibold text-primary font-latin">{roleLabels[member.role] ?? member.role}</span>
+                      <UserCog className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-semibold text-foreground font-latin">{roleLabels[member.role] ?? member.role}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {hasPermission(member.role, "customers:read_pii") && (
@@ -203,15 +197,15 @@ export default function TeamManagementPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-[10px] text-neutral font-latin">
-                    <Clock size={14} />
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-latin">
+                    <Clock className="h-3.5 w-3.5" />
                     {new Date(member.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="secondary" size="icon" className="h-8 w-8 rounded shadow-sm hover:text-destructive" onClick={() => handleRemove(member.id, member.name)}>
-                      <Trash size={18} />
+                      <Trash2 className="h-[18px] w-[18px]" />
                     </Button>
                   </div>
                 </TableCell>
@@ -225,16 +219,16 @@ export default function TeamManagementPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {[
           { title: { ar: "الأدوار والصلاحيات", en: "Roles & Permissions" }, desc: { ar: "إدارة من يمكنه رؤية البيانات الحساسة أو تعديل الأسعار.", en: "Manage who can see sensitive data or modify prices." }, icon: ShieldCheck },
-          { title: { ar: "تقارير النشاط", en: "Activity Reports" }, desc: { ar: "تتبع نشاط الفريق والمهام المنجزة في النظام.", en: "Track team activity and completed tasks." }, icon: UserGear },
-          { title: { ar: "نظام الدعوات", en: "Invitation System" }, desc: { ar: "دعوة آمنة عبر البريد الإلكتروني مع انتهاء تلقائي.", en: "Secure email invitations with auto-expiry." }, icon: Envelope },
+          { title: { ar: "تقارير النشاط", en: "Activity Reports" }, desc: { ar: "تتبع نشاط الفريق والمهام المنجزة في النظام.", en: "Track team activity and completed tasks." }, icon: UserCog },
+          { title: { ar: "نظام الدعوات", en: "Invitation System" }, desc: { ar: "دعوة آمنة عبر البريد الإلكتروني مع انتهاء تلقائي.", en: "Secure email invitations with auto-expiry." }, icon: Mail },
         ].map((item, i) => (
           <Card key={i} className="p-6 flex items-start gap-4 hover:border-secondary/20 transition-all">
             <div className="p-3 bg-secondary/10 rounded text-secondary">
-              <item.icon size={24} />
+              <item.icon className="h-6 w-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-primary font-primary">{item.title[lang]}</h4>
-              <p className="text-[10px] text-neutral mt-1 font-primary leading-relaxed">{item.desc[lang]}</p>
+              <h4 className="text-sm font-bold text-foreground">{item.title[lang]}</h4>
+              <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">{item.desc[lang]}</p>
             </div>
           </Card>
         ))}

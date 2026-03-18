@@ -32,12 +32,12 @@ const chartConfig = {
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs">
+    <div className="bg-card p-3 rounded-md shadow-lg border border-border text-xs">
       <p className="font-bold text-primary mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-neutral">{p.name}:</span>
+          <span className="text-muted-foreground">{p.name}:</span>
           <span className="font-bold text-primary">{fmt(p.value)}</span>
         </div>
       ))}
@@ -75,7 +75,7 @@ export default function WavePerformanceChart({ projectId }: { projectId: string 
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">
         لا توجد بيانات موجات بعد
       </div>
     );

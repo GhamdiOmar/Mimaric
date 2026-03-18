@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button, Input } from "@repo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe, Buildings, ArrowRight, ArrowLeft, Spinner, Eye, EyeSlash } from "@phosphor-icons/react";
+import { Globe, ArrowRight, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { MimaricLogo } from "../../../components/brand/MimaricLogo";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 import { loginAction } from "../../actions/auth";
@@ -60,7 +60,6 @@ export default function LoginPage() {
     try {
       const result = await loginAction(formData);
       if (result?.error) {
-        // Handle rate limiting
         if (result.error.startsWith("RATE_LIMITED")) {
           const seconds = parseInt(result.error.split(":")[1] ?? "30", 10);
           setRateLimitSeconds(seconds);
@@ -75,14 +74,10 @@ export default function LoginPage() {
         setError(typeof msg === 'string' ? msg : msg[lang]);
         setLoading(false);
       } else {
-        // Successful login will redirect via server action
         router.push("/dashboard");
       }
     } catch (err: any) {
-      // Catch next-auth redirect "errors"
-      if (err.message?.includes("NEXT_REDIRECT")) {
-          return;
-      }
+      if (err.message?.includes("NEXT_REDIRECT")) return;
       setError(lang === "ar" ? "حدث خطأ في النظام. يرجى المحاولة لاحقاً." : "System error. Please try again later.");
       setLoading(false);
     }
@@ -90,98 +85,86 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col lg:flex-row" dir={lang === "ar" ? "rtl" : "ltr"}>
-      {/* Brand Visual Panel - Left (Desktop) */}
-      <div className="relative hidden w-full mesh-bg lg:flex lg:w-1/2 xl:w-5/12 overflow-hidden shadow-2xl">
-        {/* Architectural pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.04]">
+      {/* Brand Panel */}
+      <div className="relative hidden w-full mesh-bg lg:flex lg:w-1/2 xl:w-5/12 overflow-hidden">
+        {/* Subtle pattern */}
+        <div className="absolute inset-0 opacity-[0.03]">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="arch-login" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-                <rect x="10" y="10" width="100" height="100" stroke="white" strokeWidth="0.5" fill="none" rx="4" />
-                <rect x="30" y="30" width="60" height="60" stroke="white" strokeWidth="0.3" fill="none" rx="2" />
-                <line x1="60" y1="10" x2="60" y2="110" stroke="white" strokeWidth="0.3" />
-                <line x1="10" y1="60" x2="110" y2="60" stroke="white" strokeWidth="0.3" />
+                <rect x="10" y="10" width="100" height="100" stroke="white" strokeWidth="0.4" fill="none" rx="4" />
+                <rect x="30" y="30" width="60" height="60" stroke="white" strokeWidth="0.2" fill="none" rx="2" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#arch-login)" />
           </svg>
         </div>
 
-        {/* Floating gradient mesh blobs */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-secondary/15 blur-[80px] animate-mesh-drift" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-accent/10 blur-[60px] animate-mesh-drift" style={{ animationDelay: "-10s" }} />
+        {/* Single subtle blob */}
+        <div className="absolute top-1/3 start-1/4 w-72 h-72 rounded-full bg-secondary/10 blur-[100px] animate-mesh-drift" />
 
         <div className="relative z-20 flex h-full flex-col justify-between p-12 text-white">
-          <div className="flex items-center gap-3">
-             <MimaricLogo width={180} variant="dark" priority />
-          </div>
+          <MimaricLogo width={140} variant="dark" priority />
 
-          <div className="space-y-6">
-            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white font-primary mb-2">
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white" style={{ letterSpacing: "-0.03em" }}>
               {lang === "ar" ? "أهلاً بك في ميماريك" : "Welcome to Mimaric"}
             </h1>
-            <p className="text-lg text-white/80 max-w-md font-primary">
+            <p className="text-base text-white/70 max-w-md">
               {lang === "ar"
                 ? "أتمتة وإدارة العقارات بذكاء وفق أرقى المعايير السعودية."
                 : "Real estate automation and management with Saudi-first standards."}
             </p>
           </div>
 
-          <div className="mt-auto opacity-50">
-            <p className="text-xs font-latin uppercase tracking-widest text-white">© 2026 Mimaric PropTech. All rights reserved.</p>
-          </div>
-        </div>
-
-        {/* Decorative architectural silhouette */}
-        <div className="absolute -bottom-10 -right-20 opacity-10 transform rotate-3">
-          <Buildings size={400} weight="thin" className="text-secondary" />
+          <p className="text-xs text-white/40 uppercase tracking-widest">
+            © 2026 Mimaric PropTech
+          </p>
         </div>
       </div>
 
-      {/* Form Area - Right (Desktop) */}
+      {/* Form Area */}
       <div className="flex w-full flex-1 flex-col bg-background lg:w-1/2 xl:w-7/12">
-        {/* Top bar with Lang Toggle */}
-        <div className="flex items-center justify-between p-6 lg:px-12">
+        {/* Top bar */}
+        <div className="flex items-center justify-between p-5 lg:px-10">
           <div className="lg:hidden dark:brightness-0 dark:invert">
-             <MimaricLogo width={120} />
+            <MimaricLogo width={100} />
           </div>
-
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <button
               onClick={() => setLang(lang === "ar" ? "en" : "ar")}
-              className="flex items-center gap-2 text-sm font-medium text-neutral hover:text-primary transition-colors"
+              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Globe size={20} />
+              <Globe className="h-4 w-4" />
               <span>{lang === "ar" ? "English" : "العربية"}</span>
             </button>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-6 pb-12 lg:px-12 lg:pt-0">
-          <div className="rounded-2xl border border-border/50 bg-card/80 p-8 shadow-elevation-1 backdrop-blur-sm dark:bg-card/50">
-            <div className="mb-8 text-start">
-              <h2 className="text-2xl font-bold text-primary">
-                {lang === "ar" ? "تسجيل الدخول" : "Login"}
+        {/* Form */}
+        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-6 pb-12">
+          <div className="rounded-xl border border-border bg-card p-6 shadow-card">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-foreground">
+                {lang === "ar" ? "تسجيل الدخول" : "Sign in"}
               </h2>
-              <p className="mt-2 text-sm text-neutral font-dm-sans">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {lang === "ar"
                   ? "أدخل بياناتك للوصول إلى لوحة التحكم"
                   : "Enter your credentials to access your dashboard"}
               </p>
             </div>
 
-            {/* Form */}
-            <div className="space-y-5">
+            <div className="space-y-4">
               {error && (
-                <div className="p-3 bg-destructive/5 border border-destructive/20 text-destructive text-sm rounded-lg">
+                <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">
                   {lang === "ar" ? "البريد الإلكتروني" : "Email"}
                 </label>
                 <Input
@@ -191,17 +174,16 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
                   disabled={loading}
-                  className="focus:border-secondary/40 focus:ring-secondary/10"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-sm font-medium text-foreground">
                     {lang === "ar" ? "كلمة المرور" : "Password"}
                   </label>
-                  <Link href="/auth/forgot-password" title="title text" className="text-xs font-semibold text-primary/70 hover:text-primary">
-                    {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot Password?"}
+                  <Link href="/auth/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                    {lang === "ar" ? "نسيت كلمة المرور؟" : "Forgot password?"}
                   </Link>
                 </div>
                 <div className="relative">
@@ -212,39 +194,38 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Enter" && email && password && !loading && rateLimitSeconds <= 0) handleLogin(); }}
                     disabled={loading}
-                    className="focus:border-secondary/40 focus:ring-secondary/10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral hover:text-primary transition-colors"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
 
               <Button
-                className="w-full cursor-pointer hover:bg-primary-deep transition-all active:scale-[0.98] disabled:opacity-50"
+                className="w-full"
                 onClick={handleLogin}
                 disabled={loading || !email || !password || rateLimitSeconds > 0}
               >
                 {loading ? (
-                  <Spinner className="animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <>
-                    {lang === "ar" ? "تسجيل الدخول" : "Login"}
-                    {lang === "ar" ? <ArrowLeft className="mr-2 icon-directional" /> : <ArrowRight className="ml-2 icon-directional" />}
+                    {lang === "ar" ? "تسجيل الدخول" : "Sign in"}
+                    {lang === "ar" ? <ArrowLeft className="h-4 w-4 icon-directional" /> : <ArrowRight className="h-4 w-4 icon-directional" />}
                   </>
                 )}
               </Button>
             </div>
 
-            <p className="mt-8 text-center text-sm text-neutral font-dm-sans">
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               {lang === "ar" ? "ليس لديك حساب؟" : "Don't have an account?"}{" "}
-              <Link href="/auth/register" className="font-semibold text-primary hover:underline">
-                {lang === "ar" ? "إنشاء حساب جديد" : "Register now"}
+              <Link href="/auth/register" className="font-medium text-primary hover:underline">
+                {lang === "ar" ? "إنشاء حساب جديد" : "Register"}
               </Link>
             </p>
           </div>

@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Button, Input } from "@repo/ui";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Globe, Buildings, Spinner, CheckCircle } from "@phosphor-icons/react";
+import { Globe, Building2, Loader2, CheckCircle2 } from "lucide-react";
 import { MimaricLogo } from "../../../components/brand/MimaricLogo";
 import { PasswordStrengthHint } from "../../../components/PasswordStrengthHint";
 import { resetPassword } from "../../actions/password";
@@ -61,14 +61,14 @@ function ResetPasswordInner() {
         <div className="relative z-20 flex h-full flex-col justify-between p-12 text-white">
           <MimaricLogo width={180} variant="dark" priority />
           <div className="space-y-6">
-            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white font-primary">
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white">
               {lang === "ar" ? "إعادة تعيين كلمة المرور" : "Reset Password"}
             </h1>
           </div>
           <p className="text-xs font-latin uppercase tracking-widest text-white opacity-50">© 2026 Mimaric PropTech</p>
         </div>
         <div className="absolute -bottom-10 -right-20 opacity-10 transform rotate-3">
-          <Buildings size={400} weight="thin" className="text-secondary" />
+          <Building2 className="h-[400px] w-[400px] text-secondary" />
         </div>
       </div>
 
@@ -76,8 +76,8 @@ function ResetPasswordInner() {
       <div className="flex w-full flex-1 flex-col bg-background lg:w-1/2 xl:w-7/12">
         <div className="flex items-center justify-between p-6 lg:px-12">
           <div className="lg:hidden"><MimaricLogo width={100} /></div>
-          <button onClick={() => setLang(lang === "ar" ? "en" : "ar")} className="flex items-center gap-2 text-sm font-medium text-neutral hover:text-primary transition-colors">
-            <Globe size={20} />
+          <button onClick={() => setLang(lang === "ar" ? "en" : "ar")} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <Globe className="h-5 w-5" />
             <span>{lang === "ar" ? "English" : "العربية"}</span>
           </button>
         </div>
@@ -86,12 +86,12 @@ function ResetPasswordInner() {
           {success ? (
             <div className="text-center space-y-4">
               <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                <CheckCircle size={32} weight="fill" />
+                <CheckCircle2 className="h-8 w-8" />
               </div>
-              <h2 className="text-xl font-bold text-primary font-primary">
+              <h2 className="text-xl font-bold text-primary">
                 {lang === "ar" ? "تم تحديث كلمة المرور" : "Password Updated"}
               </h2>
-              <p className="text-sm text-neutral font-primary">
+              <p className="text-sm text-muted-foreground">
                 {lang === "ar" ? "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة." : "You can now login with your new password."}
               </p>
               <Link href="/auth/login">
@@ -100,10 +100,10 @@ function ResetPasswordInner() {
             </div>
           ) : !token ? (
             <div className="text-center space-y-4">
-              <h2 className="text-xl font-bold text-primary font-primary">
+              <h2 className="text-xl font-bold text-primary">
                 {lang === "ar" ? "رابط غير صالح" : "Invalid Link"}
               </h2>
-              <p className="text-sm text-neutral font-primary">
+              <p className="text-sm text-muted-foreground">
                 {lang === "ar" ? "رابط إعادة التعيين مفقود أو غير صالح." : "The reset link is missing or invalid."}
               </p>
               <Link href="/auth/forgot-password">
@@ -113,10 +113,10 @@ function ResetPasswordInner() {
           ) : (
             <>
               <div className="mb-8">
-                <h2 className="text-2xl font-bold text-primary font-primary">
+                <h2 className="text-2xl font-bold text-primary">
                   {lang === "ar" ? "كلمة مرور جديدة" : "New Password"}
                 </h2>
-                <p className="mt-2 text-sm text-neutral font-primary">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {lang === "ar" ? "اختر كلمة مرور قوية لحسابك." : "Choose a strong password for your account."}
                 </p>
               </div>
@@ -127,7 +127,7 @@ function ResetPasswordInner() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                     {lang === "ar" ? "كلمة المرور الجديدة" : "New Password"}
                   </label>
                   <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} disabled={loading} />
@@ -135,14 +135,14 @@ function ResetPasswordInner() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-semibold uppercase text-neutral tracking-wider">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
                     {lang === "ar" ? "تأكيد كلمة المرور" : "Confirm Password"}
                   </label>
                   <Input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={loading} />
                 </div>
 
                 <Button className="w-full" onClick={handleReset} disabled={loading || !password || !confirm}>
-                  {loading ? <Spinner className="animate-spin" /> : (lang === "ar" ? "تحديث كلمة المرور" : "Update Password")}
+                  {loading ? <Loader2 className="animate-spin" /> : (lang === "ar" ? "تحديث كلمة المرور" : "Update Password")}
                 </Button>
               </div>
             </>

@@ -3,7 +3,13 @@
 import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Spinner, CheckCircle, ClipboardText } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Plus,
+  Loader2,
+  CheckCircle2,
+  ClipboardList,
+} from "lucide-react";
 import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
 import { getSiteLogs, createSiteLog, resolveSiteLog } from "../../../../actions/site-logs";
 import { formatDualDate } from "../../../../../lib/hijri";
@@ -56,15 +62,15 @@ export default function SiteLogsPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${id}`)}>
-          <ArrowLeft size={18} />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-primary">{lang === "ar" ? "سجلات الموقع" : "Site Logs"}</h1>
-          <p className="text-sm text-neutral mt-0.5">{lang === "ar" ? "تفتيشات، ملاحظات، وسجلات يومية" : "Inspections, snags, and daily logs"}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{lang === "ar" ? "تفتيشات، ملاحظات، وسجلات يومية" : "Inspections, snags, and daily logs"}</p>
         </div>
         <div className="flex-1" />
         <Button size="sm" className="gap-2" onClick={() => setShowModal(true)}>
-          <Plus size={16} />{lang === "ar" ? "إضافة سجل" : "Add Log"}
+          <Plus className="h-4 w-4" />{lang === "ar" ? "إضافة سجل" : "Add Log"}
         </Button>
       </div>
 
@@ -81,16 +87,16 @@ export default function SiteLogsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>
+        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : logs.length === 0 ? (
         <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-          <ClipboardText size={48} className="text-neutral mx-auto mb-4" />
+          <ClipboardList className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد سجلات" : "No Logs"}</h3>
         </div>
       ) : (
         <div className="space-y-3">
           {logs.map((log: any) => (
-            <div key={log.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-raised transition-all">
+            <div key={log.id} className="bg-card rounded-md shadow-card border border-border p-5 hover:shadow-lg transition-all">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
@@ -103,20 +109,20 @@ export default function SiteLogsPage() {
                       </Badge>
                     )}
                     {log.resolvedAt ? (
-                      <Badge variant="available" className="text-xs gap-1"><CheckCircle size={10} />{lang === "ar" ? "تم الحل" : "Resolved"}</Badge>
+                      <Badge variant="available" className="text-xs gap-1"><CheckCircle2 className="h-2.5 w-2.5" />{lang === "ar" ? "تم الحل" : "Resolved"}</Badge>
                     ) : (
                       <Badge variant="reserved" className="text-xs">{lang === "ar" ? "مفتوح" : "Open"}</Badge>
                     )}
                   </div>
                   <p className="text-sm text-primary font-medium">{log.description}</p>
-                  <div className="flex items-center gap-4 mt-2 text-[10px] text-neutral">
+                  <div className="flex items-center gap-4 mt-2 text-[10px] text-muted-foreground">
                     <span>{formatDualDate(log.date, lang)}</span>
                     {log.reportedBy && <span>{lang === "ar" ? "بواسطة" : "By"}: {log.reportedBy}</span>}
                   </div>
                 </div>
                 {!log.resolvedAt && (
                   <Button size="sm" variant="secondary" className="text-xs gap-1" onClick={() => handleResolve(log.id)}>
-                    <CheckCircle size={12} />{lang === "ar" ? "حل" : "Resolve"}
+                    <CheckCircle2 className="h-3 w-3" />{lang === "ar" ? "حل" : "Resolve"}
                   </Button>
                 )}
               </div>
@@ -161,30 +167,30 @@ function AddLogModal({ lang, projectId, onClose, onSuccess }: { lang: "ar" | "en
       <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التاريخ" : "Date"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التاريخ" : "Date"}</label>
               <input type="date" required value={form.date} onChange={set("date")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "النوع" : "Type"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "النوع" : "Type"}</label>
               <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 {Object.entries(typeLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الوصف *" : "Description *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الوصف *" : "Description *"}</label>
             <textarea required value={form.description} onChange={set("description")} rows={3} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الخطورة" : "Severity"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الخطورة" : "Severity"}</label>
               <select value={form.severity} onChange={set("severity")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 <option value="">—</option>
                 {Object.entries(severityLabels).map(([k, v]) => <option key={k} value={k}>{v[lang]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المُبلِّغ" : "Reported By"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المُبلِّغ" : "Reported By"}</label>
               <input value={form.reportedBy} onChange={set("reportedBy")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
           </div>

@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, Buildings, House, TreeStructure, CaretDown, CaretRight } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  Building2,
+  Home,
+  Network,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { Button, Badge } from "@repo/ui";
 import { useLanguage } from "../../../../../components/LanguageProvider";
 import { getProjectTree } from "../../../../actions/projects";
@@ -88,7 +96,7 @@ function CollapsibleNode({
         className={`flex items-center gap-2 w-full rounded-md px-3 py-2 text-sm hover:bg-muted/50 transition-colors ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
       >
         {hasChildren ? (
-          open ? <CaretDown size={14} /> : <CaretRight size={14} />
+          open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />
         ) : (
           <span className="w-[14px]" />
         )}
@@ -123,7 +131,7 @@ export default function TreePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -134,7 +142,7 @@ export default function TreePage() {
     <CollapsibleNode
       key={building.id}
       label={building.towerName || building.name}
-      icon={<Buildings size={16} className="text-blue-600" />}
+      icon={<Building2 className="h-4 w-4 text-blue-600" />}
       badge={
         <Badge variant="outline" className="text-xs ml-auto">
           {building._count?.units ?? building.units?.length ?? 0} {t.units}
@@ -143,7 +151,7 @@ export default function TreePage() {
     >
       {building.units?.map((unit: any) => (
         <div key={unit.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
-          <House size={14} className="text-muted-foreground" />
+          <Home className="h-3.5 w-3.5 text-muted-foreground" />
           <span>{unit.number}</span>
           <span className="text-muted-foreground text-xs">
             {unit.type} {unit.floor != null && `· ${t.floor} ${unit.floor}`}
@@ -167,7 +175,7 @@ export default function TreePage() {
           onClick={() => router.push(`/dashboard/projects/${projectId}`)}
           style={{ display: "inline-flex" }}
         >
-          <ArrowLeft size={16} />
+          <ArrowLeft className="h-4 w-4" />
           {t.back}
         </Button>
         <div>
@@ -180,7 +188,7 @@ export default function TreePage() {
       <div className="rounded-lg border bg-card p-4">
         <CollapsibleNode
           label={tree.name}
-          icon={<TreeStructure size={18} className="text-primary" />}
+          icon={<Network className="h-[18px] w-[18px] text-primary" />}
           badge={
             tree.projectCode && (
               <code className="text-xs bg-muted px-2 py-0.5 rounded ml-2">{tree.projectCode}</code>
@@ -205,7 +213,7 @@ export default function TreePage() {
             </CollapsibleNode>
           ))}
 
-          {/* Buildings without a phase */}
+          {/* Building2 without a phase */}
           {tree.buildings?.length > 0 && (
             <CollapsibleNode
               label={t.noPhase}

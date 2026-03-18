@@ -4,10 +4,10 @@ import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft, Spinner, CheckCircle, Circle, MapPin, ArrowRight,
-  Warning, ShieldCheck, Scales, Plus, Trash, PencilSimple,
-  ClockCountdown, SealCheck, XCircle, Timer, CaretDown,
-} from "@phosphor-icons/react";
+  ArrowLeft, Loader2, CheckCircle2, Circle, MapPin, ArrowRight,
+  AlertTriangle, ShieldCheck, Scale, Plus, Trash2, Pencil,
+  Timer, BadgeCheck, XCircle, Clock, ChevronDown,
+} from "lucide-react";
 import { Button, Badge, SARAmount } from "@repo/ui";
 import { getLandDetail, updateLandStatus, getDueDiligence, updateDueDiligenceItems } from "../../../actions/land";
 import { getConstraints, createConstraint, updateConstraint, deleteConstraint, getConstraintStats } from "../../../actions/constraints";
@@ -54,14 +54,14 @@ const CONSTRAINT_TYPES: Record<string, { ar: string; en: string }> = {
 
 const SEVERITY_CONFIG: Record<string, { ar: string; en: string; color: string }> = {
   LOW: { ar: "منخفض", en: "Low", color: "bg-secondary/15 text-secondary border-secondary/30" },
-  MEDIUM: { ar: "متوسط", en: "Medium", color: "bg-accent/15 text-amber-700 border-accent/30" },
+  MEDIUM: { ar: "متوسط", en: "Medium", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
   HIGH: { ar: "عالي", en: "High", color: "bg-warning/15 text-warning border-warning/30" },
   BLOCKER: { ar: "مانع", en: "Blocker", color: "bg-destructive/15 text-destructive border-destructive/30" },
 };
 
 const CONSTRAINT_STATUS_CONFIG: Record<string, { ar: string; en: string; color: string }> = {
   IDENTIFIED: { ar: "محدد", en: "Identified", color: "bg-info/15 text-info border-info/30" },
-  UNDER_REVIEW: { ar: "قيد المراجعة", en: "Under Review", color: "bg-accent/15 text-amber-700 border-accent/30" },
+  UNDER_REVIEW: { ar: "قيد المراجعة", en: "Under Review", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
   MITIGATED: { ar: "تم التخفيف", en: "Mitigated", color: "bg-secondary/15 text-secondary border-secondary/30" },
   ACCEPTED: { ar: "مقبول", en: "Accepted", color: "bg-primary/15 text-primary border-primary/30" },
   REJECTED: { ar: "مرفوض", en: "Rejected", color: "bg-destructive/15 text-destructive border-destructive/30" },
@@ -78,12 +78,12 @@ const FEASIBILITY_TYPES: Record<string, { ar: string; en: string; icon: string }
 const RECOMMENDATION_CONFIG: Record<string, { ar: string; en: string; color: string }> = {
   GO: { ar: "مضي قدماً", en: "Go", color: "bg-secondary/15 text-secondary border-secondary/30" },
   NO_GO: { ar: "عدم المضي", en: "No Go", color: "bg-destructive/15 text-destructive border-destructive/30" },
-  CONDITIONAL: { ar: "مشروط", en: "Conditional", color: "bg-accent/15 text-amber-700 border-accent/30" },
+  CONDITIONAL: { ar: "مشروط", en: "Conditional", color: "bg-amber-500/15 text-amber-700 border-amber-500/30" },
 };
 
 const GATE_DECISION_CONFIG: Record<string, { ar: string; en: string; color: string; icon: any }> = {
-  PENDING: { ar: "في الانتظار", en: "Pending", color: "bg-accent/15 text-amber-700 border-accent/30", icon: ClockCountdown },
-  APPROVED: { ar: "موافق", en: "Approved", color: "bg-secondary/15 text-secondary border-secondary/30", icon: SealCheck },
+  PENDING: { ar: "في الانتظار", en: "Pending", color: "bg-amber-500/15 text-amber-700 border-amber-500/30", icon: Timer },
+  APPROVED: { ar: "موافق", en: "Approved", color: "bg-secondary/15 text-secondary border-secondary/30", icon: BadgeCheck },
   REJECTED: { ar: "مرفوض", en: "Rejected", color: "bg-destructive/15 text-destructive border-destructive/30", icon: XCircle },
   DEFERRED: { ar: "مؤجل", en: "Deferred", color: "bg-info/15 text-info border-info/30", icon: Timer },
 };
@@ -193,8 +193,8 @@ export default function LandDetailPage() {
     finally { setSaving(false); }
   }
 
-  if (loading) return <div className="flex justify-center py-20"><Spinner className="animate-spin text-primary" size={32} /></div>;
-  if (!land) return <div className="text-center py-20 text-neutral">لم يتم العثور على الأرض</div>;
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (!land) return <div className="text-center py-20 text-muted-foreground">لم يتم العثور على الأرض</div>;
 
   const currentStepIdx = STEPS.findIndex((s) => s.status === land.status);
   const allDDComplete = checklists.length > 0 && checklists.every((c) => c.completedAt);
@@ -205,11 +205,11 @@ export default function LandDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/land")}>
-          <ArrowLeft size={18} />
+          <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold text-primary">{land.name}</h1>
-          <p className="text-sm text-neutral mt-0.5">{[land.city, land.district, land.region].filter(Boolean).join(", ")}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{[land.city, land.district, land.region].filter(Boolean).join(", ")}</p>
         </div>
         <button
           onClick={async () => {
@@ -226,7 +226,7 @@ export default function LandDetailPage() {
           className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors whitespace-nowrap"
           style={{ display: "inline-flex" }}
         >
-          <MapPin size={14} />
+          <MapPin className="h-3.5 w-3.5" />
           {linkedWorkspace
             ? (lang === "ar" ? "متابعة التخطيط" : "Continue Planning")
             : (lang === "ar" ? "بدء التخطيط" : "Start Planning")}
@@ -236,22 +236,22 @@ export default function LandDetailPage() {
             <div className={`text-2xl font-black ${suitabilityScore >= 70 ? "text-secondary" : suitabilityScore >= 40 ? "text-amber-600" : "text-destructive"}`}>
               {suitabilityScore}%
             </div>
-            <span className="text-[10px] font-bold text-neutral uppercase">{lang === "ar" ? "درجة الملاءمة" : "Suitability"}</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">{lang === "ar" ? "درجة الملاءمة" : "Suitability"}</span>
           </div>
         )}
       </div>
 
       {/* Acquisition Workflow Stepper */}
       <div className="bg-card rounded-md shadow-card border border-border p-6">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-6">{lang === "ar" ? "مسار الاستحواذ" : "Acquisition Workflow"}</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">{lang === "ar" ? "مسار الاستحواذ" : "Acquisition Workflow"}</h3>
         <div className="flex items-center justify-between mb-6">
           {STEPS.map((step, idx) => (
             <React.Fragment key={step.status}>
               <div className="flex flex-col items-center gap-2">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white ${idx <= currentStepIdx ? "bg-secondary" : "bg-muted text-neutral"}`}>
-                  {idx < currentStepIdx ? <CheckCircle size={24} weight="fill" /> : <span className="font-bold">{idx + 1}</span>}
+                <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white ${idx <= currentStepIdx ? "bg-secondary" : "bg-muted text-muted-foreground"}`}>
+                  {idx < currentStepIdx ? <CheckCircle2 className="h-6 w-6" /> : <span className="font-bold">{idx + 1}</span>}
                 </div>
-                <span className={`text-xs font-bold ${idx <= currentStepIdx ? "text-secondary" : "text-neutral"}`}>{step.label[lang]}</span>
+                <span className={`text-xs font-bold ${idx <= currentStepIdx ? "text-secondary" : "text-muted-foreground"}`}>{step.label[lang]}</span>
               </div>
               {idx < STEPS.length - 1 && <div className={`flex-1 h-0.5 mx-4 ${idx < currentStepIdx ? "bg-secondary" : "bg-muted"}`} />}
             </React.Fragment>
@@ -262,17 +262,17 @@ export default function LandDetailPage() {
         <div className="flex items-center gap-3">
           {land.status === "LAND_IDENTIFIED" && (
             <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_UNDER_REVIEW")} disabled={saving}>
-              <ArrowRight size={14} />{lang === "ar" ? "بدء المراجعة" : "Start Review"}
+              <ArrowRight className="h-3.5 w-3.5" />{lang === "ar" ? "بدء المراجعة" : "Start Review"}
             </Button>
           )}
           {land.status === "LAND_UNDER_REVIEW" && (
             <Button size="sm" className="gap-2" onClick={() => handleStatusTransition("LAND_ACQUIRED")} disabled={saving || !allDDComplete}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
               {lang === "ar" ? "تأكيد الاستحواذ" : "Mark Acquired"}
             </Button>
           )}
           {land.status === "LAND_UNDER_REVIEW" && !allDDComplete && (
-            <span className="text-xs text-neutral">{lang === "ar" ? "أكمل جميع قوائم الفحص أولاً" : "Complete all checklists first"}</span>
+            <span className="text-xs text-muted-foreground">{lang === "ar" ? "أكمل جميع قوائم الفحص أولاً" : "Complete all checklists first"}</span>
           )}
           {land.status === "LAND_ACQUIRED" && (
             <Button size="sm" variant="secondary" className="gap-2" onClick={handleConvertToProject} disabled={saving}>
@@ -300,7 +300,7 @@ export default function LandDetailPage() {
           },
         ].map((item, i) => (
           <div key={i} className="bg-card rounded-md shadow-card border border-border p-4">
-            <span className="text-[10px] font-bold uppercase text-neutral">{item.label}</span>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">{item.label}</span>
             <p className="text-lg font-bold text-primary mt-1">{item.value}</p>
           </div>
         ))}
@@ -308,19 +308,19 @@ export default function LandDetailPage() {
 
       {/* Location Map */}
       <div className="bg-card rounded-md shadow-card border border-border p-6">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral mb-4">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
           {lang === "ar" ? "الموقع على الخريطة" : "Location on Map"}
         </h3>
         {land.latitude && land.longitude ? (
           <div>
             <MapPicker latitude={land.latitude} longitude={land.longitude} readonly height="250px" zoom={14} />
-            <p className="text-[10px] text-neutral mt-2" dir="ltr">
+            <p className="text-[10px] text-muted-foreground mt-2" dir="ltr">
               {land.latitude.toFixed(6)}, {land.longitude.toFixed(6)}
             </p>
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-8 text-neutral">
-            <MapPin size={32} className="mb-2 opacity-30" />
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <MapPin className="h-8 w-8 mb-2 opacity-30" />
             <p className="text-sm">{lang === "ar" ? "لم يتم تحديد الموقع بعد" : "No location set"}</p>
           </div>
         )}
@@ -336,7 +336,7 @@ export default function LandDetailPage() {
               className={`px-6 py-4 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${
                 mainTab === tab.key
                   ? "border-primary text-primary"
-                  : "border-transparent text-neutral hover:text-primary"
+                  : "border-transparent text-muted-foreground hover:text-primary"
               }`}
             >
               {tab.label[lang]}
@@ -365,10 +365,10 @@ export default function LandDetailPage() {
                   <button
                     key={cat}
                     onClick={() => setDdTab(cat)}
-                    className={`px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${ddTab === cat ? "border-primary text-primary" : "border-transparent text-neutral hover:text-primary"}`}
+                    className={`px-4 py-3 text-xs font-bold whitespace-nowrap border-b-2 transition-colors ${ddTab === cat ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-primary"}`}
                   >
                     {CATEGORY_LABELS[cat]?.[lang] ?? cat}
-                    <span className="mr-1 text-[10px] text-neutral">({done}/{items.length})</span>
+                    <span className="mr-1 text-[10px] text-muted-foreground">({done}/{items.length})</span>
                   </button>
                 );
               })}
@@ -381,11 +381,11 @@ export default function LandDetailPage() {
                   className="flex items-center gap-3 w-full text-start p-3 rounded-md hover:bg-muted/20 transition-colors"
                 >
                   {item.checked ? (
-                    <CheckCircle size={20} weight="fill" className="text-secondary min-w-[20px]" />
+                    <CheckCircle2 className="h-5 w-5 text-secondary min-w-[20px]" />
                   ) : (
-                    <Circle size={20} className="text-neutral min-w-[20px]" />
+                    <Circle className="h-5 w-5 text-muted-foreground min-w-[20px]" />
                   )}
-                  <span className={`text-sm ${item.checked ? "text-neutral line-through" : "text-primary font-medium"}`}>
+                  <span className={`text-sm ${item.checked ? "text-muted-foreground line-through" : "text-primary font-medium"}`}>
                     {item.label}
                   </span>
                 </button>
@@ -399,7 +399,7 @@ export default function LandDetailPage() {
                         style={{ width: `${(activeChecklist.items.filter((i: any) => i.checked).length / activeChecklist.items.length) * 100}%` }}
                       />
                     </div>
-                    <span className="text-xs text-neutral">
+                    <span className="text-xs text-muted-foreground">
                       {activeChecklist.items.filter((i: any) => i.checked).length}/{activeChecklist.items.length}
                     </span>
                   </div>
@@ -424,7 +424,7 @@ export default function LandDetailPage() {
                 ].map((stat, i) => (
                   <div key={i} className="text-center p-3 bg-muted/20 rounded-md">
                     <div className={`text-xl font-black ${stat.color}`}>{stat.value}</div>
-                    <div className="text-[10px] font-bold text-neutral uppercase">{stat.label}</div>
+                    <div className="text-[10px] font-bold text-muted-foreground uppercase">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -433,13 +433,13 @@ export default function LandDetailPage() {
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "سجل القيود" : "Constraint Records"}</h4>
               <Button size="sm" className="gap-1 text-xs" onClick={() => setShowConstraintModal(true)}>
-                <Plus size={14} />{lang === "ar" ? "إضافة قيد" : "Add Constraint"}
+                <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة قيد" : "Add Constraint"}
               </Button>
             </div>
 
             {constraints.length === 0 ? (
-              <div className="text-center py-12 text-neutral">
-                <ShieldCheck size={40} className="mx-auto mb-3 opacity-30" />
+              <div className="text-center py-12 text-muted-foreground">
+                <ShieldCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">{lang === "ar" ? "لا توجد قيود مسجلة" : "No constraints recorded"}</p>
               </div>
             ) : (
@@ -457,19 +457,19 @@ export default function LandDetailPage() {
                             <Badge className={`text-[10px] border ${sevConfig.color}`}>{sevConfig[lang]}</Badge>
                             <Badge className={`text-[10px] border ${statusConf.color}`}>{statusConf[lang]}</Badge>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-neutral">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{typeLabel}</span>
                             {c.source && <><span>·</span><span>{c.source}</span></>}
                           </div>
-                          {c.description && <p className="text-xs text-neutral mt-2">{c.description}</p>}
+                          {c.description && <p className="text-xs text-muted-foreground mt-2">{c.description}</p>}
                           {c.mitigationPlan && (
                             <p className="text-xs text-secondary mt-1">
                               <span className="font-bold">{lang === "ar" ? "خطة التخفيف:" : "Mitigation:"}</span> {c.mitigationPlan}
                             </p>
                           )}
                         </div>
-                        <button onClick={() => handleDeleteConstraint(c.id)} className="text-neutral hover:text-destructive transition-colors p-1">
-                          <Trash size={16} />
+                        <button onClick={() => handleDeleteConstraint(c.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -490,7 +490,7 @@ export default function LandDetailPage() {
                   <div className={`text-3xl font-black ${suitabilityScore >= 70 ? "text-secondary" : suitabilityScore >= 40 ? "text-amber-600" : "text-destructive"}`}>
                     {suitabilityScore}%
                   </div>
-                  <div className="text-[10px] font-bold text-neutral uppercase">{lang === "ar" ? "درجة الملاءمة الكلية" : "Overall Suitability"}</div>
+                  <div className="text-[10px] font-bold text-muted-foreground uppercase">{lang === "ar" ? "درجة الملاءمة الكلية" : "Overall Suitability"}</div>
                 </div>
                 <div className="flex-1">
                   <div className="h-3 bg-muted rounded-full overflow-hidden">
@@ -499,7 +499,7 @@ export default function LandDetailPage() {
                       style={{ width: `${suitabilityScore}%` }}
                     />
                   </div>
-                  <p className="text-[10px] text-neutral mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                     {lang === "ar"
                       ? "قانوني 25% · تجاري 25% · فني 20% · بيئي 15% · مالي 15%"
                       : "Legal 25% · Commercial 25% · Technical 20% · Environmental 15% · Financial 15%"}
@@ -511,13 +511,13 @@ export default function LandDetailPage() {
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "تقييمات الجدوى" : "Feasibility Assessments"}</h4>
               <Button size="sm" className="gap-1 text-xs" onClick={() => setShowFeasibilityModal(true)}>
-                <Plus size={14} />{lang === "ar" ? "إضافة تقييم" : "Add Assessment"}
+                <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "إضافة تقييم" : "Add Assessment"}
               </Button>
             </div>
 
             {assessments.length === 0 ? (
-              <div className="text-center py-12 text-neutral">
-                <Scales size={40} className="mx-auto mb-3 opacity-30" />
+              <div className="text-center py-12 text-muted-foreground">
+                <Scale className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">{lang === "ar" ? "لا توجد تقييمات جدوى" : "No feasibility assessments"}</p>
               </div>
             ) : (
@@ -549,8 +549,8 @@ export default function LandDetailPage() {
                           />
                         </div>
                       )}
-                      {a.notes && <p className="text-xs text-neutral mt-1">{a.notes}</p>}
-                      <div className="text-[10px] text-neutral mt-2">
+                      {a.notes && <p className="text-xs text-muted-foreground mt-1">{a.notes}</p>}
+                      <div className="text-[10px] text-muted-foreground mt-2">
                         {a.assessedAt ? new Date(a.assessedAt).toLocaleDateString("ar-SA") : ""}
                       </div>
                     </div>
@@ -567,13 +567,13 @@ export default function LandDetailPage() {
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-sm font-bold text-primary">{lang === "ar" ? "سجل بوابات القرار" : "Decision Gate History"}</h4>
               <Button size="sm" className="gap-1 text-xs" onClick={() => setShowGateModal(true)}>
-                <Plus size={14} />{lang === "ar" ? "طلب انتقال" : "Request Transition"}
+                <Plus className="h-3.5 w-3.5" />{lang === "ar" ? "طلب انتقال" : "Request Transition"}
               </Button>
             </div>
 
             {gates.length === 0 ? (
-              <div className="text-center py-12 text-neutral">
-                <SealCheck size={40} className="mx-auto mb-3 opacity-30" />
+              <div className="text-center py-12 text-muted-foreground">
+                <BadgeCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
                 <p className="text-sm">{lang === "ar" ? "لا توجد بوابات قرار" : "No decision gates"}</p>
               </div>
             ) : (
@@ -588,14 +588,14 @@ export default function LandDetailPage() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <DecIcon size={18} weight="fill" className={decConfig.color.includes("secondary") ? "text-secondary" : decConfig.color.includes("destructive") ? "text-destructive" : "text-amber-600"} />
+                            <DecIcon className={`h-[18px] w-[18px] ${decConfig.color.includes("secondary") ? "text-secondary" : decConfig.color.includes("destructive") ? "text-destructive" : "text-amber-600"}`} />
                             <span className="text-sm font-bold text-primary">
                               {fromLabel} → {toLabel}
                             </span>
                             <Badge className={`text-[10px] border ${decConfig.color}`}>{decConfig[lang]}</Badge>
                           </div>
-                          {g.notes && <p className="text-xs text-neutral">{g.notes}</p>}
-                          <div className="text-[10px] text-neutral mt-1">
+                          {g.notes && <p className="text-xs text-muted-foreground">{g.notes}</p>}
+                          <div className="text-[10px] text-muted-foreground mt-1">
                             {g.createdAt ? new Date(g.createdAt).toLocaleDateString("ar-SA") : ""}
                             {g.decidedAt && ` · ${lang === "ar" ? "تم القرار" : "Decided"}: ${new Date(g.decidedAt).toLocaleDateString("ar-SA")}`}
                           </div>
@@ -609,7 +609,7 @@ export default function LandDetailPage() {
                               disabled={saving}
                              
                             >
-                              <SealCheck size={12} />{lang === "ar" ? "موافقة" : "Approve"}
+                              <BadgeCheck className="h-3 w-3" />{lang === "ar" ? "موافقة" : "Approve"}
                             </Button>
                             <Button
                               size="sm"
@@ -619,7 +619,7 @@ export default function LandDetailPage() {
                               disabled={saving}
                              
                             >
-                              <XCircle size={12} />{lang === "ar" ? "رفض" : "Reject"}
+                              <XCircle className="h-3 w-3" />{lang === "ar" ? "رفض" : "Reject"}
                             </Button>
                           </div>
                         )}
@@ -702,7 +702,7 @@ function AddConstraintModal({ lang, projectId, onClose, onSuccess }: {
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "النوع" : "Type"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "النوع" : "Type"}</label>
               <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 {Object.entries(CONSTRAINT_TYPES).map(([key, val]) => (
                   <option key={key} value={key}>{val[lang]}</option>
@@ -710,7 +710,7 @@ function AddConstraintModal({ lang, projectId, onClose, onSuccess }: {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الخطورة" : "Severity"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الخطورة" : "Severity"}</label>
               <select value={form.severity} onChange={set("severity")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 {Object.entries(SEVERITY_CONFIG).map(([key, val]) => (
                   <option key={key} value={key}>{val[lang]}</option>
@@ -719,25 +719,25 @@ function AddConstraintModal({ lang, projectId, onClose, onSuccess }: {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الوصف المختصر *" : "Label *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الوصف المختصر *" : "Label *"}</label>
             <input required value={form.label} onChange={set("label")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التفاصيل" : "Description"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التفاصيل" : "Description"}</label>
             <textarea value={form.description} onChange={set("description")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "المصدر" : "Source"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "المصدر" : "Source"}</label>
             <input value={form.source} onChange={set("source")} className="w-full border border-border rounded-md px-3 py-2 text-sm" placeholder={lang === "ar" ? "مثال: أمانة الرياض" : "e.g. Municipality"} />
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "خطة التخفيف" : "Mitigation Plan"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "خطة التخفيف" : "Mitigation Plan"}</label>
             <textarea value={form.mitigationPlan} onChange={set("mitigationPlan")} rows={2} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -785,7 +785,7 @@ function AddFeasibilityModal({ lang, projectId, onClose, onSuccess }: {
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "نوع التقييم *" : "Assessment Type *"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "نوع التقييم *" : "Assessment Type *"}</label>
             <select value={form.type} onChange={set("type")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
               {Object.entries(FEASIBILITY_TYPES).map(([key, val]) => (
                 <option key={key} value={key}>{val.icon} {val[lang]}</option>
@@ -794,11 +794,11 @@ function AddFeasibilityModal({ lang, projectId, onClose, onSuccess }: {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "الدرجة (0-100)" : "Score (0-100)"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الدرجة (0-100)" : "Score (0-100)"}</label>
               <input type="number" min="0" max="100" value={form.score} onChange={set("score")} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "التوصية" : "Recommendation"}</label>
+              <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "التوصية" : "Recommendation"}</label>
               <select value={form.recommendation} onChange={set("recommendation")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
                 <option value="">—</option>
                 {Object.entries(RECOMMENDATION_CONFIG).map(([key, val]) => (
@@ -808,13 +808,13 @@ function AddFeasibilityModal({ lang, projectId, onClose, onSuccess }: {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+            <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
             <textarea value={form.notes} onChange={set("notes")} rows={3} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
             <Button type="submit" size="sm" disabled={saving}>
-              {saving ? <Spinner size={14} className="animate-spin" /> : null}
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
               {lang === "ar" ? "حفظ" : "Save"}
             </Button>
           </div>
@@ -871,24 +871,24 @@ function RequestGateModal({ lang, projectId, currentStatus, onClose, onSuccess }
               <div className="bg-muted/20 rounded-md p-4 text-center">
                 <div className="flex items-center justify-center gap-3 text-sm font-bold text-primary">
                   <span>{currentLabel}</span>
-                  <ArrowRight size={16} className="text-neutral" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   <span className="text-secondary">{nextLabel}</span>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-neutral mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
+                <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
                 <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="w-full border border-border rounded-md px-3 py-2 text-sm" />
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
                 <Button type="button" variant="secondary" size="sm" onClick={onClose}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
                 <Button type="submit" size="sm" disabled={saving}>
-                  {saving ? <Spinner size={14} className="animate-spin" /> : null}
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                   {lang === "ar" ? "إرسال الطلب" : "Submit Request"}
                 </Button>
               </div>
             </>
           ) : (
-            <div className="text-center py-4 text-neutral">
+            <div className="text-center py-4 text-muted-foreground">
               <p className="text-sm">{lang === "ar" ? "لا يوجد انتقال متاح من هذه المرحلة" : "No transition available from this stage"}</p>
               <Button type="button" variant="secondary" size="sm" onClick={onClose} className="mt-4">{lang === "ar" ? "إغلاق" : "Close"}</Button>
             </div>

@@ -3,18 +3,18 @@
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
-  Buildings,
-  MagnifyingGlass,
+  Building2,
+  Search,
   ArrowRight,
   ArrowLeft,
   Check,
   Plus,
-  Trash,
+  Trash2,
   User,
   MapPin,
-  EnvelopeSimple,
-  Spinner,
-} from "@phosphor-icons/react";
+  Mail,
+  Loader2,
+} from "lucide-react";
 import { Button, Input } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { useSession } from "../../../components/SimpleSessionProvider";
@@ -339,10 +339,10 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-primary font-primary">
+            <h1 className="text-2xl font-bold text-primary">
               {lang === "ar" ? "إعداد حسابك" : "Set Up Your Account"}
             </h1>
-            <p className="text-sm text-neutral mt-1 font-primary">
+            <p className="text-sm text-muted-foreground mt-1">
               {lang === "ar"
                 ? "أكمل الخطوات التالية لتفعيل حسابك على ميماريك."
                 : "Complete the following steps to activate your Mimaric account."}
@@ -373,7 +373,7 @@ export default function OnboardingPage() {
                   )}
                 >
                   {i < currentStep ? (
-                    <Check size={18} weight="bold" />
+                    <Check className="h-[18px] w-[18px]" />
                   ) : (
                     i + 1
                   )}
@@ -400,7 +400,7 @@ export default function OnboardingPage() {
           <div className="bg-card rounded-xl border border-gray-100 shadow-sm p-8 min-h-[400px]">
             {/* Error Banner */}
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 font-primary">
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
                 {error}
               </div>
             )}
@@ -409,11 +409,11 @@ export default function OnboardingPage() {
             {currentStepId === "join" && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                 <div className="text-center mb-8">
-                  <Buildings size={48} className="text-primary/30 mx-auto mb-3" weight="duotone" />
-                  <h2 className="text-lg font-bold text-primary font-primary">
+                  <Building2 className="h-12 w-12 text-primary/30 mx-auto mb-3" />
+                  <h2 className="text-lg font-bold text-primary">
                     {lang === "ar" ? "هل تريد الانضمام لمنشأة قائمة؟" : "Join an existing company?"}
                   </h2>
-                  <p className="text-sm text-neutral mt-1 font-primary">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {lang === "ar"
                       ? "يمكنك الانضمام لمنشأة مسجلة أو المتابعة كمستقل."
                       : "You can join a registered company or continue independently."}
@@ -429,12 +429,12 @@ export default function OnboardingPage() {
                       className="group p-6 rounded-xl border-2 border-gray-200 hover:border-secondary hover:bg-secondary/5 transition-all text-center space-y-3"
                     >
                       <div className="h-14 w-14 rounded-full bg-secondary/10 flex items-center justify-center mx-auto group-hover:bg-secondary/20 transition-colors">
-                        <Buildings size={28} className="text-secondary" />
+                        <Building2 className="h-7 w-7 text-secondary" />
                       </div>
-                      <h3 className="text-sm font-bold text-primary font-primary">
+                      <h3 className="text-sm font-bold text-primary">
                         {lang === "ar" ? "الانضمام لمنشأة" : "Join a company"}
                       </h3>
-                      <p className="text-xs text-neutral font-primary">
+                      <p className="text-xs text-muted-foreground">
                         {lang === "ar"
                           ? "ابحث بالسجل التجاري وانضم لفريق العمل"
                           : "Search by CR number and join the team"}
@@ -451,12 +451,12 @@ export default function OnboardingPage() {
                       className="group p-6 rounded-xl border-2 border-gray-200 hover:border-primary hover:bg-primary/5 transition-all text-center space-y-3"
                     >
                       <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto group-hover:bg-primary/20 transition-colors">
-                        <User size={28} className="text-primary" />
+                        <User className="h-7 w-7 text-primary" />
                       </div>
-                      <h3 className="text-sm font-bold text-primary font-primary">
+                      <h3 className="text-sm font-bold text-primary">
                         {lang === "ar" ? "متابعة كمستقل" : "Continue independently"}
                       </h3>
-                      <p className="text-xs text-neutral font-primary">
+                      <p className="text-xs text-muted-foreground">
                         {lang === "ar"
                           ? "أنشئ مساحة عمل شخصية خاصة بك"
                           : "Create your own personal workspace"}
@@ -469,7 +469,7 @@ export default function OnboardingPage() {
                 {joinChoice === "join" && !joinRequestSent && (
                   <div className="space-y-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                         {lang === "ar" ? "رقم السجل التجاري" : "Commercial Registration Number"}
                       </label>
                       <div className="flex gap-3">
@@ -492,9 +492,9 @@ export default function OnboardingPage() {
                          
                         >
                           {searching ? (
-                            <Spinner size={16} className="animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <MagnifyingGlass size={16} />
+                            <Search className="h-4 w-4" />
                           )}
                           {lang === "ar" ? "بحث" : "Search"}
                         </Button>
@@ -506,10 +506,10 @@ export default function OnboardingPage() {
                       <div className="p-4 bg-green-50 border border-green-200 rounded-lg space-y-3">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                            <Buildings size={20} className="text-green-700" />
+                            <Building2 className="h-5 w-5 text-green-700" />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-green-800 font-primary">
+                            <p className="text-sm font-bold text-green-800">
                               {lookupResult.maskedName}
                             </p>
                             <p className="text-[10px] text-green-600 font-latin">
@@ -524,9 +524,9 @@ export default function OnboardingPage() {
                          
                         >
                           {loading ? (
-                            <Spinner size={16} className="animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <ArrowRight size={16} />
+                            <ArrowRight className="h-4 w-4" />
                           )}
                           {lang === "ar" ? "طلب الانضمام" : "Request to Join"}
                         </Button>
@@ -536,7 +536,7 @@ export default function OnboardingPage() {
                     {/* Not Found */}
                     {lookupResult && !lookupResult.found && !lookupResult.error && (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
-                        <p className="text-sm text-amber-800 font-primary">
+                        <p className="text-sm text-amber-800">
                           {lang === "ar"
                             ? "لم يتم العثور على المنشأة. هل تريد تسجيلها؟"
                             : "Company not found. Would you like to register it?"}
@@ -549,9 +549,9 @@ export default function OnboardingPage() {
                          
                         >
                           {loading ? (
-                            <Spinner size={16} className="animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Buildings size={16} />
+                            <Building2 className="h-4 w-4" />
                           )}
                           {lang === "ar" ? "تسجيل المنشأة" : "Register Company"}
                         </Button>
@@ -567,7 +567,7 @@ export default function OnboardingPage() {
                         setCrSearch("");
                         setError("");
                       }}
-                      className="text-xs text-neutral hover:text-primary transition-colors font-primary"
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
                     >
                       {lang === "ar" ? "العودة للخيارات" : "Back to options"}
                     </button>
@@ -578,12 +578,12 @@ export default function OnboardingPage() {
                 {joinRequestSent && (
                   <div className="text-center space-y-4 py-6">
                     <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                      <Check size={32} weight="bold" className="text-green-600" />
+                      <Check className="h-8 w-8 text-green-600" />
                     </div>
-                    <h3 className="text-lg font-bold text-green-800 font-primary">
+                    <h3 className="text-lg font-bold text-green-800">
                       {lang === "ar" ? "تم إرسال طلب الانضمام" : "Join request sent"}
                     </h3>
-                    <p className="text-sm text-neutral font-primary max-w-sm mx-auto">
+                    <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                       {lang === "ar"
                         ? "سيقوم مسؤول المنشأة بمراجعة طلبك. يمكنك المتابعة بإعداد مساحة العمل الشخصية حاليًا."
                         : "The company admin will review your request. You can continue setting up your personal workspace for now."}
@@ -594,7 +594,7 @@ export default function OnboardingPage() {
                      
                     >
                       {lang === "ar" ? "متابعة" : "Continue"}
-                      {lang === "ar" ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                      {lang === "ar" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                     </Button>
                   </div>
                 )}
@@ -605,10 +605,10 @@ export default function OnboardingPage() {
             {currentStepId === "org" && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-primary font-primary">
+                  <h2 className="text-lg font-bold text-primary">
                     {lang === "ar" ? "معلومات المنشأة" : "Organization Details"}
                   </h2>
-                  <p className="text-sm text-neutral mt-1 font-primary">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {lang === "ar"
                       ? "أدخل البيانات الأساسية لمنشأتك."
                       : "Enter your organization's basic information."}
@@ -617,7 +617,7 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       {lang === "ar" ? "اسم المنشأة بالعربي" : "Organization Name (Arabic)"}
                     </label>
                     <Input
@@ -628,7 +628,7 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       {lang === "ar" ? "اسم المنشأة بالإنجليزي" : "Organization Name (English)"}
                     </label>
                     <Input
@@ -643,7 +643,7 @@ export default function OnboardingPage() {
                 {showBusinessFields && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                         {lang === "ar" ? "رقم السجل التجاري" : "CR Number"}
                       </label>
                       <Input
@@ -658,7 +658,7 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                         {lang === "ar" ? "الرقم الضريبي (VAT)" : "VAT Number"}
                       </label>
                       <Input
@@ -677,7 +677,7 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       {lang === "ar" ? "نوع المنشأة" : "Entity Type"}
                     </label>
                     <select
@@ -694,7 +694,7 @@ export default function OnboardingPage() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       {lang === "ar" ? "الشكل القانوني" : "Legal Form"}
                     </label>
                     <select
@@ -721,7 +721,7 @@ export default function OnboardingPage() {
                     className="gap-2"
                    
                   >
-                    {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                    {lang === "ar" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
                     {lang === "ar" ? "السابق" : "Previous"}
                   </Button>
                   <div className="flex items-center gap-3">
@@ -739,9 +739,9 @@ export default function OnboardingPage() {
                       className="gap-2 px-8"
                      
                     >
-                      {loading && <Spinner size={16} className="animate-spin" />}
+                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                       {lang === "ar" ? "حفظ ومتابعة" : "Save & Continue"}
-                      {lang === "ar" ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                      {lang === "ar" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -752,10 +752,10 @@ export default function OnboardingPage() {
             {currentStepId === "contact" && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-primary font-primary">
+                  <h2 className="text-lg font-bold text-primary">
                     {lang === "ar" ? "معلومات الاتصال والموقع" : "Contact & Location"}
                   </h2>
-                  <p className="text-sm text-neutral mt-1 font-primary">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {lang === "ar"
                       ? "أضف بيانات التواصل وموقع المنشأة."
                       : "Add your contact details and location."}
@@ -764,8 +764,8 @@ export default function OnboardingPage() {
 
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                      <EnvelopeSimple size={14} />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5" />
                       {lang === "ar" ? "رقم الجوال" : "Mobile Number"}
                     </label>
                     <Input
@@ -779,8 +779,8 @@ export default function OnboardingPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                        <MapPin size={14} />
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5" />
                         {lang === "ar" ? "المدينة" : "City"}
                       </label>
                       <Input
@@ -790,8 +790,8 @@ export default function OnboardingPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral flex items-center gap-2">
-                        <MapPin size={14} />
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <MapPin className="h-3.5 w-3.5" />
                         {lang === "ar" ? "المنطقة" : "Region"}
                       </label>
                       <Input
@@ -812,7 +812,7 @@ export default function OnboardingPage() {
                     className="gap-2"
                    
                   >
-                    {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                    {lang === "ar" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
                     {lang === "ar" ? "السابق" : "Previous"}
                   </Button>
                   <div className="flex items-center gap-3">
@@ -830,9 +830,9 @@ export default function OnboardingPage() {
                       className="gap-2 px-8"
                      
                     >
-                      {loading && <Spinner size={16} className="animate-spin" />}
+                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                       {lang === "ar" ? "حفظ ومتابعة" : "Save & Continue"}
-                      {lang === "ar" ? <ArrowLeft size={16} /> : <ArrowRight size={16} />}
+                      {lang === "ar" ? <ArrowLeft className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -843,10 +843,10 @@ export default function OnboardingPage() {
             {currentStepId === "invite" && (
               <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                 <div className="mb-6">
-                  <h2 className="text-lg font-bold text-primary font-primary">
+                  <h2 className="text-lg font-bold text-primary">
                     {lang === "ar" ? "دعوة فريق العمل" : "Invite Your Team"}
                   </h2>
-                  <p className="text-sm text-neutral mt-1 font-primary">
+                  <p className="text-sm text-muted-foreground mt-1">
                     {lang === "ar"
                       ? "أرسل دعوات لفريقك للانضمام إلى المنصة."
                       : "Send invitations for your team to join the platform."}
@@ -885,7 +885,7 @@ export default function OnboardingPage() {
                           className="text-red-500 hover:text-red-700 flex-shrink-0"
                          
                         >
-                          <Trash size={16} />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
                     </div>
@@ -897,7 +897,7 @@ export default function OnboardingPage() {
                   onClick={addInviteRow}
                   className="flex items-center gap-2 text-xs font-bold text-secondary hover:text-secondary/80 transition-colors"
                 >
-                  <Plus size={14} />
+                  <Plus className="h-3.5 w-3.5" />
                   {lang === "ar" ? "إضافة عضو آخر" : "Add another"}
                 </button>
 
@@ -910,7 +910,7 @@ export default function OnboardingPage() {
                     className="gap-2"
                    
                   >
-                    {lang === "ar" ? <ArrowRight size={16} /> : <ArrowLeft size={16} />}
+                    {lang === "ar" ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
                     {lang === "ar" ? "السابق" : "Previous"}
                   </Button>
                   <div className="flex items-center gap-3">
@@ -929,9 +929,9 @@ export default function OnboardingPage() {
                      
                     >
                       {loading ? (
-                        <Spinner size={16} className="animate-spin" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       ) : (
-                        <Check size={16} weight="bold" />
+                        <Check className="h-4 w-4" />
                       )}
                       {lang === "ar" ? "إرسال الدعوات وإنهاء الإعداد" : "Send Invitations & Complete"}
                     </Button>

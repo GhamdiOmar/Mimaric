@@ -3,12 +3,11 @@
 import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
-  ClockCounterClockwise,
-  Funnel,
-  CaretLeft,
-  CaretRight,
-  MagnifyingGlass,
-} from "@phosphor-icons/react";
+  History,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import {
   Button,
   Input,
@@ -143,11 +142,11 @@ export default function AuditLogPage() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-purple-500/10">
-            <ClockCounterClockwise size={24} className="text-purple-500" />
+            <History className="h-6 w-6 text-purple-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{t.title}</h1>
-            <p className="text-xs text-muted">{t.subtitle}</p>
+            <h1 className="text-xl font-bold text-foreground">{t.title}</h1>
+            <p className="text-xs text-muted-foreground">{t.subtitle}</p>
           </div>
         </div>
       </div>
@@ -155,7 +154,7 @@ export default function AuditLogPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <Funnel size={16} className="text-muted" />
+          <Filter className="h-4 w-4 text-muted-foreground" />
           <select
             value={actionFilter}
             onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
@@ -195,21 +194,21 @@ export default function AuditLogPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted">
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                   <div className="animate-pulse">Loading...</div>
                 </TableCell>
               </TableRow>
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted">{t.noLogs}</TableCell>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">{t.noLogs}</TableCell>
               </TableRow>
             ) : (
               logs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="text-muted whitespace-nowrap">{formatDate(log.createdAt)}</TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">{formatDate(log.createdAt)}</TableCell>
                   <TableCell>
                     <div className="font-medium">{log.userEmail}</div>
-                    <div className="text-[10px] text-muted">{log.userRole}</div>
+                    <div className="text-[10px] text-muted-foreground">{log.userRole}</div>
                   </TableCell>
                   <TableCell>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-semibold", actionColors[log.action] || "bg-gray-500/10 text-gray-500")}>
@@ -217,8 +216,8 @@ export default function AuditLogPage() {
                     </span>
                   </TableCell>
                   <TableCell className="font-medium">{log.resource}</TableCell>
-                  <TableCell className="text-muted font-mono text-[10px]">{log.resourceId ? log.resourceId.slice(0, 12) + "..." : "—"}</TableCell>
-                  <TableCell className="text-muted">{log.ipAddress || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground font-mono text-[10px]">{log.resourceId ? log.resourceId.slice(0, 12) + "..." : "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{log.ipAddress || "—"}</TableCell>
                 </TableRow>
               ))
             )}
@@ -229,17 +228,17 @@ export default function AuditLogPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <span className="text-xs text-muted">
+          <span className="text-xs text-muted-foreground">
             {t.page} {page} {t.of} {totalPages}
           </span>
           <div className="flex gap-2">
             <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>
-              <CaretLeft size={14} />
+              <ChevronLeft className="h-3.5 w-3.5" />
               {t.prev}
             </Button>
             <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
               {t.next}
-              <CaretRight size={14} />
+              <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>

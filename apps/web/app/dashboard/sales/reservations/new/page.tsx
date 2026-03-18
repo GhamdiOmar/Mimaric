@@ -7,17 +7,17 @@ import {
   User,
   Tag,
   Calendar,
-  CurrencyCircleDollar,
+  CircleDollarSign,
   ArrowRight,
   ArrowLeft,
-  Buildings,
+  Building2,
   Info,
-  Warning,
-  Spinner,
-  MagnifyingGlass,
+  AlertTriangle,
+  Loader2,
+  Search,
   Package,
-  House,
-} from "@phosphor-icons/react";
+  Home,
+} from "lucide-react";
 import { RiyalIcon } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { Button, Input, Badge } from "@repo/ui";
@@ -33,9 +33,9 @@ const fmt = (n: number) =>
 
 const steps = [
   { id: 1, label: { ar: "اختيار العميل", en: "Select Customer" }, icon: User },
-  { id: 2, label: { ar: "اختيار الوحدة", en: "Select Unit" }, icon: House },
+  { id: 2, label: { ar: "اختيار الوحدة", en: "Select Unit" }, icon: Home },
   { id: 3, label: { ar: "تفاصيل الحجز", en: "Details" }, icon: Tag },
-  { id: 4, label: { ar: "تأكيد الدفع", en: "Payment" }, icon: CurrencyCircleDollar },
+  { id: 4, label: { ar: "تأكيد الدفع", en: "Payment" }, icon: CircleDollarSign },
   { id: 5, label: { ar: "ملخص الحجز", en: "Summary" }, icon: Check },
 ];
 
@@ -191,19 +191,19 @@ function InnerNewReservationPage() {
           onClick={() => { setSource("unit"); setSelectedInventoryItem(null); }}
           className={cn(
             "px-4 py-2 rounded-sm text-sm font-bold transition-all",
-            source === "unit" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
+            source === "unit" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-primary"
           )}
         >
-          <span className="flex items-center gap-2"><Buildings size={16} /> {lang === "ar" ? "من الوحدات" : "From Unit"}</span>
+          <span className="flex items-center gap-2"><Building2 className="h-4 w-4" /> {lang === "ar" ? "من الوحدات" : "From Unit"}</span>
         </button>
         <button
           onClick={() => setSource("inventory")}
           className={cn(
             "px-4 py-2 rounded-sm text-sm font-bold transition-all",
-            source === "inventory" ? "bg-card text-primary shadow-sm" : "text-neutral hover:text-primary"
+            source === "inventory" ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:text-primary"
           )}
         >
-          <span className="flex items-center gap-2"><Package size={16} /> {lang === "ar" ? "من المخزون" : "From Inventory"}</span>
+          <span className="flex items-center gap-2"><Package className="h-4 w-4" /> {lang === "ar" ? "من المخزون" : "From Inventory"}</span>
         </button>
       </div>
 
@@ -224,14 +224,14 @@ function InnerNewReservationPage() {
                 className={cn(
                   "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
                   isActive ? "bg-card border-secondary text-secondary ring-4 ring-secondary/10" :
-                  isCompleted ? "bg-secondary border-secondary text-white" : "bg-card border-muted text-neutral"
+                  isCompleted ? "bg-secondary border-secondary text-white" : "bg-card border-muted text-muted-foreground"
                 )}
               >
-                {isCompleted ? <Check size={20} weight="bold" /> : <Icon size={20} />}
+                {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
               </div>
               <span className={cn(
                 "text-[10px] font-bold uppercase tracking-wider",
-                isActive ? "text-primary" : "text-neutral"
+                isActive ? "text-primary" : "text-muted-foreground"
               )}>
                 {step.label[lang]}
               </span>
@@ -248,21 +248,21 @@ function InnerNewReservationPage() {
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="text-start">
               <h2 className="text-xl font-bold text-primary">{lang === "ar" ? "اختر العميل المعني" : "Select Interested Customer"}</h2>
-              <p className="text-sm text-neutral font-dm-sans mt-1">{lang === "ar" ? "ابحث عن عميل موجود أو أضف عميل جديد لبدء الحجز" : "Search existing customer or add new to start reservation"}</p>
+              <p className="text-sm text-muted-foreground font-dm-sans mt-1">{lang === "ar" ? "ابحث عن عميل موجود أو أضف عميل جديد لبدء الحجز" : "Search existing customer or add new to start reservation"}</p>
             </div>
 
             <div className="relative">
               <Input placeholder={lang === "ar" ? "بحث بالاسم أو الجوال..." : "Search by name or mobile..."} className="pl-12 h-12" />
-              <MagnifyingGlass size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral" />
+              <Search className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "العملاء المتاحون" : "Available Customers"}</h3>
+              <h3 className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "العملاء المتاحون" : "Available Customers"}</h3>
               {fetchingCustomers ? (
-                <div className="flex justify-center py-10"><Spinner className="animate-spin text-primary" size={24} /></div>
+                <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
               ) : customers.length === 0 ? (
                 <div className="text-center py-10">
-                  <p className="text-sm text-neutral">{lang === "ar" ? "لا يوجد عملاء. أضف عميل أولاً من صفحة العملاء." : "No customers found. Add a customer first from the Customers page."}</p>
+                  <p className="text-sm text-muted-foreground">{lang === "ar" ? "لا يوجد عملاء. أضف عميل أولاً من صفحة العملاء." : "No customers found. Add a customer first from the Customers page."}</p>
                   <Link href="/dashboard/sales/customers" className="text-sm text-secondary mt-2 inline-block hover:underline">
                     {lang === "ar" ? "إضافة عميل →" : "Add Customer →"}
                   </Link>
@@ -283,14 +283,14 @@ function InnerNewReservationPage() {
                       </div>
                       <div>
                         <p className="text-sm font-bold text-primary">{customer.name}</p>
-                        <p className="text-xs text-neutral font-dm-sans" dir="ltr">{customer.phone}</p>
+                        <p className="text-xs text-muted-foreground font-dm-sans" dir="ltr">{customer.phone}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant={customer.status === "NEW" ? "default" : "reserved"} className="text-[10px]">
                         {customer.status}
                       </Badge>
-                      {selectedCustomerId === customer.id && <Check size={20} className="text-secondary" weight="bold" />}
+                      {selectedCustomerId === customer.id && <Check className="h-5 w-5 text-secondary" />}
                     </div>
                   </div>
                 ))
@@ -306,20 +306,20 @@ function InnerNewReservationPage() {
               <>
                 <div className="text-start">
                   <h2 className="text-xl font-bold text-primary">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</h2>
-                  <p className="text-sm text-neutral font-dm-sans mt-1">{lang === "ar" ? "اختر المشروع ثم المبنى ثم الوحدة المراد حجزها" : "Select project, then building, then unit to reserve"}</p>
+                  <p className="text-sm text-muted-foreground font-dm-sans mt-1">{lang === "ar" ? "اختر المشروع ثم المبنى ثم الوحدة المراد حجزها" : "Select project, then building, then unit to reserve"}</p>
                 </div>
 
                 {fetchingProjects ? (
-                  <div className="flex justify-center py-10"><Spinner className="animate-spin text-primary" size={24} /></div>
+                  <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
                 ) : projects.length === 0 ? (
                   <div className="text-center py-10">
-                    <p className="text-sm text-neutral">{lang === "ar" ? "لا توجد مشاريع. أنشئ مشروع أولاً." : "No projects found. Create a project first."}</p>
+                    <p className="text-sm text-muted-foreground">{lang === "ar" ? "لا توجد مشاريع. أنشئ مشروع أولاً." : "No projects found. Create a project first."}</p>
                   </div>
                 ) : (
                   <>
                     {/* Project Selector */}
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "المشروع" : "Project"}</label>
+                      <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "المشروع" : "Project"}</label>
                       <select
                         value={selectedProjectId}
                         onChange={(e) => {
@@ -339,7 +339,7 @@ function InnerNewReservationPage() {
                     {/* Building Selector */}
                     {selectedProjectId && selectedProject?.buildings?.length > 0 && (
                       <div className="space-y-2">
-                        <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "المبنى" : "Building"}</label>
+                        <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "المبنى" : "Building"}</label>
                         <select
                           value={selectedBuildingId}
                           onChange={(e) => {
@@ -361,12 +361,12 @@ function InnerNewReservationPage() {
                     {/* Unit Grid */}
                     {selectedBuildingId && (
                       <div className="space-y-3">
-                        <label className="text-xs font-bold uppercase text-neutral">
+                        <label className="text-xs font-bold uppercase text-muted-foreground">
                           {lang === "ar" ? "الوحدات المتاحة" : "Available Units"} ({availableUnits.length})
                         </label>
                         {availableUnits.length === 0 ? (
                           <div className="text-center py-6 bg-muted/10 rounded-md border border-dashed border-muted">
-                            <p className="text-sm text-neutral">{lang === "ar" ? "لا توجد وحدات متاحة في هذا المبنى" : "No available units in this building"}</p>
+                            <p className="text-sm text-muted-foreground">{lang === "ar" ? "لا توجد وحدات متاحة في هذا المبنى" : "No available units in this building"}</p>
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -386,21 +386,21 @@ function InnerNewReservationPage() {
                               >
                                 <div className="flex items-center justify-between mb-2">
                                   <span className="text-sm font-bold text-primary">{unit.number}</span>
-                                  {selectedUnit?.id === unit.id && <Check size={16} className="text-secondary" weight="bold" />}
+                                  {selectedUnit?.id === unit.id && <Check className="h-4 w-4 text-secondary" />}
                                 </div>
                                 <div className="space-y-1">
-                                  <p className="text-xs text-neutral">
+                                  <p className="text-xs text-muted-foreground">
                                     {unit.type === "APARTMENT" ? (lang === "ar" ? "شقة" : "Apartment") :
                                      unit.type === "VILLA" ? (lang === "ar" ? "فيلا" : "Villa") :
                                      unit.type === "OFFICE" ? (lang === "ar" ? "مكتب" : "Office") :
                                      unit.type === "RETAIL" ? (lang === "ar" ? "محل تجاري" : "Retail") : unit.type}
                                   </p>
                                   {unit.area && (
-                                    <p className="text-xs text-neutral">{unit.area} {lang === "ar" ? "م²" : "m²"}</p>
+                                    <p className="text-xs text-muted-foreground">{unit.area} {lang === "ar" ? "م²" : "m²"}</p>
                                   )}
                                   {(unit.markupPrice || unit.price) && (
                                     <p className="text-sm font-bold text-secondary flex items-center gap-1">
-                                      <RiyalIcon size={12} /> {fmt(Number(unit.markupPrice ?? unit.price))}
+                                      <RiyalIcon className="h-3 w-3" /> {fmt(Number(unit.markupPrice ?? unit.price))}
                                     </p>
                                   )}
                                 </div>
@@ -415,20 +415,20 @@ function InnerNewReservationPage() {
                     {selectedUnit && (
                       <div className="p-4 rounded-md bg-secondary/5 border border-secondary/20 flex items-center gap-4">
                         <div className="h-12 w-12 rounded-md bg-secondary/10 flex items-center justify-center text-secondary">
-                          <House size={24} />
+                          <Home className="h-6 w-6" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-bold text-primary">
                             {lang === "ar" ? "الوحدة المختارة:" : "Selected Unit:"} {selectedUnit.number}
                           </p>
-                          <p className="text-xs text-neutral">
+                          <p className="text-xs text-muted-foreground">
                             {selectedProject?.name} → {selectedBuilding?.name}
                           </p>
                         </div>
                         <div className="text-end">
                           {(selectedUnit.markupPrice || selectedUnit.price) && (
                             <p className="text-lg font-bold text-secondary flex items-center gap-1">
-                              <RiyalIcon size={16} /> {fmt(Number(selectedUnit.markupPrice ?? selectedUnit.price))}
+                              <RiyalIcon className="h-4 w-4" /> {fmt(Number(selectedUnit.markupPrice ?? selectedUnit.price))}
                             </p>
                           )}
                         </div>
@@ -442,11 +442,11 @@ function InnerNewReservationPage() {
               <div className="space-y-6">
                 <div className="text-start">
                   <h2 className="text-xl font-bold text-primary">{lang === "ar" ? "اختر المنتج من المخزون" : "Select Inventory Product"}</h2>
-                  <p className="text-sm text-neutral font-dm-sans mt-1">{lang === "ar" ? "اختر المشروع ثم المنتج المتاح للحجز" : "Select project then available product to reserve"}</p>
+                  <p className="text-sm text-muted-foreground font-dm-sans mt-1">{lang === "ar" ? "اختر المشروع ثم المنتج المتاح للحجز" : "Select project then available product to reserve"}</p>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "المشروع" : "Project"}</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "المشروع" : "Project"}</label>
                   <select
                     value={selectedProjectId}
                     onChange={(e) => { setSelectedProjectId(e.target.value); setSelectedInventoryItem(null); }}
@@ -460,11 +460,11 @@ function InnerNewReservationPage() {
                 </div>
 
                 {fetchingInventory && (
-                  <div className="flex justify-center py-4"><Spinner className="animate-spin text-primary" size={20} /></div>
+                  <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
                 )}
 
                 {!fetchingInventory && selectedProjectId && inventoryItems.length === 0 && (
-                  <p className="text-sm text-neutral text-center py-4">{lang === "ar" ? "لا توجد منتجات متاحة في هذا المشروع" : "No available items in this project"}</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">{lang === "ar" ? "لا توجد منتجات متاحة في هذا المشروع" : "No available items in this project"}</p>
                 )}
 
                 {!fetchingInventory && inventoryItems.length > 0 && (
@@ -482,15 +482,15 @@ function InnerNewReservationPage() {
                           <p className="text-sm font-bold text-primary">
                             {item.productLabelArabic || item.productLabel || item.itemNumber}
                           </p>
-                          <p className="text-xs text-neutral">
+                          <p className="text-xs text-muted-foreground">
                             {item.productType} — {item.areaSqm ? `${item.areaSqm} م²` : "—"}
                           </p>
                         </div>
                         <div className="text-end">
                           <p className="text-sm font-bold text-secondary flex items-center gap-1 justify-end">
-                            <RiyalIcon size={12} /> {fmt(Number(item.basePriceSar ?? 0))}
+                            <RiyalIcon className="h-3 w-3" /> {fmt(Number(item.basePriceSar ?? 0))}
                           </p>
-                          {selectedInventoryItem?.id === item.id && <Check size={16} className="text-secondary mr-auto" weight="bold" />}
+                          {selectedInventoryItem?.id === item.id && <Check className="h-4 w-4 text-secondary mr-auto" />}
                         </div>
                       </div>
                     ))}
@@ -506,40 +506,40 @@ function InnerNewReservationPage() {
           <div className="space-y-6 animate-in fade-in duration-500">
             <div className="text-start">
               <h2 className="text-xl font-bold text-primary">{lang === "ar" ? "تفاصيل الحجز" : "Reservation Details"}</h2>
-              <p className="text-sm text-neutral font-dm-sans mt-1">{lang === "ar" ? "تأكيد تفاصيل الوحدة المختارة ومدة الحجز" : "Confirm selected unit details and reservation duration"}</p>
+              <p className="text-sm text-muted-foreground font-dm-sans mt-1">{lang === "ar" ? "تأكيد تفاصيل الوحدة المختارة ومدة الحجز" : "Confirm selected unit details and reservation duration"}</p>
             </div>
 
             <div className="p-4 rounded-md bg-primary/5 border border-primary/10 flex items-center gap-4">
               <div className="h-12 w-12 rounded-md bg-primary flex items-center justify-center text-white">
-                {source === "inventory" ? <Package size={24} /> : <Buildings size={24} />}
+                {source === "inventory" ? <Package className="h-6 w-6" /> : <Building2 className="h-6 w-6" />}
               </div>
               <div className="flex-1">
                 {source === "inventory" && selectedInventoryItem ? (
                   <>
                     <p className="text-sm font-bold text-primary">{selectedInventoryItem.productLabelArabic || selectedInventoryItem.productLabel || selectedInventoryItem.itemNumber}</p>
-                    <p className="text-xs text-neutral">{selectedInventoryItem.productType} — {selectedInventoryItem.areaSqm ? `${selectedInventoryItem.areaSqm} م²` : "—"}</p>
+                    <p className="text-xs text-muted-foreground">{selectedInventoryItem.productType} — {selectedInventoryItem.areaSqm ? `${selectedInventoryItem.areaSqm} م²` : "—"}</p>
                   </>
                 ) : selectedUnit ? (
                   <>
                     <p className="text-sm font-bold text-primary">{lang === "ar" ? "وحدة" : "Unit"} {selectedUnit.number}</p>
-                    <p className="text-xs text-neutral">{selectedProject?.name} → {selectedBuilding?.name}</p>
-                    {selectedUnit.area && <p className="text-xs text-neutral">{selectedUnit.area} {lang === "ar" ? "م²" : "m²"}</p>}
+                    <p className="text-xs text-muted-foreground">{selectedProject?.name} → {selectedBuilding?.name}</p>
+                    {selectedUnit.area && <p className="text-xs text-muted-foreground">{selectedUnit.area} {lang === "ar" ? "م²" : "m²"}</p>}
                   </>
                 ) : (
-                  <p className="text-sm text-neutral">{lang === "ar" ? "لم يتم اختيار وحدة" : "No unit selected"}</p>
+                  <p className="text-sm text-muted-foreground">{lang === "ar" ? "لم يتم اختيار وحدة" : "No unit selected"}</p>
                 )}
               </div>
               <div className="text-end">
-                <p className="text-xs text-neutral uppercase font-bold">{lang === "ar" ? "سعر الوحدة" : "Unit Price"}</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold">{lang === "ar" ? "سعر الوحدة" : "Unit Price"}</p>
                 <p className="text-lg font-bold text-secondary flex items-center gap-1 justify-end">
-                  <RiyalIcon size={16} /> {fmt(effectiveDeposit)}
+                  <RiyalIcon className="h-4 w-4" /> {fmt(effectiveDeposit)}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "مدة الحجز (أيام)" : "Reservation Duration (Days)"}</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "مدة الحجز (أيام)" : "Reservation Duration (Days)"}</label>
                 <select
                   value={reservationDays}
                   onChange={(e) => setReservationDays(Number(e.target.value))}
@@ -551,7 +551,7 @@ function InnerNewReservationPage() {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "تاريخ انتهاء الحجز" : "Expiry Date"}</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "تاريخ انتهاء الحجز" : "Expiry Date"}</label>
                 <Input
                   type="date"
                   className="h-11"
@@ -562,7 +562,7 @@ function InnerNewReservationPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-neutral">{lang === "ar" ? "مبلغ جدية الحجز (ر.س)" : "Deposit Amount (SAR)"}</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground">{lang === "ar" ? "مبلغ جدية الحجز (ر.س)" : "Deposit Amount (SAR)"}</label>
               <Input
                 type="number"
                 className="h-11"
@@ -571,8 +571,8 @@ function InnerNewReservationPage() {
               />
             </div>
 
-            <div className="p-4 rounded-md bg-accent/5 border border-accent/20 flex gap-3">
-              <Info size={20} className="text-accent shrink-0 mt-0.5" />
+            <div className="p-4 rounded-md bg-amber-500/5 border border-amber-500/20 flex gap-3">
+              <Info className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-primary leading-relaxed">
                 {source === "inventory"
                   ? (lang === "ar"
@@ -590,11 +590,11 @@ function InnerNewReservationPage() {
         {currentStep === 4 && (
           <div className="space-y-6 animate-in fade-in duration-500 text-center py-8">
             <div className="h-20 w-20 bg-secondary/10 rounded-full flex items-center justify-center mx-auto text-secondary mb-4 transition-transform hover:scale-110">
-              <CurrencyCircleDollar size={48} weight="fill" />
+              <CircleDollarSign className="h-12 w-12" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-primary">{lang === "ar" ? "مبلغ الحجز" : "Reservation Deposit"}</h2>
-              <p className="text-sm text-neutral max-w-sm mx-auto mt-2">
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2">
                 {lang === "ar"
                   ? `يتطلب تأكيد الحجز دفع مبلغ جدية حجز قدره ${fmt(effectiveDeposit)} ريال سعودي`
                   : `Confirming the reservation requires a deposit of SAR ${fmt(effectiveDeposit)}`}
@@ -603,18 +603,18 @@ function InnerNewReservationPage() {
 
             <div className="max-w-xs mx-auto space-y-4 pt-4">
               <div className="flex justify-between items-center py-3 border-b border-border">
-                <span className="text-sm text-neutral">{lang === "ar" ? "الإجمالي المستحق" : "Total Due"}</span>
-                <span className="text-lg font-bold text-primary flex items-center gap-1.5"><RiyalIcon size={16} /> {fmt(effectiveDeposit)}</span>
+                <span className="text-sm text-muted-foreground">{lang === "ar" ? "الإجمالي المستحق" : "Total Due"}</span>
+                <span className="text-lg font-bold text-primary flex items-center gap-1.5"><RiyalIcon className="h-4 w-4" /> {fmt(effectiveDeposit)}</span>
               </div>
 
               <div className="p-4 rounded-md border-2 border-primary/20 bg-primary/5 text-start flex items-center gap-3">
-                <Check size={20} className="text-primary" />
+                <Check className="h-5 w-5 text-primary" />
                 <span className="text-sm font-bold text-primary">{lang === "ar" ? "تحويل بنكي / نقدي" : "Bank Transfer / Cash"}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 justify-center text-xs text-neutral/60">
-              <Warning size={14} />
+            <div className="flex items-center gap-3 justify-center text-xs text-muted-foreground/60">
+              <AlertTriangle className="h-3.5 w-3.5" />
               <span>{lang === "ar" ? "هذا المبلغ غير قابل للاسترداد حسب السياسة" : "This amount is non-refundable per policy"}</span>
             </div>
           </div>
@@ -625,29 +625,29 @@ function InnerNewReservationPage() {
           <div className="space-y-8 animate-in zoom-in-95 duration-500">
             <div className="text-center">
               <div className="h-16 w-16 bg-secondary rounded-full flex items-center justify-center mx-auto text-white mb-4">
-                {loading ? <Spinner className="animate-spin" size={32} /> : <Check size={32} weight="bold" />}
+                {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : <Check className="h-8 w-8" />}
               </div>
               <h2 className="text-2xl font-bold text-primary">{lang === "ar" ? "تم تجهيز الحجز بنجاح" : "Reservation Ready"}</h2>
-              <p className="text-sm text-neutral mt-2">{lang === "ar" ? "يرجى مراجعة البيانات قبل التأكيد النهائي" : "Please review details before final confirmation"}</p>
+              <p className="text-sm text-muted-foreground mt-2">{lang === "ar" ? "يرجى مراجعة البيانات قبل التأكيد النهائي" : "Please review details before final confirmation"}</p>
             </div>
 
             <div className="bg-muted/30 rounded-lg p-6 space-y-4 border border-border">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral">{lang === "ar" ? "العميل" : "Client"}</span>
+                <span className="text-muted-foreground">{lang === "ar" ? "العميل" : "Client"}</span>
                 <span className="font-bold text-primary">{selectedCustomer?.name || "..."}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral">{lang === "ar" ? "المشروع" : "Project"}</span>
+                <span className="text-muted-foreground">{lang === "ar" ? "المشروع" : "Project"}</span>
                 <span className="font-bold text-primary">{selectedProject?.name || "—"}</span>
               </div>
               {source === "unit" && selectedUnit && (
                 <>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral">{lang === "ar" ? "المبنى" : "Building"}</span>
+                    <span className="text-muted-foreground">{lang === "ar" ? "المبنى" : "Building"}</span>
                     <span className="font-bold text-primary">{selectedBuilding?.name || "—"}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral">{lang === "ar" ? "الوحدة" : "Unit"}</span>
+                    <span className="text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</span>
                     <span className="font-bold text-primary">{selectedUnit.number}</span>
                   </div>
                 </>
@@ -655,28 +655,28 @@ function InnerNewReservationPage() {
               {source === "inventory" && selectedInventoryItem && (
                 <>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral">{lang === "ar" ? "المنتج" : "Product"}</span>
+                    <span className="text-muted-foreground">{lang === "ar" ? "المنتج" : "Product"}</span>
                     <span className="font-bold text-primary">
                       {selectedInventoryItem.productLabelArabic || selectedInventoryItem.itemNumber}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-neutral">{lang === "ar" ? "المصدر" : "Source"}</span>
+                    <span className="text-muted-foreground">{lang === "ar" ? "المصدر" : "Source"}</span>
                     <Badge variant="reserved" className="text-[10px]">{lang === "ar" ? "من المخزون" : "From Inventory"}</Badge>
                   </div>
                 </>
               )}
               <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral">{lang === "ar" ? "مدة الحجز" : "Duration"}</span>
+                <span className="text-muted-foreground">{lang === "ar" ? "مدة الحجز" : "Duration"}</span>
                 <span className="font-bold text-primary">{reservationDays} {lang === "ar" ? "يوم" : "days"}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-neutral">{lang === "ar" ? "تاريخ الانتهاء" : "Expiry"}</span>
+                <span className="text-muted-foreground">{lang === "ar" ? "تاريخ الانتهاء" : "Expiry"}</span>
                 <span className="font-bold text-primary">{new Date(expiryDate || "").toLocaleDateString("ar-SA")}</span>
               </div>
               <div className="pt-4 border-t border-border flex justify-between items-center">
                 <span className="font-bold text-primary">{lang === "ar" ? "إجمالي مبلغ الحجز" : "Total Deposit"}</span>
-                <span className="text-xl font-bold text-secondary flex items-center gap-1.5"><RiyalIcon size={20} /> {fmt(effectiveDeposit)}</span>
+                <span className="text-xl font-bold text-secondary flex items-center gap-1.5"><RiyalIcon className="h-5 w-5" /> {fmt(effectiveDeposit)}</span>
               </div>
             </div>
 
@@ -701,7 +701,7 @@ function InnerNewReservationPage() {
             disabled={currentStep === 1 || loading}
             className="gap-2"
           >
-            {lang === "ar" ? <ArrowRight size={18} /> : <ArrowLeft size={18} />}
+            {lang === "ar" ? <ArrowRight className="h-[18px] w-[18px]" /> : <ArrowLeft className="h-[18px] w-[18px]" />}
             {lang === "ar" ? "السابق" : "Previous"}
           </Button>
 
@@ -715,13 +715,13 @@ function InnerNewReservationPage() {
             className="gap-2"
           >
             {lang === "ar" ? "التالي" : "Next"}
-            {lang === "ar" ? <ArrowLeft size={18} /> : <ArrowRight size={18} />}
+            {lang === "ar" ? <ArrowLeft className="h-[18px] w-[18px]" /> : <ArrowRight className="h-[18px] w-[18px]" />}
           </Button>
         </div>
       </div>
 
       <div className="mt-6 text-center">
-        <Link href="/dashboard/sales/reservations" className="text-sm text-neutral hover:text-primary transition-colors flex items-center justify-center gap-2">
+        <Link href="/dashboard/sales/reservations" className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2">
           {lang === "ar" ? "إلغاء والعودة للحجوزات" : "Cancel and go back to reservations"}
         </Link>
       </div>
@@ -731,7 +731,7 @@ function InnerNewReservationPage() {
 
 export default function NewReservationPage() {
   return (
-    <React.Suspense fallback={<div className="flex justify-center py-10"><Spinner className="animate-spin text-primary" size={32} /></div>}>
+    <React.Suspense fallback={<div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
       <InnerNewReservationPage />
     </React.Suspense>
   );

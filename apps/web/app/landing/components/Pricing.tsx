@@ -3,17 +3,18 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  CheckCircle,
-  XCircle,
+  Building2,
+  Sparkles,
   Crown,
-  Sparkle,
-  Buildings,
-} from "@phosphor-icons/react";
+  Check,
+  X,
+} from "lucide-react";
 import { t as translations } from "../translations";
+import type { LucideIcon } from "lucide-react";
 
 type Plan = {
   slug: string;
-  icon: typeof Buildings;
+  icon: LucideIcon;
   name: string;
   desc: string;
   monthlyPrice: number;
@@ -33,7 +34,7 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
   const plans: Plan[] = [
     {
       slug: "starter",
-      icon: Buildings,
+      icon: Building2,
       name: t.starter,
       desc: t.starterDesc,
       monthlyPrice: 0,
@@ -55,7 +56,7 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
     },
     {
       slug: "professional",
-      icon: Sparkle,
+      icon: Sparkles,
       name: t.professional,
       desc: t.professionalDesc,
       monthlyPrice: 499,
@@ -135,17 +136,19 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
           </span>
           <button
             onClick={() => setAnnual(!annual)}
-            className={`relative h-7 w-12 rounded-full transition-colors ${
-              annual ? "bg-secondary" : "bg-muted-foreground/30"
+            className={`relative h-6 w-11 rounded-full transition-colors ${
+              annual ? "bg-primary" : "bg-muted-foreground/30"
             }`}
             style={{ display: "inline-flex" }}
+            aria-pressed={annual}
+            type="button"
           >
             <span
-              className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
+              className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
                 annual
                   ? lang === "ar"
-                    ? "-translate-x-5"
-                    : "translate-x-5"
+                    ? "-translate-x-[1.25rem]"
+                    : "translate-x-[1.25rem]"
                   : lang === "ar"
                     ? "-translate-x-0.5"
                     : "translate-x-0.5"
@@ -158,137 +161,129 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
             {t.annual}
           </span>
           {annual && (
-            <span className="rounded-full bg-secondary/10 px-2.5 py-0.5 text-xs font-semibold text-secondary">
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
               {t.annualSave}
             </span>
           )}
         </div>
 
         {/* Plan cards */}
-        <div className="mt-12 grid gap-8 lg:grid-cols-3">
+        <div className="mt-12 grid gap-6 lg:grid-cols-3">
           {plans.map((plan) => {
             const Icon = plan.icon;
             return (
               <div
                 key={plan.slug}
-                className={`relative overflow-hidden rounded-2xl border p-8 transition-all duration-300 hover:-translate-y-1 ${
+                className={`relative overflow-hidden rounded-2xl border p-6 transition-colors ${
                   plan.highlighted
-                    ? "border-secondary bg-card shadow-xl ring-2 ring-secondary/20 dark:bg-card dark:shadow-glow-green"
-                    : "border-border/50 bg-card/80 shadow-elevation-1 backdrop-blur-sm dark:bg-card/50"
+                    ? "border-primary bg-card shadow-md dark:bg-card"
+                    : "border-border/50 bg-card/80 shadow-sm backdrop-blur-sm dark:bg-card/50"
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute top-0 inset-x-0 bg-secondary py-1 text-center text-xs font-semibold text-white">
+                  <span className="absolute top-3 end-3 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                     {t.mostPopular}
-                  </div>
+                  </span>
                 )}
 
-                <div className={plan.highlighted ? "pt-4" : ""}>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                        plan.highlighted
-                          ? "bg-secondary/10"
-                          : "bg-muted dark:bg-muted/50"
-                      }`}
-                    >
-                      <Icon
-                        size={22}
-                        weight="duotone"
-                        className={
-                          plan.highlighted
-                            ? "text-secondary"
-                            : "text-primary dark:text-white"
-                        }
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-primary dark:text-white">
-                        {plan.name}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {plan.desc}
-                  </p>
-
-                  {/* Price */}
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="font-dm-sans text-4xl font-bold text-primary dark:text-white">
-                      {formatPrice(plan)}
-                    </span>
-                    {priceSuffix(plan) && (
-                      <span className="text-sm text-muted-foreground">
-                        {priceSuffix(plan)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* CTA */}
-                  <Link
-                    href={plan.ctaHref}
-                    className={`mt-6 block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-all hover:-translate-y-0.5 ${
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex size-9 items-center justify-center rounded-lg ${
                       plan.highlighted
-                        ? "bg-secondary text-white hover:bg-green-bright"
-                        : "bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-white dark:text-primary dark:hover:bg-gray-100"
+                        ? "bg-primary/10"
+                        : "bg-muted dark:bg-muted/50"
                     }`}
-                    style={{ display: "inline-flex", justifyContent: "center" }}
                   >
-                    {plan.cta}
-                  </Link>
-
-                  {/* Limits */}
-                  <div className="mt-6 space-y-2 border-t border-border pt-6">
-                    <p className="text-sm text-foreground/80">
-                      <span className="font-semibold">{plan.limits.projects}</span>{" "}
-                      {t.projects}
-                    </p>
-                    <p className="text-sm text-foreground/80">
-                      <span className="font-semibold">{plan.limits.users}</span>{" "}
-                      {t.users}
-                    </p>
-                    <p className="text-sm text-foreground/80">
-                      <span className="font-semibold">{plan.limits.units}</span>{" "}
-                      {t.units}
-                    </p>
+                    <Icon
+                      className={`h-[18px] w-[18px] ${
+                        plan.highlighted
+                          ? "text-primary"
+                          : "text-primary dark:text-white"
+                      }`}
+                    />
                   </div>
+                  <h3 className="text-lg font-bold text-primary dark:text-white">
+                    {plan.name}
+                  </h3>
+                </div>
 
-                  {/* Features */}
-                  <div className="mt-4 space-y-2">
-                    {plan.features.map(({ key, label, included }) => (
-                      <div key={key} className="flex items-center gap-2">
-                        {included ? (
-                          <CheckCircle
-                            size={16}
-                            weight="fill"
-                            className="shrink-0 text-secondary"
-                          />
-                        ) : (
-                          <XCircle
-                            size={16}
-                            weight="fill"
-                            className="shrink-0 text-muted-foreground/40"
-                          />
-                        )}
-                        <span
-                          className={`text-sm ${
-                            included
-                              ? "text-foreground/80"
-                              : "text-muted-foreground/60"
-                          }`}
-                        >
-                          {label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {plan.desc}
+                </p>
 
-                  {/* Support level */}
-                  <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">
-                    {plan.supportLevel}
+                {/* Price */}
+                <div className="mt-5 flex items-baseline gap-1">
+                  <span className="font-dm-sans text-4xl font-bold text-primary dark:text-white">
+                    {formatPrice(plan)}
+                  </span>
+                  {priceSuffix(plan) && (
+                    <span className="text-sm text-muted-foreground">
+                      {priceSuffix(plan)}
+                    </span>
+                  )}
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href={plan.ctaHref}
+                  className={`mt-5 block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-colors ${
+                    plan.highlighted
+                      ? "bg-primary text-white hover:bg-primary/85"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-white dark:text-primary dark:hover:bg-gray-100"
+                  }`}
+                  style={{ display: "inline-flex", justifyContent: "center" }}
+                >
+                  {plan.cta}
+                </Link>
+
+                {/* Limits */}
+                <div className="mt-5 space-y-1.5 border-t border-border pt-5">
+                  <p className="text-sm text-foreground/80">
+                    <span className="font-semibold">{plan.limits.projects}</span>{" "}
+                    {t.projects}
+                  </p>
+                  <p className="text-sm text-foreground/80">
+                    <span className="font-semibold">{plan.limits.users}</span>{" "}
+                    {t.users}
+                  </p>
+                  <p className="text-sm text-foreground/80">
+                    <span className="font-semibold">{plan.limits.units}</span>{" "}
+                    {t.units}
                   </p>
                 </div>
+
+                {/* Features */}
+                <div className="mt-3 space-y-1.5">
+                  {plan.features.map(({ key, label, included }) => (
+                    <div key={key} className="flex items-center gap-2">
+                      {included ? (
+                        <Check
+                          className="h-3.5 w-3.5 shrink-0 text-primary"
+                          strokeWidth={2.5}
+                        />
+                      ) : (
+                        <X
+                          className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40"
+                          strokeWidth={2}
+                        />
+                      )}
+                      <span
+                        className={`text-sm ${
+                          included
+                            ? "text-foreground/80"
+                            : "text-muted-foreground/60"
+                        }`}
+                      >
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Support level */}
+                <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
+                  {plan.supportLevel}
+                </p>
               </div>
             );
           })}

@@ -46,24 +46,24 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-card p-3 rounded-md shadow-raised border border-border text-xs space-y-1">
+    <div className="bg-card p-3 rounded-md shadow-lg border border-border text-xs space-y-1">
       <p className="font-bold text-primary">{d.label}</p>
       <div className="flex items-center gap-1">
-        <span className="text-neutral">متوسط السعر/م²:</span>
+        <span className="text-muted-foreground">متوسط السعر/م²:</span>
         <span className="font-bold text-primary flex items-center gap-0.5">
-          <RiyalIcon size={10} /> {fmt(d.avgPricePerSqm)}
+          <RiyalIcon className="h-2.5 w-2.5" /> {fmt(d.avgPricePerSqm)}
         </span>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-neutral">الحد الأدنى:</span>
-        <span className="font-bold flex items-center gap-0.5"><RiyalIcon size={10} /> {fmt(d.minPrice)}</span>
+        <span className="text-muted-foreground">الحد الأدنى:</span>
+        <span className="font-bold flex items-center gap-0.5"><RiyalIcon className="h-2.5 w-2.5" /> {fmt(d.minPrice)}</span>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-neutral">الحد الأعلى:</span>
-        <span className="font-bold flex items-center gap-0.5"><RiyalIcon size={10} /> {fmt(d.maxPrice)}</span>
+        <span className="text-muted-foreground">الحد الأعلى:</span>
+        <span className="font-bold flex items-center gap-0.5"><RiyalIcon className="h-2.5 w-2.5" /> {fmt(d.maxPrice)}</span>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-neutral">عدد الوحدات:</span>
+        <span className="text-muted-foreground">عدد الوحدات:</span>
         <span className="font-bold">{d.count}</span>
       </div>
     </div>
@@ -98,7 +98,7 @@ export default function PricingDistributionChart({ projectId }: { projectId: str
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">
         لا توجد بيانات تسعير بعد
       </div>
     );

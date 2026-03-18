@@ -3,22 +3,22 @@
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
-  Question,
+  HelpCircle,
   Ticket,
   ShieldCheck,
   BookOpen,
-  CaretDown,
-  CaretUp,
-  MagnifyingGlass,
-  PaperPlaneTilt,
-  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  Send,
+  CheckCircle2,
   XCircle,
   Clock,
-  ChatDots,
-  Gear,
-  Warning,
-} from "@phosphor-icons/react";
-import { Button } from "@repo/ui";
+  MessageSquare,
+  Settings,
+  AlertTriangle,
+} from "lucide-react";
+import { Button, PageHeader } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { hasPermission } from "../../../lib/permissions";
@@ -175,13 +175,22 @@ export default function HelpPage() {
     }
   }
 
-  const tabs: { key: Tab; label: { ar: string; en: string }; icon: any; adminOnly?: boolean }[] = [
-    { key: "overview", label: { ar: "نظرة عامة", en: "Overview" }, icon: Question },
-    { key: "faq", label: { ar: "الأسئلة والأدلة", en: "FAQs & Guides" }, icon: BookOpen },
-    { key: "tickets", label: { ar: "تذاكري", en: "My Tickets" }, icon: Ticket },
-    { key: "permissions", label: { ar: "طلب صلاحيات", en: "Request Permissions" }, icon: ShieldCheck },
-    ...(isOrgAdmin ? [{ key: "org-admin" as Tab, label: { ar: "إدارة المنظمة", en: "Org Management" }, icon: ShieldCheck, adminOnly: true }] : []),
-    ...(isSystemStaff ? [{ key: "system-admin" as Tab, label: { ar: "إدارة النظام", en: "System Admin" }, icon: Gear, adminOnly: true }] : []),
+  const tabIcons: Record<string, React.ElementType> = {
+    overview: HelpCircle,
+    faq: BookOpen,
+    tickets: Ticket,
+    permissions: ShieldCheck,
+    "org-admin": ShieldCheck,
+    "system-admin": Settings,
+  };
+
+  const tabs: { key: Tab; label: { ar: string; en: string }; adminOnly?: boolean }[] = [
+    { key: "overview", label: { ar: "نظرة عامة", en: "Overview" } },
+    { key: "faq", label: { ar: "الأسئلة والأدلة", en: "FAQs & Guides" } },
+    { key: "tickets", label: { ar: "تذاكري", en: "My Tickets" } },
+    { key: "permissions", label: { ar: "طلب صلاحيات", en: "Request Permissions" } },
+    ...(isOrgAdmin ? [{ key: "org-admin" as Tab, label: { ar: "إدارة المنظمة", en: "Org Management" }, adminOnly: true }] : []),
+    ...(isSystemStaff ? [{ key: "system-admin" as Tab, label: { ar: "إدارة النظام", en: "System Admin" }, adminOnly: true }] : []),
   ];
 
   const statusBadge = (status: string) => {
@@ -240,30 +249,31 @@ export default function HelpPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">{lang === "ar" ? "مركز المساعدة" : "Help Center"}</h1>
-          <p className="text-sm text-neutral mt-1">{lang === "ar" ? "الأسئلة الشائعة، الدعم الفني، وطلب الصلاحيات" : "FAQs, technical support, and permission requests"}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={lang === "ar" ? "مركز المساعدة" : "Help Center"}
+        description={lang === "ar" ? "الأسئلة الشائعة، الدعم الفني، وطلب الصلاحيات" : "FAQs, technical support, and permission requests"}
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all",
-              activeTab === tab.key
-                ? "bg-primary text-white shadow-md"
-                : "text-neutral hover:bg-muted/30 hover:text-primary"
-            )}
-          >
-            <tab.icon size={16} weight={activeTab === tab.key ? "fill" : "regular"} />
-            {tab.label[lang]}
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const Icon = tabIcons[tab.key] ?? HelpCircle;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap transition-all",
+                activeTab === tab.key
+                  ? "bg-primary text-white shadow-md"
+                  : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label[lang]}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Content */}
@@ -272,19 +282,19 @@ export default function HelpPage() {
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button onClick={() => { setActiveTab("tickets"); setShowNewTicket(true); }} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
-              <Ticket size={32} className="text-secondary mb-3" />
-              <h3 className="font-bold text-primary">{lang === "ar" ? "تقديم تذكرة" : "Submit Ticket"}</h3>
-              <p className="text-xs text-neutral mt-1">{lang === "ar" ? "أبلغ عن مشكلة أو اطلب ميزة جديدة" : "Report an issue or request a feature"}</p>
+              <Ticket className="h-8 w-8 text-secondary mb-3" />
+              <h3 className="font-bold text-foreground">{lang === "ar" ? "تقديم تذكرة" : "Submit Ticket"}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{lang === "ar" ? "أبلغ عن مشكلة أو اطلب ميزة جديدة" : "Report an issue or request a feature"}</p>
             </button>
             <button onClick={() => setActiveTab("permissions")} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
-              <ShieldCheck size={32} className="text-accent mb-3" />
-              <h3 className="font-bold text-primary">{lang === "ar" ? "طلب صلاحيات" : "Request Permissions"}</h3>
-              <p className="text-xs text-neutral mt-1">{lang === "ar" ? "اطلب ترقية صلاحياتك في النظام" : "Request a role upgrade in the system"}</p>
+              <ShieldCheck className="h-8 w-8 text-amber-500 mb-3" />
+              <h3 className="font-bold text-foreground">{lang === "ar" ? "طلب صلاحيات" : "Request Permissions"}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{lang === "ar" ? "اطلب ترقية صلاحياتك في النظام" : "Request a role upgrade in the system"}</p>
             </button>
             <button onClick={() => setActiveTab("faq")} className="bg-card p-6 rounded-md shadow-card border border-border hover:shadow-lg hover:-translate-y-0.5 transition-all text-start">
-              <BookOpen size={32} className="text-info mb-3" />
-              <h3 className="font-bold text-primary">{lang === "ar" ? "الأسئلة الشائعة" : "FAQs & Guides"}</h3>
-              <p className="text-xs text-neutral mt-1">{lang === "ar" ? "ابحث في الأسئلة الشائعة وأدلة الاستخدام" : "Browse FAQs and usage guides"}</p>
+              <BookOpen className="h-8 w-8 text-info mb-3" />
+              <h3 className="font-bold text-foreground">{lang === "ar" ? "الأسئلة الشائعة" : "FAQs & Guides"}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{lang === "ar" ? "ابحث في الأسئلة الشائعة وأدلة الاستخدام" : "Browse FAQs and usage guides"}</p>
             </button>
           </div>
 
@@ -292,15 +302,15 @@ export default function HelpPage() {
           {isSystemStaff && stats && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-neutral">{lang === "ar" ? "تذاكر مفتوحة" : "Open Tickets"}</p>
-                <p className="text-2xl font-bold text-primary mt-1">{stats.openTickets}</p>
+                <p className="text-xs text-muted-foreground">{lang === "ar" ? "تذاكر مفتوحة" : "Open Tickets"}</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{stats.openTickets}</p>
               </div>
               <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-neutral">{lang === "ar" ? "قيد المعالجة" : "In Progress"}</p>
+                <p className="text-xs text-muted-foreground">{lang === "ar" ? "قيد المعالجة" : "In Progress"}</p>
                 <p className="text-2xl font-bold text-blue-600 mt-1">{stats.inProgressTickets}</p>
               </div>
               <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-neutral">{lang === "ar" ? "طلبات صلاحيات معلقة" : "Pending Requests"}</p>
+                <p className="text-xs text-muted-foreground">{lang === "ar" ? "طلبات صلاحيات معلقة" : "Pending Requests"}</p>
                 <p className="text-2xl font-bold text-amber-600 mt-1">{stats.pendingRequests}</p>
               </div>
             </div>
@@ -312,7 +322,7 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* Search */}
           <div className="relative">
-            <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral" />
+            <Search className="h-[18px] w-[18px] absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={faqSearch}
@@ -326,7 +336,7 @@ export default function HelpPage() {
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setFaqCategory("all")}
-              className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all", faqCategory === "all" ? "bg-primary text-white" : "bg-muted/50 text-neutral hover:bg-muted")}
+              className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all", faqCategory === "all" ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted")}
             >
               {lang === "ar" ? "الكل" : "All"}
             </button>
@@ -334,7 +344,7 @@ export default function HelpPage() {
               <button
                 key={cat.key}
                 onClick={() => setFaqCategory(cat.key)}
-                className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all", faqCategory === cat.key ? "bg-primary text-white" : "bg-muted/50 text-neutral hover:bg-muted")}
+                className={cn("px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all", faqCategory === cat.key ? "bg-primary text-white" : "bg-muted/50 text-muted-foreground hover:bg-muted")}
               >
                 {cat.label[lang]}
               </button>
@@ -344,19 +354,19 @@ export default function HelpPage() {
           {/* FAQ Accordion */}
           <div className="bg-card rounded-md border border-border divide-y divide-border">
             {filteredFaqs.length === 0 ? (
-              <div className="p-6 text-center text-sm text-neutral">{lang === "ar" ? "لا توجد نتائج" : "No results found"}</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">{lang === "ar" ? "لا توجد نتائج" : "No results found"}</div>
             ) : (
               filteredFaqs.map((item) => (
                 <div key={item.id}>
                   <button
                     onClick={() => setOpenFaq(openFaq === item.id ? null : item.id)}
-                    className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-primary hover:bg-muted/10 transition-colors text-start"
+                    className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/10 transition-colors text-start"
                   >
                     <span>{item.question[lang]}</span>
-                    {openFaq === item.id ? <CaretUp size={16} className="min-w-[16px]" /> : <CaretDown size={16} className="min-w-[16px]" />}
+                    {openFaq === item.id ? <ChevronUp className="h-4 w-4 min-w-[16px]" /> : <ChevronDown className="h-4 w-4 min-w-[16px]" />}
                   </button>
                   {openFaq === item.id && (
-                    <div className="px-4 pb-3 text-sm text-neutral leading-relaxed bg-muted/5">
+                    <div className="px-4 pb-3 text-sm text-muted-foreground leading-relaxed bg-muted/5">
                       {item.answer[lang]}
                     </div>
                   )}
@@ -367,7 +377,7 @@ export default function HelpPage() {
 
           {/* Guides */}
           <div>
-            <h2 className="text-lg font-bold text-primary mb-4">{lang === "ar" ? "أدلة الاستخدام" : "Usage Guides"}</h2>
+            <h2 className="text-lg font-bold text-foreground mb-4">{lang === "ar" ? "أدلة الاستخدام" : "Usage Guides"}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {GUIDE_ITEMS.map((guide, idx) => (
                 <div key={guide.id} className="bg-card rounded-md border border-border overflow-hidden flex flex-col">
@@ -379,23 +389,23 @@ export default function HelpPage() {
                       {idx + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-primary text-sm leading-snug">{guide.title[lang]}</h3>
-                      <p className="text-xs text-neutral mt-1.5 leading-relaxed">{guide.description[lang]}</p>
+                      <h3 className="font-bold text-foreground text-sm leading-snug">{guide.title[lang]}</h3>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{guide.description[lang]}</p>
                     </div>
                     <span className={cn(
                       "min-w-[24px] h-6 w-6 rounded-full flex items-center justify-center transition-all mt-0.5",
                       openGuide === guide.id
                         ? "bg-secondary/15 text-secondary rotate-180"
-                        : "bg-muted/50 text-neutral"
+                        : "bg-muted/50 text-muted-foreground"
                     )}>
-                      <CaretDown size={14} weight="bold" />
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </span>
                   </button>
                   {openGuide === guide.id && (
                     <div className="px-4 pb-4 border-t border-border bg-muted/5">
                       <ol className="mt-3 space-y-2.5">
                         {guide.steps.map((step, i) => (
-                          <li key={i} className="flex gap-2.5 text-xs text-neutral">
+                          <li key={i} className="flex gap-2.5 text-xs text-muted-foreground">
                             <span className="min-w-[22px] h-[22px] rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-[10px] font-bold shrink-0">
                               {i + 1}
                             </span>
@@ -415,7 +425,7 @@ export default function HelpPage() {
       {activeTab === "tickets" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-primary">{lang === "ar" ? "تذاكري" : "My Tickets"}</h2>
+            <h2 className="text-lg font-bold text-foreground">{lang === "ar" ? "تذاكري" : "My Tickets"}</h2>
             <Button size="sm" onClick={() => setShowNewTicket(!showNewTicket)}>
               {lang === "ar" ? "تذكرة جديدة" : "New Ticket"}
             </Button>
@@ -449,7 +459,7 @@ export default function HelpPage() {
               <div className="flex gap-2 justify-end">
                 <Button variant="ghost" size="sm" onClick={() => setShowNewTicket(false)}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
                 <Button variant="success" size="sm" onClick={handleSubmitTicket} disabled={ticketLoading}>
-                  <PaperPlaneTilt size={14} className="me-1" />
+                  <Send className="h-3.5 w-3.5 me-1" />
                   {ticketLoading ? "..." : (lang === "ar" ? "إرسال" : "Submit")}
                 </Button>
               </div>
@@ -459,20 +469,20 @@ export default function HelpPage() {
           {/* Tickets Table */}
           <div className="bg-card rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
+              <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
                 <tr>
                   <th className="px-3 py-2 text-start">#</th>
                   <th className="px-3 py-2 text-start">{lang === "ar" ? "الموضوع" : "Subject"}</th>
                   <th className="px-3 py-2 text-start">{lang === "ar" ? "الفئة" : "Category"}</th>
                   <th className="px-3 py-2 text-center">{lang === "ar" ? "الأولوية" : "Priority"}</th>
                   <th className="px-3 py-2 text-center">{lang === "ar" ? "الحالة" : "Status"}</th>
-                  <th className="px-3 py-2 text-center"><ChatDots size={14} /></th>
+                  <th className="px-3 py-2 text-center"><MessageSquare className="h-3.5 w-3.5" /></th>
                   <th className="px-3 py-2 text-start">{lang === "ar" ? "التاريخ" : "Date"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {myTickets.length === 0 ? (
-                  <tr><td colSpan={7} className="px-3 py-8 text-center text-neutral">{lang === "ar" ? "لا توجد تذاكر" : "No tickets yet"}</td></tr>
+                  <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد تذاكر" : "No tickets yet"}</td></tr>
                 ) : (
                   myTickets.map((ticket: any) => (
                     <tr key={ticket.id} className="hover:bg-muted/10 transition-colors">
@@ -480,11 +490,11 @@ export default function HelpPage() {
                       <td className="px-3 py-2">
                         <Link href={`/dashboard/help/tickets/${ticket.id}`} className="text-primary hover:underline font-medium">{ticket.subject}</Link>
                       </td>
-                      <td className="px-3 py-2 text-xs text-neutral">{categoryLabel(ticket.category)}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{categoryLabel(ticket.category)}</td>
                       <td className="px-3 py-2 text-center">{priorityBadge(ticket.priority)}</td>
                       <td className="px-3 py-2 text-center">{statusBadge(ticket.status)}</td>
-                      <td className="px-3 py-2 text-center text-xs text-neutral">{ticket._count?.messages ?? 0}</td>
-                      <td className="px-3 py-2 text-xs text-neutral">{new Date(ticket.createdAt).toLocaleDateString("en-CA")}</td>
+                      <td className="px-3 py-2 text-center text-xs text-muted-foreground">{ticket._count?.messages ?? 0}</td>
+                      <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(ticket.createdAt).toLocaleDateString("en-CA")}</td>
                     </tr>
                   ))
                 )}
@@ -498,8 +508,8 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* Request Form */}
           <div className="bg-card p-4 rounded-md border border-border space-y-3">
-            <h2 className="font-bold text-primary">{lang === "ar" ? "طلب ترقية الصلاحيات" : "Request Permission Upgrade"}</h2>
-            <p className="text-xs text-neutral">{lang === "ar" ? "دورك الحالي: " : "Your current role: "}<span className="font-bold">{userRole}</span></p>
+            <h2 className="font-bold text-foreground">{lang === "ar" ? "طلب ترقية الصلاحيات" : "Request Permission Upgrade"}</h2>
+            <p className="text-xs text-muted-foreground">{lang === "ar" ? "دورك الحالي: " : "Your current role: "}<span className="font-bold">{userRole}</span></p>
             <select value={permForm.requestedRole} onChange={(e) => setPermForm({ ...permForm, requestedRole: e.target.value })} className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none">
               <option value="">{lang === "ar" ? "اختر الدور المطلوب" : "Select requested role"}</option>
               {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[lang]} ({o.value})</option>)}
@@ -512,17 +522,17 @@ export default function HelpPage() {
               className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none resize-none"
             />
             <Button variant="success" size="sm" onClick={handleSubmitPermRequest} disabled={permLoading || !permForm.requestedRole || !permForm.reason.trim()}>
-              <PaperPlaneTilt size={14} className="me-1" />
+              <Send className="h-3.5 w-3.5 me-1" />
               {permLoading ? "..." : (lang === "ar" ? "إرسال الطلب" : "Submit Request")}
             </Button>
           </div>
 
           {/* Request History */}
           <div>
-            <h3 className="font-bold text-primary mb-2">{lang === "ar" ? "سجل الطلبات" : "Request History"}</h3>
+            <h3 className="font-bold text-foreground mb-2">{lang === "ar" ? "سجل الطلبات" : "Request History"}</h3>
             <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
+                <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
                   <tr>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "الدور المطلوب" : "Requested Role"}</th>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "السبب" : "Reason"}</th>
@@ -533,15 +543,15 @@ export default function HelpPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {myRequests.length === 0 ? (
-                    <tr><td colSpan={5} className="px-3 py-8 text-center text-neutral">{lang === "ar" ? "لا توجد طلبات" : "No requests yet"}</td></tr>
+                    <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد طلبات" : "No requests yet"}</td></tr>
                   ) : (
                     myRequests.map((req: any) => (
                       <tr key={req.id}>
                         <td className="px-3 py-2 font-medium">{req.requestedRole}</td>
-                        <td className="px-3 py-2 text-xs text-neutral max-w-[200px] truncate">{req.reason}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[200px] truncate">{req.reason}</td>
                         <td className="px-3 py-2 text-center">{statusBadge(req.status)}</td>
-                        <td className="px-3 py-2 text-xs text-neutral">{req.reviewNote ?? "—"}</td>
-                        <td className="px-3 py-2 text-xs text-neutral">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{req.reviewNote ?? "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
                       </tr>
                     ))
                   )}
@@ -557,10 +567,10 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* Pending Permission Requests */}
           <div>
-            <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "طلبات الصلاحيات المعلقة" : "Pending Permission Requests"}</h2>
+            <h2 className="text-lg font-bold text-foreground mb-3">{lang === "ar" ? "طلبات الصلاحيات المعلقة" : "Pending Permission Requests"}</h2>
             <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
+                <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
                   <tr>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "المستخدم" : "User"}</th>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "الدور الحالي" : "Current Role"}</th>
@@ -572,18 +582,18 @@ export default function HelpPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {pendingRequests.length === 0 ? (
-                    <tr><td colSpan={6} className="px-3 py-8 text-center text-neutral">{lang === "ar" ? "لا توجد طلبات معلقة" : "No pending requests"}</td></tr>
+                    <tr><td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد طلبات معلقة" : "No pending requests"}</td></tr>
                   ) : (
                     pendingRequests.map((req: any) => (
                       <tr key={req.id}>
                         <td className="px-3 py-2">
                           <div className="font-medium">{req.user?.name}</div>
-                          <div className="text-[10px] text-neutral">{req.user?.email}</div>
+                          <div className="text-[10px] text-muted-foreground">{req.user?.email}</div>
                         </td>
                         <td className="px-3 py-2 text-xs">{req.user?.role}</td>
                         <td className="px-3 py-2 text-xs font-bold text-secondary">{req.requestedRole}</td>
-                        <td className="px-3 py-2 text-xs text-neutral max-w-[200px]">{req.reason}</td>
-                        <td className="px-3 py-2 text-xs text-neutral">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[200px]">{req.reason}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
                         <td className="px-3 py-2">
                           {reviewingId === req.id ? (
                             <div className="space-y-2">
@@ -596,10 +606,10 @@ export default function HelpPage() {
                               />
                               <div className="flex gap-1">
                                 <Button size="sm" variant="success" onClick={() => handleReview(req.id, "APPROVED")} className="h-6 px-2 text-[10px]">
-                                  <CheckCircle size={12} className="me-1" />{lang === "ar" ? "موافقة" : "Approve"}
+                                  <CheckCircle2 className="h-3 w-3 me-1" />{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
                                 <Button size="sm" variant="danger" onClick={() => handleReview(req.id, "DECLINED")} className="h-6 px-2 text-[10px]">
-                                  <XCircle size={12} className="me-1" />{lang === "ar" ? "رفض" : "Decline"}
+                                  <XCircle className="h-3 w-3 me-1" />{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
@@ -619,10 +629,10 @@ export default function HelpPage() {
 
           {/* Pending Join Requests */}
           <div>
-            <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "طلبات الانضمام المعلقة" : "Pending Join Requests"}</h2>
+            <h2 className="text-lg font-bold text-foreground mb-3">{lang === "ar" ? "طلبات الانضمام المعلقة" : "Pending Join Requests"}</h2>
             <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
+                <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
                   <tr>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "المستخدم" : "User"}</th>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "رقم السجل" : "CR Number"}</th>
@@ -633,17 +643,17 @@ export default function HelpPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {pendingJoinRequests.length === 0 ? (
-                    <tr><td colSpan={5} className="px-3 py-8 text-center text-neutral">{lang === "ar" ? "لا توجد طلبات انضمام" : "No pending join requests"}</td></tr>
+                    <tr><td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد طلبات انضمام" : "No pending join requests"}</td></tr>
                   ) : (
                     pendingJoinRequests.map((req: any) => (
                       <tr key={req.id}>
                         <td className="px-3 py-2">
                           <div className="font-medium">{req.user?.name}</div>
-                          <div className="text-[10px] text-neutral">{req.user?.email}</div>
+                          <div className="text-[10px] text-muted-foreground">{req.user?.email}</div>
                         </td>
                         <td className="px-3 py-2 font-mono text-xs">{req.crNumber}</td>
-                        <td className="px-3 py-2 text-xs text-neutral max-w-[200px]">{req.reason ?? "—"}</td>
-                        <td className="px-3 py-2 text-xs text-neutral">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground max-w-[200px]">{req.reason ?? "—"}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(req.createdAt).toLocaleDateString("en-CA")}</td>
                         <td className="px-3 py-2">
                           {joinReviewingId === req.id ? (
                             <div className="space-y-2">
@@ -656,10 +666,10 @@ export default function HelpPage() {
                               />
                               <div className="flex gap-1">
                                 <Button size="sm" variant="success" onClick={() => handleJoinReview(req.id, "APPROVED_JOIN")} className="h-6 px-2 text-[10px]">
-                                  <CheckCircle size={12} className="me-1" />{lang === "ar" ? "موافقة" : "Approve"}
+                                  <CheckCircle2 className="h-3 w-3 me-1" />{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
                                 <Button size="sm" variant="danger" onClick={() => handleJoinReview(req.id, "DECLINED_JOIN")} className="h-6 px-2 text-[10px]">
-                                  <XCircle size={12} className="me-1" />{lang === "ar" ? "رفض" : "Decline"}
+                                  <XCircle className="h-3 w-3 me-1" />{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
@@ -684,10 +694,10 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* All Tickets */}
           <div>
-            <h2 className="text-lg font-bold text-primary mb-3">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
+            <h2 className="text-lg font-bold text-foreground mb-3">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
             <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-neutral text-[10px] uppercase">
+                <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
                   <tr>
                     <th className="px-3 py-2 text-start">#</th>
                     <th className="px-3 py-2 text-start">{lang === "ar" ? "المستخدم" : "User"}</th>
@@ -701,7 +711,7 @@ export default function HelpPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {allTickets.length === 0 ? (
-                    <tr><td colSpan={8} className="px-3 py-8 text-center text-neutral">{lang === "ar" ? "لا توجد تذاكر" : "No tickets"}</td></tr>
+                    <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد تذاكر" : "No tickets"}</td></tr>
                   ) : (
                     allTickets.map((ticket: any) => (
                       <tr key={ticket.id} className="hover:bg-muted/10 transition-colors">
@@ -710,10 +720,10 @@ export default function HelpPage() {
                         <td className="px-3 py-2">
                           <Link href={`/dashboard/help/tickets/${ticket.id}`} className="text-primary hover:underline font-medium text-xs">{ticket.subject}</Link>
                         </td>
-                        <td className="px-3 py-2 text-xs text-neutral">{categoryLabel(ticket.category)}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{categoryLabel(ticket.category)}</td>
                         <td className="px-3 py-2 text-center">{priorityBadge(ticket.priority)}</td>
                         <td className="px-3 py-2 text-center">{statusBadge(ticket.status)}</td>
-                        <td className="px-3 py-2 text-xs text-neutral">{new Date(ticket.createdAt).toLocaleDateString("en-CA")}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(ticket.createdAt).toLocaleDateString("en-CA")}</td>
                         <td className="px-3 py-2 text-center">
                           <Link href={`/dashboard/help/tickets/${ticket.id}`} className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors">
                             {lang === "ar" ? "عرض" : "View"}

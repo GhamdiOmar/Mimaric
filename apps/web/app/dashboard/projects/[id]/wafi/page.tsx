@@ -4,19 +4,19 @@ import { useLanguage } from "../../../../../components/LanguageProvider";
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  CaretLeft,
-  Bank,
+  ChevronLeft,
+  Landmark,
   HardHat,
-  UsersThree,
-  Certificate,
-  CloudArrowUp,
+  Users,
+  Award,
+  CloudUpload,
   Plus,
-  ArrowsClockwise,
-  CheckCircle,
-  Warning,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
   Clock,
   Eye,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import { Button, Badge, KPICard, EmptyState } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
@@ -31,12 +31,12 @@ import { getEtmamRegistration, registerWithEtmam, triggerEtmamSync, getEtmamSync
 type Tab = "escrow" | "milestones" | "consultants" | "contracts" | "license" | "etmam";
 
 const tabs: { id: Tab; label: { ar: string; en: string }; icon: any }[] = [
-  { id: "escrow", label: { ar: "حساب الضمان", en: "Escrow" }, icon: Bank },
+  { id: "escrow", label: { ar: "حساب الضمان", en: "Escrow" }, icon: Landmark },
   { id: "milestones", label: { ar: "المراحل الإنشائية", en: "Milestones" }, icon: HardHat },
-  { id: "consultants", label: { ar: "الاستشاريون", en: "Consultants" }, icon: UsersThree },
-  { id: "contracts", label: { ar: "عقود وافي", en: "Wafi Contracts" }, icon: Certificate },
-  { id: "license", label: { ar: "ترخيص وافي", en: "Wafi License" }, icon: Certificate },
-  { id: "etmam", label: { ar: "إتمام", en: "Etmam" }, icon: CloudArrowUp },
+  { id: "consultants", label: { ar: "الاستشاريون", en: "Consultants" }, icon: Users },
+  { id: "contracts", label: { ar: "عقود وافي", en: "Wafi Contracts" }, icon: Award },
+  { id: "license", label: { ar: "ترخيص وافي", en: "Wafi License" }, icon: Award },
+  { id: "etmam", label: { ar: "إتمام", en: "Etmam" }, icon: CloudUpload },
 ];
 
 export default function WafiCompliancePage() {
@@ -127,7 +127,7 @@ export default function WafiCompliancePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)}>
-            <CaretLeft size={16} className="icon-directional" />
+            <ChevronLeft className="h-4 w-4 icon-directional" />
             {lang === "ar" ? "عودة للمشروع" : "Back to Project"}
           </Button>
           <h1 className="text-xl font-bold text-foreground">
@@ -151,7 +151,7 @@ export default function WafiCompliancePage() {
                   : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
               )}
             >
-              <Icon size={18} weight={activeTab === tab.id ? "fill" : "regular"} />
+              <Icon className="h-[18px] w-[18px]" weight={activeTab === tab.id ? "fill" : "regular"} />
               {tab.label[lang]}
             </button>
           );
@@ -168,10 +168,10 @@ export default function WafiCompliancePage() {
           ) : escrow ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <KPICard label={lang === "ar" ? "الرصيد الحالي" : "Current Balance"} value={`${Number(escrow.currentBalance).toLocaleString()} ر.س`} accentColor="primary" icon={<Bank size={20} />} />
-                <KPICard label={lang === "ar" ? "إجمالي الإيداعات" : "Total Deposits"} value={`${Number(escrow.totalDeposited).toLocaleString()} ر.س`} accentColor="success" icon={<Plus size={20} />} />
-                <KPICard label={lang === "ar" ? "إجمالي السحوبات" : "Total Withdrawals"} value={`${Number(escrow.totalWithdrawn).toLocaleString()} ر.س`} accentColor="warning" icon={<ArrowsClockwise size={20} />} />
-                <KPICard label={lang === "ar" ? "مبلغ الاحتفاظ (5%)" : "Retention (5%)"} value={`${Number(escrow.retentionAmount).toLocaleString()} ر.س`} accentColor="info" icon={<Clock size={20} />} />
+                <KPICard label={lang === "ar" ? "الرصيد الحالي" : "Current Balance"} value={`${Number(escrow.currentBalance).toLocaleString()} ر.س`} accentColor="primary" icon={<Landmark className="h-5 w-5" />} />
+                <KPICard label={lang === "ar" ? "إجمالي الإيداعات" : "Total Deposits"} value={`${Number(escrow.totalDeposited).toLocaleString()} ر.س`} accentColor="success" icon={<Plus className="h-5 w-5" />} />
+                <KPICard label={lang === "ar" ? "إجمالي السحوبات" : "Total Withdrawals"} value={`${Number(escrow.totalWithdrawn).toLocaleString()} ر.س`} accentColor="warning" icon={<RefreshCw className="h-5 w-5" />} />
+                <KPICard label={lang === "ar" ? "مبلغ الاحتفاظ (5%)" : "Retention (5%)"} value={`${Number(escrow.retentionAmount).toLocaleString()} ر.س`} accentColor="info" icon={<Clock className="h-5 w-5" />} />
               </div>
               {/* Admin Expense Cap Meter */}
               {escrow.adminExpenseCap && (
@@ -223,10 +223,10 @@ export default function WafiCompliancePage() {
             </>
           ) : (
             <EmptyState
-              icon={<Bank size={48} weight="duotone" />}
+              icon={<Landmark className="h-12 w-12" />}
               title={lang === "ar" ? "لا يوجد حساب ضمان" : "No Escrow Account"}
               description={lang === "ar" ? "قم بإنشاء حساب ضمان لهذا المشروع للامتثال لمتطلبات وافي" : "Create an escrow account for this project to comply with Wafi requirements"}
-              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus size={16} />{lang === "ar" ? "إنشاء حساب ضمان" : "Create Escrow Account"}</Button>}
+              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus className="h-4 w-4" />{lang === "ar" ? "إنشاء حساب ضمان" : "Create Escrow Account"}</Button>}
             />
           )}
         </div>
@@ -274,7 +274,7 @@ export default function WafiCompliancePage() {
                     </div>
                     {m.status === "CERTIFIED" && m.certifiedBy && (
                       <div className="text-end shrink-0">
-                        <p className="text-[10px] text-success flex items-center gap-1"><CheckCircle size={12} weight="fill" />{lang === "ar" ? "معتمد" : "Certified"}</p>
+                        <p className="text-[10px] text-success flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />{lang === "ar" ? "معتمد" : "Certified"}</p>
                         <p className="text-[9px] text-muted-foreground">{m.certifiedBy.name}</p>
                       </div>
                     )}
@@ -284,10 +284,10 @@ export default function WafiCompliancePage() {
             </>
           ) : (
             <EmptyState
-              icon={<HardHat size={48} weight="duotone" />}
+              icon={<HardHat className="h-12 w-12" />}
               title={lang === "ar" ? "لا توجد مراحل إنشائية" : "No Construction Milestones"}
               description={lang === "ar" ? "أضف المراحل الإنشائية لتتبع تقدم البناء وربط الفواتير" : "Add construction milestones to track building progress and link billing"}
-              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus size={16} />{lang === "ar" ? "إضافة مرحلة" : "Add Milestone"}</Button>}
+              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus className="h-4 w-4" />{lang === "ar" ? "إضافة مرحلة" : "Add Milestone"}</Button>}
             />
           )}
         </div>
@@ -314,10 +314,10 @@ export default function WafiCompliancePage() {
             </div>
           ) : (
             <EmptyState
-              icon={<UsersThree size={48} weight="duotone" />}
+              icon={<Users className="h-12 w-12" />}
               title={lang === "ar" ? "لا يوجد استشاريون معيّنون" : "No Consultants Assigned"}
               description={lang === "ar" ? "عيّن استشاريًا هندسيًا مستقلاً لاعتماد مراحل البناء" : "Assign an independent engineering consultant to certify construction milestones"}
-              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus size={16} />{lang === "ar" ? "تعيين استشاري" : "Assign Consultant"}</Button>}
+              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus className="h-4 w-4" />{lang === "ar" ? "تعيين استشاري" : "Assign Consultant"}</Button>}
             />
           )}
         </div>
@@ -344,7 +344,7 @@ export default function WafiCompliancePage() {
               {/* Delay Penalties */}
               {delays.length > 0 && (
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
-                  <h3 className="text-sm font-semibold text-destructive mb-3 flex items-center gap-2"><Warning size={16} />{lang === "ar" ? "غرامات التأخير" : "Delay Penalties"}</h3>
+                  <h3 className="text-sm font-semibold text-destructive mb-3 flex items-center gap-2"><AlertTriangle className="h-4 w-4" />{lang === "ar" ? "غرامات التأخير" : "Delay Penalties"}</h3>
                   <div className="space-y-2">
                     {delays.map((d: any) => (
                       <div key={d.id} className="flex items-center justify-between text-sm">
@@ -358,10 +358,10 @@ export default function WafiCompliancePage() {
             </>
           ) : (
             <EmptyState
-              icon={<Certificate size={48} weight="duotone" />}
+              icon={<Award className="h-12 w-12" />}
               title={lang === "ar" ? "لا توجد عقود وافي" : "No Wafi Contracts"}
               description={lang === "ar" ? "أضف عقود وافي للمشترين لتتبع جداول الدفع والتعويضات" : "Add Wafi contracts for buyers to track payment schedules and compensations"}
-              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus size={16} />{lang === "ar" ? "إضافة عقد" : "Add Contract"}</Button>}
+              action={<Button onClick={() => toast.info(lang === "ar" ? "قريبًا" : "Coming soon")}><Plus className="h-4 w-4" />{lang === "ar" ? "إضافة عقد" : "Add Contract"}</Button>}
             />
           )}
         </div>
@@ -397,7 +397,7 @@ export default function WafiCompliancePage() {
             </div>
           ) : (
             <EmptyState
-              icon={<Certificate size={48} weight="duotone" />}
+              icon={<Award className="h-12 w-12" />}
               title={lang === "ar" ? "لا يوجد ترخيص وافي" : "No Wafi License"}
               description={lang === "ar" ? "تقدم بطلب ترخيص وافي من الهيئة العامة للعقار (REGA)" : "Apply for a Wafi license from the Real Estate General Authority (REGA)"}
               action={
@@ -410,7 +410,7 @@ export default function WafiCompliancePage() {
                     toast.error(e.message);
                   }
                 }}>
-                  <Plus size={16} />{lang === "ar" ? "تقديم طلب ترخيص" : "Apply for License"}
+                  <Plus className="h-4 w-4" />{lang === "ar" ? "تقديم طلب ترخيص" : "Apply for License"}
                 </Button>
               }
             />
@@ -449,7 +449,7 @@ export default function WafiCompliancePage() {
                       loadEtmam();
                     } catch (e: any) { toast.error(e.message); }
                   }}>
-                    <ArrowsClockwise size={14} />
+                    <RefreshCw className="h-3.5 w-3.5" />
                     {syncType.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase())}
                   </Button>
                 ))}
@@ -478,7 +478,7 @@ export default function WafiCompliancePage() {
             </>
           ) : (
             <EmptyState
-              icon={<CloudArrowUp size={48} weight="duotone" />}
+              icon={<CloudUpload className="h-12 w-12" />}
               title={lang === "ar" ? "غير مسجل في إتمام" : "Not Registered with Etmam"}
               description={lang === "ar" ? "سجل في منصة إتمام (وزارة الشؤون البلدية) للإبلاغ الربع سنوي" : "Register with the Etmam platform (MOMAH) for quarterly reporting"}
               action={
@@ -489,7 +489,7 @@ export default function WafiCompliancePage() {
                     loadEtmam();
                   } catch (e: any) { toast.error(e.message); }
                 }}>
-                  <CloudArrowUp size={16} />{lang === "ar" ? "التسجيل في إتمام" : "Register with Etmam"}
+                  <CloudUpload className="h-4 w-4" />{lang === "ar" ? "التسجيل في إتمام" : "Register with Etmam"}
                 </Button>
               }
             />

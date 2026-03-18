@@ -2,6 +2,7 @@
 
 import { db } from "@repo/db";
 import { requirePermission } from "../../lib/auth-helpers";
+import { logAuditEvent } from "../../lib/audit";
 
 // ─── Inventory Items ─────────────────────────────────────────────────────────
 
@@ -316,6 +317,15 @@ export async function updateReleaseStatus(
     },
   });
 
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "UPDATE", resource: "InventoryItem", resourceId: itemId,
+    before: { releaseStatus: item.releaseStatus },
+    after: { releaseStatus },
+    metadata: holdReason ? { holdReason } : undefined,
+    organizationId: session.organizationId,
+  });
+
   return JSON.parse(JSON.stringify(updated));
 }
 
@@ -330,6 +340,14 @@ export async function setMinimumSellPrice(itemId: string, minimumSellPrice: numb
   const updated = await db.inventoryItem.update({
     where: { id: itemId },
     data: { minimumSellPrice },
+  });
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "UPDATE", resource: "InventoryItem", resourceId: itemId,
+    before: { minimumSellPrice: item.minimumSellPrice ? Number(item.minimumSellPrice) : null },
+    after: { minimumSellPrice },
+    organizationId: session.organizationId,
   });
 
   return JSON.parse(JSON.stringify(updated));
@@ -397,6 +415,13 @@ export async function bulkImportInventory(
       results.errors.push({ row: i + 1, error: err.message });
     }
   }
+
+  logAuditEvent({
+    userId: session.userId, userEmail: session.email, userRole: session.role,
+    action: "CREATE", resource: "InventoryItem", resourceId: projectId,
+    metadata: { bulkImport: true, imported: results.imported, errors: results.errors.length },
+    organizationId: session.organizationId,
+  });
 
   return results;
 }

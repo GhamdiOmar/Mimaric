@@ -2,19 +2,19 @@
 
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
-import { 
-  FilePdf, 
-  FileImage, 
-  FileText, 
-  FolderSimplePlus, 
-  CloudArrowUp,
-  DownloadSimple,
-  Trash,
-  DotsThreeVertical,
-  Selection,
-  MagnifyingGlass,
-  Spinner
-} from "@phosphor-icons/react";
+import {
+  FileText as FilePdf,
+  Image as FileImage,
+  FileText,
+  FolderPlus,
+  CloudUpload,
+  Download,
+  Trash2,
+  MoreVertical,
+  SquareDashedMousePointer,
+  Search,
+  Loader2
+} from "lucide-react";
 import { Button, Input, Badge } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getDocuments, registerFileInDb } from "../../actions/documents";
@@ -61,7 +61,7 @@ export default function DocumentVaultPage() {
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <Spinner className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -71,10 +71,10 @@ export default function DocumentVaultPage() {
       {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
         <div>
-          <h1 className="text-2xl font-bold text-primary font-primary">
+          <h1 className="text-2xl font-bold text-primary">
             {lang === "ar" ? "خزنة الوثائق" : "Document Vault"}
           </h1>
-          <p className="text-sm text-neutral mt-1 font-primary">
+          <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar" ? "إدارة وتخزين كافة الوثائق الهندسية والقانونية للمشاريع." : "Manage and store all engineering and legal project documents."}
           </p>
         </div>
@@ -90,7 +90,7 @@ export default function DocumentVaultPage() {
             content={{
               button: (
                 <div className="flex items-center gap-2">
-                  <CloudArrowUp size={18} weight="fill" />
+                  <CloudUpload className="h-[18px] w-[18px]" />
                   {lang === "ar" ? "رفع وثيقة" : "Upload Document"}
                 </div>
               )
@@ -107,19 +107,19 @@ export default function DocumentVaultPage() {
               <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">Categories</h3>
               <div className="space-y-1">
                  {['All Documents', 'Blueprints', 'Legal Permits', 'Structural Plans', 'Commercial', 'Marketing'].map((cat) => (
-                    <button key={cat} className="w-full text-start px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors font-primary text-neutral hover:text-primary">
+                    <button key={cat} className="w-full text-start px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-primary">
                        {cat}
                     </button>
                  ))}
               </div>
               <Button variant="ghost" size="sm" className="w-full mt-4 gap-2 text-secondary hover:bg-secondary/5 border-dashed border border-secondary/20">
-                 <FolderSimplePlus size={16} />
+                 <FolderPlus className="h-4 w-4" />
                  {lang === "ar" ? "مجلد جديد" : "New Folder"}
               </Button>
            </div>
            
            <div className="bg-primary-deep p-6 rounded-md text-white shadow-lg overflow-hidden relative">
-              <FilePdf size={48} className="absolute -bottom-4 -right-4 opacity-10 rotate-12" />
+              <FilePdf className="h-12 w-12 absolute -bottom-4 -right-4 opacity-10 rotate-12" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-secondary font-latin">Storage Usage</p>
               <div className="mt-4 space-y-2">
                  <div className="h-1.5 w-full bg-card/10 rounded-full overflow-hidden">
@@ -135,16 +135,16 @@ export default function DocumentVaultPage() {
            {/* Filters */}
            <div className="bg-card rounded-md border border-border p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
              <div className="relative w-full md:w-80 group">
-                <MagnifyingGlass size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral group-focus-within:text-secondary transition-colors" />
+                <Search className="h-[18px] w-[18px] absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-secondary transition-colors" />
                 <input 
                   type="text" 
                   placeholder={lang === "ar" ? "بحث في الوثائق..." : "Search documents..."}
-                  className="w-full bg-muted/30 border-transparent rounded py-2 pr-10 pl-4 text-sm outline-none font-primary focus:bg-card focus:border-border transition-all"
+                  className="w-full bg-muted/30 border-transparent rounded py-2 pr-10 pl-4 text-sm outline-none focus:bg-card focus:border-border transition-all"
                 />
              </div>
              <div className="flex items-center gap-2">
                 <Button variant="secondary" size="sm" className="h-8 w-8 p-0">
-                   <Selection size={18} />
+                   <SquareDashedMousePointer className="h-[18px] w-[18px]" />
                 </Button>
                 <div className="h-4 w-px bg-border mx-1" />
                 <Badge variant="available" className="bg-secondary/5 text-secondary border-none">Recent</Badge>
@@ -154,8 +154,8 @@ export default function DocumentVaultPage() {
            {/* Files Grid */}
            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {docs.length === 0 && !loading && (
-                <div className="col-span-full py-20 text-center text-neutral">
-                  <CloudArrowUp size={48} className="mx-auto opacity-20 mb-4" />
+                <div className="col-span-full py-20 text-center text-muted-foreground">
+                  <CloudUpload className="h-12 w-12 mx-auto opacity-20 mb-4" />
                   <p>{lang === "ar" ? "لا توجد وثائق حالياً. ابدأ برفع أول وثيقة." : "No documents yet. Start by uploading one."}</p>
                 </div>
               )}
@@ -166,22 +166,22 @@ export default function DocumentVaultPage() {
                         "h-12 w-12 rounded flex items-center justify-center",
                         ['pdf'].includes(doc.type?.toLowerCase()) ? "bg-red-50 text-red-500" : ['jpg', 'png', 'jpeg'].includes(doc.type?.toLowerCase()) ? "bg-blue-50 text-blue-500" : "bg-green-50 text-green-500"
                       )}>
-                         {['pdf'].includes(doc.type?.toLowerCase()) ? <FilePdf size={28} /> : ['jpg', 'png', 'jpeg'].includes(doc.type?.toLowerCase()) ? <FileImage size={28} /> : <FileText size={28} />}
+                         {['pdf'].includes(doc.type?.toLowerCase()) ? <FilePdf className="h-7 w-7" /> : ['jpg', 'png', 'jpeg'].includes(doc.type?.toLowerCase()) ? <FileImage className="h-7 w-7" /> : <FileText className="h-7 w-7" />}
                       </div>
-                      <button className="text-neutral hover:text-primary transition-colors">
-                         <DotsThreeVertical size={20} />
+                      <button className="text-muted-foreground hover:text-primary transition-colors">
+                         <MoreVertical className="h-5 w-5" />
                       </button>
                    </div>
                    
                    <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-primary truncate font-primary">{doc.name}</h4>
-                      <p className="text-[10px] text-neutral font-latin">{new Date(doc.createdAt).toLocaleDateString()}</p>
+                      <h4 className="text-sm font-bold text-primary truncate">{doc.name}</h4>
+                      <p className="text-[10px] text-muted-foreground font-latin">{new Date(doc.createdAt).toLocaleDateString()}</p>
                    </div>
 
                    <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                      <Badge variant="available" className="text-[9px] bg-muted text-neutral border-none">{doc.category}</Badge>
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center text-neutral hover:text-secondary transition-all">
-                         <DownloadSimple size={18} />
+                      <Badge variant="available" className="text-[9px] bg-muted text-muted-foreground border-none">{doc.category}</Badge>
+                      <a href={doc.url} target="_blank" rel="noopener noreferrer" className="h-8 w-8 rounded-full hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-secondary transition-all">
+                         <Download className="h-[18px] w-[18px]" />
                       </a>
                    </div>
                 </div>

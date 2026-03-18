@@ -1,5 +1,57 @@
 # Changelog — Mimaric PropTech
 
+## [2.0.0] — 2026-03-18
+
+### Premium UI/UX Redesign
+
+Complete redesign as a premium bilingual proptech SaaS platform with production-ready design system.
+
+#### Design System
+- Warm charcoal purple palette (hue 260-270) with purple brand accent (`270 55% 62%`)
+- IBM Plex Sans Arabic + DM Sans typography with pro header tracking (-3%, 115% line-height)
+- Dark-mode-first: layered surfaces, minimal shadows, depth via surface lightness
+- Glass morphism hero cards with `backdrop-blur` and subtle white borders
+- Consistent 4pt/8pt spacing grid, restrained micro-interactions
+
+#### New UI Components
+- `PageIntro` — Glass hero card for major pages
+- `KPICard` — Metric card with label, value, subtitle, icon, accent border, trend, loading state
+- `FilterBar` — Unified filter toolbar with status tabs and search
+- `StatusBadge` — Entity-aware badges (unit, contract, lease, maintenance, customer)
+- `FormSection` — Grouped form card with title and description
+- `DataTable` — Sortable, filterable data table with pagination
+
+#### Icon Migration
+- 100% migration from `@phosphor-icons/react` to `lucide-react` across 90+ files
+- Standardized `className="h-N w-N"` sizing pattern, zero Phosphor imports remaining
+
+#### Landing Page
+- All 11 components updated to purple brand accent (was green/teal)
+- Fresh authenticated dashboard screenshots for Features and Hero sections
+- Purple CTAs, trust badges, pricing toggle, Vision 2030 badges
+
+#### Dashboard Pages
+- All major pages upgraded with PageIntro glass cards, KPI rows with bilingual subtitles
+- Units page: complete redesign with consolidated toolbar, cards/table toggle, status filter pills
+- Sales page: KPI cards, module navigation with record counts
+- Finance: action buttons, escrow/collection cards, revenue breakdown
+- Settings: FormSection cards, TypeScript strict mode fixes
+- 20+ pages polished with consistent patterns
+
+#### Button System
+- 7 variants with 4 states (default, hover, active/pressed, disabled)
+- `active:scale-[0.97]` press feedback, `transition-colors` for performance
+
+#### Token Cleanup
+- `text-neutral` → `text-muted-foreground`, `shadow-elevation-*` → `shadow-sm/md/lg`
+- Removed `font-primary`, replaced `text-accent` → `text-amber-500`
+
+#### Stats
+- 98 files changed, 6,049 insertions, 5,000 deletions
+- Build: 0 errors, ~20-35s
+
+---
+
 ## [1.3.0] — 2026-03-18
 
 ### Added — Saudi RED FRD Gap Closure (Sprint 0–1)

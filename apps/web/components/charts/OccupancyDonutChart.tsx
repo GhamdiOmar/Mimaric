@@ -19,13 +19,13 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-elevation-2 border border-border/50 text-xs">
+    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-md border border-border/50 text-xs">
       <p className="font-bold text-primary mb-1">{d.name}</p>
       <div className="space-y-0.5">
-        <p className="text-neutral">إجمالي الوحدات: <span className="font-bold text-primary">{d.total}</span></p>
-        <p className="text-neutral">مشغولة: <span className="font-bold text-secondary">{d.occupied}</span></p>
-        <p className="text-neutral">شاغرة: <span className="font-bold text-destructive">{d.vacant}</span></p>
-        <p className="text-neutral">نسبة الإشغال: <span className="font-bold text-primary">{d.rate}%</span></p>
+        <p className="text-muted-foreground">إجمالي الوحدات: <span className="font-bold text-primary">{d.total}</span></p>
+        <p className="text-muted-foreground">مشغولة: <span className="font-bold text-secondary">{d.occupied}</span></p>
+        <p className="text-muted-foreground">شاغرة: <span className="font-bold text-destructive">{d.vacant}</span></p>
+        <p className="text-muted-foreground">نسبة الإشغال: <span className="font-bold text-primary">{d.rate}%</span></p>
       </div>
     </div>
   );
@@ -65,7 +65,7 @@ export default function OccupancyDonutChart() {
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">
         لا توجد مشاريع بعد
       </div>
     );
@@ -101,7 +101,7 @@ export default function OccupancyDonutChart() {
       <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
         <span className="text-2xl font-bold text-primary">{overallRate}%</span>
         <br />
-        <span className="text-[10px] text-neutral">إشغال</span>
+        <span className="text-[10px] text-muted-foreground">إشغال</span>
       </div>
     </div>
   );

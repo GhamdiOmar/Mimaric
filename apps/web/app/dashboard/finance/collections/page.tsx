@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Spinner, Eye, CurrencyDollar, Warning, Users } from "@phosphor-icons/react";
+import { Loader2, Eye, CircleDollarSign, AlertTriangle, Users } from "lucide-react";
 import { Button, Badge, Card, CardContent } from "@repo/ui";
 import { useLanguage } from "../../../../components/LanguageProvider";
 import { PaginationControls } from "../../../../components/pagination-controls";
@@ -145,7 +145,7 @@ export default function CollectionsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center min-h-[200px]">
-          <Spinner size={32} className="animate-spin text-muted-foreground" />
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : cases.length === 0 ? (
         <p className="text-muted-foreground">{t.noCases}</p>
@@ -182,7 +182,7 @@ export default function CollectionsPage() {
                         onClick={() => router.push(`/dashboard/finance/collections/${c.id}`)}
                         style={{ display: "inline-flex" }}
                       >
-                        <Eye size={16} />
+                        <Eye className="h-4 w-4" />
                       </Button>
                     </td>
                   </tr>

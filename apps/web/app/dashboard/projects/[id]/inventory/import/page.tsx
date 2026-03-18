@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, UploadSimple, CheckCircle, XCircle } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  Upload,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { Button, Badge } from "@repo/ui";
 import { useLanguage } from "../../../../../../components/LanguageProvider";
 import { bulkImportInventory } from "../../../../../actions/inventory";
@@ -123,7 +129,7 @@ export default function InventoryImportPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push(`/dashboard/projects/${projectId}`)} style={{ display: "inline-flex" }}>
-          <ArrowLeft size={16} /> {t.back}
+          <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
         <h1 className="text-2xl font-bold">{t.title}</h1>
       </div>
@@ -148,7 +154,7 @@ export default function InventoryImportPage() {
             className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer hover:border-primary/50 transition-colors"
             onClick={() => fileRef.current?.click()}
           >
-            <UploadSimple size={48} className="mx-auto text-muted-foreground mb-4" />
+            <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
             <p className="text-muted-foreground">{t.dragDrop}</p>
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
           </div>
@@ -205,7 +211,7 @@ export default function InventoryImportPage() {
         <div className="space-y-4">
           <div className="flex gap-4">
             <div className="rounded-lg border p-4 flex items-center gap-3">
-              <CheckCircle size={24} className="text-green-600" weight="fill" />
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
               <div>
                 <p className="text-2xl font-bold">{results.imported}</p>
                 <p className="text-xs text-muted-foreground">{t.imported}</p>
@@ -213,7 +219,7 @@ export default function InventoryImportPage() {
             </div>
             {results.errors.length > 0 && (
               <div className="rounded-lg border border-red-200 p-4 flex items-center gap-3">
-                <XCircle size={24} className="text-red-600" weight="fill" />
+                <XCircle className="h-6 w-6 text-red-600" />
                 <div>
                   <p className="text-2xl font-bold text-red-600">{results.errors.length}</p>
                   <p className="text-xs text-muted-foreground">{t.errors}</p>

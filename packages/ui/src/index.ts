@@ -13,6 +13,16 @@ export * from "./components/Popover";
 export * from "./components/Tabs";
 export * from "./components/Toast";
 
+/* ─── New Design System Components ────────────────────────── */
+export * from "./components/PageHeader";
+export * from "./components/FilterBar";
+export * from "./components/StatusBadge";
+export * from "./components/StatCard";
+export * from "./components/DataTable";
+export * from "./components/FormSection";
+export * from "./components/FormField"; /* exports FieldWrapper */
+export * from "./components/PageIntro";
+
 /* ─── Shadcn Primitives (no overlap with above) ───────────── */
 export * from "./primitives/accordion";
 export * from "./primitives/alert";

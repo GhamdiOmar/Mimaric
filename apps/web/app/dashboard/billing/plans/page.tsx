@@ -3,16 +3,16 @@
 import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
 import {
-  CheckCircle,
+  CheckCircle2,
   XCircle,
   Crown,
   Sparkle,
-  Buildings,
+  Building2,
   ArrowLeft,
   ArrowRight,
   Tag,
   X,
-} from "@phosphor-icons/react";
+} from "lucide-react";
 import { Button } from "@repo/ui";
 import Link from "next/link";
 import { getPlans, subscribeToPlan, getCurrentSubscription } from "../../../actions/billing";
@@ -109,7 +109,7 @@ export default function PlansPage() {
     );
   }
 
-  const planIcons = [Sparkle, Crown, Buildings];
+  const planIcons = [Sparkle, Crown, Building2];
 
   return (
     <div className="space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -154,7 +154,7 @@ export default function PlansPage() {
       <div className="max-w-md mx-auto" data-testid="coupon-section">
         {appliedCoupon ? (
           <div className="flex items-center gap-3 p-3 rounded-lg border border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
-            <Tag className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" weight="fill" />
+            <Tag className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-green-800 dark:text-green-300">
                 {appliedCoupon.code}
@@ -293,7 +293,7 @@ export default function PlansPage() {
                     disabled
                    
                   >
-                    <CheckCircle className="w-4 h-4 me-2" />
+                    <CheckCircle2 className="w-4 h-4 me-2" />
                     {t.currentPlan}
                   </Button>
                 ) : (
@@ -321,7 +321,7 @@ export default function PlansPage() {
                   return (
                     <div key={ent.featureKey} className="flex items-center gap-2 text-sm">
                       {granted ? (
-                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" weight="fill" />
+                        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0" />
                       ) : (
                         <XCircle className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
                       )}

@@ -2,7 +2,14 @@
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Spinner, CheckCircle, Clock, CurrencyDollar, Warning } from "@phosphor-icons/react";
+import {
+  ArrowLeft,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  AlertTriangle,
+} from "lucide-react";
 import { Button, Badge, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import { useLanguage } from "../../../../../../components/LanguageProvider";
 import {
@@ -133,7 +140,7 @@ export default function PaymentPlanPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Spinner size={32} className="animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -142,7 +149,7 @@ export default function PaymentPlanPage() {
     return (
       <div className="p-6 space-y-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()} style={{ display: "inline-flex" }}>
-          <ArrowLeft size={16} /> {t.back}
+          <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
         <p className="text-muted-foreground">{t.noPlan}</p>
       </div>
@@ -153,7 +160,7 @@ export default function PaymentPlanPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()} style={{ display: "inline-flex" }}>
-          <ArrowLeft size={16} /> {t.back}
+          <ArrowLeft className="h-4 w-4" /> {t.back}
         </Button>
         <h1 className="text-2xl font-bold">{t.title}</h1>
       </div>
@@ -164,7 +171,7 @@ export default function PaymentPlanPage() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <CheckCircle size={20} className="text-green-600" />
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
                 <div>
                   <p className="text-2xl font-bold">{summary.totalPaid.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">{t.totalPaid} SAR</p>
@@ -175,7 +182,7 @@ export default function PaymentPlanPage() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <CurrencyDollar size={20} className="text-blue-600" />
+                <DollarSign className="h-5 w-5 text-blue-600" />
                 <div>
                   <p className="text-2xl font-bold">{summary.totalRemaining.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground">{t.remaining} SAR</p>
@@ -186,7 +193,7 @@ export default function PaymentPlanPage() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <Clock size={20} className="text-amber-600" />
+                <Clock className="h-5 w-5 text-amber-600" />
                 <div>
                   <p className="text-2xl font-bold">
                     {summary.nextDue ? new Date(summary.nextDue.dueDate).toLocaleDateString() : "—"}
@@ -199,7 +206,7 @@ export default function PaymentPlanPage() {
           <Card>
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <Warning size={20} className="text-red-600" />
+                <AlertTriangle className="h-5 w-5 text-red-600" />
                 <div>
                   <p className="text-2xl font-bold">{summary.overdueCount}</p>
                   <p className="text-xs text-muted-foreground">{t.overdue}</p>

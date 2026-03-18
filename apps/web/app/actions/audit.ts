@@ -7,6 +7,7 @@ export async function getAuditLogs(filters?: {
   userId?: string;
   action?: string;
   resource?: string;
+  resourceId?: string;
   from?: string;
   to?: string;
   page?: number;
@@ -23,6 +24,7 @@ export async function getAuditLogs(filters?: {
   if (filters?.userId) where.userId = filters.userId;
   if (filters?.action) where.action = filters.action;
   if (filters?.resource) where.resource = filters.resource;
+  if (filters?.resourceId) where.resourceId = filters.resourceId;
   if (filters?.from || filters?.to) {
     where.createdAt = {};
     if (filters.from) where.createdAt.gte = new Date(filters.from);

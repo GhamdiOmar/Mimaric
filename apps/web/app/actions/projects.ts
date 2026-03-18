@@ -142,6 +142,20 @@ export async function updateProject(
 ) {
   const session = await requirePermission("projects:write");
 
+  // RED: Off-plan edit restriction post-activation
+  const existing = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!existing) throw new Error("Project not found");
+
+  if (existing.approvalStatus === "ACTIVATED") {
+    const RESTRICTED_FIELDS = ["name", "type", "parcelNumber", "plotNumber", "blockNumber", "deedNumber", "landUse", "totalAreaSqm", "region", "city", "district", "streetName", "postalCode", "latitude", "longitude", "boundaries", "utilities", "estimatedValueSar"];
+    const attempted = Object.keys(data).filter((k) => RESTRICTED_FIELDS.includes(k) && (data as any)[k] !== undefined);
+    if (attempted.length > 0) {
+      throw new Error(`Cannot modify ${attempted.join(", ")} on an activated project`);
+    }
+  }
+
   const project = await db.project.update({
     where: { id: projectId, organizationId: session.organizationId },
     data,

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Globe } from "lucide-react";
 import { t as translations } from "../translations";
 
 export default function Footer({
@@ -48,8 +49,8 @@ export default function Footer({
 
   return (
     <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-8 lg:grid-cols-6">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-12">
+        <div className="grid gap-6 lg:grid-cols-6">
           {/* Brand */}
           <div className="lg:col-span-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -58,21 +59,22 @@ export default function Footer({
               alt="Mimaric"
               className="h-8 w-auto dark:brightness-0 dark:invert"
             />
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
               {t.tagline}
             </p>
 
             {/* Language toggle */}
             <button
               onClick={onToggleLang}
-              className="mt-4 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
               style={{ display: "inline-flex" }}
             >
+              <Globe className="h-3.5 w-3.5" />
               {lang === "ar" ? "English" : "العربية"}
             </button>
 
             {/* Made in Saudi badge */}
-            <p className="mt-4 text-xs text-muted-foreground/60">
+            <p className="mt-3 text-xs text-muted-foreground/60">
               {t.madeInSaudi}
             </p>
           </div>
@@ -83,7 +85,7 @@ export default function Footer({
               <h4 className="text-sm font-semibold text-primary dark:text-white">
                 {col.title}
               </h4>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-3 space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link.label}>
                     <Link
@@ -100,7 +102,7 @@ export default function Footer({
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 border-t border-border pt-8">
+        <div className="mt-10 border-t border-border pt-6">
           <p className="text-center text-xs text-muted-foreground/60">
             &copy; {new Date().getFullYear()} Mimaric. {t.allRightsReserved}
           </p>

@@ -40,8 +40,8 @@ export default function LandPipelineChart() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="flex items-center justify-center h-64 text-neutral text-sm">جاري التحميل...</div>;
-  if (data.every((d) => d.value === 0)) return <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">لا توجد بيانات</div>;
+  if (loading) return <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">جاري التحميل...</div>;
+  if (data.every((d) => d.value === 0)) return <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">لا توجد بيانات</div>;
 
   return (
     <ChartContainer config={chartConfig} className="h-[280px] w-full">

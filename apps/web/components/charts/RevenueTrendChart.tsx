@@ -30,21 +30,21 @@ const fmt = (n: number) =>
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-elevation-2 border border-border/50 text-xs">
+    <div className="bg-card/90 backdrop-blur-xl p-3 rounded-lg shadow-md border border-border/50 text-xs">
       <p className="font-bold text-primary mb-1">{label}</p>
       {payload.map((p: any) => (
         <div key={p.dataKey} className="flex items-center gap-2 py-0.5">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-neutral">{p.name}:</span>
+          <span className="text-muted-foreground">{p.name}:</span>
           <span className="font-bold text-primary flex items-center gap-0.5">
-            <RiyalIcon size={12} /> {fmt(p.value)}
+            <RiyalIcon className="h-3 w-3" /> {fmt(p.value)}
           </span>
         </div>
       ))}
       <div className="border-t border-border/50 mt-1 pt-1 flex items-center gap-1">
-        <span className="text-neutral">الإجمالي:</span>
+        <span className="text-muted-foreground">الإجمالي:</span>
         <span className="font-bold text-primary flex items-center gap-0.5">
-          <RiyalIcon size={12} /> {fmt(payload.reduce((s: number, p: any) => s + p.value, 0))}
+          <RiyalIcon className="h-3 w-3" /> {fmt(payload.reduce((s: number, p: any) => s + p.value, 0))}
         </span>
       </div>
     </div>
@@ -96,7 +96,7 @@ export default function RevenueTrendChart() {
 
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-neutral/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-muted-foreground/40 text-sm">
         لا توجد بيانات إيرادات بعد
       </div>
     );

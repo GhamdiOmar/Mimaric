@@ -2,24 +2,26 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings, Package, Tag, Vault, Coins } from "@phosphor-icons/react";
-import { SARAmount, Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
+import { TrendingUp, AlertTriangle, Receipt, CircleDollarSign, Wrench, MapPin, Building2, Package, Vault, Coins, Loader2, FileDown, BarChart3, Zap } from "lucide-react";
+import { KPICard, SARAmount, PageIntro, Button, Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
+import { useLanguage } from "../../../components/LanguageProvider";
 import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary, getOffPlanRevenueSummary } from "../../actions/finance";
 
-const categoryLabels: Record<string, string> = {
-  HVAC: "تكييف",
-  PLUMBING: "سباكة",
-  ELECTRICAL: "كهرباء",
-  STRUCTURAL: "إنشائي",
-  FIRE_SAFETY: "سلامة حريق",
-  ELEVATOR: "مصاعد",
-  CLEANING: "نظافة",
-  LANDSCAPING: "تنسيق حدائق",
-  PEST_CONTROL: "مكافحة آفات",
-  GENERAL: "عام",
+const categoryLabels: Record<string, { ar: string; en: string }> = {
+  HVAC: { ar: "تكييف", en: "HVAC" },
+  PLUMBING: { ar: "سباكة", en: "Plumbing" },
+  ELECTRICAL: { ar: "كهرباء", en: "Electrical" },
+  STRUCTURAL: { ar: "إنشائي", en: "Structural" },
+  FIRE_SAFETY: { ar: "سلامة حريق", en: "Fire Safety" },
+  ELEVATOR: { ar: "مصاعد", en: "Elevator" },
+  CLEANING: { ar: "نظافة", en: "Cleaning" },
+  LANDSCAPING: { ar: "تنسيق حدائق", en: "Landscaping" },
+  PEST_CONTROL: { ar: "مكافحة آفات", en: "Pest Control" },
+  GENERAL: { ar: "عام", en: "General" },
 };
 
 export default function FinancePage() {
+  const { lang } = useLanguage();
   const [stats, setStats] = React.useState<any>(null);
   const [maintenanceCosts, setMaintenanceCosts] = React.useState<any>(null);
   const [unitRevenue, setUnitRevenue] = React.useState<any[]>([]);
@@ -47,74 +49,77 @@ export default function FinancePage() {
   }, []);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="px-2">
-        <h1 className="text-2xl font-bold text-primary font-primary">المالية</h1>
-        <p className="text-sm text-neutral mt-1 font-primary">إدارة الفوترة الإلكترونية والتقارير المالية وضريبة القيمة المضافة.</p>
-      </div>
+    <div className="space-y-8">
+      <PageIntro
+        title={lang === "ar" ? "المالية" : "Finance"}
+        description={lang === "ar"
+          ? "هذه الصفحة تعيد تقديم لوحة المالية بصياغة أكثر فخامة ووضوحاً. سطح داكن، بطاقات زجاجية طبقية، هرمية تحريرية قوية."
+          : "Executive finance command view. Manage invoicing, collections, and VAT compliance with full operational clarity."}
+        actions={
+          <>
+            <Button variant="primary" size="sm"><FileDown className="h-3.5 w-3.5" /> {lang === "ar" ? "تصدير التقرير التنفيذي" : "Export Report"}</Button>
+            <Button variant="outline" size="sm"><BarChart3 className="h-3.5 w-3.5" /> {lang === "ar" ? "عرض التدفقات النقدية" : "Cash Flows"}</Button>
+            <Button variant="outline" size="sm"><Zap className="h-3.5 w-3.5" /> {lang === "ar" ? "الفوترة الإلكترونية" : "E-Invoicing"}</Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            label: "إجمالي الإيرادات",
-            value: stats ? <SARAmount value={stats.totalRevenue} size={24} /> : "—",
-            icon: CurrencyCircleDollar,
-            color: "secondary",
-          },
-          {
-            label: "الفواتير المعلقة",
-            value: stats ? <SARAmount value={stats.pendingInvoices} size={20} /> : "—",
-            icon: Receipt,
-            color: "accent",
-          },
-          {
-            label: "المتأخرات",
-            value: stats ? <SARAmount value={stats.overdueAmount} size={20} /> : "—",
-            icon: Warning,
-            color: "destructive",
-          },
-          {
-            label: "نسبة التحصيل",
-            value: stats ? `${stats.collectionRate}%` : "—",
-            icon: TrendUp,
-            color: "secondary",
-          },
-        ].map((kpi, i) => (
-          <Card key={i} className="p-6">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">{kpi.label}</span>
-              <kpi.icon size={20} className={
-                kpi.color === "secondary" ? "text-secondary" :
-                kpi.color === "destructive" ? "text-destructive" : "text-accent"
-              } />
-            </div>
-            <h3 className="text-2xl font-bold text-primary">
-              {loading ? <Spinner size={24} className="animate-spin" /> : kpi.value}
-            </h3>
-          </Card>
-        ))}
+      {/* KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <KPICard
+          label={lang === "ar" ? "إجمالي الإيرادات" : "Total Revenue"}
+          value={loading ? "—" : <SARAmount value={stats?.totalRevenue ?? 0} compact size={20} />}
+          subtitle={lang === "ar" ? "إيرادات محصلة عبر الإيجارات والمبيعات خلال الفترة الحالية" : "Revenue collected via rent and sales this period"}
+          icon={<CircleDollarSign className="h-[18px] w-[18px]" />}
+          accentColor="secondary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "نسبة التحصيل" : "Collection Rate"}
+          value={loading ? "—" : `${stats?.collectionRate ?? 0}%`}
+          subtitle={lang === "ar" ? "يظهر تحسن الالتزام والسداد مقارنة بالدورة السابقة" : "Shows improved payment compliance vs previous period"}
+          icon={<TrendingUp className="h-[18px] w-[18px]" />}
+          accentColor="secondary"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "الفواتير المعلقة" : "Pending Invoices"}
+          value={loading ? "—" : <SARAmount value={stats?.pendingInvoices ?? 0} compact size={20} />}
+          subtitle={lang === "ar" ? "لا توجد فواتير مفتوحة حالياً ضمن الفترة المحددة" : "No outstanding invoices within the current period"}
+          icon={<Receipt className="h-[18px] w-[18px]" />}
+          accentColor="accent"
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "المتأخرات" : "Overdue"}
+          value={loading ? "—" : <SARAmount value={stats?.overdueAmount ?? 0} compact size={20} />}
+          subtitle={lang === "ar" ? "الحسابات المتأخرة منخفضة وتحت السيطرة التشغيلية" : "Overdue accounts are low and under operational control"}
+          icon={<AlertTriangle className="h-[18px] w-[18px]" />}
+          accentColor="destructive"
+          loading={loading}
+        />
       </div>
 
       {/* Quick Nav */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Link href="/dashboard/finance/escrow" className="block group">
-          <Card className="p-4 transition-colors group-hover:border-primary/40">
+          <Card className="p-4 transition-colors hover:border-primary/30">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2"><Vault size={20} className="text-primary" /></div>
+              <div className="rounded-lg bg-primary/10 p-2.5"><Vault className="h-[18px] w-[18px] text-primary" /></div>
               <div>
-                <h3 className="text-sm font-bold text-primary">حسابات الضمان — Escrow</h3>
-                <p className="text-xs text-neutral mt-0.5">إدارة حسابات الضمان للمشاريع على الخارطة</p>
+                <h3 className="text-sm font-semibold text-foreground">{lang === "ar" ? "حسابات الضمان" : "Escrow Accounts"}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{lang === "ar" ? "إدارة حسابات الضمان للمشاريع" : "Manage escrow accounts for projects"}</p>
               </div>
             </div>
           </Card>
         </Link>
         <Link href="/dashboard/finance/collections" className="block group">
-          <Card className="p-4 transition-colors group-hover:border-primary/40">
+          <Card className="p-4 transition-colors hover:border-primary/30">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2"><Coins size={20} className="text-amber-600" /></div>
+              <div className="rounded-lg bg-warning/10 p-2.5"><Coins className="h-[18px] w-[18px] text-warning" /></div>
               <div>
-                <h3 className="text-sm font-bold text-primary">التحصيل — Collections</h3>
-                <p className="text-xs text-neutral mt-0.5">أعمار الذمم والمتابعة والتصعيد</p>
+                <h3 className="text-sm font-semibold text-foreground">{lang === "ar" ? "التحصيل" : "Collections"}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{lang === "ar" ? "أعمار الذمم والمتابعة والتصعيد" : "Aging, follow-ups, and escalation"}</p>
               </div>
             </div>
           </Card>
@@ -123,28 +128,20 @@ export default function FinancePage() {
 
       {/* Revenue breakdown */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-neutral">إيرادات الإيجار</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <SARAmount value={stats.totalRentRevenue} size={28} className="text-3xl font-bold text-primary" />
-              </div>
-              <p className="text-xs text-neutral mt-2">{stats.paidCount} دفعة محصّلة من {stats.installmentCount}</p>
-            </CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{lang === "ar" ? "إيرادات الإيجار" : "Rental Revenue"}</p>
+            <div className="mt-2">
+              <SARAmount value={stats.totalRentRevenue} size={28} className="text-2xl font-bold text-foreground" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">{stats.paidCount} {lang === "ar" ? "دفعة محصّلة من" : "paid of"} {stats.installmentCount}</p>
           </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xs font-bold uppercase tracking-widest text-neutral">إيرادات البيع</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <SARAmount value={stats.totalSaleRevenue} size={28} className="text-3xl font-bold text-primary" />
-              </div>
-              <p className="text-xs text-neutral mt-2">من العقود الموقّعة</p>
-            </CardContent>
+          <Card className="p-5">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{lang === "ar" ? "إيرادات البيع" : "Sales Revenue"}</p>
+            <div className="mt-2">
+              <SARAmount value={stats.totalSaleRevenue} size={28} className="text-2xl font-bold text-foreground" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">{lang === "ar" ? "من العقود الموقّعة" : "From signed contracts"}</p>
           </Card>
         </div>
       )}
@@ -152,41 +149,29 @@ export default function FinancePage() {
       {/* Off-Plan Revenue */}
       {offPlanRevenue && offPlanRevenue.total > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package size={20} className="text-accent" weight="duotone" />
-              <span className="text-lg font-bold text-primary font-primary">إيرادات على الخارطة</span>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Package className="h-4 w-4 text-amber-500" />
+              {lang === "ar" ? "إيرادات على الخارطة" : "Off-Plan Revenue"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المسار</span>
-                <div className="mt-2">
-                  <SARAmount value={offPlanRevenue.pipelineValue} size={20} className="text-xl font-bold text-primary" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                { label: { ar: "قيمة المسار", en: "Pipeline Value" }, value: offPlanRevenue.pipelineValue, sub: `${offPlanRevenue.total} ${lang === "ar" ? "عنصر" : "items"}` },
+                { label: { ar: "قيمة المحجوز", en: "Reserved Value" }, value: offPlanRevenue.reservedValue, sub: `${offPlanRevenue.reservedCount} ${lang === "ar" ? "محجوز" : "reserved"}` },
+                { label: { ar: "قيمة المباع", en: "Sold Value" }, value: offPlanRevenue.soldValue, sub: `${offPlanRevenue.soldCount} ${lang === "ar" ? "مباع" : "sold"}` },
+              ].map((item, i) => (
+                <div key={i} className="rounded-lg bg-muted/30 p-4">
+                  <p className="text-xs font-medium text-muted-foreground">{item.label[lang]}</p>
+                  <div className="mt-1.5"><SARAmount value={item.value} size={18} className="text-lg font-bold text-foreground" /></div>
+                  <p className="text-[10px] text-muted-foreground mt-1">{item.sub}</p>
                 </div>
-                <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.total} عنصر مخزون</p>
-              </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المحجوز</span>
-                <div className="mt-2">
-                  <SARAmount value={offPlanRevenue.reservedValue} size={20} className="text-xl font-bold text-amber-600" />
-                </div>
-                <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.reservedCount} محجوز</p>
-              </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">قيمة المباع</span>
-                <div className="mt-2">
-                  <SARAmount value={offPlanRevenue.soldValue} size={20} className="text-xl font-bold text-secondary" />
-                </div>
-                <p className="text-[10px] text-neutral mt-1">{offPlanRevenue.soldCount} مباع</p>
-              </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">معدل التحويل</span>
-                <div className="mt-2">
-                  <span className="text-xl font-bold text-info font-latin">{offPlanRevenue.conversionRate}%</span>
-                </div>
-                <div className="mt-2 h-1.5 bg-border rounded-full overflow-hidden">
+              ))}
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "معدل التحويل" : "Conversion Rate"}</p>
+                <p className="text-lg font-bold text-foreground mt-1.5 tabular-nums">{offPlanRevenue.conversionRate}%</p>
+                <div className="mt-2 h-1 bg-border rounded-full overflow-hidden">
                   <div className="h-full bg-info rounded-full transition-all" style={{ width: `${offPlanRevenue.conversionRate}%` }} />
                 </div>
               </div>
@@ -195,56 +180,51 @@ export default function FinancePage() {
         </Card>
       )}
 
+      {/* ZATCA Placeholder */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-bold text-primary font-primary">الفوترة الإلكترونية — ZATCA Phase 2</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">{lang === "ar" ? "الفوترة الإلكترونية — ZATCA Phase 2" : "E-Invoicing — ZATCA Phase 2"}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted rounded-lg text-neutral/40 text-sm font-primary">
-            سيتم تفعيل الربط مع فاتورة قريباً — Coming Soon
+          <div className="flex items-center justify-center h-48 border border-dashed border-border rounded-lg text-muted-foreground text-sm">
+            {lang === "ar" ? "سيتم تفعيل الربط مع فاتورة قريبا" : "Integration with ZATCA coming soon"}
           </div>
         </CardContent>
       </Card>
 
-      {/* Maintenance Costs Section */}
+      {/* Maintenance Costs */}
       {maintenanceCosts && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wrench size={20} className="text-accent" />
-              <span className="text-lg font-bold text-primary font-primary">تكاليف الصيانة</span>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Wrench className="h-4 w-4 text-amber-500" />
+              {lang === "ar" ? "تكاليف الصيانة" : "Maintenance Costs"}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">تقديري</span>
-                <div className="mt-2">
-                  <SARAmount value={maintenanceCosts.totalEstimated} size={24} className="text-2xl font-bold text-primary" />
-                </div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "تقديري" : "Estimated"}</p>
+                <div className="mt-1.5"><SARAmount value={maintenanceCosts.totalEstimated} size={20} className="text-xl font-bold text-foreground" /></div>
               </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">فعلي</span>
-                <div className="mt-2">
-                  <SARAmount value={maintenanceCosts.totalActual} size={24} className="text-2xl font-bold text-primary" />
-                </div>
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "فعلي" : "Actual"}</p>
+                <div className="mt-1.5"><SARAmount value={maintenanceCosts.totalActual} size={20} className="text-xl font-bold text-foreground" /></div>
               </div>
             </div>
             {Object.keys(maintenanceCosts.byCategory).length > 0 && (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-right">الفئة</TableHead>
-                    <TableHead className="text-left">التكلفة</TableHead>
+                    <TableHead>{lang === "ar" ? "الفئة" : "Category"}</TableHead>
+                    <TableHead className="text-end">{lang === "ar" ? "التكلفة" : "Cost"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {Object.entries(maintenanceCosts.byCategory).map(([cat, cost]) => (
                     <TableRow key={cat}>
-                      <TableCell className="text-primary font-primary">{categoryLabels[cat] ?? cat}</TableCell>
-                      <TableCell className="text-left">
-                        <SARAmount value={cost as number} size={14} />
-                      </TableCell>
+                      <TableCell className="font-medium">{categoryLabels[cat]?.[lang] ?? cat}</TableCell>
+                      <TableCell className="text-end"><SARAmount value={cost as number} size={14} /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -254,38 +234,34 @@ export default function FinancePage() {
         </Card>
       )}
 
-      {/* Unit Revenue Table */}
+      {/* Unit Revenue */}
       {unitRevenue.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Buildings size={20} className="text-secondary" />
-              <span className="text-lg font-bold text-primary font-primary">إيرادات الوحدات</span>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <Building2 className="h-4 w-4 text-secondary" />
+              {lang === "ar" ? "إيرادات الوحدات" : "Unit Revenue"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">الوحدة</TableHead>
-                  <TableHead className="text-right">المبنى</TableHead>
-                  <TableHead className="text-left">إيرادات الإيجار</TableHead>
-                  <TableHead className="text-left">تكاليف الصيانة</TableHead>
-                  <TableHead className="text-left">صافي الدخل</TableHead>
+                  <TableHead>{lang === "ar" ? "الوحدة" : "Unit"}</TableHead>
+                  <TableHead>{lang === "ar" ? "المبنى" : "Building"}</TableHead>
+                  <TableHead className="text-end">{lang === "ar" ? "إيرادات الإيجار" : "Rent Income"}</TableHead>
+                  <TableHead className="text-end">{lang === "ar" ? "تكاليف الصيانة" : "Maintenance"}</TableHead>
+                  <TableHead className="text-end">{lang === "ar" ? "صافي الدخل" : "Net Income"}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {unitRevenue.map((u: any) => (
                   <TableRow key={u.id}>
-                    <TableCell className="text-primary font-medium">{u.number}</TableCell>
-                    <TableCell className="text-primary font-primary">{u.building}</TableCell>
-                    <TableCell className="text-left">
-                      <SARAmount value={u.rentIncome} size={14} />
-                    </TableCell>
-                    <TableCell className="text-left">
-                      <SARAmount value={u.maintenanceCost} size={14} />
-                    </TableCell>
-                    <TableCell className={`text-left font-bold ${u.netIncome >= 0 ? "text-green-600" : "text-red-600"}`}>
+                    <TableCell className="font-medium">{u.number}</TableCell>
+                    <TableCell>{u.building}</TableCell>
+                    <TableCell className="text-end"><SARAmount value={u.rentIncome} size={14} /></TableCell>
+                    <TableCell className="text-end"><SARAmount value={u.maintenanceCost} size={14} /></TableCell>
+                    <TableCell className={`text-end font-semibold ${u.netIncome >= 0 ? "text-success" : "text-destructive"}`}>
                       <SARAmount value={u.netIncome} size={14} />
                     </TableCell>
                   </TableRow>
@@ -296,34 +272,30 @@ export default function FinancePage() {
         </Card>
       )}
 
-      {/* Land Investment Section */}
+      {/* Land Investment */}
       {landInvestment && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin size={20} className="text-secondary" />
-              <span className="text-lg font-bold text-primary font-primary">استثمارات الأراضي</span>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+              <MapPin className="h-4 w-4 text-secondary" />
+              {lang === "ar" ? "استثمارات الأراضي" : "Land Investments"}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">تكلفة الاستحواذ</span>
-                <div className="mt-2">
-                  <SARAmount value={landInvestment.totalAcquisitionCost} size={20} className="text-xl font-bold text-primary" />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "تكلفة الاستحواذ" : "Acquisition Cost"}</p>
+                <div className="mt-1.5"><SARAmount value={landInvestment.totalAcquisitionCost} size={18} className="text-lg font-bold text-foreground" /></div>
               </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">القيمة التقديرية</span>
-                <div className="mt-2">
-                  <SARAmount value={landInvestment.totalEstimatedValue} size={20} className="text-xl font-bold text-primary" />
-                </div>
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "القيمة التقديرية" : "Estimated Value"}</p>
+                <div className="mt-1.5"><SARAmount value={landInvestment.totalEstimatedValue} size={18} className="text-lg font-bold text-foreground" /></div>
               </div>
-              <div className="bg-muted/30 p-4 rounded-md">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral">الربح/الخسارة غير المحققة</span>
-                <div className="mt-2">
-                  <span className={`text-xl font-bold ${landInvestment.unrealizedGainLoss >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    <SARAmount value={landInvestment.unrealizedGainLoss} size={20} />
+              <div className="rounded-lg bg-muted/30 p-4">
+                <p className="text-xs font-medium text-muted-foreground">{lang === "ar" ? "الربح/الخسارة غير المحققة" : "Unrealized Gain/Loss"}</p>
+                <div className="mt-1.5">
+                  <span className={`text-lg font-bold ${landInvestment.unrealizedGainLoss >= 0 ? "text-success" : "text-destructive"}`}>
+                    <SARAmount value={landInvestment.unrealizedGainLoss} size={18} />
                   </span>
                 </div>
               </div>
