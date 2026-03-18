@@ -209,6 +209,14 @@ export default function ContractDetailPage() {
               </Button>
             );
           })}
+          {contract.status === "SIGNED" && (
+            <Link href={`/dashboard/sales/contracts/${contract.id}/payment-plan`}>
+              <Button size="sm" variant="secondary" className="gap-2" style={{ display: "inline-flex" }}>
+                <CurrencyCircleDollar size={16} />
+                {lang === "ar" ? "خطة الدفع" : "Payment Plan"}
+              </Button>
+            </Link>
+          )}
           {can("contracts:delete") && contract.status === "DRAFT" && (
             <Button
               size="sm"

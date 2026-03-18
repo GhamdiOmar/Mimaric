@@ -330,3 +330,90 @@ export async function getApprovalStats(projectId: string) {
 
   return { total, approved, pending, rejected, totalConditions, metConditions };
 }
+
+// ─── RED: Follow-Up Tasks ───────────────────────────────────────────────────
+
+export async function addFollowUpTask(
+  submissionId: string,
+  data: { task: string; taskArabic?: string; assignedTo?: string; dueDate?: string }
+) {
+  const session = await requirePermission("approvals:write");
+
+  const submission = await db.approvalSubmission.findFirst({
+    where: { id: submissionId, organizationId: session.organizationId },
+  });
+  if (!submission) throw new Error("Submission not found");
+
+  const followUp = await db.approvalFollowUp.create({
+    data: {
+      submissionId,
+      task: data.task,
+      taskArabic: data.taskArabic,
+      assignedTo: data.assignedTo,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+      organizationId: session.organizationId,
+    },
+  });
+
+  return JSON.parse(JSON.stringify(followUp));
+}
+
+export async function updateFollowUpStatus(
+  followUpId: string,
+  status: string
+) {
+  const session = await requirePermission("approvals:write");
+
+  const followUp = await db.approvalFollowUp.findFirst({
+    where: { id: followUpId, organizationId: session.organizationId },
+  });
+  if (!followUp) throw new Error("Follow-up task not found");
+
+  const updated = await db.approvalFollowUp.update({
+    where: { id: followUpId },
+    data: {
+      status: status as any,
+      completedAt: status === "COMPLETED" ? new Date() : undefined,
+    },
+  });
+
+  return JSON.parse(JSON.stringify(updated));
+}
+
+export async function getBlockingApprovals(module?: string) {
+  const session = await requirePermission("approvals:read");
+
+  const where: any = {
+    organizationId: session.organizationId,
+    isBlocking: true,
+    status: { notIn: ["APPROVED_FINAL", "APPROVED_WITH_CONDITIONS"] },
+  };
+  if (module) where.blockingModule = module;
+
+  const submissions = await db.approvalSubmission.findMany({
+    where,
+    include: {
+      project: { select: { id: true, name: true } },
+      _count: { select: { followUps: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(submissions));
+}
+
+export async function getApprovalFollowUps(submissionId: string) {
+  const session = await requirePermission("approvals:read");
+
+  const submission = await db.approvalSubmission.findFirst({
+    where: { id: submissionId, organizationId: session.organizationId },
+  });
+  if (!submission) throw new Error("Submission not found");
+
+  const followUps = await db.approvalFollowUp.findMany({
+    where: { submissionId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(followUps));
+}

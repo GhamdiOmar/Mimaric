@@ -6,6 +6,25 @@ import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 import { checkLimit, FEATURE_KEYS } from "../../lib/entitlements";
 
+// ─── RED: Project Approval State Machine ────────────────────────────────────
+
+const PROJECT_APPROVAL_TRANSITIONS: Record<string, string[]> = {
+  DRAFT_PROJECT: ["PENDING_APPROVAL"],
+  PENDING_APPROVAL: ["APPROVED_PROJECT", "REJECTED_PROJECT"],
+  APPROVED_PROJECT: ["ACTIVATED"],
+  REJECTED_PROJECT: ["DRAFT_PROJECT"],
+  ACTIVATED: [],
+};
+
+// City code lookup for project code generation
+const CITY_CODES: Record<string, string> = {
+  riyadh: "RYD", jeddah: "JED", makkah: "MKH", madinah: "MED",
+  dammam: "DMM", khobar: "KHB", dhahran: "DHR", jubail: "JUB",
+  tabuk: "TBK", abha: "ABH", taif: "TAF", hail: "HAL",
+  jazan: "JZN", najran: "NJR", yanbu: "YNB", buraydah: "BUR",
+  khamis_mushait: "KMS", al_ahsa: "AHS", neom: "NOM",
+};
+
 export async function createProject(data: {
   name: string;
   description?: string;
@@ -391,4 +410,373 @@ export async function deleteProjectDocument(documentId: string) {
     revalidatePath(`/dashboard/projects/${doc.projectId}`);
   }
   revalidatePath("/dashboard/documents");
+}
+
+// ─── RED: Project Governance Actions ──────────────────────────────────────────
+
+/**
+ * Generate a unique project code: PRJ-{CITY}-{YEAR}-{SEQ}
+ */
+export async function generateProjectCode(projectId: string) {
+  const session = await requirePermission("projects:write");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const cityKey = (project.city ?? "riyadh").toLowerCase().replace(/\s+/g, "_");
+  const cityCode = CITY_CODES[cityKey] ?? cityKey.substring(0, 3).toUpperCase();
+  const year = new Date().getFullYear();
+
+  // Count existing projects with codes in this org for sequencing
+  const existingCount = await db.project.count({
+    where: {
+      organizationId: session.organizationId,
+      projectCode: { not: null },
+    },
+  });
+
+  const seq = String(existingCount + 1).padStart(3, "0");
+  const code = `PRJ-${cityCode}-${year}-${seq}`;
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: { projectCode: code },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    metadata: { projectCode: code },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Assign project owners (internal PM and finance contact)
+ */
+export async function assignProjectOwners(
+  projectId: string,
+  data: { internalOwnerId?: string; financeOwnerId?: string }
+) {
+  const session = await requirePermission("projects:write");
+
+  const before = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!before) throw new Error("Project not found");
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: {
+      internalOwnerId: data.internalOwnerId,
+      financeOwnerId: data.financeOwnerId,
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    before: { internalOwnerId: before.internalOwnerId, financeOwnerId: before.financeOwnerId },
+    after: { internalOwnerId: updated.internalOwnerId, financeOwnerId: updated.financeOwnerId },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Submit a project for approval: DRAFT_PROJECT → PENDING_APPROVAL
+ */
+export async function submitProjectForApproval(projectId: string) {
+  const session = await requirePermission("projects:write");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
+  if (!allowed.includes("PENDING_APPROVAL")) {
+    throw new Error(`Cannot submit project from status '${project.approvalStatus}'`);
+  }
+
+  // Validate minimum requirements before submission
+  if (!project.projectCode) {
+    throw new Error("Project code is required before submission");
+  }
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: { approvalStatus: "PENDING_APPROVAL" as any },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    before: { approvalStatus: project.approvalStatus },
+    after: { approvalStatus: "PENDING_APPROVAL" },
+    metadata: { transition: "DRAFT_PROJECT → PENDING_APPROVAL" },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Approve a project: PENDING_APPROVAL → APPROVED_PROJECT
+ */
+export async function approveProject(projectId: string, notes?: string) {
+  const session = await requirePermission("projects:approve");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
+  if (!allowed.includes("APPROVED_PROJECT")) {
+    throw new Error(`Cannot approve project from status '${project.approvalStatus}'`);
+  }
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: { approvalStatus: "APPROVED_PROJECT" as any },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    before: { approvalStatus: project.approvalStatus },
+    after: { approvalStatus: "APPROVED_PROJECT" },
+    metadata: { transition: "PENDING_APPROVAL → APPROVED_PROJECT", notes },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Reject a project: PENDING_APPROVAL → REJECTED_PROJECT
+ */
+export async function rejectProject(projectId: string, reason: string) {
+  const session = await requirePermission("projects:approve");
+
+  if (!reason?.trim()) throw new Error("Rejection reason is required");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
+  if (!allowed.includes("REJECTED_PROJECT")) {
+    throw new Error(`Cannot reject project from status '${project.approvalStatus}'`);
+  }
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: { approvalStatus: "REJECTED_PROJECT" as any },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    before: { approvalStatus: project.approvalStatus },
+    after: { approvalStatus: "REJECTED_PROJECT" },
+    metadata: { transition: "PENDING_APPROVAL → REJECTED_PROJECT", reason },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Compute project readiness flags for activation checks.
+ */
+export async function computeReadinessFlags(projectId: string) {
+  const session = await requirePermission("projects:read");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+    include: {
+      approvalSubmissions: { where: { status: { not: "APPROVED_FINAL" } } },
+      infrastructureReadiness: true,
+      escrowAccount: true,
+      inventoryItems: { where: { status: "AVAILABLE_INV" } },
+      buildings: { include: { _count: { select: { units: true } } } },
+    },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const blockers: string[] = [];
+
+  // Check: all critical approvals approved
+  const pendingApprovals = (project as any).approvalSubmissions?.length ?? 0;
+  if (pendingApprovals > 0) {
+    blockers.push(`${pendingApprovals} approval(s) still pending`);
+  }
+
+  // Check: infrastructure readiness
+  const infra = (project as any).infrastructureReadiness?.[0];
+  const infraReady = infra?.electricityReady && infra?.waterReady && infra?.roadAccess;
+  if (!infraReady) {
+    blockers.push("Infrastructure readiness incomplete");
+  }
+
+  // Check: escrow account active (for off-plan projects)
+  const isOffPlan = project.status === "OFF_PLAN_LAUNCHED" || project.status === "LAUNCH_READINESS";
+  if (isOffPlan && !(project as any).escrowAccount) {
+    blockers.push("Escrow account not set up (required for off-plan)");
+  }
+
+  // Check: at least 1 released inventory item
+  const releasedCount = (project as any).inventoryItems?.length ?? 0;
+  if (releasedCount === 0) {
+    blockers.push("No released inventory items");
+  }
+
+  // Check: at least 1 building with units
+  const hasUnits = (project as any).buildings?.some((b: any) => b._count.units > 0);
+  if (!hasUnits) {
+    blockers.push("No buildings with units defined");
+  }
+
+  const launchReady = blockers.length === 0;
+  const handoverReady = launchReady && project.status === "READY";
+
+  return { launchReady, handoverReady, blockers };
+}
+
+/**
+ * Activate a project: APPROVED_PROJECT → ACTIVATED.
+ * Validates readiness before allowing activation.
+ */
+export async function activateProject(projectId: string) {
+  const session = await requirePermission("projects:approve");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
+  if (!allowed.includes("ACTIVATED")) {
+    throw new Error(`Cannot activate project from status '${project.approvalStatus}'`);
+  }
+
+  // Validate readiness
+  const readiness = await computeReadinessFlags(projectId);
+  if (!readiness.launchReady) {
+    throw new Error(`Project not ready for activation: ${readiness.blockers.join("; ")}`);
+  }
+
+  const updated = await db.project.update({
+    where: { id: projectId },
+    data: {
+      approvalStatus: "ACTIVATED" as any,
+      activatedAt: new Date(),
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Project",
+    resourceId: projectId,
+    before: { approvalStatus: project.approvalStatus },
+    after: { approvalStatus: "ACTIVATED" },
+    metadata: { transition: "APPROVED_PROJECT → ACTIVATED" },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/projects/${projectId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+/**
+ * Get full project hierarchy tree: Project → Phases → Buildings → Units
+ */
+export async function getProjectTree(projectId: string) {
+  const session = await requirePermission("projects:read");
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: session.organizationId },
+    include: {
+      phases: {
+        include: {
+          buildings: {
+            include: {
+              units: {
+                select: {
+                  id: true,
+                  number: true,
+                  type: true,
+                  status: true,
+                  area: true,
+                  floor: true,
+                },
+                orderBy: { number: "asc" },
+              },
+              _count: { select: { units: true } },
+            },
+            orderBy: { name: "asc" },
+          },
+        },
+        orderBy: { name: "asc" },
+      },
+      // Also include buildings not assigned to a phase
+      buildings: {
+        where: { phaseId: null },
+        include: {
+          units: {
+            select: {
+              id: true,
+              number: true,
+              type: true,
+              status: true,
+              area: true,
+              floor: true,
+            },
+            orderBy: { number: "asc" },
+          },
+          _count: { select: { units: true } },
+        },
+        orderBy: { name: "asc" },
+      },
+    },
+  });
+
+  if (!project) throw new Error("Project not found");
+  return JSON.parse(JSON.stringify(project));
 }

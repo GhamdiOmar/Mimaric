@@ -518,6 +518,18 @@ export default function ProjectDetailPage() {
               {lang === "ar" ? "عرض الوحدات" : "View Units"}
             </Button>
           </Link>
+          <Link href={`/dashboard/projects/${id}/governance`}>
+            <Button variant="secondary" size="sm" className="gap-2">
+              <SealCheck size={14} />
+              {lang === "ar" ? "الحوكمة" : "Governance"}
+            </Button>
+          </Link>
+          <Link href={`/dashboard/projects/${id}/tree`}>
+            <Button variant="secondary" size="sm" className="gap-2">
+              <GridFour size={14} />
+              {lang === "ar" ? "هيكل المشروع" : "Project Tree"}
+            </Button>
+          </Link>
           <Link href={`/dashboard/projects/${id}/site-logs`}>
             <Button variant="secondary" size="sm" className="gap-2">
               <ClipboardText size={14} />
@@ -1570,6 +1582,11 @@ export default function ProjectDetailPage() {
                   <HardHat size={14} />{lang === "ar" ? "تحويل المباع إلى وحدات" : "Convert Sold to Units"}
                 </button>
               )}
+              <Link href={`/dashboard/projects/${id}/inventory/import`}>
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
+                  <CloudArrowUp size={14} />{lang === "ar" ? "استيراد CSV" : "Import CSV"}
+                </button>
+              </Link>
               <button
                 onClick={() => setShowInventoryModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
@@ -1724,10 +1741,19 @@ export default function ProjectDetailPage() {
               >
                 <CurrencyDollar size={14} />{lang === "ar" ? "حساب الأسعار" : "Calculate All"}
               </button>
+              <Link href={`/dashboard/projects/${id}/pricing/versions`}>
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
+                  <ClockCounterClockwise size={14} />{lang === "ar" ? "إصدارات الأسعار" : "Price Versions"}
+                </button>
+              </Link>
+              <Link href={`/dashboard/projects/${id}/pricing/change-requests`}>
+                <button className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-accent/20 text-amber-700 hover:bg-accent/30 active:bg-accent/40 transition-all">
+                  <FunnelSimple size={14} />{lang === "ar" ? "طلبات تعديل الأسعار" : "Price Change Requests"}
+                </button>
+              </Link>
               <button
                 onClick={() => setShowPricingModal(true)}
                 className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-primary text-white hover:bg-primary/90 active:bg-primary/80 transition-all"
-               
               >
                 <Plus size={14} />{lang === "ar" ? "إضافة قاعدة" : "Add Rule"}
               </button>

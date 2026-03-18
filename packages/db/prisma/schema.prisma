@@ -143,6 +143,12 @@ enum UserRole {
   FINANCE_OFFICER
   TECHNICIAN
   ENGINEERING_CONSULTANT    // Wafi: independent engineering consultant for milestone certification
+  APPROVALS_MANAGER         // RED: dedicated approval workflow manager
+  ESCROW_CONTROLLER         // RED: escrow account oversight and disbursement
+  COLLECTIONS_OFFICER       // RED: receivables aging and collection follow-up
+  HANDOVER_OFFICER          // RED: unit handover coordination and sign-off
+  QA_INSPECTOR              // RED: quality assurance / milestone certification
+  VENDOR_CONTRACTOR         // RED: external vendor with scoped read access
   BUYER
   TENANT
   USER
@@ -184,6 +190,15 @@ model Project {
   acquisitionDate   DateTime?  // Date of acquisition
   landLegalNotes    String?    // Legal notes / encumbrances
   suitabilityScore Float?       // Weighted feasibility score 0-100
+  // RED: Project governance fields
+  projectCode           String?  @unique  // e.g., PRJ-RYD-2026-001
+  developerEntityId     String?            // FK to Organization (legal entity)
+  internalOwnerId       String?            // FK to User (project owner)
+  financeOwnerId        String?            // FK to User (finance owner)
+  approvalStatus        ProjectApprovalStatus @default(DRAFT_PROJECT)
+  activatedAt           DateTime?
+  plannedLaunchDate     DateTime?
+  plannedCompletionDate DateTime?
   buildings      Building[]
   documents      Document[]
   dueDiligence   DueDiligence[]
@@ -198,6 +213,7 @@ model Project {
   infrastructureReadiness InfrastructureReadiness[]
   inventoryItems       InventoryItem[]
   pricingRules         PricingRule[]
+  priceListVersions    PriceListVersion[]
   launchWaves          LaunchWave[]
   // ── Wafi Compliance Relations ──
   escrowAccount          EscrowAccount?
@@ -243,6 +259,15 @@ enum ProjectStatus {
   HANDED_OVER
 }
 
+// RED: Project-level approval/governance workflow status
+enum ProjectApprovalStatus {
+  DRAFT_PROJECT
+  PENDING_APPROVAL
+  APPROVED_PROJECT
+  REJECTED_PROJECT
+  ACTIVATED
+}
+
 enum LandUse {
   RESIDENTIAL_LAND
   COMMERCIAL_LAND
@@ -269,6 +294,9 @@ model Building {
   constructionYear  Int?     // Year of construction
   buildingType      String?  // residential, commercial, etc.
   occupancyStatus   String?  // vacant, occupied, under_construction, etc.
+  // RED: Building identification
+  towerName         String?  // Tower/building marketing name
+  blockCode         String?  // Block code within phase
   electricityConnected Boolean? // Utility: electricity
   waterConnected    Boolean? // Utility: water
   units             Unit[]
@@ -296,6 +324,8 @@ model Unit {
   floor        Int?          // Floor number
   bedrooms     Int?          // Number of bedrooms
   bathrooms    Int?          // Number of bathrooms
+  balconyAreaSqm Float?     // RED: balcony/terrace area in sqm
+  parkingCount   Int?        // RED: number of assigned parking spaces
   commercialStrategy CommercialStrategy? // FR-08/21: SELL, LEASE, HOLD, etc.
   reservations        Reservation[]
   documents           Document[]
@@ -330,6 +360,10 @@ model Customer {
   nationalIdHash String?       // SHA-256 hash for exact search on encrypted nationalId
   phoneHash      String?       // SHA-256 hash for exact search on encrypted phone
   emailHash      String?       // SHA-256 hash for exact search on encrypted email
+  // RED: Buyer profile enhancements
+  preferredLanguage    String?  @default("ar")
+  authorizedSignatory  String?   // For corporate buyers
+  companyDocuments     Json?     // For corporate buyers
   status         CustomerStatus @default(NEW)
   source         String?
   organizationId String
@@ -387,6 +421,15 @@ model Reservation {
   status          ReservationStatus @default(PENDING)
   expiresAt       DateTime
   amount          Decimal?
+  // RED: Enhanced reservation fields
+  depositRequired  Boolean  @default(false)
+  depositAmount    Decimal?
+  depositPaidAt    DateTime?
+  salesChannel     SalesChannel?
+  expiryPolicy     String?
+  extensionCount   Int      @default(0)
+  maxExtensions    Int      @default(1)
+  extensions       ReservationExtension[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
@@ -394,6 +437,28 @@ model Reservation {
   @@index([unitId])
   @@index([userId])
   @@index([inventoryItemId])
+}
+
+// RED: Reservation extension requests
+model ReservationExtension {
+  id              String   @id @default(cuid())
+  reservationId   String
+  reservation     Reservation @relation(fields: [reservationId], references: [id])
+  requestedBy     String
+  approvedBy      String?
+  newExpiresAt    DateTime
+  reason          String?
+  status          ExtensionStatus @default(PENDING_EXTENSION)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([reservationId])
+}
+
+enum ExtensionStatus {
+  PENDING_EXTENSION
+  APPROVED_EXTENSION
+  REJECTED_EXTENSION
 }
 
 enum ReservationStatus {
@@ -442,6 +507,20 @@ model Contract {
   // Shared
   termsAndConditions        String?
   notes                     String?
+  // RED: Amount breakdown
+  grossAmount               Decimal?
+  discountAmount            Decimal?
+  netAmount                 Decimal?
+  // RED: Template & signatures
+  templateId                String?
+  templateVersion           Int?
+  buyerSignedAt             DateTime?
+  developerSignedAt         DateTime?
+  buyerSignatureUrl         String?
+  developerSignatureUrl     String?
+  pdfPreviewUrl             String?
+  // RED: Relations
+  paymentPlan               PaymentPlan?
 
   @@index([customerId])
   @@index([unitId])
@@ -462,6 +541,69 @@ enum ContractType {
   LEASE
 }
 
+// RED: Payment Plans (linked 1:1 to Contract)
+model PaymentPlan {
+  id             String   @id @default(cuid())
+  contractId     String   @unique
+  contract       Contract @relation(fields: [contractId], references: [id])
+  name           String?
+  totalAmount    Decimal
+  downPayment    Decimal?
+  status         PaymentPlanStatus @default(DRAFT_PLAN)
+  installments   PaymentPlanInstallment[]
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum PaymentPlanStatus {
+  DRAFT_PLAN
+  ACTIVE_PLAN
+  COMPLETED_PLAN
+  CANCELLED_PLAN
+}
+
+model PaymentPlanInstallment {
+  id                String   @id @default(cuid())
+  paymentPlanId     String
+  paymentPlan       PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  installmentNumber Int
+  amount            Decimal
+  dueDate           DateTime
+  status            InstallmentStatus @default(UNPAID)
+  paidAt            DateTime?
+  paidAmount        Decimal?
+  paymentMethod     String?
+  referenceNumber   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([paymentPlanId])
+}
+
+enum InstallmentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+// RED: Contract Templates
+model ContractTemplate {
+  id             String   @id @default(cuid())
+  name           String
+  nameArabic     String?
+  type           ContractType
+  version        Int      @default(1)
+  content        String   // HTML template with {{vars}}
+  isActive       Boolean  @default(true)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
+}
+
 enum UnitType {
   APARTMENT
   VILLA
@@ -477,6 +619,9 @@ enum UnitStatus {
   SOLD
   RENTED
   MAINTENANCE
+  SUSPENDED        // RED: temporarily blocked from transactions
+  WITHDRAWN        // RED: permanently removed from inventory
+  HANDED_OVER      // RED: handover to buyer completed
 }
 
 // ─── Lease ────────────────────────────────────────────────────────────────────
@@ -737,6 +882,8 @@ model AuditLog {
   resource       String   // Customer, Contract, Unit, etc.
   resourceId     String?
   metadata       Json?
+  changeSnapshot Json?    // RED: {before: {...}, after: {...}} for UPDATE, full payload for CREATE
+  fieldChanges   Json?    // RED: [{field, oldValue, newValue}, ...] auto-computed diff
   ipAddress      String?
   organizationId String
   createdAt      DateTime @default(now())
@@ -823,6 +970,10 @@ model Phase {
   startDate      DateTime?
   endDate        DateTime?
   budgetSar      Decimal?
+  // RED: Phase governance fields
+  phaseCode            String?
+  salesEnabled         Boolean  @default(false)
+  approvalDependencyId String?   // FK to ApprovalSubmission blocking this phase
   buildings      Building[]
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
@@ -1314,11 +1465,41 @@ model ApprovalSubmission {
   comments           ApprovalComment[]
   parentSubmissionId String?        // Links to previous submission if resubmission
   revisionNumber     Int            @default(1)
+  // RED: SLA and blocking
+  expectedResponseDate DateTime?   // SLA deadline
+  isBlocking           Boolean  @default(false)
+  blockingModule       String?    // "SALES" | "LAUNCH" | "INFRASTRUCTURE"
+  followUps            ApprovalFollowUp[]
   organizationId     String
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
   @@index([projectId])
+}
+
+// RED: Follow-up tasks linked to approval submissions
+model ApprovalFollowUp {
+  id             String   @id @default(cuid())
+  submissionId   String
+  submission     ApprovalSubmission @relation(fields: [submissionId], references: [id])
+  task           String
+  taskArabic     String?
+  assignedTo     String?
+  dueDate        DateTime?
+  status         FollowUpStatus @default(OPEN)
+  completedAt    DateTime?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([submissionId])
+}
+
+enum FollowUpStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }
 
 enum ApprovalType {
@@ -1456,13 +1637,25 @@ model InventoryItem {
   releaseDate        DateTime?
   status             InventoryStatus @default(UNRELEASED)
   channel            SalesChannel?
+  // RED: Release & pricing controls
+  releaseStatus      ReleaseStatus @default(NOT_RELEASED)
+  minimumSellPrice   Decimal?
+  holdReason         String?
+  holdUntil          DateTime?
   reservations       Reservation[]   @relation("InventoryReservations")
+  priceChangeRequests PriceChangeRequest[]
   organizationId     String
   createdAt          DateTime        @default(now())
   updatedAt          DateTime        @updatedAt
 
   @@index([projectId])
   @@index([status])
+}
+
+enum ReleaseStatus {
+  NOT_RELEASED
+  RELEASED
+  HOLD
 }
 
 enum ProductType {
@@ -1523,6 +1716,66 @@ enum PricingRuleType {
   BLOCK_ADJUSTMENT
   PRODUCT_TYPE_PREMIUM
   CUSTOM_PRICING
+}
+
+// ─── RED: Price List Versioning & Change Requests ────────────────────────────
+
+model PriceListVersion {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id])
+  versionNumber  Int
+  name           String?
+  effectiveDate  DateTime
+  status         PriceListStatus @default(DRAFT_PRICE_LIST)
+  snapshot       Json     // Full price table at time of version
+  approvedBy     String?
+  approvedAt     DateTime?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+enum PriceListStatus {
+  DRAFT_PRICE_LIST
+  PENDING_PRICE_APPROVAL
+  APPROVED_PRICE_LIST
+  SUPERSEDED
+}
+
+model PriceChangeRequest {
+  id               String   @id @default(cuid())
+  inventoryItemId  String?
+  inventoryItem    InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  projectId        String
+  requestedBy      String   // userId
+  currentPrice     Decimal
+  proposedPrice    Decimal
+  variancePct      Float    // Auto-calculated: (proposed - current) / current * 100
+  reason           String
+  reasonArabic     String?
+  justification    String?
+  status           PriceChangeStatus @default(PENDING_PRICE_CHANGE)
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  reviewNotes      String?
+  escalated        Boolean  @default(false)
+  escalatedTo      String?
+  organizationId   String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([inventoryItemId])
+}
+
+enum PriceChangeStatus {
+  PENDING_PRICE_CHANGE
+  APPROVED_PRICE_CHANGE
+  REJECTED_PRICE_CHANGE
+  ESCALATED_PRICE_CHANGE
 }
 
 // ─── Phase 3: Launch Wave (Stage 10-12 — Release Control) ───────────────────
@@ -2498,4 +2751,65 @@ model PlanningComment {
   @@index([workspaceId])
   @@index([scenarioId])
   @@index([organizationId])
+}
+
+// ─── RED: Collections & Receivables ─────────────────────────────────────────
+
+model CollectionCase {
+  id                 String           @id @default(cuid())
+  contractId         String
+  customerId         String
+  assignedTo         String?          // userId of collection officer
+  status             CollectionStatus @default(CURRENT)
+  totalOutstanding   Decimal
+  oldestDueDate      DateTime?
+  lastContactDate    DateTime?
+  lastContactNote    String?
+  promiseToPayDate   DateTime?
+  promiseToPayAmount Decimal?
+  escalationLevel    Int              @default(0)
+  notes              String?
+  activities         CollectionActivity[]
+  organizationId     String
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@index([contractId])
+  @@index([assignedTo])
+  @@index([status])
+}
+
+model CollectionActivity {
+  id               String   @id @default(cuid())
+  collectionCaseId String
+  collectionCase   CollectionCase @relation(fields: [collectionCaseId], references: [id])
+  type             CollectionActivityType
+  notes            String?
+  nextAction       String?
+  nextActionDate   DateTime?
+  userId           String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([collectionCaseId])
+}
+
+enum CollectionStatus {
+  CURRENT
+  FOLLOW_UP
+  PROMISE_TO_PAY
+  ESCALATED
+  LEGAL
+  SETTLED
+}
+
+enum CollectionActivityType {
+  CALL
+  EMAIL
+  SMS
+  VISIT
+  NOTE
+  PROMISE
+  ESCALATION
 }

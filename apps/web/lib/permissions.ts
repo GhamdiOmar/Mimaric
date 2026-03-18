@@ -136,6 +136,23 @@ export type Permission =
   | "planning:feasibility"
   | "planning:approve"
   | "planning:export"
+  // RED: Project Governance
+  | "projects:approve"
+  // RED: Inventory Management
+  | "inventory:import"
+  | "inventory:release"
+  // RED: Collections
+  | "collections:read"
+  | "collections:write"
+  | "collections:assign"
+  // RED: Handover
+  | "handover:read"
+  | "handover:write"
+  | "handover:approve"
+  // RED: Price Approvals
+  | "price_approval:read"
+  | "price_approval:write"
+  | "price_approval:approve"
   // System (platform-level)
   | "system:admin"
   | "system:support";
@@ -179,6 +196,12 @@ const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "planning:compliance", "planning:feasibility", "planning:approve", "planning:export",
   // Billing
   "billing:read", "billing:write",
+  // RED: Project Governance, Inventory, Collections, Handover, Price Approvals
+  "projects:approve",
+  "inventory:import", "inventory:release",
+  "collections:read", "collections:write", "collections:assign",
+  "handover:read", "handover:write", "handover:approve",
+  "price_approval:read", "price_approval:write", "price_approval:approve",
   // Wafi Compliance
   "escrow:read", "escrow:write", "escrow:approve",
   "consultant:read", "consultant:write",
@@ -347,6 +370,65 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "help:read", "help:create_ticket",
   ],
 
+  // ── RED: Specialized roles ──────────────────────────────────────────────
+  APPROVALS_MANAGER: [
+    "dashboard:read",
+    "approvals:read", "approvals:write", "approvals:submit",
+    "projects:read", "projects:approve",
+    "decision_gates:read", "decision_gates:write",
+    "documents:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  ESCROW_CONTROLLER: [
+    "dashboard:read",
+    "escrow:read", "escrow:write", "escrow:approve",
+    "finance:read",
+    "contracts:read",
+    "documents:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  COLLECTIONS_OFFICER: [
+    "dashboard:read",
+    "collections:read", "collections:write",
+    "contracts:read",
+    "customers:read",
+    "finance:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  HANDOVER_OFFICER: [
+    "dashboard:read",
+    "handover:read", "handover:write",
+    "projects:read",
+    "units:read",
+    "milestones:read",
+    "documents:read", "documents:write",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  QA_INSPECTOR: [
+    "dashboard:read",
+    "milestones:read", "milestones:certify",
+    "projects:read",
+    "documents:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  VENDOR_CONTRACTOR: [
+    "dashboard:read",
+    "maintenance:read",
+    "documents:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
+  ],
+
   BUYER: [
     "dashboard:read",
     "units:read",
@@ -383,6 +465,8 @@ export const SYSTEM_ROLES: string[] = ["SYSTEM_ADMIN", "SYSTEM_SUPPORT"];
 export const CUSTOMER_ASSIGNABLE_ROLES: string[] = [
   "COMPANY_ADMIN", "PROJECT_MANAGER", "SALES_MANAGER", "SALES_AGENT",
   "PROPERTY_MANAGER", "FINANCE_OFFICER", "TECHNICIAN", "ENGINEERING_CONSULTANT",
+  "APPROVALS_MANAGER", "ESCROW_CONTROLLER", "COLLECTIONS_OFFICER",
+  "HANDOVER_OFFICER", "QA_INSPECTOR", "VENDOR_CONTRACTOR",
   "BUYER", "TENANT", "USER",
 ];
 

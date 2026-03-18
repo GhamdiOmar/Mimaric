@@ -293,6 +293,114 @@ export async function getGlobalInventoryStats() {
   return { total, available, reserved, sold, unreleased, totalValue };
 }
 
+// ─── RED: Release Status & Bulk Import ───────────────────────────────────────
+
+export async function updateReleaseStatus(
+  itemId: string,
+  releaseStatus: string,
+  holdReason?: string
+) {
+  const session = await requirePermission("inventory:release");
+
+  const item = await db.inventoryItem.findFirst({
+    where: { id: itemId, organizationId: session.organizationId },
+  });
+  if (!item) throw new Error("Inventory item not found");
+
+  const updated = await db.inventoryItem.update({
+    where: { id: itemId },
+    data: {
+      releaseStatus: releaseStatus as any,
+      holdReason: releaseStatus === "HOLD" ? holdReason : null,
+      holdUntil: null,
+    },
+  });
+
+  return JSON.parse(JSON.stringify(updated));
+}
+
+export async function setMinimumSellPrice(itemId: string, minimumSellPrice: number) {
+  const session = await requirePermission("inventory:write");
+
+  const item = await db.inventoryItem.findFirst({
+    where: { id: itemId, organizationId: session.organizationId },
+  });
+  if (!item) throw new Error("Inventory item not found");
+
+  const updated = await db.inventoryItem.update({
+    where: { id: itemId },
+    data: { minimumSellPrice },
+  });
+
+  return JSON.parse(JSON.stringify(updated));
+}
+
+export async function bulkImportInventory(
+  projectId: string,
+  items: Array<{
+    itemNumber: string;
+    productType: string;
+    productLabel?: string;
+    areaSqm?: number;
+    basePriceSar?: number;
+    channel?: string;
+  }>
+) {
+  const session = await requirePermission("inventory:import");
+  const orgId = session.organizationId;
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: orgId },
+  });
+  if (!project) throw new Error("Project not found");
+
+  const results: { imported: number; errors: Array<{ row: number; error: string }> } = {
+    imported: 0,
+    errors: [],
+  };
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    try {
+      if (!item.itemNumber?.trim()) {
+        results.errors.push({ row: i + 1, error: "Item number is required" });
+        continue;
+      }
+      if (!item.productType?.trim()) {
+        results.errors.push({ row: i + 1, error: "Product type is required" });
+        continue;
+      }
+
+      // Check for duplicate item number
+      const existing = await db.inventoryItem.findFirst({
+        where: { projectId, itemNumber: item.itemNumber },
+      });
+      if (existing) {
+        results.errors.push({ row: i + 1, error: `Duplicate item number: ${item.itemNumber}` });
+        continue;
+      }
+
+      await db.inventoryItem.create({
+        data: {
+          projectId,
+          itemNumber: item.itemNumber,
+          productType: item.productType as any,
+          productLabel: item.productLabel,
+          areaSqm: item.areaSqm,
+          basePriceSar: item.basePriceSar,
+          channel: item.channel as any,
+          organizationId: orgId,
+        },
+      });
+      results.imported++;
+    } catch (err: any) {
+      results.errors.push({ row: i + 1, error: err.message });
+    }
+  }
+
+  return results;
+}
+
 // Helper
 function mapLandUseToProductType(landUse: string | null): string {
   switch (landUse) {

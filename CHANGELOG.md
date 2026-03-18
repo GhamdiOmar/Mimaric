@@ -1,5 +1,73 @@
 # Changelog — Mimaric PropTech
 
+## [1.3.0] — 2026-03-18
+
+### Added — Saudi RED FRD Gap Closure (Sprint 0–1)
+
+- **6 new RED roles** — APPROVALS_MANAGER, ESCROW_CONTROLLER, COLLECTIONS_OFFICER, HANDOVER_OFFICER, QA_INSPECTOR, VENDOR_CONTRACTOR with scoped permission sets
+- **15 new permissions** — `projects:approve`, `inventory:import`, `inventory:release`, `collections:read/write/assign`, `handover:read/write/approve`, `price_approval:read/write/approve`
+- **Project governance workflow** — Full approval state machine (DRAFT → PENDING → APPROVED → ACTIVATED) with project code generation (PRJ-{CITY}-{YEAR}-{SEQ}), owner assignment, and readiness flags
+- **Readiness validation** — Launch/handover readiness checks: pending approvals, infrastructure, escrow (off-plan), released inventory, buildings with units
+- **Project tree view** — Collapsible hierarchy: Project → Phases → Buildings → Units with status badges and unit counts
+- **Enhanced audit logging** — `changeSnapshot` (before/after JSON) and `fieldChanges` (auto-computed diff array) on AuditLog model
+- **Paginated query helper** — Generic `paginatedQuery()` server action wrapping Prisma findMany + count
+- **Pagination controls component** — Page nav with ellipsis, page size selector (10/25/50/100), bilingual labels
+- **Unsaved changes guard** — Browser beforeunload + popstate interception with bilingual AlertDialog
+- **Auto-save indicator** — 2-second debounced save for DRAFT records with Saving/Saved/Error status
+- **Audit trail tab component** — Per-record timeline with field-level diffs, expandable change details
+
+### Added — Approval SLA & Blocking (Sprint 2 partial)
+
+- **Approval follow-up tasks** — ApprovalFollowUp model with task assignment, due dates, status tracking (OPEN → IN_PROGRESS → COMPLETED)
+- **Blocking approvals** — `isBlocking` flag + `blockingModule` field on ApprovalSubmission to gate sales/launch/infrastructure
+- **SLA tracking** — `expectedResponseDate` on submissions, computed `daysOpen` in detail view
+
+### Added — Inventory & Pricing Enhancements (Sprint 2 partial)
+
+- **Release status** — `ReleaseStatus` enum (NOT_RELEASED, RELEASED, HOLD) on InventoryItem with hold reason/date
+- **Minimum sell price** — Floor price enforcement on inventory items
+- **Price list versioning** — PriceListVersion model with snapshot, approval workflow (DRAFT → APPROVED → SUPERSEDED)
+- **Price change requests** — PriceChangeRequest model with variance calculation, auto-escalation threshold, approval/rejection workflow
+- **Bulk inventory import** — CSV import wizard page at `/projects/[id]/inventory/import`
+
+### Added — Sales & Contracting Enhancements (Sprint 3 partial)
+
+- **Payment plans** — PaymentPlan + PaymentPlanInstallment models with down payment, partial payment support, status tracking
+- **Reservation guards** — Race condition protection via `$transaction`, duplicate reservation check, release status validation
+- **Reservation extensions** — ReservationExtension model with approval workflow and extension count limits
+- **Contract templates** — ContractTemplate model with version history and HTML variable interpolation
+- **Dual signature tracking** — `buyerSignedAt`, `developerSignedAt`, signature URL fields on Contract
+- **Contract financial fields** — `grossAmount`, `discountAmount`, `netAmount` with auto-calculation
+
+### Added — Collections Module (Sprint 4 partial)
+
+- **Collection cases** — CollectionCase model with aging buckets, status workflow (CURRENT → FOLLOW_UP → PROMISE_TO_PAY → ESCALATED → LEGAL → SETTLED)
+- **Collection activities** — CollectionActivity model for call/email/SMS/visit/note logging
+- **Aging report** — Receivables bucketed by 1-30, 31-60, 61-90, 90+ days
+- **Per-contract financial statement** — Ledger view with debit/credit/running balance
+- **Collections UI** — `/finance/collections` with aging bucket tabs, status filters, KPI cards, empty state; `/finance/collections/[id]` with activity timeline
+
+### Added — Navigation & UI Wiring
+
+- **Finance page** — Quick-nav cards for Escrow and Collections modules
+- **Project detail** — Governance and Project Tree buttons in action bar
+- **Inventory tab** — Import CSV button linking to bulk import wizard
+- **Pricing tab** — Price Versions and Price Change Requests buttons
+- **Contract detail** — Payment Plan button (visible when contract is SIGNED)
+- **Breadcrumb labels** — governance, tree, collections, import, change-requests, versions, payment-plan, templates, statement, preview
+- **Role display labels** — Arabic/English labels for all 6 new RED roles in sidebar profile
+
+### Changed — Schema
+
+- **UnitStatus** — Added SUSPENDED, WITHDRAWN, HANDED_OVER values
+- **UserRole** — Added 6 RED roles to enum
+- **AuditLog** — Added `changeSnapshot` (Json?) and `fieldChanges` (Json?) columns
+- **Unit** — Added `balconyAreaSqm` (Float?) and `parkingCount` (Int?)
+- **Project** — Added `projectCode` (unique), `developerEntityId`, `internalOwnerId`, `financeOwnerId`, `approvalStatus`, `activatedAt`, `plannedLaunchDate`, `plannedCompletionDate`
+- **Phase** — Added `phaseCode`, `salesEnabled`, `approvalDependencyId`
+- **Building** — Added `towerName`, `blockCode`
+- **9 new models** — ApprovalFollowUp, PriceListVersion, PriceChangeRequest, PaymentPlan, PaymentPlanInstallment, ReservationExtension, ContractTemplate, CollectionCase, CollectionActivity
+
 ## [1.2.0] — 2026-03-14
 
 ### Added — Saudi Ejar Contract Compliance

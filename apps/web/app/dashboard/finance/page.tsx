@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings, Package, Tag } from "@phosphor-icons/react";
+import Link from "next/link";
+import { Receipt, CurrencyCircleDollar, TrendUp, Warning, Spinner, ChartBar, Wrench, MapPin, Buildings, Package, Tag, Vault, Coins } from "@phosphor-icons/react";
 import { SARAmount, Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary, getOffPlanRevenueSummary } from "../../actions/finance";
 
@@ -92,6 +93,32 @@ export default function FinancePage() {
             </h3>
           </Card>
         ))}
+      </div>
+
+      {/* Quick Nav */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/dashboard/finance/escrow" className="block group">
+          <Card className="p-4 transition-colors group-hover:border-primary/40">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2"><Vault size={20} className="text-primary" /></div>
+              <div>
+                <h3 className="text-sm font-bold text-primary">حسابات الضمان — Escrow</h3>
+                <p className="text-xs text-neutral mt-0.5">إدارة حسابات الضمان للمشاريع على الخارطة</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/dashboard/finance/collections" className="block group">
+          <Card className="p-4 transition-colors group-hover:border-primary/40">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-amber-100 dark:bg-amber-900/30 p-2"><Coins size={20} className="text-amber-600" /></div>
+              <div>
+                <h3 className="text-sm font-bold text-primary">التحصيل — Collections</h3>
+                <p className="text-xs text-neutral mt-0.5">أعمار الذمم والمتابعة والتصعيد</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
       </div>
 
       {/* Revenue breakdown */}

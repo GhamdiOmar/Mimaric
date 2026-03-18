@@ -425,3 +425,107 @@ export async function deleteContract(contractId: string) {
   revalidatePath("/dashboard/sales/contracts");
   revalidatePath("/dashboard/units");
 }
+
+// ─── RED: Contract Amount & Signature Enhancements ──────────────────────────
+
+export async function updateContractAmounts(
+  contractId: string,
+  data: { grossAmount: number; discountAmount?: number }
+) {
+  const session = await requirePermission("contracts:write");
+
+  const contract = await db.contract.findFirst({
+    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+  });
+  if (!contract) throw new Error("Contract not found");
+
+  const discount = data.discountAmount ?? 0;
+  const netAmount = data.grossAmount - discount;
+
+  const updated = await db.contract.update({
+    where: { id: contractId },
+    data: {
+      grossAmount: data.grossAmount,
+      discountAmount: discount,
+      netAmount,
+      amount: netAmount, // Keep amount in sync
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Contract",
+    resourceId: contractId,
+    before: { grossAmount: contract.grossAmount, discountAmount: contract.discountAmount, netAmount: contract.netAmount },
+    after: { grossAmount: data.grossAmount, discountAmount: discount, netAmount },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+export async function recordBuyerSignature(contractId: string, signatureUrl: string) {
+  const session = await requirePermission("contracts:write");
+
+  const contract = await db.contract.findFirst({
+    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+  });
+  if (!contract) throw new Error("Contract not found");
+
+  const updated = await db.contract.update({
+    where: { id: contractId },
+    data: {
+      buyerSignedAt: new Date(),
+      buyerSignatureUrl: signatureUrl,
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Contract",
+    resourceId: contractId,
+    metadata: { event: "buyer_signature_recorded" },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
+
+export async function recordDeveloperSignature(contractId: string, signatureUrl: string) {
+  const session = await requirePermission("contracts:write");
+
+  const contract = await db.contract.findFirst({
+    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+  });
+  if (!contract) throw new Error("Contract not found");
+
+  const updated = await db.contract.update({
+    where: { id: contractId },
+    data: {
+      developerSignedAt: new Date(),
+      developerSignatureUrl: signatureUrl,
+    },
+  });
+
+  logAuditEvent({
+    userId: session.userId,
+    userEmail: session.email,
+    userRole: session.role,
+    action: "UPDATE",
+    resource: "Contract",
+    resourceId: contractId,
+    metadata: { event: "developer_signature_recorded" },
+    organizationId: session.organizationId,
+  });
+
+  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
+  return JSON.parse(JSON.stringify(updated));
+}
