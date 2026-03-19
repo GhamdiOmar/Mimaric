@@ -75,14 +75,14 @@ export async function applyCoupon(couponId: string, invoiceId: string) {
     }),
   ]);
 
-  if (!coupon) throw new Error("Coupon not found");
-  if (!invoice) throw new Error("Invoice not found");
+  if (!coupon) throw new Error("Coupon code not found. Please check the code and try again.");
+  if (!invoice) throw new Error("Invoice not found or you don't have access. Please verify the invoice number.");
 
   // Check if already redeemed by this org
   const existing = await db.couponRedemption.findFirst({
     where: { couponId, organizationId: session.organizationId },
   });
-  if (existing) throw new Error("Coupon already used by your organization");
+  if (existing) throw new Error("This coupon has already been used by your organization.");
 
   // Calculate discount
   const subtotal = Number(invoice.subtotal);
@@ -96,7 +96,7 @@ export async function applyCoupon(couponId: string, invoiceId: string) {
 
   // Enforce minimum purchase
   if (coupon.minPurchaseAmount && subtotal < Number(coupon.minPurchaseAmount)) {
-    throw new Error(`Minimum purchase of ${Number(coupon.minPurchaseAmount)} SAR required`);
+    throw new Error("This coupon requires a minimum purchase amount. Please check the coupon terms.");
   }
 
   // Recalculate invoice

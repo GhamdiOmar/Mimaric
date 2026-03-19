@@ -10,7 +10,7 @@ async function verifyProjectAccess(projectId: string, orgId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return project;
 }
 
@@ -44,7 +44,7 @@ export async function getEscrowTransactions(
     include: { project: { select: { organizationId: true } } },
   });
   if (!escrow || escrow.project.organizationId !== session.organizationId) {
-    throw new Error("Escrow account not found");
+    throw new Error("Escrow account not found or you don't have access. Please verify the escrow account exists for this project.");
   }
 
   const transactions = await db.escrowTransaction.findMany({
@@ -78,7 +78,7 @@ export async function createEscrowAccount(data: {
   const existing = await db.escrowAccount.findUnique({
     where: { projectId: data.projectId },
   });
-  if (existing) throw new Error("Escrow account already exists for this project");
+  if (existing) throw new Error("An escrow account already exists for this project. Each project can only have one escrow account.");
 
   const escrow = await db.escrowAccount.create({
     data: {
@@ -110,7 +110,7 @@ export async function recordEscrowDeposit(data: {
     include: { project: { select: { organizationId: true } } },
   });
   if (!escrow || escrow.project.organizationId !== session.organizationId) {
-    throw new Error("Escrow account not found");
+    throw new Error("Escrow account not found or you don't have access. Please verify the escrow account exists for this project.");
   }
 
   const [transaction] = await db.$transaction([
@@ -156,20 +156,20 @@ export async function requestEscrowWithdrawal(data: {
     include: { project: { select: { organizationId: true } } },
   });
   if (!escrow || escrow.project.organizationId !== session.organizationId) {
-    throw new Error("Escrow account not found");
+    throw new Error("Escrow account not found or you don't have access. Please verify the escrow account exists for this project.");
   }
 
   // Validate admin expense cap (20% rule)
   if (data.type === "ADMIN_EXPENSE" && escrow.adminExpenseCap) {
     const newTotal = Number(escrow.adminExpenseUsed) + data.amount;
     if (newTotal > Number(escrow.adminExpenseCap)) {
-      throw new Error("Admin expense would exceed 20% cap");
+      throw new Error("This withdrawal would exceed the 20% administrative expense cap. Please reduce the amount or request a cap increase.");
     }
   }
 
   // Validate sufficient balance
   if (data.amount > Number(escrow.currentBalance)) {
-    throw new Error("Insufficient escrow balance");
+    throw new Error("Insufficient escrow balance to process this withdrawal. Please verify the available balance.");
   }
 
   const transaction = await db.escrowTransaction.create({
@@ -200,10 +200,10 @@ export async function approveEscrowWithdrawal(txnId: string) {
     },
   });
   if (!txn || txn.escrowAccount.project.organizationId !== session.organizationId) {
-    throw new Error("Transaction not found");
+    throw new Error("Transaction not found or you don't have access. Please refresh and try again.");
   }
   if (txn.status !== "AWAITING_APPROVAL") {
-    throw new Error("Transaction is not awaiting approval");
+    throw new Error("This transaction has already been processed and is no longer awaiting approval.");
   }
 
   const escrow = txn.escrowAccount;
@@ -244,7 +244,7 @@ export async function validateAdminExpenseCap(escrowId: string, amount: number) 
     include: { project: { select: { organizationId: true } } },
   });
   if (!escrow || escrow.project.organizationId !== session.organizationId) {
-    throw new Error("Escrow account not found");
+    throw new Error("Escrow account not found or you don't have access. Please verify the escrow account exists for this project.");
   }
 
   const cap = Number(escrow.adminExpenseCap ?? 0);

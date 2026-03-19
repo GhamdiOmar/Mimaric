@@ -33,7 +33,7 @@ export async function updateLandingPage(landingPage: string) {
   const session = await getSessionOrThrow();
 
   if (!ALLOWED_LANDING_PAGES.includes(landingPage)) {
-    throw new Error("Invalid landing page");
+    throw new Error("The selected landing page is not valid. Please choose a different option.");
   }
 
   const current = await db.user.findUnique({

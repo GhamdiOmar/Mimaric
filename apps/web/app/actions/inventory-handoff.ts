@@ -34,7 +34,7 @@ export async function convertInventoryToUnits(projectId: string) {
     where: { id: projectId, organizationId: orgId },
     include: { buildings: { select: { id: true, name: true } } },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Get all SOLD_INV inventory items for this project
   const soldItems = await db.inventoryItem.findMany({

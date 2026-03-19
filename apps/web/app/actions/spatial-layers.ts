@@ -32,7 +32,7 @@ export async function createSpatialLayer(data: {
   const workspace = await db.planningWorkspace.findFirst({
     where: { id: data.workspaceId, organizationId: orgId },
   });
-  if (!workspace) throw new Error("Workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access.");
 
   // Count features in GeoJSON
   let featureCount = 0;
@@ -79,7 +79,7 @@ export async function updateSpatialLayer(
   const existing = await db.spatialLayer.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Spatial layer not found");
+  if (!existing) throw new Error("Spatial layer not found. Please refresh and try again.");
 
   let featureCount = existing.featureCount;
   if (data.geoJson) {
@@ -111,7 +111,7 @@ export async function deleteSpatialLayer(id: string) {
   const existing = await db.spatialLayer.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Spatial layer not found");
+  if (!existing) throw new Error("Spatial layer not found. Please refresh and try again.");
 
   await db.spatialLayer.delete({ where: { id } });
 }
@@ -123,7 +123,7 @@ export async function toggleLayerVisibility(id: string) {
   const existing = await db.spatialLayer.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Spatial layer not found");
+  if (!existing) throw new Error("Spatial layer not found. Please refresh and try again.");
 
   const updated = await db.spatialLayer.update({
     where: { id },

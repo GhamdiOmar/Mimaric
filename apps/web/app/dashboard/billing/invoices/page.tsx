@@ -10,6 +10,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  X,
+  Loader2,
 } from "lucide-react";
 import {
   Button,
@@ -22,13 +24,50 @@ import {
   TableCell,
 } from "@repo/ui";
 import Link from "next/link";
-import { getInvoices } from "../../../actions/billing";
+import { getInvoices, getInvoiceById } from "../../../actions/billing";
+import { exportToPDF } from "../../../../lib/export";
 
 export default function InvoicesPage() {
   const { lang } = useLanguage();
   const [data, setData] = React.useState<any>({ invoices: [], total: 0, page: 1, totalPages: 0 });
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
+  const [viewInvoice, setViewInvoice] = React.useState<any>(null);
+  const [loadingInvoice, setLoadingInvoice] = React.useState(false);
+  const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+
+  const handleViewInvoice = async (invoiceId: string) => {
+    setLoadingInvoice(true);
+    try {
+      const invoice = await getInvoiceById(invoiceId);
+      setViewInvoice(invoice);
+    } catch (err) {
+      console.error("Failed to load invoice:", err);
+    } finally {
+      setLoadingInvoice(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (invoiceId: string) => {
+    setDownloadingId(invoiceId);
+    try {
+      const invoice = await getInvoiceById(invoiceId);
+      setViewInvoice(invoice);
+      // Wait for the modal to render the element
+      await new Promise((r) => setTimeout(r, 300));
+      await exportToPDF({
+        elementId: "invoice-detail-print",
+        filename: `Invoice_${invoice.invoiceNumber}`,
+        title: lang === "ar" ? `فاتورة ${invoice.invoiceNumber}` : `Invoice ${invoice.invoiceNumber}`,
+        lang,
+      });
+      setViewInvoice(null);
+    } catch (err) {
+      console.error("Failed to download invoice:", err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   React.useEffect(() => {
     async function load() {
@@ -117,11 +156,21 @@ export default function InvoicesPage() {
                       <TableCell className="font-semibold">{Number(inv.total).toLocaleString()} {t.sar}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <button className="p-1.5 rounded-md hover:bg-muted" title={t.view}>
+                          <button
+                            className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                            title={t.view}
+                            onClick={() => handleViewInvoice(inv.id)}
+                            disabled={loadingInvoice}
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-1.5 rounded-md hover:bg-muted" title={t.download}>
-                            <Download className="w-4 h-4" />
+                          <button
+                            className="p-1.5 rounded-md hover:bg-muted transition-colors"
+                            title={t.download}
+                            onClick={() => handleDownloadInvoice(inv.id)}
+                            disabled={downloadingId === inv.id}
+                          >
+                            {downloadingId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                           </button>
                         </div>
                       </TableCell>
@@ -163,6 +212,119 @@ export default function InvoicesPage() {
           </>
         )}
       </Card>
+
+      {/* Invoice Detail Modal */}
+      {viewInvoice && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-card w-full max-w-2xl rounded-xl shadow-2xl border border-border animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto" dir={lang === "ar" ? "rtl" : "ltr"}>
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-lg font-bold text-foreground">
+                {lang === "ar" ? "تفاصيل الفاتورة" : "Invoice Details"} — {viewInvoice.invoiceNumber}
+              </h2>
+              <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div id="invoice-detail-print" className="p-6 space-y-6">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">{t.invoiceNumber}</p>
+                  <p className="font-semibold text-foreground">{viewInvoice.invoiceNumber}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">{t.date}</p>
+                  <p className="font-semibold text-foreground">
+                    {viewInvoice.issuedAt ? new Date(viewInvoice.issuedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US") : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">{t.status}</p>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${(statusConfig[viewInvoice.status] ?? statusConfig.DRAFT!).color}`}>
+                    {lang === "ar" ? (statusConfig[viewInvoice.status] ?? statusConfig.DRAFT!).labelAr : (statusConfig[viewInvoice.status] ?? statusConfig.DRAFT!).labelEn}
+                  </span>
+                </div>
+                {viewInvoice.dueDate && (
+                  <div>
+                    <p className="text-muted-foreground">{lang === "ar" ? "تاريخ الاستحقاق" : "Due Date"}</p>
+                    <p className="font-semibold text-foreground">{new Date(viewInvoice.dueDate).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US")}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Line Items */}
+              {viewInvoice.lineItems && viewInvoice.lineItems.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-bold text-foreground mb-3">{lang === "ar" ? "البنود" : "Line Items"}</h3>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{lang === "ar" ? "الوصف" : "Description"}</TableHead>
+                        <TableHead className="text-end">{lang === "ar" ? "الكمية" : "Qty"}</TableHead>
+                        <TableHead className="text-end">{lang === "ar" ? "السعر" : "Price"}</TableHead>
+                        <TableHead className="text-end">{t.total}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {viewInvoice.lineItems.map((item: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.description}</TableCell>
+                          <TableCell className="text-end">{item.quantity}</TableCell>
+                          <TableCell className="text-end">{Number(item.unitPrice).toLocaleString()} {t.sar}</TableCell>
+                          <TableCell className="text-end font-medium">{Number(item.total).toLocaleString()} {t.sar}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Totals */}
+              <div className="border-t border-border pt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t.subtotal}</span>
+                  <span className="font-medium">{Number(viewInvoice.subtotal).toLocaleString()} {t.sar}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t.vat}</span>
+                  <span className="font-medium">{Number(viewInvoice.vatAmount).toLocaleString()} {t.sar}</span>
+                </div>
+                {viewInvoice.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>{lang === "ar" ? "الخصم" : "Discount"}</span>
+                    <span>-{Number(viewInvoice.discount).toLocaleString()} {t.sar}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-bold border-t border-border pt-2">
+                  <span>{t.total}</span>
+                  <span>{Number(viewInvoice.total).toLocaleString()} {t.sar}</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
+              <Button variant="secondary" size="sm" style={{ display: "inline-flex" }} onClick={() => setViewInvoice(null)}>
+                {lang === "ar" ? "إغلاق" : "Close"}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                style={{ display: "inline-flex" }}
+                className="gap-2"
+                onClick={async () => {
+                  await exportToPDF({
+                    elementId: "invoice-detail-print",
+                    filename: `Invoice_${viewInvoice.invoiceNumber}`,
+                    title: lang === "ar" ? `فاتورة ${viewInvoice.invoiceNumber}` : `Invoice ${viewInvoice.invoiceNumber}`,
+                    lang,
+                  });
+                }}
+              >
+                <Download className="w-4 h-4" />
+                {lang === "ar" ? "تحميل PDF" : "Download PDF"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

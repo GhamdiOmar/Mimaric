@@ -17,6 +17,8 @@ import {
   Users,
   Home,
   Save,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { Button, Input, PageHeader, FormSection } from "@repo/ui";
 import Link from "next/link";
@@ -68,7 +70,12 @@ export default function OrgSettingsPage() {
     addrShort: "",
   });
 
-  const set = (key: string, val: string) => setForm((prev) => ({ ...prev, [key]: val }));
+  const [fieldErrors, setFieldErrors] = React.useState<Record<string, boolean>>({});
+
+  const set = (key: string, val: string) => {
+    setForm((prev) => ({ ...prev, [key]: val }));
+    if (fieldErrors[key]) setFieldErrors((prev) => ({ ...prev, [key]: false }));
+  };
 
   React.useEffect(() => {
     getUserPreferences()
@@ -124,7 +131,17 @@ export default function OrgSettingsPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const requiredFields = ["name"] as const;
   const handleSave = async () => {
+    const errors: Record<string, boolean> = {};
+    for (const key of requiredFields) {
+      if (!form[key].trim()) errors[key] = true;
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     setSaving(true);
     try {
       const updated = await updateOrganization({
@@ -163,7 +180,7 @@ export default function OrgSettingsPage() {
       });
       setOrg(updated as Record<string, unknown>);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message = err instanceof Error ? err.message : (lang === "ar" ? "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى." : "An unexpected error occurred. Please try again.");
       alert(message);
     } finally {
       setSaving(false);
@@ -217,9 +234,18 @@ export default function OrgSettingsPage() {
               >
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-muted-foreground">
-                    {lang === "ar" ? "اسم المنظمة" : "Organization Name"}
+                    {lang === "ar" ? "اسم المنظمة" : "Organization Name"} *
                   </label>
-                  <Input value={form.name} onChange={(e) => set("name", e.target.value)} />
+                  <Input
+                    value={form.name}
+                    onChange={(e) => set("name", e.target.value)}
+                    className={fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                  />
+                  {fieldErrors.name && (
+                    <p className="text-xs text-red-500">
+                      {lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -646,14 +672,21 @@ export default function OrgSettingsPage() {
               </FormSection>
 
               {/* Save Button */}
-              <div className="flex justify-end">
+              <div className="flex items-center justify-between">
+                <Link
+                  href="/dashboard/onboarding?mode=edit"
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {lang === "ar" ? "إعادة تشغيل معالج الإعداد" : "Re-run Setup Wizard"}
+                </Link>
                 <Button
                   className="gap-2"
                   onClick={handleSave}
                   disabled={saving}
                   style={{ display: "inline-flex" }}
                 >
-                  <Save className="h-4 w-4" />
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {saving
                     ? lang === "ar"
                       ? "جاري الحفظ..."

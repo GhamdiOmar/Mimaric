@@ -17,8 +17,11 @@ import {
   MessageSquare,
   Settings,
   AlertTriangle,
+  Download,
+  Loader2,
 } from "lucide-react";
 import { Button, PageHeader } from "@repo/ui";
+import { exportToExcel } from "../../../lib/export";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { hasPermission } from "../../../lib/permissions";
@@ -78,6 +81,7 @@ export default function HelpPage() {
   const [showNewTicket, setShowNewTicket] = React.useState(false);
   const [ticketForm, setTicketForm] = React.useState({ subject: "", description: "", category: "GENERAL_INQUIRY", priority: "MEDIUM" });
   const [ticketLoading, setTicketLoading] = React.useState(false);
+  const [ticketErrors, setTicketErrors] = React.useState<Record<string, boolean>>({});
 
   // Permission request state
   const [myRequests, setMyRequests] = React.useState<any[]>([]);
@@ -91,8 +95,10 @@ export default function HelpPage() {
   const [stats, setStats] = React.useState<any>(null);
   const [reviewNote, setReviewNote] = React.useState("");
   const [reviewingId, setReviewingId] = React.useState<string | null>(null);
+  const [reviewActionLoading, setReviewActionLoading] = React.useState(false);
   const [joinReviewingId, setJoinReviewingId] = React.useState<string | null>(null);
   const [joinReviewNote, setJoinReviewNote] = React.useState("");
+  const [joinReviewActionLoading, setJoinReviewActionLoading] = React.useState(false);
 
   // Load data based on tab
   React.useEffect(() => {
@@ -121,7 +127,14 @@ export default function HelpPage() {
   });
 
   async function handleSubmitTicket() {
-    if (!ticketForm.subject.trim() || !ticketForm.description.trim()) return;
+    const errors: Record<string, boolean> = {};
+    if (!ticketForm.subject.trim()) errors.subject = true;
+    if (!ticketForm.description.trim()) errors.description = true;
+    if (Object.keys(errors).length > 0) {
+      setTicketErrors(errors);
+      return;
+    }
+    setTicketErrors({});
     setTicketLoading(true);
     try {
       await createSupportTicket(ticketForm);
@@ -150,6 +163,7 @@ export default function HelpPage() {
   }
 
   async function handleJoinReview(requestId: string, decision: "APPROVED_JOIN" | "DECLINED_JOIN") {
+    setJoinReviewActionLoading(true);
     try {
       await reviewJoinRequest(requestId, decision, joinReviewNote || undefined);
       setJoinReviewingId(null);
@@ -158,10 +172,13 @@ export default function HelpPage() {
       setPendingJoinRequests(reqs);
     } catch (e: any) {
       alert(e.message);
+    } finally {
+      setJoinReviewActionLoading(false);
     }
   }
 
   async function handleReview(requestId: string, decision: "APPROVED" | "DECLINED") {
+    setReviewActionLoading(true);
     try {
       await reviewPermissionRequest(requestId, decision, reviewNote || undefined);
       setReviewingId(null);
@@ -172,6 +189,8 @@ export default function HelpPage() {
       setStats(s);
     } catch (e: any) {
       alert(e.message);
+    } finally {
+      setReviewActionLoading(false);
     }
   }
 
@@ -239,6 +258,24 @@ export default function HelpPage() {
         {(labels[priority] ?? { ar: priority, en: priority })[lang]}
       </span>
     );
+  };
+
+  const handleExportTickets = () => {
+    const tickets = isSystemStaff && activeTab === "system-admin" ? allTickets : myTickets;
+    exportToExcel({
+      data: tickets,
+      columns: [
+        { header: lang === "ar" ? "رقم التذكرة" : "Ticket #", key: "ticketNumber", width: 15 },
+        { header: lang === "ar" ? "الموضوع" : "Subject", key: "subject", width: 35 },
+        { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 18 },
+        { header: lang === "ar" ? "الأولوية" : "Priority", key: "priority", width: 15 },
+        { header: lang === "ar" ? "الفئة" : "Category", key: "category", width: 20, render: (val: any) => { const c = CATEGORY_OPTIONS.find((o) => o.value === val); return c ? c.label[lang] : val ?? ""; } },
+        { header: lang === "ar" ? "تاريخ الإنشاء" : "Created Date", key: "createdAt", width: 18, render: (val: any) => val ? new Date(val).toLocaleDateString("en-CA") : "" },
+      ],
+      filename: lang === "ar" ? "سجل_التذاكر" : "tickets_list",
+      lang,
+      title: lang === "ar" ? "سجل التذاكر — ميماريك" : "Tickets List — Mimaric",
+    });
   };
 
   const categoryLabel = (cat: string) => {
@@ -426,41 +463,57 @@ export default function HelpPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground">{lang === "ar" ? "تذاكري" : "My Tickets"}</h2>
-            <Button size="sm" onClick={() => setShowNewTicket(!showNewTicket)}>
-              {lang === "ar" ? "تذكرة جديدة" : "New Ticket"}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportTickets}>
+                <Download className="h-4 w-4" />
+                {lang === "ar" ? "تصدير التذاكر" : "Export Tickets"}
+              </Button>
+              <Button size="sm" onClick={() => setShowNewTicket(!showNewTicket)}>
+                {lang === "ar" ? "تذكرة جديدة" : "New Ticket"}
+              </Button>
+            </div>
           </div>
 
           {/* New Ticket Form */}
           {showNewTicket && (
             <div className="bg-card p-4 rounded-md border border-border space-y-3">
-              <input
-                type="text"
-                value={ticketForm.subject}
-                onChange={(e) => setTicketForm({ ...ticketForm, subject: e.target.value })}
-                placeholder={lang === "ar" ? "الموضوع" : "Subject"}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={ticketForm.subject}
+                  onChange={(e) => { setTicketForm({ ...ticketForm, subject: e.target.value }); if (ticketErrors.subject) setTicketErrors((prev) => ({ ...prev, subject: false })); }}
+                  placeholder={lang === "ar" ? "الموضوع" : "Subject"}
+                  className={`w-full border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none ${ticketErrors.subject ? "border-red-500" : "border-border"}`}
+                />
+                {ticketErrors.subject && (
+                  <p className="text-xs text-red-500 mt-1">{lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}</p>
+                )}
+              </div>
               <div className="flex gap-3">
-                <select value={ticketForm.category} onChange={(e) => setTicketForm({ ...ticketForm, category: e.target.value })} className="border border-border rounded-md px-3 py-2 text-sm flex-1 outline-none">
+                <select value={ticketForm.category} onChange={(e) => setTicketForm({ ...ticketForm, category: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   {CATEGORY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[lang]}</option>)}
                 </select>
-                <select value={ticketForm.priority} onChange={(e) => setTicketForm({ ...ticketForm, priority: e.target.value })} className="border border-border rounded-md px-3 py-2 text-sm flex-1 outline-none">
+                <select value={ticketForm.priority} onChange={(e) => setTicketForm({ ...ticketForm, priority: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                   {PRIORITY_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[lang]}</option>)}
                 </select>
               </div>
-              <textarea
-                value={ticketForm.description}
-                onChange={(e) => setTicketForm({ ...ticketForm, description: e.target.value })}
-                placeholder={lang === "ar" ? "وصف المشكلة أو الطلب..." : "Describe the issue or request..."}
-                rows={4}
-                className="w-full border border-border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none resize-none"
-              />
+              <div>
+                <textarea
+                  value={ticketForm.description}
+                  onChange={(e) => { setTicketForm({ ...ticketForm, description: e.target.value }); if (ticketErrors.description) setTicketErrors((prev) => ({ ...prev, description: false })); }}
+                  placeholder={lang === "ar" ? "وصف المشكلة أو الطلب..." : "Describe the issue or request..."}
+                  rows={4}
+                  className={`w-full border rounded-md px-3 py-2 text-sm focus:border-primary/30 outline-none resize-none ${ticketErrors.description ? "border-red-500" : "border-border"}`}
+                />
+                {ticketErrors.description && (
+                  <p className="text-xs text-red-500 mt-1">{lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}</p>
+                )}
+              </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setShowNewTicket(false)}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
-                <Button variant="success" size="sm" onClick={handleSubmitTicket} disabled={ticketLoading}>
-                  <Send className="h-3.5 w-3.5 me-1" />
-                  {ticketLoading ? "..." : (lang === "ar" ? "إرسال" : "Submit")}
+                <Button variant="ghost" size="sm" onClick={() => setShowNewTicket(false)} disabled={ticketLoading} style={{ display: "inline-flex" }}>{lang === "ar" ? "إلغاء" : "Cancel"}</Button>
+                <Button variant="success" size="sm" onClick={handleSubmitTicket} disabled={ticketLoading} style={{ display: "inline-flex" }} className="gap-1">
+                  {ticketLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  {ticketLoading ? (lang === "ar" ? "جاري الإرسال..." : "Submitting...") : (lang === "ar" ? "إرسال" : "Submit")}
                 </Button>
               </div>
             </div>
@@ -510,7 +563,7 @@ export default function HelpPage() {
           <div className="bg-card p-4 rounded-md border border-border space-y-3">
             <h2 className="font-bold text-foreground">{lang === "ar" ? "طلب ترقية الصلاحيات" : "Request Permission Upgrade"}</h2>
             <p className="text-xs text-muted-foreground">{lang === "ar" ? "دورك الحالي: " : "Your current role: "}<span className="font-bold">{userRole}</span></p>
-            <select value={permForm.requestedRole} onChange={(e) => setPermForm({ ...permForm, requestedRole: e.target.value })} className="w-full border border-border rounded-md px-3 py-2 text-sm outline-none">
+            <select value={permForm.requestedRole} onChange={(e) => setPermForm({ ...permForm, requestedRole: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
               <option value="">{lang === "ar" ? "اختر الدور المطلوب" : "Select requested role"}</option>
               {ROLE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label[lang]} ({o.value})</option>)}
             </select>
@@ -605,11 +658,11 @@ export default function HelpPage() {
                                 className="w-full border border-border rounded px-2 py-1 text-xs outline-none"
                               />
                               <div className="flex gap-1">
-                                <Button size="sm" variant="success" onClick={() => handleReview(req.id, "APPROVED")} className="h-6 px-2 text-[10px]">
-                                  <CheckCircle2 className="h-3 w-3 me-1" />{lang === "ar" ? "موافقة" : "Approve"}
+                                <Button size="sm" variant="success" onClick={() => handleReview(req.id, "APPROVED")} disabled={reviewActionLoading} className="h-6 px-2 text-[10px]" style={{ display: "inline-flex" }}>
+                                  {reviewActionLoading ? <Loader2 className="h-3 w-3 me-1 animate-spin" /> : <CheckCircle2 className="h-3 w-3 me-1" />}{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleReview(req.id, "DECLINED")} className="h-6 px-2 text-[10px]">
-                                  <XCircle className="h-3 w-3 me-1" />{lang === "ar" ? "رفض" : "Decline"}
+                                <Button size="sm" variant="danger" onClick={() => handleReview(req.id, "DECLINED")} disabled={reviewActionLoading} className="h-6 px-2 text-[10px]" style={{ display: "inline-flex" }}>
+                                  {reviewActionLoading ? <Loader2 className="h-3 w-3 me-1 animate-spin" /> : <XCircle className="h-3 w-3 me-1" />}{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
@@ -665,11 +718,11 @@ export default function HelpPage() {
                                 className="w-full border border-border rounded px-2 py-1 text-xs outline-none"
                               />
                               <div className="flex gap-1">
-                                <Button size="sm" variant="success" onClick={() => handleJoinReview(req.id, "APPROVED_JOIN")} className="h-6 px-2 text-[10px]">
-                                  <CheckCircle2 className="h-3 w-3 me-1" />{lang === "ar" ? "موافقة" : "Approve"}
+                                <Button size="sm" variant="success" onClick={() => handleJoinReview(req.id, "APPROVED_JOIN")} disabled={joinReviewActionLoading} className="h-6 px-2 text-[10px]" style={{ display: "inline-flex" }}>
+                                  {joinReviewActionLoading ? <Loader2 className="h-3 w-3 me-1 animate-spin" /> : <CheckCircle2 className="h-3 w-3 me-1" />}{lang === "ar" ? "موافقة" : "Approve"}
                                 </Button>
-                                <Button size="sm" variant="danger" onClick={() => handleJoinReview(req.id, "DECLINED_JOIN")} className="h-6 px-2 text-[10px]">
-                                  <XCircle className="h-3 w-3 me-1" />{lang === "ar" ? "رفض" : "Decline"}
+                                <Button size="sm" variant="danger" onClick={() => handleJoinReview(req.id, "DECLINED_JOIN")} disabled={joinReviewActionLoading} className="h-6 px-2 text-[10px]" style={{ display: "inline-flex" }}>
+                                  {joinReviewActionLoading ? <Loader2 className="h-3 w-3 me-1 animate-spin" /> : <XCircle className="h-3 w-3 me-1" />}{lang === "ar" ? "رفض" : "Decline"}
                                 </Button>
                               </div>
                             </div>
@@ -694,7 +747,13 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* All Tickets */}
           <div>
-            <h2 className="text-lg font-bold text-foreground mb-3">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-foreground">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportTickets}>
+                <Download className="h-4 w-4" />
+                {lang === "ar" ? "تصدير التذاكر" : "Export Tickets"}
+              </Button>
+            </div>
             <div className="bg-card rounded-md border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">

@@ -67,7 +67,7 @@ export default function RegisterPage() {
         <div className="relative z-20 flex h-full flex-col justify-between p-12 text-white">
           <MimaricLogo width={140} variant="dark" priority />
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white" style={{ letterSpacing: "-0.03em" }}>
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white">
               {lang === "ar" ? "ارتقِ بإدارة عقاراتك" : "Elevate Your Real Estate"}
             </h1>
             <p className="text-base text-white/70 max-w-md">

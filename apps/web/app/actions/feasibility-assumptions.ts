@@ -39,7 +39,7 @@ export async function upsertFeasibilityAssumptions(
       },
     },
   });
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   // Calculate metrics from geometry + assumptions
   const calculatedMetrics = calculateFeasibility(scenario.subdivisionPlan, data);

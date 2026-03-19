@@ -71,7 +71,7 @@ export async function generateBuildingsFromPlots(
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Load subdivision plan with plots and blocks
   const plan = await db.subdivisionPlan.findFirst({
@@ -81,8 +81,8 @@ export async function generateBuildingsFromPlots(
       blocks: { orderBy: { blockNumber: "asc" } },
     },
   });
-  if (!plan) throw new Error("Subdivision plan not found");
-  if (plan.plots.length === 0) throw new Error("No plots found in subdivision plan");
+  if (!plan) throw new Error("Subdivision plan not found or you don't have access. Please refresh and try again.");
+  if (plan.plots.length === 0) throw new Error("No plots were found in the selected subdivision plan. Please add plots first.");
 
   // Group plots by blockId (null blockId = ungrouped)
   const plotsByBlock = new Map<string, typeof plan.plots>();

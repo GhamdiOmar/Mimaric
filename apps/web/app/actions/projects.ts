@@ -146,13 +146,13 @@ export async function updateProject(
   const existing = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!existing) throw new Error("Project not found");
+  if (!existing) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   if (existing.approvalStatus === "ACTIVATED") {
     const RESTRICTED_FIELDS = ["name", "type", "parcelNumber", "plotNumber", "blockNumber", "deedNumber", "landUse", "totalAreaSqm", "region", "city", "district", "streetName", "postalCode", "latitude", "longitude", "boundaries", "utilities", "estimatedValueSar"];
     const attempted = Object.keys(data).filter((k) => RESTRICTED_FIELDS.includes(k) && (data as any)[k] !== undefined);
     if (attempted.length > 0) {
-      throw new Error(`Cannot modify ${attempted.join(", ")} on an activated project`);
+      throw new Error("This project has been activated and certain fields can no longer be modified. Please contact your administrator if changes are needed.");
     }
   }
 
@@ -198,7 +198,7 @@ export async function createBuilding(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const building = await db.building.create({
     data: {
@@ -238,7 +238,7 @@ export async function getProjectDetail(projectId: string) {
     },
   });
 
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return JSON.parse(JSON.stringify(project));
 }
 
@@ -258,7 +258,7 @@ export async function updateBuilding(
   const building = await db.building.findFirst({
     where: { id: buildingId, project: { organizationId: session.organizationId } },
   });
-  if (!building) throw new Error("Building not found");
+  if (!building) throw new Error("Building not found or you don't have access to it. Please verify the building exists.");
 
   const updated = await db.building.update({
     where: { id: buildingId },
@@ -275,7 +275,7 @@ export async function deleteBuilding(buildingId: string) {
   const building = await db.building.findFirst({
     where: { id: buildingId, project: { organizationId: session.organizationId } },
   });
-  if (!building) throw new Error("Building not found");
+  if (!building) throw new Error("Building not found or you don't have access to it. Please verify the building exists.");
 
   logAuditEvent({
     userId: session.userId,
@@ -299,7 +299,7 @@ export async function getProjectDocuments(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const documents = await db.document.findMany({
     where: { projectId },
@@ -324,7 +324,7 @@ export async function registerProjectDocument(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const document = await db.document.create({
     data: {
@@ -355,7 +355,7 @@ export async function uploadDocumentVersion(data: {
   const doc = await db.document.findFirst({
     where: { id: data.documentId, organizationId: session.organizationId },
   });
-  if (!doc) throw new Error("Document not found");
+  if (!doc) throw new Error("Document not found or you don't have access to it. Please verify the document exists.");
 
   const nextVersion = doc.version + 1;
 
@@ -405,7 +405,7 @@ export async function deleteProjectDocument(documentId: string) {
   const doc = await db.document.findFirst({
     where: { id: documentId, organizationId: session.organizationId },
   });
-  if (!doc) throw new Error("Document not found");
+  if (!doc) throw new Error("Document not found or you don't have access to it. Please verify the document exists.");
 
   logAuditEvent({
     userId: session.userId,
@@ -437,7 +437,7 @@ export async function generateProjectCode(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const cityKey = (project.city ?? "riyadh").toLowerCase().replace(/\s+/g, "_");
   const cityCode = CITY_CODES[cityKey] ?? cityKey.substring(0, 3).toUpperCase();
@@ -486,7 +486,7 @@ export async function assignProjectOwners(
   const before = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!before) throw new Error("Project not found");
+  if (!before) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const updated = await db.project.update({
     where: { id: projectId },
@@ -521,16 +521,16 @@ export async function submitProjectForApproval(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
   if (!allowed.includes("PENDING_APPROVAL")) {
-    throw new Error(`Cannot submit project from status '${project.approvalStatus}'`);
+    throw new Error("This project cannot be submitted for approval from its current status. It must be in Draft status to submit.");
   }
 
   // Validate minimum requirements before submission
   if (!project.projectCode) {
-    throw new Error("Project code is required before submission");
+    throw new Error("A project code is required before submitting for approval. Please generate a project code first.");
   }
 
   const updated = await db.project.update({
@@ -564,11 +564,11 @@ export async function approveProject(projectId: string, notes?: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
   if (!allowed.includes("APPROVED_PROJECT")) {
-    throw new Error(`Cannot approve project from status '${project.approvalStatus}'`);
+    throw new Error("This project cannot be approved from its current status. It must be Pending Approval to approve.");
   }
 
   const updated = await db.project.update({
@@ -599,16 +599,16 @@ export async function approveProject(projectId: string, notes?: string) {
 export async function rejectProject(projectId: string, reason: string) {
   const session = await requirePermission("projects:approve");
 
-  if (!reason?.trim()) throw new Error("Rejection reason is required");
+  if (!reason?.trim()) throw new Error("Please provide a reason for rejecting this project.");
 
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
   if (!allowed.includes("REJECTED_PROJECT")) {
-    throw new Error(`Cannot reject project from status '${project.approvalStatus}'`);
+    throw new Error("This project cannot be rejected from its current status. It must be Pending Approval to reject.");
   }
 
   const updated = await db.project.update({
@@ -649,7 +649,7 @@ export async function computeReadinessFlags(projectId: string) {
       buildings: { include: { _count: { select: { units: true } } } },
     },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const blockers: string[] = [];
 
@@ -700,17 +700,17 @@ export async function activateProject(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: session.organizationId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const allowed = PROJECT_APPROVAL_TRANSITIONS[project.approvalStatus] ?? [];
   if (!allowed.includes("ACTIVATED")) {
-    throw new Error(`Cannot activate project from status '${project.approvalStatus}'`);
+    throw new Error("This project cannot be activated from its current status. It must be Approved first.");
   }
 
   // Validate readiness
   const readiness = await computeReadinessFlags(projectId);
   if (!readiness.launchReady) {
-    throw new Error(`Project not ready for activation: ${readiness.blockers.join("; ")}`);
+    throw new Error(`This project is not ready for activation. Please resolve the following: ${readiness.blockers.join("; ")}`);
   }
 
   const updated = await db.project.update({
@@ -791,6 +791,6 @@ export async function getProjectTree(projectId: string) {
     },
   });
 
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return JSON.parse(JSON.stringify(project));
 }

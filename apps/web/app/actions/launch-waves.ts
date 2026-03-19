@@ -13,7 +13,7 @@ export async function getLaunchWaves(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const waves = await db.launchWave.findMany({
     where: { projectId },
@@ -38,7 +38,7 @@ export async function createLaunchWave(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Get next wave number
   const existing = await db.launchWave.count({
@@ -82,7 +82,7 @@ export async function updateLaunchWave(
   const existing = await db.launchWave.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Launch wave not found");
+  if (!existing) throw new Error("Launch wave not found or you don't have access. Please refresh and try again.");
 
   const updated = await db.launchWave.update({
     where: { id },
@@ -108,10 +108,10 @@ export async function deleteLaunchWave(id: string) {
   const existing = await db.launchWave.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Launch wave not found");
+  if (!existing) throw new Error("Launch wave not found or you don't have access. Please refresh and try again.");
 
   if (existing.status === "LAUNCHED") {
-    throw new Error("Cannot delete a launched wave");
+    throw new Error("A launched wave cannot be deleted. Please close the wave first if you need to make changes.");
   }
 
   await db.launchWave.delete({ where: { id } });
@@ -127,10 +127,10 @@ export async function launchWave(id: string) {
   const existing = await db.launchWave.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Launch wave not found");
+  if (!existing) throw new Error("Launch wave not found or you don't have access. Please refresh and try again.");
 
   if (existing.status === "LAUNCHED" || existing.status === "CLOSED_WAVE") {
-    throw new Error("Wave is already launched or closed");
+    throw new Error("This wave has already been launched or closed and cannot be launched again.");
   }
 
   const updated = await db.launchWave.update({
@@ -172,10 +172,10 @@ export async function closeWave(id: string) {
   const existing = await db.launchWave.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Launch wave not found");
+  if (!existing) throw new Error("Launch wave not found or you don't have access. Please refresh and try again.");
 
   if (existing.status !== "LAUNCHED") {
-    throw new Error("Can only close a launched wave");
+    throw new Error("Only a currently launched wave can be closed. Please check the wave status.");
   }
 
   const updated = await db.launchWave.update({

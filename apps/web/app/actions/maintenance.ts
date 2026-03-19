@@ -119,7 +119,7 @@ export async function getMaintenanceRequest(id: string) {
       preventivePlan: true,
     },
   });
-  if (!request) throw new Error("Request not found");
+  if (!request) throw new Error("Request not found or you don't have access. Please refresh the page and try again.");
   return JSON.parse(JSON.stringify(request));
 }
 
@@ -146,12 +146,12 @@ export async function updateMaintenanceRequest(
   const request = await db.maintenanceRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId },
   });
-  if (!request) throw new Error("Request not found");
+  if (!request) throw new Error("Request not found or you don't have access. Please refresh the page and try again.");
 
   // Validate status transition
   if (data.status && data.status !== request.status) {
     if (!(await getValidTransitions(request.status)).includes(data.status)) {
-      throw new Error(`Invalid status transition: ${request.status} → ${data.status}`);
+      throw new Error("This status change is not allowed from the current maintenance request status. Please check the allowed workflow transitions.");
     }
   }
 
@@ -204,7 +204,7 @@ export async function deleteMaintenanceRequest(requestId: string) {
   const request = await db.maintenanceRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId },
   });
-  if (!request) throw new Error("Request not found");
+  if (!request) throw new Error("Request not found or you don't have access. Please refresh the page and try again.");
 
   logAuditEvent({
     userId: session.userId,

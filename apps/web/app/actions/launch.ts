@@ -18,7 +18,7 @@ export async function getLaunchReadinessChecklist(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // 1. Approved subdivision plan
   const approvedSubPlans = await db.subdivisionPlan.count({
@@ -165,7 +165,7 @@ export async function getMapInventory(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const items = await db.inventoryItem.findMany({
     where: { projectId, organizationId: orgId },
@@ -192,13 +192,13 @@ export async function reserveInventoryItem(data: {
   const item = await db.inventoryItem.findFirst({
     where: { id: data.inventoryItemId, projectId: data.projectId, organizationId: orgId, status: "AVAILABLE_INV" },
   });
-  if (!item) throw new Error("Inventory item not found or not available");
+  if (!item) throw new Error("The selected inventory item was not found or is no longer available for booking.");
 
   // Validate customer
   const customer = await db.customer.findFirst({
     where: { id: data.customerId, organizationId: orgId },
   });
-  if (!customer) throw new Error("Customer not found");
+  if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   // Create reservation (unitId required by schema)
   const reservation = await db.reservation.create({
@@ -297,7 +297,7 @@ export async function getSalesTracking(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const waves = await db.launchWave.findMany({
     where: { projectId, organizationId: orgId },

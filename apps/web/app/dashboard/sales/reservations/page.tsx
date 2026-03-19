@@ -12,6 +12,7 @@ import {
   Loader2,
   Building2,
   User,
+  X,
 } from "lucide-react";
 import {
   SARAmount,
@@ -40,6 +41,8 @@ export default function ReservationsPage() {
   const { lang } = useLanguage();
   const [reservations, setReservations] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [processingId, setProcessingId] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     loadReservations();
@@ -50,18 +53,22 @@ export default function ReservationsPage() {
       const data = await getReservations();
       setReservations(data);
     } catch (err) {
-      console.error("Failed to load reservations:", err);
+      setError(lang === "ar" ? "فشل تحميل الحجوزات" : "Failed to load reservations");
     } finally {
       setLoading(false);
     }
   }
 
   async function handleStatusChange(id: string, status: "CONFIRMED" | "CANCELLED" | "EXPIRED") {
+    setProcessingId(id);
+    setError(null);
     try {
       await updateReservationStatus(id, status);
       await loadReservations();
     } catch (err) {
-      console.error("Failed to update status:", err);
+      setError(lang === "ar" ? "فشل تحديث حالة الحجز" : "Failed to update reservation status");
+    } finally {
+      setProcessingId(null);
     }
   }
 
@@ -77,12 +84,22 @@ export default function ReservationsPage() {
           </p>
         </div>
         <Link href="/dashboard/sales/reservations/new">
-          <Button size="sm" className="gap-2">
+          <Button size="sm" style={{ display: "inline-flex" }} className="gap-2">
             <Plus className="h-4 w-4" />
             {lang === "ar" ? "حجز جديد" : "New Reservation"}
           </Button>
         </Link>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20">
@@ -98,7 +115,7 @@ export default function ReservationsPage() {
             {lang === "ar" ? "ابدأ بإنشاء حجز جديد لوحدة عقارية" : "Start by creating a new unit reservation"}
           </p>
           <Link href="/dashboard/sales/reservations/new">
-            <Button className="mt-4 gap-2">
+            <Button className="mt-4 gap-2" style={{ display: "inline-flex" }}>
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "حجز جديد" : "New Reservation"}
             </Button>
@@ -178,16 +195,21 @@ export default function ReservationsPage() {
                           <Button
                             size="sm"
                             variant="secondary"
-                            className="text-xs h-7 px-2"
+                            style={{ display: "inline-flex" }}
+                            className="text-xs h-7 px-2 gap-1"
                             onClick={() => handleStatusChange(res.id, "CONFIRMED")}
+                            disabled={processingId === res.id}
                           >
+                            {processingId === res.id && <Loader2 className="h-3 w-3 animate-spin" />}
                             {lang === "ar" ? "تأكيد" : "Confirm"}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-xs h-7 px-2 text-red-500 hover:bg-red-50 hover:text-red-600"
+                            style={{ display: "inline-flex" }}
+                            className="text-xs h-7 px-2 text-red-500 hover:bg-red-50 hover:text-red-600 gap-1"
                             onClick={() => handleStatusChange(res.id, "CANCELLED")}
+                            disabled={processingId === res.id}
                           >
                             {lang === "ar" ? "إلغاء" : "Cancel"}
                           </Button>

@@ -107,7 +107,7 @@ export default function LoginPage() {
           <MimaricLogo width={140} variant="dark" priority />
 
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white" style={{ letterSpacing: "-0.03em" }}>
+            <h1 className="text-4xl font-bold leading-tight xl:text-5xl text-white">
               {lang === "ar" ? "أهلاً بك في ميماريك" : "Welcome to Mimaric"}
             </h1>
             <p className="text-base text-white/70 max-w-md">

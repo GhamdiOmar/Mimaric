@@ -6,7 +6,6 @@ import {
   FileText as FilePdf,
   Image as FileImage,
   FileText,
-  FolderPlus,
   CloudUpload,
   Download,
   Trash2,
@@ -19,11 +18,15 @@ import { Button, Input, Badge } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getDocuments, registerFileInDb } from "../../actions/documents";
 import { UploadButton } from "../../../lib/uploadthing";
+import { exportToExcel } from "../../../lib/export";
 
 export default function DocumentVaultPage() {
   const { lang } = useLanguage();
   const [docs, setDocs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [uploadError, setUploadError] = React.useState<string | null>(null);
+  const [exporting, setExporting] = React.useState(false);
+  const [activeCategory, setActiveCategory] = React.useState<string>("all");
 
   React.useEffect(() => {
     async function loadDocs() {
@@ -40,6 +43,7 @@ export default function DocumentVaultPage() {
   }, []);
 
   const handleUploadComplete = async (res: any) => {
+    setUploadError(null);
     try {
       // res is an array of uploaded files
       for (const file of res) {
@@ -54,17 +58,30 @@ export default function DocumentVaultPage() {
       const updatedData = await getDocuments();
       setDocs(updatedData);
     } catch (err) {
-      alert("Failed to register document");
+      setUploadError(lang === "ar" ? "فشل تسجيل الوثيقة" : "Failed to register document");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleExportDocuments = async () => {
+    setExporting(true);
+    try {
+    exportToExcel({
+      data: docs,
+      columns: [
+        { header: lang === "ar" ? "اسم الوثيقة" : "Document Name", key: "name", width: 35 },
+        { header: lang === "ar" ? "التصنيف" : "Category", key: "category", width: 20 },
+        { header: lang === "ar" ? "النوع" : "Type", key: "type", width: 15 },
+        { header: lang === "ar" ? "تاريخ الرفع" : "Uploaded Date", key: "createdAt", width: 20, render: (val: any) => val ? new Date(val).toLocaleDateString("en-CA") : "" },
+        { header: lang === "ar" ? "رفع بواسطة" : "Uploaded By", key: "uploadedBy", width: 25, render: (val: any) => val?.name ?? val ?? "" },
+      ],
+      filename: lang === "ar" ? "سجل_الوثائق" : "documents_list",
+      lang,
+      title: lang === "ar" ? "سجل الوثائق — ميماريك" : "Document List — Mimaric",
+    });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -79,10 +96,14 @@ export default function DocumentVaultPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportDocuments} disabled={exporting} className="gap-2">
+            {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {exporting ? (lang === "ar" ? "جاري التصدير..." : "Exporting...") : (lang === "ar" ? "تصدير القائمة" : "Export List")}
+          </Button>
           <UploadButton
             endpoint="blueprintUploader"
             onClientUploadComplete={handleUploadComplete}
-            onUploadError={(error: Error) => alert(`ERROR! ${error.message}`)}
+            onUploadError={(error: Error) => setUploadError(lang === "ar" ? `خطأ في الرفع: ${error.message}` : `Upload error: ${error.message}`)}
             appearance={{
               button: "bg-secondary hover:bg-green-bright text-white text-sm font-bold gap-2 flex h-9 px-4 rounded-md",
               allowedContent: "hidden"
@@ -99,23 +120,46 @@ export default function DocumentVaultPage() {
         </div>
       </div>
 
+      {/* Upload Error */}
+      {uploadError && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+          <p className="text-sm text-red-600 dark:text-red-400 flex-1">{uploadError}</p>
+          <button onClick={() => setUploadError(null)} className="text-red-400 hover:text-red-600 text-xs font-medium">
+            {lang === "ar" ? "إغلاق" : "Dismiss"}
+          </button>
+        </div>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Categories Sidebar */}
         <div className="lg:col-span-1 space-y-4">
            <div className="bg-card rounded-md border border-border p-6 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">Categories</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">{lang === "ar" ? "التصنيفات" : "Categories"}</h3>
               <div className="space-y-1">
-                 {['All Documents', 'Blueprints', 'Legal Permits', 'Structural Plans', 'Commercial', 'Marketing'].map((cat) => (
-                    <button key={cat} className="w-full text-start px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-primary">
-                       {cat}
+                 {[
+                   { id: "all", label: { ar: "جميع الوثائق", en: "All Documents" } },
+                   { id: "BLUEPRINT", label: { ar: "مخططات", en: "Blueprints" } },
+                   { id: "LEGAL", label: { ar: "تصاريح قانونية", en: "Legal Permits" } },
+                   { id: "STRUCTURAL", label: { ar: "مخططات إنشائية", en: "Structural Plans" } },
+                   { id: "COMMERCIAL", label: { ar: "تجاري", en: "Commercial" } },
+                   { id: "MARKETING", label: { ar: "تسويق", en: "Marketing" } },
+                   { id: "GENERAL", label: { ar: "عام", en: "General" } },
+                 ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={cn(
+                        "w-full text-start px-3 py-2 text-sm rounded-md transition-colors",
+                        activeCategory === cat.id
+                          ? "bg-secondary/10 text-secondary font-bold"
+                          : "text-muted-foreground hover:bg-muted hover:text-primary"
+                      )}
+                    >
+                       {cat.label[lang]}
                     </button>
                  ))}
               </div>
-              <Button variant="ghost" size="sm" className="w-full mt-4 gap-2 text-secondary hover:bg-secondary/5 border-dashed border border-secondary/20">
-                 <FolderPlus className="h-4 w-4" />
-                 {lang === "ar" ? "مجلد جديد" : "New Folder"}
-              </Button>
            </div>
            
            <div className="bg-primary-deep p-6 rounded-md text-white shadow-lg overflow-hidden relative">
@@ -152,14 +196,34 @@ export default function DocumentVaultPage() {
            </div>
 
            {/* Files Grid */}
+           {loading ? (
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+               {[1, 2, 3, 4, 5, 6].map((i) => (
+                 <div key={i} className="bg-card rounded-md border border-border p-5 animate-pulse">
+                   <div className="flex items-start justify-between mb-4">
+                     <div className="h-12 w-12 rounded bg-muted" />
+                     <div className="h-5 w-5 rounded bg-muted" />
+                   </div>
+                   <div className="space-y-2">
+                     <div className="h-4 bg-muted rounded w-3/4" />
+                     <div className="h-3 bg-muted rounded w-1/3" />
+                   </div>
+                   <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                     <div className="h-4 bg-muted rounded w-16" />
+                     <div className="h-8 w-8 rounded-full bg-muted" />
+                   </div>
+                 </div>
+               ))}
+             </div>
+           ) : (
            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {docs.length === 0 && !loading && (
+              {docs.filter((doc) => activeCategory === "all" || doc.category === activeCategory).length === 0 && (
                 <div className="col-span-full py-20 text-center text-muted-foreground">
                   <CloudUpload className="h-12 w-12 mx-auto opacity-20 mb-4" />
                   <p>{lang === "ar" ? "لا توجد وثائق حالياً. ابدأ برفع أول وثيقة." : "No documents yet. Start by uploading one."}</p>
                 </div>
               )}
-              {docs.map((doc) => (
+              {docs.filter((doc) => activeCategory === "all" || doc.category === activeCategory).map((doc) => (
                 <div key={doc.id} className="bg-card rounded-md border border-border p-5 hover:shadow-md transition-all group relative border-b-4 border-b-transparent hover:border-b-secondary">
                    <div className="flex items-start justify-between mb-4">
                       <div className={cn(
@@ -187,6 +251,7 @@ export default function DocumentVaultPage() {
                 </div>
               ))}
            </div>
+           )}
         </div>
       </div>
     </div>

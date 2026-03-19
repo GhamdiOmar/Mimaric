@@ -15,7 +15,7 @@ export async function updateUnit(unitId: string, data: any) {
     include: { building: { include: { project: true } } },
   });
   if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    throw new Error("Unit not found");
+    throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   const updated = await db.unit.update({
@@ -42,7 +42,7 @@ export async function massUpdateUnits(
   const allBelongToOrg = existingUnits.every(
     (u) => u.building.project.organizationId === session.organizationId
   );
-  if (!allBelongToOrg) throw new Error("Unauthorized: units do not belong to your organization");
+  if (!allBelongToOrg) throw new Error("One or more units do not belong to your organization. Please verify the selected units.");
 
   const results = await db.$transaction(
     units.map((u) =>
@@ -99,7 +99,7 @@ export async function createUnit(data: {
     include: { project: true },
   });
   if (!building || building.project.organizationId !== session.organizationId) {
-    throw new Error("Building not found");
+    throw new Error("Building not found or you don't have access. Please verify the building exists in your organization.");
   }
 
   // Entitlement check: units.max
@@ -132,7 +132,7 @@ export async function deleteUnit(unitId: string) {
     include: { building: { include: { project: true } } },
   });
   if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    throw new Error("Unit not found");
+    throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   await db.unit.delete({ where: { id: unitId } });
@@ -172,7 +172,7 @@ export async function getUnitFinancialSummary(unitId: string) {
     },
   });
   if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    throw new Error("Unit not found");
+    throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   const totalRentCollected = unit.leases.reduce((s, l) =>

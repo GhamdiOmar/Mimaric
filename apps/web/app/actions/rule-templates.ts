@@ -78,7 +78,7 @@ export async function updateRuleTemplate(
   const existing = await db.ruleTemplate.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Rule template not found (can only edit org-specific rules)");
+  if (!existing) throw new Error("Rule template not found. You can only edit organization-specific rules.");
 
   const updated = await db.ruleTemplate.update({
     where: { id },
@@ -104,7 +104,7 @@ export async function deleteRuleTemplate(id: string) {
   const existing = await db.ruleTemplate.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Rule template not found (can only delete org-specific rules)");
+  if (!existing) throw new Error("Rule template not found. You can only delete organization-specific rules.");
 
   await db.ruleTemplate.delete({ where: { id } });
 }

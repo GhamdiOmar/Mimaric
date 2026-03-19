@@ -180,7 +180,7 @@ export async function acceptInvitation(data: {
           where: { id: invitation.id },
         });
         if (!freshInvite || freshInvite.status !== "PENDING_INVITE") {
-          throw new Error("INVITATION_ALREADY_USED");
+          throw new Error("This invitation has already been used. Please request a new invitation.");
         }
 
         const newUser = await tx.user.create({
@@ -307,7 +307,7 @@ export async function getOrgInvitations() {
     });
   } catch (error: any) {
     console.error("[Invitations] getOrgInvitations error:", error);
-    throw new Error("Failed to fetch invitations");
+    throw new Error("Unable to load invitations. Please refresh and try again.");
   }
 }
 

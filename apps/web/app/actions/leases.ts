@@ -34,7 +34,7 @@ export async function createLease(data: {
   const customer = await db.customer.findFirst({
     where: { id: data.customerId, organizationId: session.organizationId },
   });
-  if (!customer) throw new Error("Customer not found");
+  if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   // Verify unit belongs to org
   const unit = await db.unit.findFirst({
@@ -42,7 +42,7 @@ export async function createLease(data: {
     include: { building: { include: { project: true } } },
   });
   if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    throw new Error("Unit not found");
+    throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   const startDate = new Date(data.startDate);
@@ -153,7 +153,7 @@ export async function terminateLease(leaseId: string) {
     include: { customer: true },
   });
   if (!lease || lease.customer.organizationId !== session.organizationId) {
-    throw new Error("Lease not found");
+    throw new Error("Lease not found or you don't have access. Please verify the lease exists in your organization.");
   }
 
   await db.$transaction(async (tx: any) => {

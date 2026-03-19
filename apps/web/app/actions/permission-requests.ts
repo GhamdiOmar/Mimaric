@@ -116,7 +116,7 @@ export async function reviewPermissionRequest(
   const request = await db.permissionRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId, status: "PENDING" },
   });
-  if (!request) throw new Error("Request not found or already reviewed");
+  if (!request) throw new Error("This request was not found or has already been reviewed. Please refresh the page.");
 
   // Update the request
   const updated = await db.permissionRequest.update({
@@ -132,7 +132,7 @@ export async function reviewPermissionRequest(
   if (decision === "APPROVED" && request.requestedRole) {
     // Guard: non-system users cannot approve upgrades to system roles
     if (isSystemRole(request.requestedRole) && !isSystemRole(session.role)) {
-      throw new Error("Cannot approve upgrade to system-level role");
+      throw new Error("System-level role upgrades cannot be approved through this process. Please contact a system administrator.");
     }
     await db.user.update({
       where: { id: request.userId },

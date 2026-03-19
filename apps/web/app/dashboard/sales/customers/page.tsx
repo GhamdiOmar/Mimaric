@@ -20,6 +20,7 @@ import {
   FileText,
   Eye,
   EyeOff,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -37,19 +38,25 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@repo/ui";
-import { getCustomers, updateCustomerStatus, createCustomer, getCustomerUnitAssignments } from "../../../actions/customers";
+import { getCustomers, updateCustomerStatus, createCustomer, getCustomerUnitAssignments, deleteCustomer } from "../../../actions/customers";
 import { exportToExcel, exportToPDF } from "../../../../lib/export";
 import { usePermissions } from "../../../../hooks/usePermissions";
 import { maskNationalId, maskPhone, maskEmail } from "../../../../lib/pii-masking";
 import { formatDualDate } from "../../../../lib/hijri";
 
 const customerStatuses = [
-  { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-blue-500" },
-  { id: "INTERESTED", label: { ar: "مهتم", en: "Interested" }, color: "bg-indigo-500" },
-  { id: "QUALIFIED", label: { ar: "مؤهل", en: "Qualified" }, color: "bg-secondary" },
-  { id: "VIEWING", label: { ar: "معاينة", en: "Viewing" }, color: "bg-amber-500" },
-  { id: "RESERVED", label: { ar: "محجوز", en: "Reserved" }, color: "bg-amber-500" },
+  { id: "NEW", label: { ar: "جديد", en: "New" }, color: "bg-primary" },
+  { id: "INTERESTED", label: { ar: "مهتم", en: "Interested" }, color: "bg-info" },
+  { id: "QUALIFIED", label: { ar: "مؤهل", en: "Qualified" }, color: "bg-success" },
+  { id: "VIEWING", label: { ar: "معاينة", en: "Viewing" }, color: "bg-secondary" },
+  { id: "RESERVED", label: { ar: "محجوز", en: "Reserved" }, color: "bg-success" },
 ];
 
 export default function CustomersPage() {
@@ -76,6 +83,21 @@ export default function CustomersPage() {
   const [customerUnits, setCustomerUnits] = React.useState<any[]>([]);
   const [loadingUnits, setLoadingUnits] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [openMenuId, setOpenMenuId] = React.useState<string | null>(null);
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    if (openMenuId) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
   const { can } = usePermissions();
   const hasPiiAccess = can("customers:read_pii");
 
@@ -127,7 +149,7 @@ export default function CustomersPage() {
       await updateCustomerStatus(customerId, newStatus);
     } catch (err) {
       setCustomers(previousCustomers);
-      alert("Failed to update status");
+      alert(lang === "ar" ? "فشل تحديث حالة العميل. يرجى المحاولة مرة أخرى." : "Failed to update customer status. Please try again.");
     }
   };
 
@@ -140,7 +162,7 @@ export default function CustomersPage() {
       setNewCustomer({ name: "", phone: "", email: "", nationalId: "", nameArabic: "", personType: "", gender: "", nationality: "", status: "NEW" });
       setShowOptionalFields(false);
     } catch (err) {
-      alert("Failed to create customer");
+      alert(lang === "ar" ? "فشل إنشاء العميل. يرجى المحاولة مرة أخرى." : "Failed to create customer. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -178,6 +200,20 @@ export default function CustomersPage() {
       setTimeout(doExport, 500); // give React time to render the table DOM
     } else {
       await doExport();
+    }
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteCustomer(deleteTarget.id);
+      setCustomers(prev => prev.filter(c => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch (err) {
+      alert(lang === "ar" ? "فشل حذف العميل" : "Failed to delete customer");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -239,7 +275,7 @@ export default function CustomersPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className={cn(showPii && "bg-amber-50 border-amber-200 text-amber-700")}
+                className={cn(showPii && "bg-secondary/10 border-secondary/20 text-secondary")}
                 style={{ display: "inline-flex" }}
                 onClick={() => setShowPii(!showPii)}
               >
@@ -344,9 +380,6 @@ export default function CustomersPage() {
                     {filteredCustomers.filter(l => l.status === status.id).length}
                   </Badge>
                 </div>
-                <button className="text-muted-foreground hover:text-primary">
-                  <MoreVertical className="h-5 w-5" />
-                </button>
               </div>
 
               {/* Column Content */}
@@ -398,6 +431,15 @@ export default function CustomersPage() {
                           >
                             {lang === "ar" ? "الوحدات" : "Units"}
                           </button>
+                          {can("customers:delete") && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: customer.id, name: customer.name }); }}
+                              className="text-muted-foreground/60 hover:text-destructive transition-colors"
+                              title={lang === "ar" ? "حذف" : "Delete"}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                           <select
                             value={customer.status}
                             onChange={(e) => handleStatusChange(customer.id, e.target.value)}
@@ -475,7 +517,8 @@ export default function CustomersPage() {
             </TableHeader>
             <TableBody>
               {filteredCustomers.map((customer) => (
-                <TableRow key={customer.id} className="group">
+                <React.Fragment key={customer.id}>
+                <TableRow className="group">
                   <TableCell>
                     <div className="text-sm font-bold text-primary">{customer.name}</div>
                     {customer.nameArabic && customer.nameArabic !== customer.name && (
@@ -507,16 +550,126 @@ export default function CustomersPage() {
                     {formatDualDate(customer.createdAt, lang)}
                   </TableCell>
                   <TableCell className="text-end">
-                    <button className="p-1 text-muted-foreground hover:text-primary transition-colors">
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      {can("customers:delete") && (
+                        <button
+                          onClick={() => setDeleteTarget({ id: customer.id, name: customer.name })}
+                          className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          title={lang === "ar" ? "حذف" : "Delete"}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                      <div className="relative" ref={openMenuId === customer.id ? menuRef : undefined}>
+                        <button
+                          className="p-1 text-muted-foreground hover:text-primary transition-colors"
+                          onClick={() => setOpenMenuId(openMenuId === customer.id ? null : customer.id)}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                        {openMenuId === customer.id && (
+                          <div className="absolute end-0 top-full mt-1 z-50 w-40 bg-card border border-border rounded-md shadow-lg py-1 animate-in fade-in zoom-in-95 duration-150">
+                            <button
+                              className="w-full text-start px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                toggleCustomerUnits(customer.id);
+                              }}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                              {lang === "ar" ? "عرض التفاصيل" : "View Details"}
+                            </button>
+                            {can("customers:write") && (
+                              <button
+                                className="w-full text-start px-3 py-2 text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setNewCustomer({
+                                    name: customer.name || "",
+                                    phone: customer.phone || "",
+                                    email: customer.email || "",
+                                    nationalId: customer.nationalId || "",
+                                    nameArabic: customer.nameArabic || "",
+                                    personType: customer.personType || "",
+                                    gender: customer.gender || "",
+                                    nationality: customer.nationality || "",
+                                    status: customer.status || "NEW",
+                                  });
+                                  setShowOptionalFields(!!(customer.nameArabic || customer.personType || customer.gender || customer.nationality));
+                                  setShowAddModal(true);
+                                }}
+                              >
+                                <User className="h-3.5 w-3.5" />
+                                {lang === "ar" ? "تعديل" : "Edit"}
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </TableCell>
                 </TableRow>
+                {expandedCustomer === customer.id && (
+                  <TableRow>
+                    <TableCell colSpan={hasPiiAccess ? 7 : 6} className="bg-muted/20 p-4">
+                      {loadingUnits ? (
+                        <p className="text-xs text-muted-foreground text-center py-2">{lang === "ar" ? "جاري التحميل..." : "Loading..."}</p>
+                      ) : customerUnits.length === 0 ? (
+                        <p className="text-xs text-muted-foreground/60 text-center py-1">{lang === "ar" ? "لا توجد وحدات مرتبطة" : "No linked units"}</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {customerUnits.map((cu: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between text-xs py-1">
+                              <span className="font-bold text-primary">{cu.unitNumber} — {cu.building}</span>
+                              <Badge variant="draft" className="text-[9px] py-0">{lang === "ar" ? unitTypeLabelsAr[cu.type] ?? cu.type : cu.type}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>{lang === "ar" ? "حذف العميل" : "Delete Customer"}</DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `هل أنت متأكد من حذف هذا العميل؟ (${deleteTarget?.name})`
+                : `Are you sure you want to delete this customer? (${deleteTarget?.name})`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteCustomer}
+              disabled={deleting}
+              className="gap-2"
+              style={{ display: "inline-flex" }}
+            >
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Trash2 className="h-4 w-4" />
+              {lang === "ar" ? "حذف" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Customer Modal */}
       {showAddModal && (

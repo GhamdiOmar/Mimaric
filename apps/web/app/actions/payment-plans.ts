@@ -19,7 +19,7 @@ export async function createPaymentPlan(
   const contract = await db.contract.findFirst({
     where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   // Validate sum
   const netAmount = Number(contract.netAmount ?? contract.amount);
@@ -29,7 +29,7 @@ export async function createPaymentPlan(
 
   if (Math.abs(total - netAmount) > 0.01) {
     throw new Error(
-      `Payment plan total (${total.toFixed(2)}) does not match contract net amount (${netAmount.toFixed(2)})`
+      `The payment plan total (${total.toFixed(2)} SAR) does not match the contract amount (${netAmount.toFixed(2)} SAR). Please adjust the installment amounts so they add up to the contract total.`
     );
   }
 
@@ -91,13 +91,13 @@ export async function recordInstallmentPayment(
     where: { id: installmentId },
     include: { paymentPlan: true },
   });
-  if (!installment) throw new Error("Installment not found");
+  if (!installment) throw new Error("Payment installment not found. Please refresh the page and try again.");
 
   // Verify org access
   const plan = await db.paymentPlan.findFirst({
     where: { id: installment.paymentPlanId, organizationId: session.organizationId },
   });
-  if (!plan) throw new Error("Payment plan not found");
+  if (!plan) throw new Error("Payment plan not found. Please verify the contract has an associated payment plan.");
 
   const newPaidAmount = Number(installment.paidAmount ?? 0) + data.amount;
   const installmentAmount = Number(installment.amount);

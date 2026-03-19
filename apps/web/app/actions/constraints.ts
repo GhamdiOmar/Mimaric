@@ -11,7 +11,7 @@ export async function getConstraints(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const constraints = await db.constraintRecord.findMany({
     where: { projectId },
@@ -39,7 +39,7 @@ export async function createConstraint(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const constraint = await db.constraintRecord.create({
     data: {
@@ -79,7 +79,7 @@ export async function updateConstraint(
   const existing = await db.constraintRecord.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Constraint not found");
+  if (!existing) throw new Error("Constraint not found. Please refresh and try again.");
 
   const updated = await db.constraintRecord.update({
     where: { id },
@@ -105,7 +105,7 @@ export async function deleteConstraint(id: string) {
   const existing = await db.constraintRecord.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Constraint not found");
+  if (!existing) throw new Error("Constraint not found. Please refresh and try again.");
 
   await db.constraintRecord.delete({ where: { id } });
 }

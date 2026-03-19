@@ -145,7 +145,7 @@ export async function getProjectFinancials(projectId: string) {
     where: { id: projectId, organizationId: orgId },
     select: { acquisitionPrice: true, estimatedValueSar: true },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const landCost = Number(project.acquisitionPrice ?? 0);
 

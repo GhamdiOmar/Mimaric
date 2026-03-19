@@ -13,7 +13,7 @@ export async function getApprovalSubmissions(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const submissions = await db.approvalSubmission.findMany({
     where: { projectId },
@@ -37,7 +37,7 @@ export async function getApprovalDetail(submissionId: string) {
       conditions: { orderBy: { createdAt: "asc" } },
     },
   });
-  if (!submission) throw new Error("Submission not found");
+  if (!submission) throw new Error("Submission not found or you don't have access. Please refresh and try again.");
 
   return JSON.parse(JSON.stringify(submission));
 }
@@ -56,7 +56,7 @@ export async function createApprovalSubmission(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const submission = await db.approvalSubmission.create({
     data: {
@@ -92,7 +92,7 @@ export async function updateApprovalSubmission(
   const existing = await db.approvalSubmission.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Submission not found");
+  if (!existing) throw new Error("Submission not found or you don't have access. Please refresh and try again.");
 
   const updated = await db.approvalSubmission.update({
     where: { id },
@@ -120,7 +120,7 @@ export async function submitApproval(id: string) {
   const existing = await db.approvalSubmission.findFirst({
     where: { id, organizationId: orgId, status: "DRAFT_APPROVAL" },
   });
-  if (!existing) throw new Error("Submission not found or already submitted");
+  if (!existing) throw new Error("Submission not found or has already been submitted. Please refresh and try again.");
 
   const updated = await db.approvalSubmission.update({
     where: { id },
@@ -143,7 +143,7 @@ export async function createResubmission(parentSubmissionId: string) {
   const parent = await db.approvalSubmission.findFirst({
     where: { id: parentSubmissionId, organizationId: orgId },
   });
-  if (!parent) throw new Error("Parent submission not found");
+  if (!parent) throw new Error("The parent submission was not found. Please refresh and try again.");
 
   const submission = await db.approvalSubmission.create({
     data: {
@@ -170,7 +170,7 @@ export async function deleteApprovalSubmission(id: string) {
   const existing = await db.approvalSubmission.findFirst({
     where: { id, organizationId: orgId, status: "DRAFT_APPROVAL" },
   });
-  if (!existing) throw new Error("Can only delete draft submissions");
+  if (!existing) throw new Error("Only draft submissions can be deleted. Please withdraw the submission first if it has been submitted.");
 
   // Delete associated comments and conditions first
   await db.approvalComment.deleteMany({ where: { submissionId: id } });
@@ -210,7 +210,7 @@ export async function resolveComment(
   const existing = await db.approvalComment.findFirst({
     where: { id: commentId },
   });
-  if (!existing) throw new Error("Comment not found");
+  if (!existing) throw new Error("Comment not found. It may have already been deleted.");
 
   const updated = await db.approvalComment.update({
     where: { id: commentId },
@@ -229,7 +229,7 @@ export async function deleteApprovalComment(commentId: string) {
   const session = await requirePermission("approvals:write");
 
   const existing = await db.approvalComment.findFirst({ where: { id: commentId } });
-  if (!existing) throw new Error("Comment not found");
+  if (!existing) throw new Error("Comment not found. It may have already been deleted.");
 
   await db.approvalComment.delete({ where: { id: commentId } });
 }
@@ -263,7 +263,7 @@ export async function markConditionMet(
   const existing = await db.approvalCondition.findFirst({
     where: { id: conditionId },
   });
-  if (!existing) throw new Error("Condition not found");
+  if (!existing) throw new Error("Condition not found. It may have already been removed.");
 
   const updated = await db.approvalCondition.update({
     where: { id: conditionId },
@@ -283,7 +283,7 @@ export async function unmarkConditionMet(conditionId: string) {
   const existing = await db.approvalCondition.findFirst({
     where: { id: conditionId },
   });
-  if (!existing) throw new Error("Condition not found");
+  if (!existing) throw new Error("Condition not found. It may have already been removed.");
 
   const updated = await db.approvalCondition.update({
     where: { id: conditionId },
@@ -343,7 +343,7 @@ export async function addFollowUpTask(
   const submission = await db.approvalSubmission.findFirst({
     where: { id: submissionId, organizationId: session.organizationId },
   });
-  if (!submission) throw new Error("Submission not found");
+  if (!submission) throw new Error("Submission not found or you don't have access. Please refresh and try again.");
 
   const followUp = await db.approvalFollowUp.create({
     data: {
@@ -375,7 +375,7 @@ export async function updateFollowUpStatus(
   const followUp = await db.approvalFollowUp.findFirst({
     where: { id: followUpId, organizationId: session.organizationId },
   });
-  if (!followUp) throw new Error("Follow-up task not found");
+  if (!followUp) throw new Error("Follow-up task not found. Please refresh and try again.");
 
   const updated = await db.approvalFollowUp.update({
     where: { id: followUpId },
@@ -424,7 +424,7 @@ export async function getApprovalFollowUps(submissionId: string) {
   const submission = await db.approvalSubmission.findFirst({
     where: { id: submissionId, organizationId: session.organizationId },
   });
-  if (!submission) throw new Error("Submission not found");
+  if (!submission) throw new Error("Submission not found or you don't have access. Please refresh and try again.");
 
   const followUps = await db.approvalFollowUp.findMany({
     where: { submissionId },

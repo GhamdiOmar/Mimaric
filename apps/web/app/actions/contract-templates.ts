@@ -47,7 +47,7 @@ export async function updateContractTemplate(
   const existing = await db.contractTemplate.findFirst({
     where: { id: templateId, organizationId: session.organizationId },
   });
-  if (!existing) throw new Error("Template not found");
+  if (!existing) throw new Error("Contract template not found. Please refresh and try again.");
 
   // If content changed, increment version
   const versionBump = data.content && data.content !== existing.content;
@@ -83,7 +83,7 @@ export async function getContractTemplate(templateId: string) {
   const template = await db.contractTemplate.findFirst({
     where: { id: templateId, organizationId: session.organizationId },
   });
-  if (!template) throw new Error("Template not found");
+  if (!template) throw new Error("Contract template not found. Please refresh and try again.");
 
   return JSON.parse(JSON.stringify(template));
 }
@@ -94,7 +94,7 @@ export async function deleteContractTemplate(templateId: string) {
   const template = await db.contractTemplate.findFirst({
     where: { id: templateId, organizationId: session.organizationId },
   });
-  if (!template) throw new Error("Template not found");
+  if (!template) throw new Error("Contract template not found. Please refresh and try again.");
 
   logAuditEvent({
     userId: session.userId,

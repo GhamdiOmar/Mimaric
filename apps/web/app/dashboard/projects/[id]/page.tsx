@@ -270,14 +270,14 @@ export default function ProjectDetailPage() {
     } catch (e: any) {
       // Fallback: if decision gate system fails (e.g. transition not in valid map),
       // fall back to direct update for legacy statuses
-      if (e?.message?.includes("Invalid stage transition")) {
+      if (e?.message?.includes("Cannot transition")) {
         try {
           await updateProject(id as string, { status: newStatus });
           await load();
         } catch (e2) { console.error(e2); }
       } else {
         console.error(e);
-        alert(e?.message || "Status transition failed");
+        alert(lang === "ar" ? `فشل تغيير الحالة: ${e?.message || "يرجى المحاولة مرة أخرى"}` : e?.message || "Status change failed. Please try again.");
       }
     }
 
@@ -706,7 +706,7 @@ export default function ProjectDetailPage() {
                       await load();
                     } catch (e: any) {
                       console.error(e);
-                      alert(e?.message || "Error generating buildings");
+                      alert(lang === "ar" ? `فشل إنشاء المباني: ${e?.message || "يرجى المحاولة مرة أخرى"}` : e?.message || "Failed to generate buildings. Please try again.");
                     }
                   }}
                   style={{ display: "inline-flex" }}
@@ -861,12 +861,10 @@ export default function ProjectDetailPage() {
             <p className="text-sm text-muted-foreground">
               {maintenanceRequests.length} {lang === "ar" ? "طلب صيانة" : "maintenance requests"}
             </p>
-            <Link href="/dashboard/maintenance">
-              <Button variant="secondary" size="sm" className="gap-2">
-                <Wrench className="h-3.5 w-3.5" />
-                {lang === "ar" ? "إدارة الصيانة" : "Manage Maintenance"}
-              </Button>
-            </Link>
+            <Button variant="secondary" size="sm" className="gap-2" style={{ display: "inline-flex" }} onClick={() => router.push("/dashboard/maintenance")}>
+              <Wrench className="h-3.5 w-3.5" />
+              {lang === "ar" ? "إدارة الصيانة" : "Manage Maintenance"}
+            </Button>
           </div>
 
           {loadingMaintenance ? (
@@ -1223,11 +1221,9 @@ export default function ProjectDetailPage() {
                         </div>
                         {sp.nameArabic && <p className="text-xs text-muted-foreground mt-0.5">{sp.nameArabic}</p>}
                       </div>
-                      <Link href={`/dashboard/projects/${id}/subdivision/${sp.id}`}>
-                        <Button variant="secondary" size="sm" className="text-xs gap-1">
-                          <Eye className="h-3.5 w-3.5" />{lang === "ar" ? "عرض" : "View"}
-                        </Button>
-                      </Link>
+                      <Button variant="secondary" size="sm" className="text-xs gap-1" style={{ display: "inline-flex" }} onClick={() => router.push(`/dashboard/projects/${id}/subdivision/${sp.id}`)}>
+                        <Eye className="h-3.5 w-3.5" />{lang === "ar" ? "عرض" : "View"}
+                      </Button>
                     </div>
                     <div className="grid grid-cols-4 gap-3 text-xs">
                       <div>
@@ -1596,7 +1592,7 @@ export default function ProjectDetailPage() {
                       loadInventory();
                     } catch (e: any) {
                       console.error(e);
-                      alert(e?.message || "Conversion failed");
+                      alert(lang === "ar" ? `فشل التحويل: ${e?.message || "يرجى المحاولة مرة أخرى"}` : e?.message || "Conversion failed. Please try again.");
                     }
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-md bg-green-600 text-white hover:bg-green-700 active:bg-green-800 transition-all"

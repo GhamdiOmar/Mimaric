@@ -69,6 +69,7 @@ export default function MaintenanceDetailPage() {
   const [request, setRequest] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [transitioningTo, setTransitioningTo] = React.useState<string | null>(null);
   const [users, setUsers] = React.useState<any[]>([]);
 
   // Inline edit states
@@ -77,6 +78,7 @@ export default function MaintenanceDetailPage() {
   const [laborHours, setLaborHours] = React.useState("");
   const [notes, setNotes] = React.useState("");
   const [showAssign, setShowAssign] = React.useState(false);
+  const [costErrors, setCostErrors] = React.useState<Record<string, string>>({});
 
   React.useEffect(() => {
     load();
@@ -103,6 +105,7 @@ export default function MaintenanceDetailPage() {
 
   async function handleStatusChange(newStatus: string) {
     setSaving(true);
+    setTransitioningTo(newStatus);
     try {
       await updateMaintenanceRequest(id as string, { status: newStatus });
       await load();
@@ -110,6 +113,7 @@ export default function MaintenanceDetailPage() {
       console.error(e);
     } finally {
       setSaving(false);
+      setTransitioningTo(null);
     }
   }
 
@@ -127,6 +131,18 @@ export default function MaintenanceDetailPage() {
   }
 
   async function handleSaveCost() {
+    const errors: Record<string, string> = {};
+    if (actualCost && (isNaN(parseFloat(actualCost)) || parseFloat(actualCost) < 0)) {
+      errors.actualCost = lang === "ar" ? "التكلفة يجب أن تكون رقمًا صحيحًا" : "Cost must be a valid positive number";
+    }
+    if (laborHours && (isNaN(parseFloat(laborHours)) || parseFloat(laborHours) < 0)) {
+      errors.laborHours = lang === "ar" ? "ساعات العمل يجب أن تكون رقمًا صحيحًا" : "Hours must be a valid positive number";
+    }
+    if (Object.keys(errors).length > 0) {
+      setCostErrors(errors);
+      return;
+    }
+    setCostErrors({});
     setSaving(true);
     try {
       await updateMaintenanceRequest(id as string, {
@@ -166,7 +182,7 @@ export default function MaintenanceDetailPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")} style={{ display: "inline-flex" }}>
           <ArrowLeft className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">
@@ -210,13 +226,13 @@ export default function MaintenanceDetailPage() {
                   key={nextStatus}
                   size="sm"
                   variant="secondary"
-                  className={`gap-2 hover:shadow-sm hover:-translate-y-0.5 transition-all ${statusButtonStyles[nextStatus] ?? ""}`}
+                  className={`gap-2 ${statusButtonStyles[nextStatus] ?? ""}`}
                   onClick={() => handleStatusChange(nextStatus)}
                   disabled={saving}
-                 
+                  style={{ display: "inline-flex" }}
                   title={nextLabel[lang === "ar" ? "en" : "ar"]}
                 >
-                  {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                  {transitioningTo === nextStatus ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                   {nextLabel[lang]}
                 </Button>
               );
@@ -272,7 +288,7 @@ export default function MaintenanceDetailPage() {
                 <CircleUser className="h-3.5 w-3.5" />
                 {lang === "ar" ? "المُعيَّن" : "Assigned To"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)}>
+              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)} style={{ display: "inline-flex" }}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -312,7 +328,7 @@ export default function MaintenanceDetailPage() {
                 <CircleDollarSign className="h-3.5 w-3.5" />
                 {lang === "ar" ? "التكاليف" : "Costs"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)}>
+              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)} style={{ display: "inline-flex" }}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -343,18 +359,32 @@ export default function MaintenanceDetailPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "التكلفة الفعلية" : "Actual Cost"}</label>
-                    <input type="number" value={actualCost} onChange={(e) => setActualCost(e.target.value)} className={inputClass} placeholder="0.00" />
+                    <input
+                      type="number"
+                      value={actualCost}
+                      onChange={(e) => { setActualCost(e.target.value); setCostErrors((prev) => { const n = { ...prev }; delete n.actualCost; return n; }); }}
+                      className={`${inputClass} ${costErrors.actualCost ? "border-red-500" : ""}`}
+                      placeholder="0.00"
+                    />
+                    {costErrors.actualCost && <p className="text-xs text-red-500">{costErrors.actualCost}</p>}
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "ساعات العمل" : "Labor Hours"}</label>
-                    <input type="number" value={laborHours} onChange={(e) => setLaborHours(e.target.value)} className={inputClass} placeholder="0" />
+                    <input
+                      type="number"
+                      value={laborHours}
+                      onChange={(e) => { setLaborHours(e.target.value); setCostErrors((prev) => { const n = { ...prev }; delete n.laborHours; return n; }); }}
+                      className={`${inputClass} ${costErrors.laborHours ? "border-red-500" : ""}`}
+                      placeholder="0"
+                    />
+                    {costErrors.laborHours && <p className="text-xs text-red-500">{costErrors.laborHours}</p>}
                   </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-muted-foreground">{lang === "ar" ? "ملاحظات" : "Notes"}</label>
                   <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className={`${inputClass} h-16 py-2`} />
                 </div>
-                <Button size="sm" onClick={handleSaveCost} disabled={saving} className="gap-2">
+                <Button size="sm" onClick={handleSaveCost} disabled={saving} className="gap-2" style={{ display: "inline-flex" }}>
                   {saving && <Loader2 className="h-3 w-3 animate-spin" />}
                   {lang === "ar" ? "حفظ" : "Save"}
                 </Button>

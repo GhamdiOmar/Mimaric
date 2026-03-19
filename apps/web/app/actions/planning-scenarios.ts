@@ -18,7 +18,7 @@ export async function createPlanningScenario(data: {
     where: { id: data.workspaceId, organizationId: orgId },
     include: { _count: { select: { scenarios: true } } },
   });
-  if (!workspace) throw new Error("Planning workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access. Please refresh and try again.");
 
   // Auto-increment version
   const version = workspace._count.scenarios + 1;
@@ -78,7 +78,7 @@ export async function duplicateScenario(scenarioId: string, newName: string, new
       workspace: { include: { _count: { select: { scenarios: true } } } },
     },
   });
-  if (!source) throw new Error("Scenario not found");
+  if (!source) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   const nextVersion = source.workspace._count.scenarios + 1;
 
@@ -231,7 +231,7 @@ export async function updateScenarioStatus(
     where: { id: scenarioId, organizationId: orgId },
     include: { workspace: true },
   });
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   // G12: Compliance gate — block approval if compliance failures exist
   if (status === "APPROVED") {
@@ -240,8 +240,8 @@ export async function updateScenarioStatus(
     });
     if (failedResults > 0) {
       throw new Error(
-        `Cannot approve scenario with ${failedResults} compliance failure(s). ` +
-        `Run compliance check and resolve all issues first.`
+        `This scenario has ${failedResults} compliance issue(s) that must be resolved before approval. ` +
+        `Please run a compliance check and fix all issues first.`
       );
     }
   }
@@ -299,7 +299,7 @@ export async function setScenarioAsBaseline(scenarioId: string) {
   const scenario = await db.planningScenario.findFirst({
     where: { id: scenarioId, organizationId: orgId },
   });
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   // Clear existing baseline in workspace
   await db.planningScenario.updateMany({
@@ -323,7 +323,7 @@ export async function deleteScenario(scenarioId: string) {
   const scenario = await db.planningScenario.findFirst({
     where: { id: scenarioId, organizationId: orgId },
   });
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   // Delete linked subdivision plan if exists
   if (scenario.subdivisionPlanId) {
@@ -353,7 +353,7 @@ export async function recalculateScenarioMetrics(scenarioId: string) {
       feasibilitySet: true,
     },
   });
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   const sp = scenario.subdivisionPlan;
   if (!sp) return null;

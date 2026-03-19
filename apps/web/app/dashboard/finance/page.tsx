@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { TrendingUp, AlertTriangle, Receipt, CircleDollarSign, Wrench, MapPin, Building2, Package, Vault, Coins, Loader2, FileDown, BarChart3, Zap } from "lucide-react";
+import { TrendingUp, AlertTriangle, Receipt, CircleDollarSign, Wrench, MapPin, Building2, Package, Vault, Coins, Loader2, FileDown, BarChart3, Zap, X } from "lucide-react";
 import { KPICard, SARAmount, PageIntro, Button, Card, CardHeader, CardTitle, CardContent, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { getFinanceStats, getMaintenanceCostSummary, getUnitRevenueBreakdown, getLandInvestmentSummary, getOffPlanRevenueSummary } from "../../actions/finance";
+import { exportToExcel } from "../../../lib/export";
 
 const categoryLabels: Record<string, { ar: string; en: string }> = {
   HVAC: { ar: "تكييف", en: "HVAC" },
@@ -28,6 +29,8 @@ export default function FinancePage() {
   const [landInvestment, setLandInvestment] = React.useState<any>(null);
   const [offPlanRevenue, setOffPlanRevenue] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [exporting, setExporting] = React.useState(false);
 
   React.useEffect(() => {
     Promise.all([
@@ -44,9 +47,64 @@ export default function FinancePage() {
         setLandInvestment(li);
         setOffPlanRevenue(opr);
       })
-      .catch(console.error)
+      .catch(() => {
+        setError(lang === "ar" ? "فشل تحميل البيانات المالية" : "Failed to load finance data");
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  const handleExportReport = async () => {
+    if (!stats) return;
+    setExporting(true);
+    try {
+      const columns = [
+        { header: lang === "ar" ? "القسم" : "Module", key: "module", width: 25 },
+        { header: lang === "ar" ? "الإيرادات" : "Revenue", key: "revenue", width: 20 },
+        { header: lang === "ar" ? "التكاليف" : "Costs", key: "costs", width: 20 },
+        { header: lang === "ar" ? "الصافي" : "Net", key: "net", width: 20 },
+        { header: lang === "ar" ? "نسبة الإشغال %" : "Occupancy %", key: "occupancy", width: 15 },
+      ];
+      const data = [
+        {
+          module: lang === "ar" ? "الإيجارات" : "Rentals",
+          revenue: stats.totalRentRevenue ?? 0,
+          costs: maintenanceCosts?.totalActual ?? 0,
+          net: (stats.totalRentRevenue ?? 0) - (maintenanceCosts?.totalActual ?? 0),
+          occupancy: stats.collectionRate ?? "—",
+        },
+        {
+          module: lang === "ar" ? "المبيعات" : "Sales",
+          revenue: stats.totalSaleRevenue ?? 0,
+          costs: 0,
+          net: stats.totalSaleRevenue ?? 0,
+          occupancy: "—",
+        },
+        {
+          module: lang === "ar" ? "على الخارطة" : "Off-Plan",
+          revenue: offPlanRevenue?.soldValue ?? 0,
+          costs: 0,
+          net: offPlanRevenue?.soldValue ?? 0,
+          occupancy: offPlanRevenue?.conversionRate ? `${offPlanRevenue.conversionRate}%` : "—",
+        },
+        {
+          module: lang === "ar" ? "استثمارات الأراضي" : "Land Investments",
+          revenue: landInvestment?.totalEstimatedValue ?? 0,
+          costs: landInvestment?.totalAcquisitionCost ?? 0,
+          net: landInvestment?.unrealizedGainLoss ?? 0,
+          occupancy: "—",
+        },
+      ];
+      await exportToExcel({
+        data,
+        columns,
+        filename: "Mimaric_Finance_Report",
+        lang,
+        title: lang === "ar" ? "التقرير المالي التنفيذي" : "Executive Finance Report",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -57,12 +115,25 @@ export default function FinancePage() {
           : "Executive finance command view. Manage invoicing, collections, and VAT compliance with full operational clarity."}
         actions={
           <>
-            <Button variant="primary" size="sm"><FileDown className="h-3.5 w-3.5" /> {lang === "ar" ? "تصدير التقرير التنفيذي" : "Export Report"}</Button>
-            <Button variant="outline" size="sm"><BarChart3 className="h-3.5 w-3.5" /> {lang === "ar" ? "عرض التدفقات النقدية" : "Cash Flows"}</Button>
-            <Button variant="outline" size="sm"><Zap className="h-3.5 w-3.5" /> {lang === "ar" ? "الفوترة الإلكترونية" : "E-Invoicing"}</Button>
+            <Button variant="primary" size="sm" style={{ display: "inline-flex" }} className="gap-1.5" disabled={exporting || loading} onClick={handleExportReport}>
+              {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+              {lang === "ar" ? "تصدير التقرير التنفيذي" : "Export Report"}
+            </Button>
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }} className="gap-1.5 opacity-50 cursor-not-allowed" disabled title={lang === "ar" ? "قريباً" : "Coming soon"}><BarChart3 className="h-3.5 w-3.5" /> {lang === "ar" ? "عرض التدفقات النقدية" : "Cash Flows"}</Button>
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }} className="gap-1.5 opacity-50 cursor-not-allowed" disabled title={lang === "ar" ? "قريباً" : "Coming soon"}><Zap className="h-3.5 w-3.5" /> {lang === "ar" ? "الفوترة الإلكترونية" : "E-Invoicing"}</Button>
           </>
         }
       />
+
+      {/* Error Display */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

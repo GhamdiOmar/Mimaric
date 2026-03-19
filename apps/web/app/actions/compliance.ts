@@ -19,8 +19,8 @@ export async function runComplianceCheck(scenarioId: string) {
       workspace: true,
     },
   });
-  if (!scenario) throw new Error("Scenario not found");
-  if (!scenario.subdivisionPlan) throw new Error("Scenario has no subdivision plan");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
+  if (!scenario.subdivisionPlan) throw new Error("This scenario does not have a subdivision plan. Please create a subdivision plan first.");
 
   // Get applicable rules
   const rules = await db.ruleTemplate.findMany({

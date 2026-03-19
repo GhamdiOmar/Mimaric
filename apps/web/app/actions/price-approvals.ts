@@ -25,12 +25,12 @@ export async function createPriceChangeRequest(data: {
     const item = await db.inventoryItem.findFirst({
       where: { id: data.inventoryItemId, organizationId: session.organizationId },
     });
-    if (!item) throw new Error("Inventory item not found");
+    if (!item) throw new Error("Inventory item not found. Please refresh the page and try again.");
     currentPrice = Number(item.finalPriceSar ?? item.basePriceSar ?? 0);
   }
 
   if (currentPrice === 0) {
-    throw new Error("Current price must be greater than zero");
+    throw new Error("The current price must be greater than zero to request a price change.");
   }
 
   const variancePct = ((data.proposedPrice - currentPrice) / currentPrice) * 100;
@@ -77,10 +77,10 @@ export async function reviewPriceChangeRequest(
   const request = await db.priceChangeRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId },
   });
-  if (!request) throw new Error("Price change request not found");
+  if (!request) throw new Error("Price change request not found. Please refresh and try again.");
 
   if (request.status !== "PENDING_PRICE_CHANGE" && request.status !== "ESCALATED_PRICE_CHANGE") {
-    throw new Error("Request is not pending review");
+    throw new Error("This request has already been reviewed and is no longer pending.");
   }
 
   const updated = await db.priceChangeRequest.update({
@@ -126,7 +126,7 @@ export async function escalatePriceChangeRequest(requestId: string, escalatedTo:
   const request = await db.priceChangeRequest.findFirst({
     where: { id: requestId, organizationId: session.organizationId },
   });
-  if (!request) throw new Error("Price change request not found");
+  if (!request) throw new Error("Price change request not found. Please refresh and try again.");
 
   const updated = await db.priceChangeRequest.update({
     where: { id: requestId },
@@ -227,10 +227,10 @@ export async function approvePriceListVersion(versionId: string) {
   const version = await db.priceListVersion.findFirst({
     where: { id: versionId, organizationId: session.organizationId },
   });
-  if (!version) throw new Error("Price list version not found");
+  if (!version) throw new Error("Price list version not found. Please refresh and try again.");
 
   if (version.status !== "DRAFT_PRICE_LIST" && version.status !== "PENDING_PRICE_APPROVAL") {
-    throw new Error("Version is not pending approval");
+    throw new Error("This version has already been reviewed and is no longer pending approval.");
   }
 
   // Supersede previous approved versions for same project
@@ -277,7 +277,7 @@ export async function comparePriceListVersions(versionId1: string, versionId2: s
     }),
   ]);
 
-  if (!v1 || !v2) throw new Error("Version not found");
+  if (!v1 || !v2) throw new Error("One or both price list versions were not found. Please refresh and try again.");
 
   const snap1 = (v1.snapshot as any[]) ?? [];
   const snap2 = (v2.snapshot as any[]) ?? [];

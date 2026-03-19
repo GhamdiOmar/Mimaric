@@ -7,7 +7,7 @@ async function verifyProjectAccess(projectId: string, orgId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return project;
 }
 
@@ -88,7 +88,7 @@ export async function updateWafiContract(
     include: { project: { select: { organizationId: true } } },
   });
   if (!existing || existing.project.organizationId !== session.organizationId) {
-    throw new Error("Wafi contract not found");
+    throw new Error("Wafi contract not found or you don't have access. Please refresh and try again.");
   }
 
   const updated = await db.wafiContract.update({
@@ -195,10 +195,10 @@ export async function generateMilestoneBilling(milestoneId: string) {
     include: { project: { select: { id: true, organizationId: true } } },
   });
   if (!milestone || milestone.project.organizationId !== session.organizationId) {
-    throw new Error("Milestone not found");
+    throw new Error("Milestone not found. Please refresh and try again.");
   }
   if (milestone.status !== "CERTIFIED") {
-    throw new Error("Milestone must be certified before generating billing");
+    throw new Error("This milestone must be certified by an engineer before billing can be generated.");
   }
 
   // Get all Wafi contracts for this project

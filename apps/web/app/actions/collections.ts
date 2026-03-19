@@ -60,7 +60,7 @@ export async function createCollectionCase(contractId: string) {
     where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
     include: { paymentPlan: { include: { installments: true } } },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   // Calculate outstanding from overdue installments
   const now = new Date();
@@ -110,7 +110,7 @@ export async function getCollectionCaseDetail(caseId: string) {
       activities: { orderBy: { createdAt: "desc" } },
     },
   });
-  if (!collectionCase) throw new Error("Collection case not found");
+  if (!collectionCase) throw new Error("Collection case not found or you don't have access. Please refresh and try again.");
 
   return JSON.parse(JSON.stringify(collectionCase));
 }
@@ -121,7 +121,7 @@ export async function assignCollectionOfficer(caseId: string, userId: string) {
   const existing = await db.collectionCase.findFirst({
     where: { id: caseId, organizationId: session.organizationId },
   });
-  if (!existing) throw new Error("Collection case not found");
+  if (!existing) throw new Error("Collection case not found or you don't have access. Please refresh and try again.");
 
   const updated = await db.collectionCase.update({
     where: { id: caseId },
@@ -153,7 +153,7 @@ export async function logCollectionActivity(
   const collectionCase = await db.collectionCase.findFirst({
     where: { id: caseId, organizationId: session.organizationId },
   });
-  if (!collectionCase) throw new Error("Collection case not found");
+  if (!collectionCase) throw new Error("Collection case not found or you don't have access. Please refresh and try again.");
 
   const activity = await db.collectionActivity.create({
     data: {
@@ -187,11 +187,11 @@ export async function updateCollectionStatus(caseId: string, status: string) {
   const collectionCase = await db.collectionCase.findFirst({
     where: { id: caseId, organizationId: session.organizationId },
   });
-  if (!collectionCase) throw new Error("Collection case not found");
+  if (!collectionCase) throw new Error("Collection case not found or you don't have access. Please refresh and try again.");
 
   const allowed = COLLECTION_TRANSITIONS[collectionCase.status] ?? [];
   if (!allowed.includes(status)) {
-    throw new Error(`Cannot transition from '${collectionCase.status}' to '${status}'`);
+    throw new Error("This status change is not allowed from the current collection case status. Please check the allowed workflow transitions.");
   }
 
   const escalationLevel = status === "ESCALATED"
@@ -268,7 +268,7 @@ export async function getContractFinancialStatement(contractId: string) {
       paymentPlan: { include: { installments: { orderBy: { dueDate: "asc" } } } },
     },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   const ledger: Array<{
     date: string;

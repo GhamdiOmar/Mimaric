@@ -13,7 +13,7 @@ export async function getInventoryItems(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const items = await db.inventoryItem.findMany({
     where: { projectId },
@@ -43,7 +43,7 @@ export async function createInventoryItem(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const item = await db.inventoryItem.create({
     data: {
@@ -91,7 +91,7 @@ export async function updateInventoryItem(
   const existing = await db.inventoryItem.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Inventory item not found");
+  if (!existing) throw new Error("Inventory item not found. Please refresh the page and try again.");
 
   const updated = await db.inventoryItem.update({
     where: { id },
@@ -122,11 +122,11 @@ export async function deleteInventoryItem(id: string) {
   const existing = await db.inventoryItem.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Inventory item not found");
+  if (!existing) throw new Error("Inventory item not found. Please refresh the page and try again.");
 
   // Only allow deleting unreleased items
   if (existing.status !== "UNRELEASED") {
-    throw new Error("Can only delete unreleased inventory items");
+    throw new Error("Only unreleased inventory items can be deleted. Please withdraw or remove the item from sale first.");
   }
 
   await db.inventoryItem.delete({ where: { id } });
@@ -145,7 +145,7 @@ export async function generateInventoryFromPlots(
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Get all plots from the subdivision plan
   const plots = await db.plot.findMany({
@@ -153,7 +153,7 @@ export async function generateInventoryFromPlots(
     orderBy: { plotNumber: "asc" },
   });
 
-  if (plots.length === 0) throw new Error("No plots found in subdivision plan");
+  if (plots.length === 0) throw new Error("No plots were found in the selected subdivision plan. Please add plots to the plan first.");
 
   // Check for existing inventory items to avoid duplicates
   const existingItems = await db.inventoryItem.findMany({
@@ -306,7 +306,7 @@ export async function updateReleaseStatus(
   const item = await db.inventoryItem.findFirst({
     where: { id: itemId, organizationId: session.organizationId },
   });
-  if (!item) throw new Error("Inventory item not found");
+  if (!item) throw new Error("Inventory item not found. Please refresh the page and try again.");
 
   const updated = await db.inventoryItem.update({
     where: { id: itemId },
@@ -335,7 +335,7 @@ export async function setMinimumSellPrice(itemId: string, minimumSellPrice: numb
   const item = await db.inventoryItem.findFirst({
     where: { id: itemId, organizationId: session.organizationId },
   });
-  if (!item) throw new Error("Inventory item not found");
+  if (!item) throw new Error("Inventory item not found. Please refresh the page and try again.");
 
   const updated = await db.inventoryItem.update({
     where: { id: itemId },
@@ -370,7 +370,7 @@ export async function bulkImportInventory(
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const results: { imported: number; errors: Array<{ row: number; error: string }> } = {
     imported: 0,

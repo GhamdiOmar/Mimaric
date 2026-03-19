@@ -53,7 +53,7 @@ function KPICard({
       <div
         className={cn(
           "rounded-lg border border-border bg-card shadow-card",
-          compact ? "p-4" : "p-5",
+          compact ? "p-4" : "p-6",
           className
         )}
         {...props}
@@ -76,7 +76,7 @@ function KPICard({
       className={cn(
         "rounded-lg border border-border bg-card shadow-card border-s-4 transition-shadow duration-200 hover:shadow-elevation-1",
         borderColorMap[accentColor] || borderColorMap.primary,
-        compact ? "p-4" : "p-5",
+        compact ? "p-4" : "p-6",
         className
       )}
       {...props}

@@ -43,7 +43,7 @@ export async function getParcelSchedule(scenarioId: string) {
     },
   });
 
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   const siteMeta = parseSiteMetadata(scenario.workspace.siteMetadata);
 
@@ -161,7 +161,7 @@ export async function getScenarioComparisonExport(workspaceId: string) {
     },
   });
 
-  if (!workspace) throw new Error("Workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access.");
 
   const siteMeta = parseSiteMetadata(workspace.siteMetadata);
 
@@ -226,7 +226,7 @@ export async function getFeasibilityExport(scenarioId: string) {
     },
   });
 
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   const siteMeta = parseSiteMetadata(scenario.workspace.siteMetadata);
   const f = scenario.feasibilitySet;
@@ -294,7 +294,7 @@ export async function getComplianceExport(scenarioId: string) {
     include: { workspace: { select: { name: true } } },
   });
 
-  if (!scenario) throw new Error("Scenario not found");
+  if (!scenario) throw new Error("Planning scenario not found. Please refresh and try again.");
 
   const results = await db.complianceResult.findMany({
     where: { scenarioId },

@@ -10,7 +10,7 @@ export async function getFeasibilityAssessments(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const assessments = await db.feasibilityAssessment.findMany({
     where: { projectId },
@@ -35,7 +35,7 @@ export async function createFeasibilityAssessment(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const assessment = await db.feasibilityAssessment.create({
     data: {
@@ -74,7 +74,7 @@ export async function updateFeasibilityAssessment(
   const existing = await db.feasibilityAssessment.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Assessment not found");
+  if (!existing) throw new Error("Feasibility assessment not found. Please refresh and try again.");
 
   const updated = await db.feasibilityAssessment.update({
     where: { id },
@@ -102,7 +102,7 @@ export async function deleteFeasibilityAssessment(id: string) {
   const existing = await db.feasibilityAssessment.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Assessment not found");
+  if (!existing) throw new Error("Feasibility assessment not found. Please refresh and try again.");
 
   await db.feasibilityAssessment.delete({ where: { id } });
 
@@ -162,7 +162,7 @@ export async function getSuitabilityScore(projectId: string) {
     where: { id: projectId, organizationId: orgId },
     select: { suitabilityScore: true },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   return project.suitabilityScore;
 }

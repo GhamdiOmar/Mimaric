@@ -9,6 +9,7 @@ import {
   Check,
   X,
 } from "lucide-react";
+import { Button } from "@repo/ui";
 import { t as translations } from "../translations";
 import type { LucideIcon } from "lucide-react";
 
@@ -134,27 +135,31 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
           >
             {t.monthly}
           </span>
-          <button
-            onClick={() => setAnnual(!annual)}
-            className={`relative h-6 w-11 rounded-full transition-colors ${
-              annual ? "bg-primary" : "bg-muted-foreground/30"
-            }`}
+          <Button
+            asChild
             style={{ display: "inline-flex" }}
-            aria-pressed={annual}
-            type="button"
           >
-            <span
-              className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
-                annual
-                  ? lang === "ar"
-                    ? "-translate-x-[1.25rem]"
-                    : "translate-x-[1.25rem]"
-                  : lang === "ar"
-                    ? "-translate-x-0.5"
-                    : "translate-x-0.5"
+            <button
+              onClick={() => setAnnual(!annual)}
+              className={`relative h-6 w-11 rounded-full transition-colors ${
+                annual ? "bg-primary" : "bg-muted-foreground/30"
               }`}
-            />
-          </button>
+              aria-pressed={annual}
+              type="button"
+            >
+              <span
+                className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform ${
+                  annual
+                    ? lang === "ar"
+                      ? "-translate-x-[1.25rem]"
+                      : "translate-x-[1.25rem]"
+                    : lang === "ar"
+                      ? "-translate-x-0.5"
+                      : "translate-x-0.5"
+                }`}
+              />
+            </button>
+          </Button>
           <span
             className={`text-sm font-medium ${annual ? "text-primary dark:text-white" : "text-muted-foreground"}`}
           >
@@ -224,8 +229,8 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
                 </div>
 
                 {/* CTA */}
-                <Link
-                  href={plan.ctaHref}
+                <Button
+                  asChild
                   className={`mt-5 block w-full rounded-lg py-2.5 text-center text-sm font-semibold transition-colors ${
                     plan.highlighted
                       ? "bg-primary text-white hover:bg-primary/85"
@@ -233,8 +238,10 @@ export default function Pricing({ lang }: { lang: "ar" | "en" }) {
                   }`}
                   style={{ display: "inline-flex", justifyContent: "center" }}
                 >
-                  {plan.cta}
-                </Link>
+                  <Link href={plan.ctaHref}>
+                    {plan.cta}
+                  </Link>
+                </Button>
 
                 {/* Limits */}
                 <div className="mt-5 space-y-1.5 border-t border-border pt-5">

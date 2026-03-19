@@ -45,6 +45,12 @@ import {
   FilterBar,
   StatusBadge,
   KPICard,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -93,25 +99,23 @@ const invStatusConfig: Record<
   AVAILABLE_INV: {
     ar: "متاح",
     en: "Available",
-    color: "bg-secondary/15 text-secondary",
+    color: "bg-success/10 text-success",
   },
   RESERVED_INV: {
     ar: "محجوز",
     en: "Reserved",
-    color:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    color: "bg-primary/10 text-primary",
   },
-  SOLD_INV: { ar: "مباع", en: "Sold", color: "bg-info/15 text-info" },
+  SOLD_INV: { ar: "مباع", en: "Sold", color: "bg-muted text-muted-foreground" },
   HELD_INV: {
     ar: "محتجز",
     en: "Held",
-    color:
-      "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+    color: "bg-muted text-muted-foreground",
   },
   WITHDRAWN: {
     ar: "مسحوب",
     en: "Withdrawn",
-    color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    color: "bg-destructive/10 text-destructive",
   },
 };
 
@@ -165,6 +169,13 @@ function AdvancedUnitMatrixPage() {
     rentalPrice: "",
     status: "AVAILABLE",
   });
+
+  // Error state for inline error display
+  const [error, setError] = React.useState<string | null>(null);
+  // Confirm delete dialog state
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  // Deleting state (separate from updating for granularity)
+  const [deleting, setDeleting] = React.useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = React.useState<"units" | "inventory">(
@@ -277,11 +288,12 @@ function AdvancedUnitMatrixPage() {
   };
 
   const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (!newStatus) return;
     setUpdating(true);
+    setError(null);
     try {
       const updates = selectedUnits.map((id) => ({ id, status: newStatus }));
       await massUpdateUnits(updates);
-      // Refresh local state
       setUnits(
         units.map((u) =>
           u && selectedUnits.includes(u.id) ? { ...u, status: newStatus } : u
@@ -289,7 +301,7 @@ function AdvancedUnitMatrixPage() {
       );
       setSelectedUnits([]);
     } catch (err) {
-      alert("Failed to update units");
+      setError(lang === "ar" ? "فشل تحديث حالة الوحدات" : "Failed to update units");
     } finally {
       setUpdating(false);
     }
@@ -322,7 +334,7 @@ function AdvancedUnitMatrixPage() {
         status: "AVAILABLE",
       });
     } catch (err) {
-      alert("Failed to create unit");
+      setError(lang === "ar" ? "فشل إنشاء الوحدة" : "Failed to create unit");
     } finally {
       setUpdating(false);
     }
@@ -348,32 +360,30 @@ function AdvancedUnitMatrixPage() {
       setShowPriceModal(false);
       setBulkPrice("");
     } catch (err) {
-      alert("Failed to update price");
+      setError(lang === "ar" ? "فشل تحديث السعر" : "Failed to update price");
     } finally {
       setUpdating(false);
     }
   };
 
   const handleBulkDelete = async () => {
-    const count = selectedUnits.length;
-    const msg =
-      lang === "ar"
-        ? `هل أنت متأكد من حذف ${count} وحدة؟ لا يمكن التراجع عن هذا الإجراء.`
-        : `Are you sure you want to delete ${count} unit(s)? This action cannot be undone.`;
-    if (!confirm(msg)) return;
-    setUpdating(true);
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setDeleting(true);
+    setError(null);
     try {
       for (const id of selectedUnits) {
         await deleteUnit(id);
       }
       setUnits(units.filter((u) => !selectedUnits.includes(u.id)));
       setSelectedUnits([]);
+      setShowDeleteConfirm(false);
     } catch (err) {
-      alert(
-        lang === "ar" ? "فشل حذف بعض الوحدات" : "Failed to delete some units"
-      );
+      setError(lang === "ar" ? "فشل حذف بعض الوحدات" : "Failed to delete some units");
     } finally {
-      setUpdating(false);
+      setDeleting(false);
     }
   };
 
@@ -432,6 +442,16 @@ function AdvancedUnitMatrixPage() {
           </>
         }
       />
+
+      {/* Inline Error Display */}
+      {error && (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -505,10 +525,11 @@ function AdvancedUnitMatrixPage() {
               </div>
 
               <div className="flex items-center gap-4">
+                {updating && <Loader2 className="h-4 w-4 animate-spin text-white" />}
                 <select
                   onChange={(e) => handleBulkStatusUpdate(e.target.value)}
-                  disabled={updating}
-                  className="bg-secondary/80 hover:bg-secondary text-white text-xs font-bold rounded-md px-3 py-2 outline-none border-none cursor-pointer"
+                  disabled={updating || deleting}
+                  className="bg-secondary/80 hover:bg-secondary text-white text-xs font-bold rounded-md px-3 py-2 outline-none border-none cursor-pointer disabled:opacity-50"
                 >
                   <option value="">
                     {lang === "ar" ? "تحديث الحالة" : "Update Status"}
@@ -537,9 +558,9 @@ function AdvancedUnitMatrixPage() {
                   style={{ display: "inline-flex" }}
                   className="gap-2 bg-red-500/80 hover:bg-red-500 whitespace-nowrap"
                   onClick={handleBulkDelete}
-                  disabled={updating}
+                  disabled={updating || deleting}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                   {lang === "ar" ? "حذف" : "Delete"}
                 </Button>
               </div>
@@ -647,10 +668,10 @@ function AdvancedUnitMatrixPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 px-1">
             <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
               <span>{lang === "ar" ? "عرض" : "Showing"} <strong className="text-foreground">{filteredUnits.length}</strong> {lang === "ar" ? "وحدة" : "units"}</span>
-              <Badge variant="available" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">{unitStatusLabels.AVAILABLE?.[lang]} {statusCounts.available}</Badge>
-              <Badge variant="reserved" className="bg-amber-500/10 text-amber-500 border-amber-500/20">{unitStatusLabels.RESERVED?.[lang]} {statusCounts.reserved}</Badge>
-              <Badge variant="sold" className="bg-info/10 text-info border-info/20">{unitStatusLabels.SOLD?.[lang]}/{unitStatusLabels.RENTED?.[lang]} {statusCounts.sold + statusCounts.rented}</Badge>
-              <Badge variant="draft" className="bg-orange-500/10 text-orange-500 border-orange-500/20">{unitStatusLabels.MAINTENANCE?.[lang]} {statusCounts.maintenance}</Badge>
+              <Badge variant="available" className="bg-success/10 text-success border-success/20">{unitStatusLabels.AVAILABLE?.[lang]} {statusCounts.available}</Badge>
+              <Badge variant="reserved" className="bg-primary/10 text-primary border-primary/20">{unitStatusLabels.RESERVED?.[lang]} {statusCounts.reserved}</Badge>
+              <Badge variant="sold" className="bg-muted text-muted-foreground border-muted">{unitStatusLabels.SOLD?.[lang]}/{unitStatusLabels.RENTED?.[lang]} {statusCounts.sold + statusCounts.rented}</Badge>
+              <Badge variant="draft" className="bg-warning/10 text-warning border-warning/20">{unitStatusLabels.MAINTENANCE?.[lang]} {statusCounts.maintenance}</Badge>
             </div>
           </div>
 
@@ -1628,6 +1649,45 @@ function AdvancedUnitMatrixPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `هل أنت متأكد من حذف ${selectedUnits.length} وحدة؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete ${selectedUnits.length} unit(s)? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="danger"
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={confirmBulkDelete}
+              disabled={deleting}
+            >
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "حذف" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

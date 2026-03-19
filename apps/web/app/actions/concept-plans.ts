@@ -10,7 +10,7 @@ export async function getConceptPlans(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const plans = await db.conceptPlan.findMany({
     where: { projectId },
@@ -39,7 +39,7 @@ export async function createConceptPlan(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Get the next version number
   const existing = await db.conceptPlan.count({
@@ -91,7 +91,7 @@ export async function updateConceptPlan(
   const existing = await db.conceptPlan.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Concept plan not found");
+  if (!existing) throw new Error("Concept plan not found. Please refresh and try again.");
 
   const updated = await db.conceptPlan.update({
     where: { id },
@@ -120,7 +120,7 @@ export async function deleteConceptPlan(id: string) {
   const existing = await db.conceptPlan.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Concept plan not found");
+  if (!existing) throw new Error("Concept plan not found. Please refresh and try again.");
 
   await db.conceptPlan.delete({ where: { id } });
 }
@@ -136,7 +136,7 @@ export async function selectConceptPlan(id: string) {
   const plan = await db.conceptPlan.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!plan) throw new Error("Concept plan not found");
+  if (!plan) throw new Error("Concept plan not found. Please refresh and try again.");
 
   // Deselect all others for this project
   await db.conceptPlan.updateMany({

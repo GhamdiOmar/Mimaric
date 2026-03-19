@@ -23,6 +23,7 @@ export const navItems: NavItem[] = [
   { label: { ar: "المالية", en: "Finance" }, icon: "Receipt", href: "/dashboard/finance", section: "operations", permission: "finance:read" },
   { label: { ar: "الصيانة", en: "Maintenance" }, icon: "Wrench", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read" },
   { label: { ar: "التقارير", en: "Reports" }, icon: "FileText", href: "/dashboard/reports", section: "operations", permission: "reports:read" },
+  { label: { ar: "المستندات", en: "Documents" }, icon: "FolderOpen", href: "/dashboard/documents", section: "operations", permission: "documents:read" },
 
   // System
   { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "CreditCard", href: "/dashboard/billing", section: "system", permission: "billing:read" },

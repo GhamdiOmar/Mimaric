@@ -15,7 +15,7 @@ export async function getSiteLogs(
     where: { id: projectId, organizationId: orgId },
     select: { id: true },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const where: any = { projectId };
   if (filters?.type) where.type = filters.type;
@@ -44,7 +44,7 @@ export async function createSiteLog(data: {
     where: { id: data.projectId, organizationId: orgId },
     select: { id: true },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const log = await db.siteLog.create({
     data: {
@@ -69,7 +69,7 @@ export async function resolveSiteLog(id: string) {
     include: { project: { select: { organizationId: true } } },
   });
   if (!log || log.project.organizationId !== session.organizationId) {
-    throw new Error("Log not found");
+    throw new Error("Site log entry not found. Please refresh and try again.");
   }
 
   await db.siteLog.update({

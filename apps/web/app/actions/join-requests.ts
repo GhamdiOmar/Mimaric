@@ -40,7 +40,7 @@ export async function reviewJoinRequest(
   });
 
   if (!request) {
-    throw new Error("Request not found or already reviewed");
+    throw new Error("This request was not found or has already been reviewed. Please refresh the page.");
   }
 
   // Update the join request
@@ -120,7 +120,7 @@ export async function cancelJoinRequest(requestId: string) {
   });
 
   if (!request) {
-    throw new Error("Request not found or already processed");
+    throw new Error("This request was not found or has already been processed. Please refresh the page.");
   }
 
   await db.joinRequest.update({

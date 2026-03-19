@@ -12,7 +12,7 @@ export async function getInfrastructureItems(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const items = await db.infrastructureReadiness.findMany({
     where: { projectId },
@@ -40,7 +40,7 @@ export async function createInfrastructureItem(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const item = await db.infrastructureReadiness.create({
     data: {
@@ -82,7 +82,7 @@ export async function updateInfrastructureItem(
   const existing = await db.infrastructureReadiness.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Infrastructure item not found");
+  if (!existing) throw new Error("Infrastructure item not found. Please refresh and try again.");
 
   const updated = await db.infrastructureReadiness.update({
     where: { id },
@@ -110,7 +110,7 @@ export async function deleteInfrastructureItem(id: string) {
   const existing = await db.infrastructureReadiness.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Infrastructure item not found");
+  if (!existing) throw new Error("Infrastructure item not found. Please refresh and try again.");
 
   await db.infrastructureReadiness.delete({ where: { id } });
 }

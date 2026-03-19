@@ -22,7 +22,7 @@ export async function createReservation(data: {
   const customer = await db.customer.findFirst({
     where: { id: data.customerId, organizationId: session.organizationId },
   });
-  if (!customer) throw new Error("Customer not found");
+  if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   // RED: Duplicate check — prevent same customer + unit reservation
   const existingReservation = await db.reservation.findFirst({
@@ -33,7 +33,7 @@ export async function createReservation(data: {
     },
   });
   if (existingReservation) {
-    throw new Error("An active reservation already exists for this customer and unit");
+    throw new Error("This customer already has an active reservation for this unit. Please cancel the existing reservation first or choose a different unit.");
   }
 
   // RED: Race condition guard — use transaction with unit status check
@@ -44,10 +44,10 @@ export async function createReservation(data: {
       include: { building: { include: { project: true } } },
     });
     if (!unit || unit.building.project.organizationId !== session.organizationId) {
-      throw new Error("Unit not found");
+      throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
     }
     if (unit.status !== "AVAILABLE") {
-      throw new Error("Unit is no longer available for reservation");
+      throw new Error("This unit is no longer available for reservation. It may have been reserved or sold. Please select another unit.");
     }
 
     // RED: Release check for inventory items
@@ -56,7 +56,7 @@ export async function createReservation(data: {
         where: { id: data.inventoryItemId },
       });
       if (invItem && invItem.releaseStatus !== "RELEASED") {
-        throw new Error("Inventory item has not been released for sale");
+        throw new Error("This inventory item has not been released for sale yet. Please wait for the item to be released before reserving.");
       }
     }
 
@@ -135,7 +135,7 @@ export async function updateReservationStatus(
     include: { customer: true },
   });
   if (!reservation || reservation.customer.organizationId !== session.organizationId) {
-    throw new Error("Reservation not found");
+    throw new Error("Reservation not found or you don't have access. Please refresh the page and try again.");
   }
 
   const updated = await db.reservation.update({
@@ -194,11 +194,11 @@ export async function requestReservationExtension(
     include: { customer: true },
   });
   if (!reservation || reservation.customer.organizationId !== session.organizationId) {
-    throw new Error("Reservation not found");
+    throw new Error("Reservation not found or you don't have access. Please refresh the page and try again.");
   }
 
   if (reservation.extensionCount >= reservation.maxExtensions) {
-    throw new Error("Maximum number of extensions reached");
+    throw new Error("This reservation has reached the maximum number of allowed extensions. Please contact your administrator for assistance.");
   }
 
   const extension = await db.reservationExtension.create({
@@ -221,11 +221,11 @@ export async function approveReservationExtension(extensionId: string) {
     include: { reservation: { include: { customer: true } } },
   });
   if (!extension || extension.reservation.customer.organizationId !== session.organizationId) {
-    throw new Error("Extension not found");
+    throw new Error("Reservation extension not found or you don't have access. Please refresh and try again.");
   }
 
   if (extension.status !== "PENDING_EXTENSION") {
-    throw new Error("Extension is not pending");
+    throw new Error("This extension has already been processed and is no longer pending approval.");
   }
 
   await db.$transaction([

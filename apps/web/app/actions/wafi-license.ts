@@ -7,7 +7,7 @@ async function verifyProjectAccess(projectId: string, orgId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return project;
 }
 
@@ -64,7 +64,7 @@ export async function createWafiLicense(data: {
   const existing = await db.wafiLicense.findUnique({
     where: { projectId: data.projectId },
   });
-  if (existing) throw new Error("Wafi license already exists for this project");
+  if (existing) throw new Error("A Wafi license already exists for this project. Each project can only have one Wafi license.");
 
   const license = await db.wafiLicense.create({
     data: {
@@ -96,7 +96,7 @@ export async function updateWafiLicense(
   const license = await db.wafiLicense.findUnique({
     where: { projectId },
   });
-  if (!license) throw new Error("Wafi license not found");
+  if (!license) throw new Error("Wafi license not found for this project. Please create a license first.");
 
   const updated = await db.wafiLicense.update({
     where: { projectId },

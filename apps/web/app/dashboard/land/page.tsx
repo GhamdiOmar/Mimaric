@@ -2,11 +2,12 @@
 
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
-import { MapPin, Plus, Loader2, Search, Eye, Navigation, Download, LandPlot, FileCheck, DollarSign } from "lucide-react";
-import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Card, CardContent, KPICard, PageIntro, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
+import { MapPin, Plus, Loader2, Search, Eye, Navigation, Download, LandPlot, FileCheck, DollarSign, Trash2 } from "lucide-react";
+import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, KPICard, PageIntro, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import Link from "next/link";
-import { getLandParcels, createLandParcel } from "../../actions/land";
+import { getLandParcels, createLandParcel, deleteLandParcel } from "../../actions/land";
 import { formatDualDate } from "../../../lib/hijri";
+import { exportToExcel } from "../../../lib/export";
 import MapPicker from "../../../components/MapPicker";
 
 const statusConfig: Record<string, { label: { ar: string; en: string }; variant: string; className: string }> = {
@@ -31,6 +32,8 @@ export default function LandPage() {
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
   const [showModal, setShowModal] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   React.useEffect(() => { loadParcels(); }, []);
 
@@ -42,6 +45,41 @@ export default function LandPage() {
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteLandParcel(deleteTarget.id);
+      setDeleteTarget(null);
+      loadParcels();
+    } catch (e) { console.error(e); }
+    finally { setDeleting(false); }
+  }
+
+  const handleExport = async () => {
+    const columns = [
+      { header: lang === "ar" ? "الاسم" : "Name", key: "name", width: 25 },
+      { header: lang === "ar" ? "الموقع" : "Location", key: "location", width: 25, render: () => "" },
+      { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 20, render: (val: string) => statusConfig[val]?.label[lang] ?? val },
+      { header: lang === "ar" ? "المساحة (م²)" : "Area (sqm)", key: "areaSqm", width: 18, render: () => "" },
+      { header: lang === "ar" ? "درجة الملاءمة" : "Suitability Score", key: "suitabilityScore", width: 18, render: (val: number | null) => val != null ? `${val}%` : "—" },
+      { header: lang === "ar" ? "تاريخ الإنشاء" : "Created Date", key: "createdDate", width: 20 },
+    ];
+    const data = filtered.map((p: any) => ({
+      ...p,
+      location: [p.city, p.district].filter(Boolean).join(", ") || "—",
+      areaSqm: p.totalAreaSqm ? fmt(p.totalAreaSqm) : "—",
+      createdDate: new Date(p.createdAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-CA"),
+    }));
+    await exportToExcel({
+      data,
+      columns,
+      filename: "Mimaric_Land_Parcels",
+      lang,
+      title: lang === "ar" ? "الأراضي" : "Land Parcels",
+    });
+  };
 
   const filtered = parcels.filter((p) =>
     !search || p.name.includes(search) || p.deedNumber?.includes(search)
@@ -58,7 +96,7 @@ export default function LandPage() {
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "إضافة قطعة" : "Add Parcel"}
             </Button>
-            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}
             </Button>
@@ -160,11 +198,23 @@ export default function LandPage() {
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{formatDualDate(p.createdAt, lang)}</TableCell>
                     <TableCell>
-                      <Link href={`/dashboard/land/${p.id}`}>
-                        <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50">
-                          <Eye className="h-3.5 w-3.5" />{lang === "ar" ? "عرض" : "View"}
+                      <div className="flex items-center gap-1">
+                        <Link href={`/dashboard/land/${p.id}`}>
+                          <Button size="sm" variant="secondary" className="text-xs h-7 px-2 gap-1 hover:text-secondary hover:border-secondary/50" style={{ display: "inline-flex" }}>
+                            <Eye className="h-3.5 w-3.5" />{lang === "ar" ? "عرض" : "View"}
+                          </Button>
+                        </Link>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs h-7 px-2 gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          style={{ display: "inline-flex" }}
+                          onClick={() => setDeleteTarget({ id: p.id, name: p.name })}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          {lang === "ar" ? "حذف" : "Delete"}
                         </Button>
-                      </Link>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -177,6 +227,46 @@ export default function LandPage() {
       {/* Add Land Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <AddLandModal lang={lang} onClose={() => setShowModal(false)} onSuccess={() => { setShowModal(false); loadParcels(); }} />
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">
+              {lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `هل أنت متأكد من حذف "${deleteTarget?.name}"؟ سيتم حذف جميع البيانات المرتبطة بها نهائياً.`
+                : `Are you sure you want to delete "${deleteTarget?.name}"? All related data will be permanently removed.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleting}
+              style={{ display: "inline-flex" }}
+              className="gap-1"
+            >
+              {deleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+              {lang === "ar" ? "حذف" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );
@@ -233,7 +323,7 @@ function AddLandModal({ lang, onClose, onSuccess }: { lang: "ar" | "en"; onClose
             </div>
             <div>
               <label className="block text-xs font-bold text-muted-foreground mb-1">{lang === "ar" ? "الاستخدام" : "Land Use"}</label>
-              <select value={form.landUse} onChange={set("landUse")} className="w-full border border-border rounded-md px-3 py-2 text-sm bg-card">
+              <select value={form.landUse} onChange={set("landUse")} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                 <option value="">—</option>
                 <option value="RESIDENTIAL_LAND">سكني</option>
                 <option value="COMMERCIAL_LAND">تجاري</option>

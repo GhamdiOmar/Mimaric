@@ -33,7 +33,7 @@ export async function setupPostHandoverMaintenance(projectId: string) {
       },
     },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const allUnits = project.buildings.flatMap((b) => b.units);
   if (allUnits.length === 0) {

@@ -97,7 +97,7 @@ export async function getPricingAnalytics(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const items = await db.inventoryItem.findMany({
     where: { projectId, organizationId: orgId },
@@ -148,7 +148,7 @@ export async function getWavePerformance(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const waves = await db.launchWave.findMany({
     where: { projectId, organizationId: orgId },

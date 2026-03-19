@@ -8,6 +8,7 @@ import type { FilterOption } from "@repo/ui";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getProjects } from "../../actions/projects";
+import { exportToExcel } from "../../../lib/export";
 
 type Project = {
   id: string;
@@ -53,10 +54,10 @@ const typeLabels: Record<string, { ar: string; en: string }> = {
 };
 
 const typeColors: Record<string, string> = {
-  RESIDENTIAL: "bg-secondary/15 text-secondary",
-  COMMERCIAL: "bg-primary/15 text-primary",
-  MIXED_USE: "bg-amber-500/15 text-amber-700",
-  VILLA_COMPOUND: "bg-info/15 text-info",
+  RESIDENTIAL: "bg-primary/15 text-primary",
+  COMMERCIAL: "bg-info/15 text-info",
+  MIXED_USE: "bg-secondary/15 text-secondary",
+  VILLA_COMPOUND: "bg-muted text-muted-foreground",
 };
 
 export default function ProjectsPage() {
@@ -78,6 +79,29 @@ export default function ProjectsPage() {
     if (filter === "regular") return projects.filter((p) => !OFF_PLAN_STATUSES.includes(p.status));
     return projects;
   }, [projects, filter]);
+
+  const handleExport = async () => {
+    const columns = [
+      { header: lang === "ar" ? "الاسم" : "Name", key: "name", width: 25 },
+      { header: lang === "ar" ? "النوع" : "Type", key: "type", width: 20, render: (val: string) => typeLabels[val]?.[lang] ?? val },
+      { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 20, render: (val: string) => statusMap[val]?.[lang] ?? val },
+      { header: lang === "ar" ? "الموقع" : "Location", key: "location", width: 25, render: () => "" },
+      { header: lang === "ar" ? "عدد الوحدات" : "Units Count", key: "unitsCount", width: 15, render: () => "" },
+      { header: lang === "ar" ? "تاريخ الإنشاء" : "Created Date", key: "createdAt", width: 20 },
+    ];
+    const data = filteredProjects.map((p) => ({
+      ...p,
+      location: [p.district, p.city].filter(Boolean).join(", ") || "—",
+      unitsCount: p.buildings.reduce((sum, b) => sum + b.units.length, 0),
+    }));
+    await exportToExcel({
+      data,
+      columns,
+      filename: "Mimaric_Projects",
+      lang,
+      title: lang === "ar" ? "المشاريع العقارية" : "Real Estate Projects",
+    });
+  };
 
   const offPlanCount = projects.filter((p) => OFF_PLAN_STATUSES.includes(p.status)).length;
   const regularCount = projects.length - offPlanCount;
@@ -102,7 +126,7 @@ export default function ProjectsPage() {
                 <Plus className="h-4 w-4" /> {lang === "ar" ? "مشروع جديد" : "New Project"}
               </Button>
             </Link>
-            <Button variant="outline" size="sm" style={{ display: "inline-flex" }}>
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExport}>
               {lang === "ar" ? "تصدير" : "Export"}
             </Button>
           </>

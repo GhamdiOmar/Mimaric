@@ -61,14 +61,14 @@ export async function createContract(data: {
 
   // Validate amount
   if (!data.amount || data.amount <= 0 || !Number.isFinite(data.amount)) {
-    throw new Error("Amount must be a positive number");
+    throw new Error("Please enter a valid contract amount. The amount must be a positive number.");
   }
 
   // Verify customer belongs to org
   const customer = await db.customer.findFirst({
     where: { id: data.customerId, organizationId: session.organizationId },
   });
-  if (!customer) throw new Error("Customer not found");
+  if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   // Verify unit belongs to org
   const unit = await db.unit.findFirst({
@@ -76,7 +76,7 @@ export async function createContract(data: {
     include: { building: { include: { project: true } } },
   });
   if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    throw new Error("Unit not found");
+    throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   // Generate contract number
@@ -85,14 +85,14 @@ export async function createContract(data: {
   // Ejar validation for LEASE contracts
   if (data.type === "LEASE") {
     if (!data.startDate || !data.endDate) {
-      throw new Error("Start date and end date are required for lease contracts");
+      throw new Error("Start date and end date are required for lease contracts. Please provide both dates.");
     }
     if (!data.paymentFrequency) {
-      throw new Error("Payment frequency is required for lease contracts");
+      throw new Error("Payment frequency is required for lease contracts. Please select a payment schedule (monthly, quarterly, etc.).");
     }
     // Security deposit max 5% per Ejar
     if (data.securityDeposit && data.securityDeposit > data.amount * 0.05) {
-      throw new Error("Security deposit cannot exceed 5% of the total lease amount (Ejar regulation)");
+      throw new Error("The security deposit cannot exceed 5% of the total lease amount, as required by Ejar regulations. Please reduce the deposit amount.");
     }
     // Default auto-renewal for leases > 3 months
     const start = new Date(data.startDate);
@@ -206,7 +206,7 @@ export async function getContract(contractId: string) {
   });
 
   if (!contract || contract.customer.organizationId !== session.organizationId) {
-    throw new Error("Contract not found");
+    throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
   return JSON.parse(JSON.stringify(contract));
@@ -247,13 +247,13 @@ export async function updateContractStatus(
     include: { customer: true },
   });
   if (!contract || contract.customer.organizationId !== session.organizationId) {
-    throw new Error("Contract not found");
+    throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
   // Enforce state machine
   const allowed = VALID_TRANSITIONS[contract.status];
   if (!allowed || !allowed.includes(status)) {
-    throw new Error(`Cannot transition contract from ${contract.status} to ${status}`);
+    throw new Error(`This contract cannot be moved from its current status to the requested status. Please check the allowed workflow transitions.`);
   }
 
   const data: any = { status };
@@ -400,7 +400,7 @@ export async function deleteContract(contractId: string) {
     include: { customer: true },
   });
   if (!contract || contract.customer.organizationId !== session.organizationId) {
-    throw new Error("Contract not found");
+    throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
   // Only DRAFT contracts can be deleted
@@ -437,7 +437,7 @@ export async function updateContractAmounts(
   const contract = await db.contract.findFirst({
     where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   const discount = data.discountAmount ?? 0;
   const netAmount = data.grossAmount - discount;
@@ -474,7 +474,7 @@ export async function recordBuyerSignature(contractId: string, signatureUrl: str
   const contract = await db.contract.findFirst({
     where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   const updated = await db.contract.update({
     where: { id: contractId },
@@ -505,7 +505,7 @@ export async function recordDeveloperSignature(contractId: string, signatureUrl:
   const contract = await db.contract.findFirst({
     where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
   });
-  if (!contract) throw new Error("Contract not found");
+  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
   const updated = await db.contract.update({
     where: { id: contractId },

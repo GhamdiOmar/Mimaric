@@ -31,10 +31,10 @@ export async function convertBaselineToProject(workspaceId: string) {
     },
   });
 
-  if (!workspace) throw new Error("Workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access.");
 
   const baseline = workspace.scenarios[0];
-  if (!baseline) throw new Error("No approved baseline scenario found");
+  if (!baseline) throw new Error("No approved baseline scenario found. Please approve a scenario before converting.");
 
   const meta = workspace.siteMetadata as any || {};
   const sp = baseline.subdivisionPlan;

@@ -47,7 +47,7 @@ export async function paginatedQuery<T = any>(
 
   const prismaModel = (db as any)[model];
   if (!prismaModel) {
-    throw new Error(`Unknown Prisma model: ${model}`);
+    throw new Error("An unexpected error occurred while loading data. Please try again or contact support.");
   }
 
   const findArgs: any = {

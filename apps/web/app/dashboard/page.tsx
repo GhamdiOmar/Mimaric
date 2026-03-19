@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Building2, TrendingUp, FileText, Wrench } from "lucide-react";
-import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
+import { Building2, TrendingUp, FileText, Wrench, AlertTriangle } from "lucide-react";
+import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent, Button } from "@repo/ui";
 import { useLanguage } from "../../components/LanguageProvider";
 import { useSession } from "../../components/SimpleSessionProvider";
 import { getDashboardStats, getDashboardLandStats, getDashboardOffPlanStats } from "../actions/dashboard";
@@ -32,15 +32,27 @@ export default function DashboardPage() {
   const [offPlanStats, setOffPlanStats] = React.useState<any>(null);
   const [planningStats, setPlanningStats] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    getDashboardStats()
-      .then((data) => setStats(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  async function loadDashboard() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch (e) {
+      console.error(e);
+      setError(lang === "ar" ? "فشل تحميل بيانات لوحة المعلومات" : "Failed to load dashboard data");
+    } finally {
+      setLoading(false);
+    }
     getDashboardLandStats().then(setLandStats).catch(console.error);
     getDashboardOffPlanStats().then(setOffPlanStats).catch(console.error);
     getDashboardPlanningStats().then(setPlanningStats).catch(() => {});
+  }
+
+  React.useEffect(() => {
+    loadDashboard();
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
@@ -68,6 +80,17 @@ export default function DashboardPage() {
           })}
         </p>
       </div>
+
+      {/* Error State */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20">
+          <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+          <p className="text-sm text-red-700 dark:text-red-400 flex-1">{error}</p>
+          <Button variant="outline" size="sm" onClick={loadDashboard} style={{ display: "inline-flex" }}>
+            {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+          </Button>
+        </div>
+      )}
 
       {/* Primary KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

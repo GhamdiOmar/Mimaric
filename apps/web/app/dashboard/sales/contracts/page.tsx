@@ -44,6 +44,7 @@ import { getCustomers } from "../../../actions/customers";
 import { getUnitsWithBuildings } from "../../../actions/units";
 import { formatDualDate } from "../../../../lib/hijri";
 import { usePermissions } from "../../../../hooks/usePermissions";
+import { exportToExcel } from "../../../../lib/export";
 
 const statusLabels: Record<string, { ar: string; en: string }> = {
   DRAFT: { ar: "مسودة", en: "Draft" },
@@ -158,6 +159,23 @@ export default function ContractsPage() {
     }
   }
 
+  function handleExport() {
+    exportToExcel({
+      data: contracts,
+      filename: lang === "ar" ? "العقود" : "contracts",
+      title: lang === "ar" ? "تقرير العقود" : "Contracts Report",
+      lang,
+      columns: [
+        { header: lang === "ar" ? "العميل" : "Customer", key: "customer", width: 25, render: (val: any) => val?.name ?? "—" },
+        { header: lang === "ar" ? "الوحدة" : "Unit", key: "unit", width: 18, render: (val: any) => val?.number ?? "—" },
+        { header: lang === "ar" ? "النوع" : "Type", key: "type", width: 12, render: (val: string) => typeLabels[val]?.[lang] ?? val },
+        { header: lang === "ar" ? "المبلغ" : "Amount", key: "amount", width: 18, render: (val: number) => fmt(Number(val)) },
+        { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 15, render: (val: string) => statusLabels[val]?.[lang] ?? val },
+        { header: lang === "ar" ? "التاريخ" : "Date", key: "createdAt", width: 18, render: (val: string) => val ? new Date(val).toLocaleDateString("en-SA") : "—" },
+      ],
+    });
+  }
+
   // Auto-fill amount when unit is selected
   const selectedUnit = units.find((u: any) => u.id === newContract.unitId);
   React.useEffect(() => {
@@ -188,7 +206,7 @@ export default function ContractsPage() {
                 {lang === "ar" ? "عقد جديد" : "New Contract"}
               </Button>
             )}
-            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}
             </Button>
@@ -213,7 +231,7 @@ export default function ContractsPage() {
               <select
                 value={newContract.type}
                 onChange={(e) => setNewContract({ ...newContract, type: e.target.value as any })}
-                className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
               >
                 <option value="SALE">{lang === "ar" ? "بيع" : "Sale"}</option>
                 <option value="LEASE">{lang === "ar" ? "إيجار" : "Lease"}</option>
@@ -226,7 +244,7 @@ export default function ContractsPage() {
               <select
                 value={newContract.customerId}
                 onChange={(e) => setNewContract({ ...newContract, customerId: e.target.value })}
-                className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
               >
                 <option value="">{lang === "ar" ? "-- اختر العميل --" : "-- Select Customer --"}</option>
                 {customers.map((c: any) => (
@@ -241,7 +259,7 @@ export default function ContractsPage() {
               <select
                 value={newContract.unitId}
                 onChange={(e) => setNewContract({ ...newContract, unitId: e.target.value })}
-                className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
               >
                 <option value="">{lang === "ar" ? "-- اختر الوحدة --" : "-- Select Unit --"}</option>
                 {units.map((u: any) => (
@@ -279,7 +297,7 @@ export default function ContractsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">{lang === "ar" ? "دورية الدفع" : "Payment Frequency"}</label>
-                    <select value={newContract.paymentFrequency} onChange={(e) => setNewContract({ ...newContract, paymentFrequency: e.target.value })} className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors">
+                    <select value={newContract.paymentFrequency} onChange={(e) => setNewContract({ ...newContract, paymentFrequency: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors">
                       <option value="MONTHLY">{lang === "ar" ? "شهري" : "Monthly"}</option>
                       <option value="QUARTERLY">{lang === "ar" ? "ربع سنوي" : "Quarterly"}</option>
                       <option value="SEMI_ANNUAL">{lang === "ar" ? "نصف سنوي" : "Semi-Annual"}</option>
@@ -294,14 +312,14 @@ export default function ContractsPage() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">{lang === "ar" ? "التجديد التلقائي" : "Auto-Renewal"}</label>
-                    <select value={newContract.autoRenewal ? "true" : "false"} onChange={(e) => setNewContract({ ...newContract, autoRenewal: e.target.value === "true" })} className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors">
+                    <select value={newContract.autoRenewal ? "true" : "false"} onChange={(e) => setNewContract({ ...newContract, autoRenewal: e.target.value === "true" })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors">
                       <option value="true">{lang === "ar" ? "نعم" : "Yes"}</option>
                       <option value="false">{lang === "ar" ? "لا" : "No"}</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-foreground">{lang === "ar" ? "مسؤولية الصيانة" : "Maintenance"}</label>
-                    <select value={newContract.maintenanceResponsibility} onChange={(e) => setNewContract({ ...newContract, maintenanceResponsibility: e.target.value })} className="w-full h-10 px-3 bg-background border border-input rounded-md text-sm outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-colors">
+                    <select value={newContract.maintenanceResponsibility} onChange={(e) => setNewContract({ ...newContract, maintenanceResponsibility: e.target.value })} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors">
                       <option value="LANDLORD">{lang === "ar" ? "المؤجر" : "Landlord"}</option>
                       <option value="TENANT">{lang === "ar" ? "المستأجر" : "Tenant"}</option>
                     </select>

@@ -7,7 +7,7 @@ async function verifyProjectAccess(projectId: string, orgId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return project;
 }
 
@@ -88,15 +88,15 @@ export async function registerWithEtmam(projectId: string) {
   const license = await db.wafiLicense.findUnique({
     where: { projectId },
   });
-  if (!license) throw new Error("Wafi license not found. Apply for license first.");
+  if (!license) throw new Error("No Wafi license found for this project. Please apply for a Wafi license before registering with Etmam.");
   if (license.status !== "APPROVED") {
-    throw new Error("Wafi license must be approved before Etmam registration");
+    throw new Error("The Wafi license must be approved before you can register with Etmam. Please wait for license approval.");
   }
 
   const existing = await db.etmamRegistration.findUnique({
     where: { wafiLicenseId: license.id },
   });
-  if (existing) throw new Error("Already registered with Etmam");
+  if (existing) throw new Error("This project is already registered with Etmam.");
 
   // Calculate next quarterly sync date
   const now = new Date();
@@ -126,7 +126,7 @@ export async function triggerEtmamSync(
     include: { etmamRegistration: true },
   });
   if (!license?.etmamRegistration) {
-    throw new Error("Not registered with Etmam");
+    throw new Error("This project is not registered with Etmam. Please register first before syncing.");
   }
 
   const reg = license.etmamRegistration;
@@ -180,7 +180,7 @@ export async function triggerEtmamSync(
       },
     });
 
-    throw new Error(`Etmam sync failed: ${error.message}`);
+    throw new Error("Etmam synchronization failed. Please try again later or contact support if the issue persists.");
   }
 }
 

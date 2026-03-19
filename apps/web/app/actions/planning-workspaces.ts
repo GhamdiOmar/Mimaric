@@ -52,7 +52,7 @@ export async function getPlanningWorkspaceDetail(id: string) {
     },
   });
 
-  if (!workspace) throw new Error("Planning workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access. Please refresh and try again.");
   return JSON.parse(JSON.stringify(workspace));
 }
 
@@ -76,7 +76,7 @@ export async function createPlanningWorkspace(data: {
         status: { in: ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"] },
       },
     });
-    if (!land) throw new Error("Land record not found");
+    if (!land) throw new Error("Land record not found or you don't have access. Please verify the record exists.");
 
     // Auto-populate site metadata from land record if not provided
     if (!data.siteMetadata) {
@@ -99,7 +99,7 @@ export async function createPlanningWorkspace(data: {
     const project = await db.project.findFirst({
       where: { id: data.projectId, organizationId: orgId },
     });
-    if (!project) throw new Error("Project not found");
+    if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
     if (!data.siteMetadata) {
       data.siteMetadata = {
@@ -160,7 +160,7 @@ export async function updatePlanningWorkspace(
   const existing = await db.planningWorkspace.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Planning workspace not found");
+  if (!existing) throw new Error("Planning workspace not found or you don't have access. Please refresh and try again.");
 
   const updated = await db.planningWorkspace.update({
     where: { id },
@@ -183,7 +183,7 @@ export async function deletePlanningWorkspace(id: string) {
   const existing = await db.planningWorkspace.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Planning workspace not found");
+  if (!existing) throw new Error("Planning workspace not found or you don't have access. Please refresh and try again.");
 
   await db.planningWorkspace.delete({ where: { id } });
 }
@@ -201,7 +201,7 @@ export async function createWorkspaceFromLand(landRecordId: string) {
       status: { in: ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"] },
     },
   });
-  if (!land) throw new Error("Land record not found");
+  if (!land) throw new Error("Land record not found or you don't have access. Please verify the record exists.");
 
   // Check if workspace already exists for this land
   const existingWorkspace = await db.planningWorkspace.findFirst({
@@ -225,7 +225,7 @@ export async function createWorkspaceFromProject(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Check if workspace already exists for this project
   const existingWorkspace = await db.planningWorkspace.findFirst({

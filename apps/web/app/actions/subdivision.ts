@@ -12,7 +12,7 @@ export async function getSubdivisionPlans(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const plans = await db.subdivisionPlan.findMany({
     where: { projectId },
@@ -38,7 +38,7 @@ export async function getSubdivisionPlanDetail(planId: string) {
       utilityCorridors: { orderBy: { name: "asc" } },
     },
   });
-  if (!plan) throw new Error("Subdivision plan not found");
+  if (!plan) throw new Error("Subdivision plan not found or you don't have access. Please refresh and try again.");
 
   return JSON.parse(JSON.stringify(plan));
 }
@@ -58,7 +58,7 @@ export async function createSubdivisionPlan(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   // Get next version number
   const existing = await db.subdivisionPlan.count({
@@ -101,7 +101,7 @@ export async function updateSubdivisionPlan(
   const existing = await db.subdivisionPlan.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Subdivision plan not found");
+  if (!existing) throw new Error("Subdivision plan not found or you don't have access. Please refresh and try again.");
 
   const updated = await db.subdivisionPlan.update({
     where: { id },
@@ -129,7 +129,7 @@ export async function createNewPlanVersion(planId: string) {
   const existing = await db.subdivisionPlan.findFirst({
     where: { id: planId, organizationId: orgId },
   });
-  if (!existing) throw new Error("Subdivision plan not found");
+  if (!existing) throw new Error("Subdivision plan not found or you don't have access. Please refresh and try again.");
 
   // Supersede the old version
   await db.subdivisionPlan.update({
@@ -189,7 +189,7 @@ export async function deleteBlock(id: string) {
   const orgId = session.organizationId;
 
   const existing = await db.block.findFirst({ where: { id, organizationId: orgId } });
-  if (!existing) throw new Error("Block not found");
+  if (!existing) throw new Error("Block not found. Please refresh and try again.");
 
   await db.block.delete({ where: { id } });
 }
@@ -250,7 +250,7 @@ export async function updatePlot(
   const orgId = session.organizationId;
 
   const existing = await db.plot.findFirst({ where: { id, organizationId: orgId } });
-  if (!existing) throw new Error("Plot not found");
+  if (!existing) throw new Error("Plot not found. Please refresh and try again.");
 
   const updated = await db.plot.update({
     where: { id },
@@ -275,7 +275,7 @@ export async function deletePlot(id: string) {
   const orgId = session.organizationId;
 
   const existing = await db.plot.findFirst({ where: { id, organizationId: orgId } });
-  if (!existing) throw new Error("Plot not found");
+  if (!existing) throw new Error("Plot not found. Please refresh and try again.");
 
   await db.plot.delete({ where: { id } });
   await updatePlanCounts(existing.subdivisionPlanId);
@@ -316,7 +316,7 @@ export async function deleteRoad(id: string) {
   const orgId = session.organizationId;
 
   const existing = await db.road.findFirst({ where: { id, organizationId: orgId } });
-  if (!existing) throw new Error("Road not found");
+  if (!existing) throw new Error("Road not found. Please refresh and try again.");
 
   await db.road.delete({ where: { id } });
 }
@@ -354,7 +354,7 @@ export async function deleteUtilityCorridor(id: string) {
   const orgId = session.organizationId;
 
   const existing = await db.utilityCorridor.findFirst({ where: { id, organizationId: orgId } });
-  if (!existing) throw new Error("Utility corridor not found");
+  if (!existing) throw new Error("Utility corridor not found. Please refresh and try again.");
 
   await db.utilityCorridor.delete({ where: { id } });
 }
@@ -374,7 +374,7 @@ export async function getSubdivisionSummary(planId: string) {
       utilityCorridors: true,
     },
   });
-  if (!plan) throw new Error("Subdivision plan not found");
+  if (!plan) throw new Error("Subdivision plan not found or you don't have access. Please refresh and try again.");
 
   const plots = plan.plots;
   const totalPlotArea = plots.reduce((sum, p) => sum + (p.areaSqm ?? 0), 0);

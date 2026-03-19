@@ -237,7 +237,7 @@ export async function getCustomerUnitAssignments(customerId: string) {
     },
   });
 
-  if (!customer) throw new Error("Customer not found");
+  if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   const units = [
     ...customer.reservations.map(r => ({ unitId: r.unit.id, unitNumber: r.unit.number, building: r.unit.building.name, type: "reservation" as const, status: r.status })),

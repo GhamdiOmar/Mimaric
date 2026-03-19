@@ -686,7 +686,7 @@ function InnerNewReservationPage() {
                   ? (lang === "ar" ? "جاري التأكيد..." : "Confirming...")
                   : (lang === "ar" ? "تأكيد الحجز وإصدار السند" : "Confirm & Issue Receipt")}
               </Button>
-              <Button variant="secondary" className="w-full">
+              <Button variant="secondary" className="w-full opacity-50 cursor-not-allowed" disabled title={lang === "ar" ? "قريباً" : "Coming soon"} style={{ display: "inline-flex" }}>
                 {lang === "ar" ? "إرسال عرض سعر مخفض للعميل" : "Send Quotation to Client"}
               </Button>
             </div>

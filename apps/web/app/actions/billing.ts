@@ -83,7 +83,7 @@ export async function subscribeToPlan(data: {
   });
 
   if (existing) {
-    throw new Error("Organization already has an active subscription. Use upgrade/downgrade instead.");
+    throw new Error("Your organization already has an active subscription. To change plans, please use the upgrade or downgrade option instead.");
   }
 
   const subscriptionId = await createSubscription({
@@ -123,11 +123,11 @@ export async function changePlan(data: {
   });
 
   if (!current) {
-    throw new Error("No active subscription to change");
+    throw new Error("There is no active subscription to change. Please subscribe to a plan first.");
   }
 
   const newPlan = await db.plan.findUnique({ where: { id: data.newPlanId } });
-  if (!newPlan) throw new Error("Plan not found");
+  if (!newPlan) throw new Error("The selected plan was not found. Please refresh and try again.");
 
   const billingCycle = data.billingCycle ?? current.billingCycle;
 
@@ -184,7 +184,7 @@ export async function cancelSubscription(reason?: string) {
   });
 
   if (!current) {
-    throw new Error("No active subscription to cancel");
+    throw new Error("There is no active subscription to cancel.");
   }
 
   await transitionSubscription(
@@ -256,7 +256,7 @@ export async function getInvoiceById(invoiceId: string) {
     },
   });
 
-  if (!invoice) throw new Error("Invoice not found");
+  if (!invoice) throw new Error("Invoice not found or you don't have access. Please verify the invoice number.");
 
   return JSON.parse(JSON.stringify(invoice));
 }
@@ -296,9 +296,9 @@ export async function generateSubscriptionInvoice(params: {
     include: { plan: true, organization: true },
   });
 
-  if (!subscription) throw new Error("Subscription not found");
+  if (!subscription) throw new Error("Subscription not found. Please refresh and try again.");
   if (subscription.organizationId !== session.organizationId) {
-    throw new Error("Unauthorized");
+    throw new Error("You don't have permission to perform this action. Please contact your administrator.");
   }
 
   const price = subscription.billingCycle === "ANNUAL"
@@ -382,7 +382,7 @@ export async function setDefaultPaymentMethod(paymentMethodId: string) {
   const method = await db.paymentMethod.findFirst({
     where: { id: paymentMethodId, organizationId: session.organizationId },
   });
-  if (!method) throw new Error("Payment method not found");
+  if (!method) throw new Error("Payment method not found. Please verify it still exists or add a new one.");
 
   // Unset all, then set the chosen one
   await db.$transaction([
@@ -409,7 +409,7 @@ export async function deletePaymentMethod(paymentMethodId: string) {
   const method = await db.paymentMethod.findFirst({
     where: { id: paymentMethodId, organizationId: session.organizationId },
   });
-  if (!method) throw new Error("Payment method not found");
+  if (!method) throw new Error("Payment method not found. Please verify it still exists or add a new one.");
 
   await db.paymentMethod.delete({ where: { id: paymentMethodId } });
 

@@ -18,7 +18,7 @@ import {
 import { Button, Input } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { useSession } from "../../../components/SimpleSessionProvider";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   lookupOrgByCR,
   createJoinRequest,
@@ -29,6 +29,7 @@ import {
   getMyJoinRequests,
 } from "../../actions/onboarding";
 import { createInvitation } from "../../actions/invitations";
+import { getOrganization } from "../../actions/organization";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,9 @@ type InviteRow = { email: string; role: string };
 export default function OnboardingPage() {
   const { data: session, update: updateSession } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const mode = searchParams.get("mode");
+  const isEditMode = mode === "edit";
 
   const { lang } = useLanguage();
   const [currentStep, setCurrentStep] = React.useState(0);
@@ -238,6 +242,35 @@ export default function OnboardingPage() {
   const setContact = (key: string, val: string) =>
     setContactForm((prev) => ({ ...prev, [key]: val }));
 
+  // Pre-fill from existing org data in edit mode
+  React.useEffect(() => {
+    if (!isEditMode) return;
+    // In edit mode, skip the join step and start at org step
+    const orgStepIndex = steps.findIndex((s) => s.id === "org");
+    if (orgStepIndex >= 0) setCurrentStep(orgStepIndex);
+
+    getOrganization()
+      .then((data: Record<string, unknown> | null) => {
+        if (!data) return;
+        const ci = (data.contactInfo as Record<string, string>) || {};
+        const na = (data.nationalAddress as Record<string, string>) || {};
+        setOrgForm({
+          nameArabic: (data.nameArabic as string) || "",
+          nameEnglish: (data.nameEnglish as string) || "",
+          crNumber: (data.crNumber as string) || "",
+          vatNumber: (data.vatNumber as string) || "",
+          entityType: (data.entityType as string) || "",
+          legalForm: (data.legalForm as string) || "",
+        });
+        setContactForm({
+          mobileNumber: ci.mobileNumber || "",
+          city: na.city || "",
+          region: na.region || "",
+        });
+      })
+      .catch(() => {});
+  }, [isEditMode]);
+
   const handleSaveContact = async () => {
     setLoading(true);
     setError("");
@@ -290,7 +323,7 @@ export default function OnboardingPage() {
 
       await completeOnboarding();
       await updateSession({ onboardingCompleted: true });
-      window.location.href = "/dashboard";
+      window.location.href = isEditMode ? "/dashboard/settings" : "/dashboard";
     } catch {
       setError(lang === "ar" ? "حدث خطأ" : "An error occurred");
     } finally {
@@ -304,7 +337,7 @@ export default function OnboardingPage() {
     try {
       await completeOnboarding();
       await updateSession({ onboardingCompleted: true });
-      window.location.href = "/dashboard";
+      window.location.href = isEditMode ? "/dashboard/settings" : "/dashboard";
     } catch {
       setError(lang === "ar" ? "حدث خطأ" : "An error occurred");
     } finally {
@@ -340,12 +373,18 @@ export default function OnboardingPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-primary">
-              {lang === "ar" ? "إعداد حسابك" : "Set Up Your Account"}
+              {isEditMode
+                ? lang === "ar" ? "تحديث الإعدادات" : "Update Settings"
+                : lang === "ar" ? "إعداد حسابك" : "Set Up Your Account"}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {lang === "ar"
-                ? "أكمل الخطوات التالية لتفعيل حسابك على ميماريك."
-                : "Complete the following steps to activate your Mimaric account."}
+              {isEditMode
+                ? lang === "ar"
+                  ? "راجع وحدّث بيانات منشأتك."
+                  : "Review and update your organization details."
+                : lang === "ar"
+                  ? "أكمل الخطوات التالية لتفعيل حسابك على ميماريك."
+                  : "Complete the following steps to activate your Mimaric account."}
             </p>
           </div>
         </div>
@@ -920,7 +959,9 @@ export default function OnboardingPage() {
                       disabled={loading}
                      
                     >
-                      {lang === "ar" ? "تخطي وإنهاء الإعداد" : "Skip & Complete Setup"}
+                      {isEditMode
+                        ? lang === "ar" ? "تخطي وتحديث الإعدادات" : "Skip & Update Settings"
+                        : lang === "ar" ? "تخطي وإنهاء الإعداد" : "Skip & Complete Setup"}
                     </Button>
                     <Button
                       onClick={handleSendInvitations}
@@ -933,7 +974,9 @@ export default function OnboardingPage() {
                       ) : (
                         <Check className="h-4 w-4" />
                       )}
-                      {lang === "ar" ? "إرسال الدعوات وإنهاء الإعداد" : "Send Invitations & Complete"}
+                      {isEditMode
+                        ? lang === "ar" ? "إرسال الدعوات وتحديث الإعدادات" : "Send Invitations & Update Settings"
+                        : lang === "ar" ? "إرسال الدعوات وإنهاء الإعداد" : "Send Invitations & Complete"}
                     </Button>
                   </div>
                 </div>

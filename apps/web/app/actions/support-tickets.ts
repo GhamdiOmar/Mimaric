@@ -46,14 +46,14 @@ export async function createSupportTicket(data: {
     } catch (error: any) {
       if (error.code === "P2002" && error.meta?.target?.includes("ticketNumber")) {
         retries--;
-        if (retries === 0) throw new Error("Failed to generate unique ticket number");
+        if (retries === 0) throw new Error("Unable to create a ticket number. Please try again in a moment.");
         continue; // Retry with new number
       }
       throw error;
     }
   }
 
-  if (!ticket) throw new Error("Failed to create ticket");
+  if (!ticket) throw new Error("We were unable to create your support ticket. Please try again.");
 
   await notifyAdmins({
     type: "SUPPORT_TICKET",
@@ -138,7 +138,7 @@ export async function getTicketWithMessages(ticketId: string) {
     },
   });
 
-  if (!ticket) throw new Error("Ticket not found");
+  if (!ticket) throw new Error("Support ticket not found or you don't have access to view it.");
   return ticket;
 }
 
@@ -156,7 +156,7 @@ export async function addTicketMessage(ticketId: string, message: string) {
         : { userId: session.userId }),
     },
   });
-  if (!ticket) throw new Error("Ticket not found");
+  if (!ticket) throw new Error("Support ticket not found or you don't have access to view it.");
 
   const ticketMessage = await db.ticketMessage.create({
     data: {
@@ -215,7 +215,7 @@ export async function updateTicketStatus(ticketId: string, status: string) {
   const ticket = await db.supportTicket.findFirst({
     where: { id: ticketId, organizationId: session.organizationId },
   });
-  if (!ticket) throw new Error("Ticket not found");
+  if (!ticket) throw new Error("Support ticket not found or you don't have access to view it.");
 
   const updated = await db.supportTicket.update({
     where: { id: ticketId },

@@ -7,19 +7,23 @@ import { requirePermission } from "../../lib/auth-helpers";
  * Valid stage transitions for the off-plan lifecycle.
  * Each entry defines: fromStage → toStage
  */
-const VALID_TRANSITIONS: Record<string, string> = {
-  LAND_IDENTIFIED: "LAND_UNDER_REVIEW",
-  LAND_UNDER_REVIEW: "LAND_ACQUIRED",
-  LAND_ACQUIRED: "CONCEPT_DESIGN",
-  CONCEPT_DESIGN: "SUBDIVISION_PLANNING",
-  SUBDIVISION_PLANNING: "AUTHORITY_SUBMISSION",
-  AUTHORITY_SUBMISSION: "INFRASTRUCTURE_PLANNING",
-  INFRASTRUCTURE_PLANNING: "INVENTORY_STRUCTURING",
-  INVENTORY_STRUCTURING: "PRICING_PACKAGING",
-  PRICING_PACKAGING: "LAUNCH_READINESS",
-  LAUNCH_READINESS: "OFF_PLAN_LAUNCHED",
-  // Legacy transition: LAND_ACQUIRED can also go to PLANNING (existing flow)
-  // Handled separately below
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  // Standard project lifecycle
+  PLANNING: ["UNDER_CONSTRUCTION"],
+  UNDER_CONSTRUCTION: ["READY"],
+  READY: ["HANDED_OVER"],
+  // Land acquisition lifecycle
+  LAND_IDENTIFIED: ["LAND_UNDER_REVIEW"],
+  LAND_UNDER_REVIEW: ["LAND_ACQUIRED"],
+  LAND_ACQUIRED: ["CONCEPT_DESIGN", "PLANNING"],
+  // Off-plan lifecycle
+  CONCEPT_DESIGN: ["SUBDIVISION_PLANNING"],
+  SUBDIVISION_PLANNING: ["AUTHORITY_SUBMISSION"],
+  AUTHORITY_SUBMISSION: ["INFRASTRUCTURE_PLANNING"],
+  INFRASTRUCTURE_PLANNING: ["INVENTORY_STRUCTURING"],
+  INVENTORY_STRUCTURING: ["PRICING_PACKAGING"],
+  PRICING_PACKAGING: ["LAUNCH_READINESS"],
+  LAUNCH_READINESS: ["OFF_PLAN_LAUNCHED"],
 };
 
 export async function getDecisionGates(projectId: string) {
@@ -29,7 +33,7 @@ export async function getDecisionGates(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const gates = await db.decisionGate.findMany({
     where: { projectId },
@@ -54,17 +58,16 @@ export async function requestStageTransition(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const fromStage = project.status;
 
   // Validate the transition is allowed
-  const expectedNext = VALID_TRANSITIONS[fromStage];
-  const isLegacyTransition = fromStage === "LAND_ACQUIRED" && data.toStage === "PLANNING";
+  const allowedNext = VALID_TRANSITIONS[fromStage] ?? [];
 
-  if (data.toStage !== expectedNext && !isLegacyTransition) {
+  if (!allowedNext.includes(data.toStage)) {
     throw new Error(
-      `Invalid transition: ${fromStage} → ${data.toStage}. Expected next stage: ${expectedNext ?? "none"}`
+      `Cannot transition the project from its current stage to the requested stage. The allowed next stages are: ${allowedNext.join(", ") || "none"}. Please review the project lifecycle requirements.`
     );
   }
 
@@ -78,7 +81,7 @@ export async function requestStageTransition(data: {
     },
   });
   if (existingPending) {
-    throw new Error("A pending transition request already exists for this stage");
+    throw new Error("A pending transition request already exists for this stage. Please wait for the existing request to be reviewed.");
   }
 
   const gate = await db.decisionGate.create({
@@ -114,7 +117,7 @@ export async function resolveDecisionGate(
   const gate = await db.decisionGate.findFirst({
     where: { id: gateId, organizationId: orgId, decision: "PENDING" },
   });
-  if (!gate) throw new Error("Decision gate not found or already resolved");
+  if (!gate) throw new Error("This decision gate was not found or has already been resolved. Please refresh the page.");
 
   // Update the gate
   const updated = await db.decisionGate.update({

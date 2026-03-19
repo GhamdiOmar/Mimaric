@@ -855,7 +855,7 @@ function RequestGateModal({ lang, projectId, currentStatus, onClose, onSuccess }
     try {
       await requestStageTransition({ projectId, toStage: nextStage, notes: notes || undefined });
       onSuccess();
-    } catch (err) { console.error(err); alert(err instanceof Error ? err.message : "Error"); }
+    } catch (err) { console.error(err); alert(err instanceof Error ? err.message : (lang === "ar" ? "حدث خطأ. يرجى المحاولة مرة أخرى." : "An error occurred. Please try again.")); }
     finally { setSaving(false); }
   }
 

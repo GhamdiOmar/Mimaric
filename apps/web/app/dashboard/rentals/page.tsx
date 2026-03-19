@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { getLeases } from "../../actions/leases";
 import { formatDualDate } from "../../../lib/hijri";
+import { exportToExcel } from "../../../lib/export";
 
 type FilterValue = "all" | "ACTIVE" | "PENDING" | "EXPIRED" | "TERMINATED";
 
@@ -59,6 +60,32 @@ export default function RentalsPage() {
     activeFilter === "all"
       ? leases
       : leases.filter((l) => l.status === activeFilter);
+
+  const handleExport = async () => {
+    const columns = [
+      { header: lang === "ar" ? "المستأجر" : "Tenant", key: "customerName", width: 25 },
+      { header: lang === "ar" ? "الوحدة" : "Unit", key: "unitNumber", width: 15 },
+      { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 15 },
+      { header: lang === "ar" ? "القيمة" : "Amount", key: "totalAmount", width: 20 },
+      { header: lang === "ar" ? "تاريخ البداية" : "Start Date", key: "startDate", width: 20 },
+      { header: lang === "ar" ? "تاريخ النهاية" : "End Date", key: "endDate", width: 20 },
+    ];
+    const rows = leases.map((l: any) => ({
+      customerName: l.customer?.name ?? "",
+      unitNumber: l.unit?.number ?? "",
+      status: l.status,
+      totalAmount: Number(l.totalAmount),
+      startDate: l.startDate ? new Date(l.startDate).toLocaleDateString() : "",
+      endDate: l.endDate ? new Date(l.endDate).toLocaleDateString() : "",
+    }));
+    await exportToExcel({
+      data: rows,
+      columns,
+      filename: "Mimaric_Leases_" + new Date().toISOString().split("T")[0],
+      lang,
+      title: lang === "ar" ? "الإيجارات" : "Leases",
+    });
+  };
 
   const statusCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -117,7 +144,7 @@ export default function RentalsPage() {
                 {lang === "ar" ? "عقد إيجار جديد" : "New Lease"}
               </Button>
             </Link>
-            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}
             </Button>

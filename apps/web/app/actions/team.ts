@@ -36,7 +36,7 @@ export async function inviteTeamMember(data: {
 
   // Guard: non-system users cannot assign system roles
   if (isSystemRole(data.role) && !isSystemRole(session.role)) {
-    throw new Error("Cannot assign system-level roles");
+    throw new Error("You don't have permission to assign system-level roles. Please contact a system administrator.");
   }
 
   // Entitlement check: users.max
@@ -54,7 +54,7 @@ export async function inviteTeamMember(data: {
 
   // Check if email already exists
   const existing = await db.user.findUnique({ where: { email: data.email } });
-  if (existing) throw new Error("A user with this email already exists");
+  if (existing) throw new Error("A user with this email address already exists. Please use a different email or check the existing team members.");
 
   const hashedPassword = await bcrypt.hash(data.password, 12);
 
@@ -79,14 +79,14 @@ export async function updateTeamMember(userId: string, data: { role?: any; name?
 
   // Guard: non-system users cannot assign system roles
   if (data.role && isSystemRole(data.role) && !isSystemRole(session.role)) {
-    throw new Error("Cannot assign system-level roles");
+    throw new Error("You don't have permission to assign system-level roles. Please contact a system administrator.");
   }
 
   // Verify user belongs to same org
   const user = await db.user.findFirst({
     where: { id: userId, organizationId: session.organizationId },
   });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error("Team member not found. Please verify they belong to your organization.");
 
   const updated = await db.user.update({
     where: { id: userId },
@@ -105,13 +105,13 @@ export async function removeTeamMember(userId: string) {
 
   // Can't remove yourself
   if (userId === session.userId) {
-    throw new Error("Cannot remove yourself");
+    throw new Error("You cannot remove your own account. Please ask another administrator to do this.");
   }
 
   const user = await db.user.findFirst({
     where: { id: userId, organizationId: session.organizationId },
   });
-  if (!user) throw new Error("User not found");
+  if (!user) throw new Error("Team member not found. Please verify they belong to your organization.");
 
   await db.user.delete({ where: { id: userId } });
 

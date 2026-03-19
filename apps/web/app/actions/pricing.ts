@@ -12,7 +12,7 @@ export async function getPricingRules(projectId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const rules = await db.pricingRule.findMany({
     where: { projectId },
@@ -39,7 +39,7 @@ export async function createPricingRule(data: {
   const project = await db.project.findFirst({
     where: { id: data.projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const rule = await db.pricingRule.create({
     data: {
@@ -80,7 +80,7 @@ export async function updatePricingRule(
   const existing = await db.pricingRule.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Pricing rule not found");
+  if (!existing) throw new Error("Pricing rule not found. Please refresh and try again.");
 
   const updated = await db.pricingRule.update({
     where: { id },
@@ -107,7 +107,7 @@ export async function deletePricingRule(id: string) {
   const existing = await db.pricingRule.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Pricing rule not found");
+  if (!existing) throw new Error("Pricing rule not found. Please refresh and try again.");
 
   await db.pricingRule.delete({ where: { id } });
 }
@@ -122,7 +122,7 @@ export async function togglePricingRule(id: string) {
   const existing = await db.pricingRule.findFirst({
     where: { id, organizationId: orgId },
   });
-  if (!existing) throw new Error("Pricing rule not found");
+  if (!existing) throw new Error("Pricing rule not found. Please refresh and try again.");
 
   const updated = await db.pricingRule.update({
     where: { id },
@@ -145,7 +145,7 @@ export async function calculatePrice(
   const item = await db.inventoryItem.findFirst({
     where: { id: inventoryItemId, organizationId: orgId },
   });
-  if (!item) throw new Error("Inventory item not found");
+  if (!item) throw new Error("Inventory item not found. Please refresh the page and try again.");
 
   const rules = await db.pricingRule.findMany({
     where: { projectId, isActive: true, organizationId: orgId },

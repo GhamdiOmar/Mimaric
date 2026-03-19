@@ -139,7 +139,7 @@ export async function updatePreventivePlan(
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
   });
-  if (!plan) throw new Error("Plan not found");
+  if (!plan) throw new Error("The selected plan was not found. Please refresh and try again.");
 
   const updateData: any = {};
   if (data.title !== undefined) updateData.title = data.title;
@@ -180,7 +180,7 @@ export async function togglePreventivePlan(planId: string) {
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
   });
-  if (!plan) throw new Error("Plan not found");
+  if (!plan) throw new Error("The selected plan was not found. Please refresh and try again.");
 
   const updated = await db.preventiveMaintenancePlan.update({
     where: { id: planId },
@@ -199,7 +199,7 @@ export async function deletePreventivePlan(planId: string) {
   const plan = await db.preventiveMaintenancePlan.findFirst({
     where: { id: planId, organizationId: session.organizationId },
   });
-  if (!plan) throw new Error("Plan not found");
+  if (!plan) throw new Error("The selected plan was not found. Please refresh and try again.");
 
   await db.preventiveMaintenancePlan.update({
     where: { id: planId },

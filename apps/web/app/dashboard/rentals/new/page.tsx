@@ -38,7 +38,7 @@ export default function NewLeasePage() {
 
   const handleAddCustomer = async () => {
     if (!newCustomer.name || !newCustomer.phone) {
-      alert("Name and phone are required");
+      alert(lang === "ar" ? "الاسم ورقم الجوال مطلوبان" : "Name and phone number are required");
       return;
     }
     setSaving(true);
@@ -47,9 +47,9 @@ export default function NewLeasePage() {
       // Here you could automatically select the newly created customer
       setShowAddModal(false);
       setNewCustomer({ name: "", phone: "", email: "", status: "NEW" });
-      alert("Customer created successfully!");
+      alert(lang === "ar" ? "تم إنشاء العميل بنجاح!" : "Customer created successfully!");
     } catch (err) {
-      alert("Failed to create customer");
+      alert(lang === "ar" ? "فشل إنشاء العميل. يرجى المحاولة مرة أخرى." : "Failed to create customer. Please try again.");
     } finally {
       setSaving(false);
     }

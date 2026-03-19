@@ -4,7 +4,7 @@ import * as React from "react";
 import {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
-  Settings, PanelLeftClose, PanelLeftOpen, HelpCircle, X,
+  Settings, PanelLeftClose, PanelLeftOpen, HelpCircle, X, FolderOpen,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
@@ -17,7 +17,7 @@ import { navItems, sectionLabels, type NavItem } from "./nav-items";
 const iconMap: Record<string, React.ElementType> = {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
-  Settings,
+  Settings, FolderOpen,
 };
 
 interface AppSidebarProps {

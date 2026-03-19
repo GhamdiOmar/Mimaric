@@ -18,11 +18,23 @@ import {
   Eye,
   Trash2,
   Download,
+  Loader2,
 } from "lucide-react";
-import { PageIntro, Button } from "@repo/ui";
+import {
+  PageIntro,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
+import { usePermissions } from "../../../hooks/usePermissions";
 import { getPlanningWorkspaces, createPlanningWorkspace, deletePlanningWorkspace } from "../../actions/planning-workspaces";
 import { getAcquiredLands } from "../../actions/land";
+import { exportToExcel } from "../../../lib/export";
 
 const STATUS_CONFIG: Record<string, { label: { ar: string; en: string }; color: string; icon: any }> = {
   DRAFT: { label: { ar: "مسودة", en: "Draft" }, color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300", icon: Pencil },
@@ -34,6 +46,7 @@ const STATUS_CONFIG: Record<string, { label: { ar: string; en: string }; color: 
 
 export default function PlanningWorkspacesPage() {
   const { lang } = useLanguage();
+  const { can } = usePermissions();
   const router = useRouter();
   const [workspaces, setWorkspaces] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -46,6 +59,9 @@ export default function PlanningWorkspacesPage() {
   const [newDescription, setNewDescription] = React.useState("");
   const [selectedLandId, setSelectedLandId] = React.useState("");
   const [creating, setCreating] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [nameError, setNameError] = React.useState(false);
 
   React.useEffect(() => {
     loadWorkspaces();
@@ -61,7 +77,11 @@ export default function PlanningWorkspacesPage() {
   }
 
   async function handleCreate() {
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      setNameError(true);
+      return;
+    }
+    setNameError(false);
     setCreating(true);
     try {
       const ws = await createPlanningWorkspace({
@@ -75,6 +95,42 @@ export default function PlanningWorkspacesPage() {
       setCreating(false);
     }
   }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deletePlanningWorkspace(deleteTarget.id);
+      setWorkspaces((prev) => prev.filter((ws) => ws.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch { /* empty */ } finally {
+      setDeleting(false);
+    }
+  }
+
+  const handleExport = async () => {
+    const columns = [
+      { header: lang === "ar" ? "الاسم" : "Name", key: "displayName", width: 25, render: () => "" },
+      { header: lang === "ar" ? "الحالة" : "Status", key: "status", width: 20, render: (val: string) => STATUS_CONFIG[val]?.label[lang] ?? val },
+      { header: lang === "ar" ? "قطعة الأرض" : "Land Parcel", key: "landName", width: 25, render: () => "" },
+      { header: lang === "ar" ? "عدد السيناريوهات" : "Scenarios Count", key: "scenariosCount", width: 18, render: () => "" },
+      { header: lang === "ar" ? "تاريخ الإنشاء" : "Created Date", key: "createdDate", width: 20 },
+    ];
+    const data = filtered.map((ws: any) => ({
+      ...ws,
+      displayName: lang === "ar" ? (ws.nameArabic || ws.name) : ws.name,
+      landName: ws.landRecord?.name ?? "—",
+      scenariosCount: ws._count?.scenarios ?? 0,
+      createdDate: new Date(ws.updatedAt).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-CA"),
+    }));
+    await exportToExcel({
+      data,
+      columns,
+      filename: "Mimaric_Planning_Workspaces",
+      lang,
+      title: lang === "ar" ? "مساحات العمل التخطيطية" : "Planning Workspaces",
+    });
+  };
 
   const filtered = workspaces.filter((ws) => {
     if (statusFilter !== "ALL" && ws.status !== statusFilter) return false;
@@ -119,7 +175,7 @@ export default function PlanningWorkspacesPage() {
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "مساحة عمل جديدة" : "New Workspace"}
             </Button>
-            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }}>
+            <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}
             </Button>
@@ -208,10 +264,29 @@ export default function PlanningWorkspacesPage() {
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{ws.description}</p>
                     )}
                   </div>
-                  <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConf.color}`}>
-                    <StatusIcon className="h-3 w-3" />
-                    {statusConf.label[lang]}
-                  </span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConf.color}`}>
+                      <StatusIcon className="h-3 w-3" />
+                      {statusConf.label[lang]}
+                    </span>
+                    {can("planning:delete") && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteTarget({
+                            id: ws.id,
+                            name: lang === "ar" ? (ws.nameArabic || ws.name) : ws.name,
+                          });
+                        }}
+                        className="p-1 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100"
+                        title={lang === "ar" ? "حذف" : "Delete"}
+                        style={{ display: "inline-flex" }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Site info */}
@@ -257,6 +332,42 @@ export default function PlanningWorkspacesPage() {
         </div>
       )}
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{lang === "ar" ? "حذف مساحة العمل" : "Delete Workspace"}</DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `هل أنت متأكد من حذف "${deleteTarget?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+                : `Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              disabled={deleting}
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleting
+                ? (lang === "ar" ? "جاري الحذف..." : "Deleting...")
+                : (lang === "ar" ? "حذف" : "Delete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Create Workspace Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/60 backdrop-blur-sm">
@@ -272,10 +383,15 @@ export default function PlanningWorkspacesPage() {
                 </label>
                 <input
                   value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
+                  onChange={(e) => { setNewName(e.target.value); if (nameError) setNameError(false); }}
                   placeholder={lang === "ar" ? "اسم مساحة العمل" : "Workspace name"}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:ring-2 focus:ring-ring outline-none"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm bg-background focus:ring-2 focus:ring-ring outline-none ${nameError ? "border-red-500" : "border-border"}`}
                 />
+                {nameError && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -309,7 +425,7 @@ export default function PlanningWorkspacesPage() {
                 <select
                   value={selectedLandId}
                   onChange={(e) => setSelectedLandId(e.target.value)}
-                  className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background focus:ring-2 focus:ring-ring outline-none"
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">{lang === "ar" ? "— بدون ربط —" : "— No link —"}</option>
                   {lands.map((l: any) => (
@@ -322,17 +438,19 @@ export default function PlanningWorkspacesPage() {
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowCreate(false)}
-                className="px-4 py-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                disabled={creating}
+                className="px-4 py-2 text-sm text-muted-foreground hover:text-primary transition-colors disabled:opacity-50"
                 style={{ display: "inline-flex" }}
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}
               </button>
               <button
                 onClick={handleCreate}
-                disabled={creating || !newName.trim()}
-                className="px-5 py-2 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-secondary/90 disabled:opacity-50 transition-colors"
+                disabled={creating}
+                className="px-5 py-2 bg-secondary text-white rounded-lg text-sm font-medium hover:bg-secondary/90 disabled:opacity-50 transition-colors gap-2"
                 style={{ display: "inline-flex" }}
               >
+                {creating && <Loader2 className="h-4 w-4 animate-spin" />}
                 {creating
                   ? (lang === "ar" ? "جاري الإنشاء..." : "Creating...")
                   : (lang === "ar" ? "إنشاء" : "Create")}

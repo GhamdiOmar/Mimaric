@@ -26,7 +26,7 @@ function PageIntro({
       {...props}
     >
       {badge && (
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20 mb-4">
+        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20 mb-4">
           {badge}
         </span>
       )}
@@ -37,7 +37,7 @@ function PageIntro({
         </p>
       )}
       {actions && (
-        <div className="flex items-center gap-3 mt-5 flex-wrap">
+        <div className="flex items-center gap-2 mt-5 flex-wrap">
           {actions}
         </div>
       )}

@@ -70,7 +70,7 @@ export async function updateLandStatus(projectId: string, newStatus: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const updated = await db.project.update({
     where: { id: projectId },
@@ -96,7 +96,7 @@ export async function getLandDetail(projectId: string) {
       decisionGates: { orderBy: { createdAt: "desc" } },
     },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   return JSON.parse(JSON.stringify(project));
 }
@@ -115,7 +115,7 @@ export async function updateLandFields(projectId: string, data: {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
 
   const updated = await db.project.update({
     where: { id: projectId },
@@ -206,6 +206,26 @@ export async function updateDueDiligenceItems(id: string, items: any[]) {
       completedAt: allChecked ? new Date() : null,
     },
   });
+}
+
+export async function deleteLandParcel(projectId: string) {
+  const session = await requirePermission("land:write");
+  const orgId = session.organizationId;
+
+  const project = await db.project.findFirst({
+    where: { id: projectId, organizationId: orgId, status: { in: LAND_STATUSES as any } },
+  });
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
+
+  // Delete related records first
+  await db.dueDiligence.deleteMany({ where: { projectId } });
+  await db.constraintRecord.deleteMany({ where: { projectId } });
+  await db.feasibilityAssessment.deleteMany({ where: { projectId } });
+  await db.decisionGate.deleteMany({ where: { projectId } });
+
+  await db.project.delete({ where: { id: projectId } });
+
+  return { success: true };
 }
 
 export async function getAcquiredLands() {

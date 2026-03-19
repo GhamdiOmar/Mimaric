@@ -16,7 +16,9 @@ import {
   Eye,
   CalendarCheck,
   UserCircle,
+  Download,
 } from "lucide-react";
+import { exportToExcel } from "../../../lib/export";
 import {
   Button,
   Dialog,
@@ -95,6 +97,7 @@ export default function MaintenancePage() {
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
+  const [formErrors, setFormErrors] = React.useState<Record<string, string>>({});
   const [form, setForm] = React.useState({
     title: "",
     description: "",
@@ -149,8 +152,20 @@ export default function MaintenancePage() {
     return () => clearTimeout(timer);
   }, [search, filterStatus, filterPriority, filterCategory]);
 
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
   function openCreate() {
     setEditingId(null);
+    setFormErrors({});
     setForm({
       title: "",
       description: "",
@@ -167,6 +182,7 @@ export default function MaintenancePage() {
 
   function openEdit(req: any) {
     setEditingId(req.id);
+    setFormErrors({});
     setForm({
       title: req.title,
       description: req.description ?? "",
@@ -182,7 +198,27 @@ export default function MaintenancePage() {
   }
 
   async function handleSave() {
-    if (!form.title || !form.unitId) return;
+    const errors: Record<string, string> = {};
+    if (!form.title.trim()) {
+      errors.title = lang === "ar" ? "العنوان مطلوب" : "Title is required";
+    }
+    if (!form.description.trim()) {
+      errors.description = lang === "ar" ? "الوصف مطلوب" : "Description is required";
+    }
+    if (!form.category) {
+      errors.category = lang === "ar" ? "التصنيف مطلوب" : "Category is required";
+    }
+    if (!form.priority) {
+      errors.priority = lang === "ar" ? "الأولوية مطلوبة" : "Priority is required";
+    }
+    if (!editingId && !form.unitId) {
+      errors.unitId = lang === "ar" ? "الوحدة مطلوبة" : "Unit is required";
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
     setSaving(true);
     try {
       if (editingId) {
@@ -231,6 +267,57 @@ export default function MaintenancePage() {
     }
   }
 
+  function handleExport() {
+    exportToExcel({
+      data: requests,
+      filename: lang === "ar" ? "طلبات_الصيانة" : "maintenance_requests",
+      title: lang === "ar" ? "تقرير طلبات الصيانة" : "Maintenance Requests Report",
+      lang,
+      columns: [
+        {
+          header: lang === "ar" ? "رقم الطلب" : "Request #",
+          key: "requestNumber",
+          width: 18,
+        },
+        {
+          header: lang === "ar" ? "العنوان" : "Title",
+          key: "title",
+          width: 30,
+        },
+        {
+          header: lang === "ar" ? "التصنيف" : "Category",
+          key: "category",
+          width: 18,
+          render: (val: string) => categoryLabels[val]?.[lang] ?? val,
+        },
+        {
+          header: lang === "ar" ? "الأولوية" : "Priority",
+          key: "priority",
+          width: 15,
+          render: (val: string) => priorityLabels[val]?.[lang] ?? val,
+        },
+        {
+          header: lang === "ar" ? "الحالة" : "Status",
+          key: "status",
+          width: 18,
+          render: (val: string) => statusLabels[val]?.[lang] ?? val,
+        },
+        {
+          header: lang === "ar" ? "المُعيَّن إليه" : "Assigned To",
+          key: "assignedTo",
+          width: 22,
+          render: (val: any) => val?.name ?? (lang === "ar" ? "غير معيّن" : "Unassigned"),
+        },
+        {
+          header: lang === "ar" ? "تاريخ الإنشاء" : "Created Date",
+          key: "createdAt",
+          width: 18,
+          render: (val: string) => val ? new Date(val).toLocaleDateString("en-SA") : "—",
+        },
+      ],
+    });
+  }
+
   // Build status filter tabs for FilterBar
   const statusFilterOptions = [
     { label: lang === "ar" ? "الكل" : "All", value: "" },
@@ -241,7 +328,7 @@ export default function MaintenancePage() {
   ];
 
   const inputClass =
-    "w-full h-10 px-3 rounded-md border border-input bg-background text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:border-ring transition-colors";
+    "w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors";
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -258,6 +345,10 @@ export default function MaintenancePage() {
             <Button size="sm" className="gap-2" onClick={openCreate} style={{ display: "inline-flex" }}>
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "طلب جديد" : "New Request"}
+            </Button>
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExport}>
+              <Download className="h-4 w-4" />
+              {lang === "ar" ? "تصدير" : "Export"}
             </Button>
             <Link href="/dashboard/maintenance/preventive">
               <Button variant="outline" size="sm" className="gap-2" style={{ display: "inline-flex" }}>
@@ -331,7 +422,7 @@ export default function MaintenancePage() {
             <select
               value={filterPriority}
               onChange={(e) => setFilterPriority(e.target.value)}
-              className="h-9 px-3 rounded-md border border-input bg-background text-xs focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="h-9 px-3 rounded-md border border-input bg-background text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">{lang === "ar" ? "كل الأولويات" : "All Priorities"}</option>
               {Object.entries(priorityLabels).map(([k, v]) => (
@@ -341,7 +432,7 @@ export default function MaintenancePage() {
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="h-9 px-3 rounded-md border border-input bg-background text-xs focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="h-9 px-3 rounded-md border border-input bg-background text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <option value="">{lang === "ar" ? "كل التصنيفات" : "All Categories"}</option>
               {Object.entries(categoryLabels).map(([k, v]) => (
@@ -470,51 +561,55 @@ export default function MaintenancePage() {
               </label>
               <input
                 value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className={inputClass}
+                onChange={(e) => updateField("title", e.target.value)}
+                className={`${inputClass} ${formErrors.title ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
                 placeholder={lang === "ar" ? "مثال: تسريب ماء في الحمام" : "e.g. Water leak in bathroom"}
               />
+              {formErrors.title && <p className="text-xs text-red-500">{formErrors.title}</p>}
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar" ? "الوصف" : "Description"}
+                {lang === "ar" ? "الوصف *" : "Description *"}
               </label>
               <textarea
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className={`${inputClass} h-20 py-2`}
+                onChange={(e) => updateField("description", e.target.value)}
+                className={`${inputClass} h-20 py-2 ${formErrors.description ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
               />
+              {formErrors.description && <p className="text-xs text-red-500">{formErrors.description}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "التصنيف" : "Category"}
+                  {lang === "ar" ? "التصنيف *" : "Category *"}
                 </label>
                 <select
                   value={form.category}
-                  onChange={(e) => setForm({ ...form, category: e.target.value })}
-                  className={inputClass}
+                  onChange={(e) => updateField("category", e.target.value)}
+                  className={`${inputClass} ${formErrors.category ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
                 >
                   {Object.entries(categoryLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v[lang]}</option>
                   ))}
                 </select>
+                {formErrors.category && <p className="text-xs text-red-500">{formErrors.category}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "الأولوية" : "Priority"}
+                  {lang === "ar" ? "الأولوية *" : "Priority *"}
                 </label>
                 <select
                   value={form.priority}
-                  onChange={(e) => setForm({ ...form, priority: e.target.value })}
-                  className={inputClass}
+                  onChange={(e) => updateField("priority", e.target.value)}
+                  className={`${inputClass} ${formErrors.priority ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
                 >
                   {Object.entries(priorityLabels).map(([k, v]) => (
                     <option key={k} value={k}>{v[lang]}</option>
                   ))}
                 </select>
+                {formErrors.priority && <p className="text-xs text-red-500">{formErrors.priority}</p>}
               </div>
             </div>
 
@@ -525,8 +620,8 @@ export default function MaintenancePage() {
                 </label>
                 <select
                   value={form.unitId}
-                  onChange={(e) => setForm({ ...form, unitId: e.target.value })}
-                  className={inputClass}
+                  onChange={(e) => updateField("unitId", e.target.value)}
+                  className={`${inputClass} ${formErrors.unitId ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
                 >
                   <option value="">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</option>
                   {units.map((u: any) => (
@@ -535,6 +630,7 @@ export default function MaintenancePage() {
                     </option>
                   ))}
                 </select>
+                {formErrors.unitId && <p className="text-xs text-red-500">{formErrors.unitId}</p>}
               </div>
             )}
 
@@ -544,7 +640,7 @@ export default function MaintenancePage() {
               </label>
               <select
                 value={form.assignedToId}
-                onChange={(e) => setForm({ ...form, assignedToId: e.target.value })}
+                onChange={(e) => updateField("assignedToId", e.target.value)}
                 className={inputClass}
               >
                 <option value="">{lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}</option>
@@ -562,7 +658,7 @@ export default function MaintenancePage() {
                 <input
                   type="date"
                   value={form.scheduledDate}
-                  onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
+                  onChange={(e) => updateField("scheduledDate", e.target.value)}
                   className={inputClass}
                 />
               </div>
@@ -573,7 +669,7 @@ export default function MaintenancePage() {
                 <input
                   type="number"
                   value={form.estimatedCost}
-                  onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })}
+                  onChange={(e) => updateField("estimatedCost", e.target.value)}
                   className={inputClass}
                   placeholder="0.00"
                 />
@@ -586,7 +682,7 @@ export default function MaintenancePage() {
               </label>
               <textarea
                 value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                onChange={(e) => updateField("notes", e.target.value)}
                 className={`${inputClass} h-16 py-2`}
               />
             </div>
@@ -599,10 +695,11 @@ export default function MaintenancePage() {
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={saving || !form.title || (!editingId && !form.unitId)}
-              loading={saving}
+              disabled={saving}
+              className="gap-2"
               style={{ display: "inline-flex" }}
             >
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
             </Button>
           </DialogFooter>

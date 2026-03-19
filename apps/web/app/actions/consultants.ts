@@ -7,7 +7,7 @@ async function verifyProjectAccess(projectId: string, orgId: string) {
   const project = await db.project.findFirst({
     where: { id: projectId, organizationId: orgId },
   });
-  if (!project) throw new Error("Project not found");
+  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
   return project;
 }
 
@@ -47,7 +47,7 @@ export async function getConsultantDetails(consultantId: string) {
     },
   });
 
-  if (!consultant) throw new Error("Consultant not found");
+  if (!consultant) throw new Error("Consultant not found or you don't have access. Please refresh and try again.");
   return JSON.parse(JSON.stringify(consultant));
 }
 
@@ -92,7 +92,7 @@ export async function createConsultantProfile(data: {
   const user = await db.user.findFirst({
     where: { id: data.userId, organizationId: session.organizationId },
   });
-  if (!user) throw new Error("User not found in organization");
+  if (!user) throw new Error("This user was not found in your organization. Please verify they are a current team member.");
 
   const consultant = await db.engineeringConsultant.create({
     data: {
@@ -120,7 +120,7 @@ export async function assignConsultant(data: {
     where: { id: data.consultantId },
     include: { user: { select: { id: true, organizationId: true } } },
   });
-  if (!consultant) throw new Error("Consultant not found");
+  if (!consultant) throw new Error("Consultant not found or you don't have access. Please refresh and try again.");
 
   const assignment = await db.consultantAssignment.create({
     data: {
@@ -142,7 +142,7 @@ export async function revokeConsultant(assignmentId: string, reason?: string) {
     include: { project: { select: { organizationId: true } } },
   });
   if (!assignment || assignment.project.organizationId !== session.organizationId) {
-    throw new Error("Assignment not found");
+    throw new Error("Consultant assignment not found. Please refresh and try again.");
   }
 
   const updated = await db.consultantAssignment.update({
@@ -170,7 +170,7 @@ export async function requireConsultantAccess(projectId: string) {
   });
 
   if (!assignment) {
-    throw new Error("You are not assigned to this project as an engineering consultant");
+    throw new Error("You are not assigned to this project as an engineering consultant. Please contact your project manager.");
   }
 
   return assignment;

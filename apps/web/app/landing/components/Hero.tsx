@@ -7,6 +7,7 @@ import {
   Receipt,
   HardHat,
 } from "lucide-react";
+import { Button } from "@repo/ui";
 import { t as translations } from "../translations";
 
 export default function Hero({ lang }: { lang: "ar" | "en" }) {
@@ -63,13 +64,15 @@ export default function Hero({ lang }: { lang: "ar" | "en" }) {
 
           {/* CTAs — one primary button + text link */}
           <div className="mt-10 flex flex-col items-center justify-center gap-5 sm:flex-row">
-            <Link
-              href="/auth/register"
+            <Button
+              asChild
               className="rounded-xl bg-primary px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:bg-primary hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5"
               style={{ display: "inline-flex" }}
             >
-              {t.startFreeTrial}
-            </Link>
+              <Link href="/auth/register">
+                {t.startFreeTrial}
+              </Link>
+            </Button>
             <a
               href="#features"
               className="text-sm font-medium text-white/60 underline underline-offset-4 decoration-white/20 transition-colors hover:text-white hover:decoration-white/40"

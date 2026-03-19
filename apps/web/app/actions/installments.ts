@@ -54,7 +54,7 @@ export async function recordPayment(
     include: { lease: { include: { customer: true } } },
   });
   if (!installment || installment.lease.customer.organizationId !== session.organizationId) {
-    throw new Error("Installment not found");
+    throw new Error("Payment installment not found. Please refresh the page and try again.");
   }
 
   const updated = await db.rentInstallment.update({

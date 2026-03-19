@@ -34,7 +34,7 @@ export async function createPlanningComment(data: {
   const workspace = await db.planningWorkspace.findFirst({
     where: { id: data.workspaceId, organizationId: orgId },
   });
-  if (!workspace) throw new Error("Workspace not found");
+  if (!workspace) throw new Error("Planning workspace not found or you don't have access.");
 
   const comment = await db.planningComment.create({
     data: {
@@ -77,11 +77,11 @@ export async function deletePlanningComment(commentId: string) {
   const comment = await db.planningComment.findFirst({
     where: { id: commentId, organizationId: orgId },
   });
-  if (!comment) throw new Error("Comment not found");
+  if (!comment) throw new Error("Comment not found. It may have already been deleted.");
 
   // Only author or admin can delete
   if (comment.authorId !== session.userId && session.role !== "COMPANY_ADMIN" && session.role !== "SYSTEM_ADMIN") {
-    throw new Error("Only the comment author or an admin can delete this comment");
+    throw new Error("You can only delete your own comments. Please contact an administrator to remove other comments.");
   }
 
   await db.planningComment.delete({ where: { id: commentId } });
