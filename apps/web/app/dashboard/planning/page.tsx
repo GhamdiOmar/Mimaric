@@ -19,6 +19,7 @@ import {
   Trash2,
   Download,
   Loader2,
+  Globe,
 } from "lucide-react";
 import {
   PageIntro,
@@ -175,6 +176,12 @@ export default function PlanningWorkspacesPage() {
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "مساحة عمل جديدة" : "New Workspace"}
             </Button>
+            <Link href="/dashboard/gis/phases">
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }}>
+                <Globe className="w-4 h-4 me-1.5" />
+                {lang === "ar" ? "جاهزية المراحل" : "Phase Readiness"}
+              </Button>
+            </Link>
             <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}

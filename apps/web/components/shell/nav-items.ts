@@ -18,6 +18,7 @@ export const navItems: NavItem[] = [
   { label: { ar: "الإيجارات", en: "Leases" }, icon: "KeyRound", href: "/dashboard/rentals", section: "core", permission: "leases:read" },
 
   // Operations
+  { label: { ar: "نظام المعلومات الجغرافية", en: "GIS" }, icon: "Globe", href: "/dashboard/gis", section: "operations", permission: "gis:read" },
   { label: { ar: "الأراضي", en: "Land" }, icon: "MapPin", href: "/dashboard/land", section: "operations", permission: "land:read" },
   { label: { ar: "التخطيط", en: "Planning" }, icon: "Compass", href: "/dashboard/planning", section: "operations", permission: "planning:read" },
   { label: { ar: "المالية", en: "Finance" }, icon: "Receipt", href: "/dashboard/finance", section: "operations", permission: "finance:read" },
@@ -78,6 +79,14 @@ export const breadcrumbLabels: Record<string, { ar: string; en: string }> = {
   "inventory": { ar: "المخزون", en: "Inventory" },
   "subdivision": { ar: "التقسيم", en: "Subdivision" },
   "tickets": { ar: "التذاكر", en: "Tickets" },
+  "gis": { ar: "نظام المعلومات الجغرافية", en: "GIS" },
+  "land-bank": { ar: "بنك الأراضي", en: "Land Bank" },
+  "sales-map": { ar: "خريطة المبيعات", en: "Sales Map" },
+  "phases": { ar: "المراحل", en: "Phases" },
+  "construction": { ar: "التنفيذ", en: "Construction" },
+  "handover": { ar: "التسليم", en: "Handover" },
+  "assets": { ar: "الأصول", en: "Assets" },
+  "overview": { ar: "نظرة عامة", en: "Overview" },
 };
 
 export const roleLabels: Record<string, { ar: string; en: string }> = {

@@ -2,7 +2,7 @@
 
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
-import { Users, Tag, Receipt, Package, TrendingUp, CircleDollarSign, BarChart3, ArrowRight } from "lucide-react";
+import { Users, Tag, Receipt, Package, TrendingUp, CircleDollarSign, BarChart3, ArrowRight, Globe } from "lucide-react";
 import { Button, Badge, SARAmount, Card, PageIntro, KPICard } from "@repo/ui";
 import Link from "next/link";
 import { getSalesStats, getOffPlanSalesStats } from "../../actions/sales";
@@ -34,6 +34,14 @@ export default function SalesPage() {
       <PageIntro
         title={lang === "ar" ? "المبيعات" : "Sales"}
         description={lang === "ar" ? "إدارة دورة المبيعات الكاملة من العميل المحتمل إلى العقد النهائي." : "Manage the full sales pipeline from customer to final contract."}
+        actions={
+          <Link href="/dashboard/gis/sales">
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }}>
+              <Globe className="w-4 h-4 me-1.5" />
+              {lang === "ar" ? "خريطة المبيعات" : "Sales Map"}
+            </Button>
+          </Link>
+        }
       />
 
       {/* KPI Row */}

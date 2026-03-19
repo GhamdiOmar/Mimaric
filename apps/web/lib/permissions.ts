@@ -125,6 +125,10 @@ export type Permission =
   | "etmam:read"
   | "etmam:write"
   | "etmam:sync"
+  // GIS
+  | "gis:read"
+  | "gis:write"
+  | "gis:export"
   // Planning OS
   | "planning:read"
   | "planning:write"
@@ -202,6 +206,8 @@ const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
   "collections:read", "collections:write", "collections:assign",
   "handover:read", "handover:write", "handover:approve",
   "price_approval:read", "price_approval:write", "price_approval:approve",
+  // GIS
+  "gis:read", "gis:write", "gis:export",
   // Wafi Compliance
   "escrow:read", "escrow:write", "escrow:approve",
   "consultant:read", "consultant:write",
@@ -268,6 +274,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "delay_penalties:read",
     "wafi_license:read",
     "etmam:read",
+    // GIS
+    "gis:read", "gis:write", "gis:export",
     "help:read", "help:create_ticket",
   ],
 
@@ -289,6 +297,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "launch:read", "launch:write",
     // Planning OS (read-only for sales visibility)
     "planning:read", "planning:export",
+    // GIS (read-only for sales map)
+    "gis:read",
     "help:read", "help:create_ticket",
   ],
 
@@ -336,6 +346,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "launch:read",
     // Planning OS (read + feasibility for financial review)
     "planning:read", "planning:feasibility", "planning:export",
+    // GIS (read-only for financial review)
+    "gis:read",
     // Wafi (escrow read/write, milestones read, contracts read/write)
     "escrow:read", "escrow:write",
     "milestones:read",
@@ -409,6 +421,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     "milestones:read",
     "documents:read", "documents:write",
     "notifications:read",
+    // GIS (read-only for handover context)
+    "gis:read",
     "help:read", "help:create_ticket",
   ],
 

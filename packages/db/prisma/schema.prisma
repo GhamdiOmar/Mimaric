@@ -55,6 +55,12 @@ model Organization {
 
   // ── Planning OS relations ──
   planningWorkspaces    PlanningWorkspace[]
+
+  // ── GIS Phase 2-3 relations ──
+  phaseReadinessRules   PhaseReadinessRule[]
+  constructionPackages  ConstructionPackage[]
+  handoverRecords       HandoverRecord[]
+  operationalAssets     OperationalAsset[]
 }
 
 enum OrgType {
@@ -183,6 +189,7 @@ model Project {
   boundaries     Json?         // {north, south, east, west} descriptions
   utilities      Json?         // {electricityConnected, waterConnected, sewageConnected, roadAccess}
   estimatedValueSar Decimal?   // Property valuation in SAR
+  mapCenter         Json?      // { lat, lng, zoom } for saved GIS map position
   // Land acquisition fields (FR-01, FR-02)
   landOwner         String?    // Current owner name
   landOwnerType     String?    // INDIVIDUAL, COMPANY, GOVERNMENT
@@ -222,6 +229,10 @@ model Project {
   wafiContracts          WafiContract[]
   delayPenalties         DelayPenalty[]
   wafiLicense            WafiLicense?
+  // ── GIS Phase 2-3 relations ──
+  constructionPackages   ConstructionPackage[]
+  handoverRecords        HandoverRecord[]
+  operationalAssets      OperationalAsset[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -974,9 +985,10 @@ model Phase {
   phaseCode            String?
   salesEnabled         Boolean  @default(false)
   approvalDependencyId String?   // FK to ApprovalSubmission blocking this phase
-  buildings      Building[]
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  buildings        Building[]
+  readinessRules   PhaseReadinessRule[]
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 
   @@index([projectId])
 }
@@ -1355,6 +1367,7 @@ model Plot {
   boundaryGeoJson   Json?     // Polygon coordinates
   status            PlotStatus @default(PLANNED)
   productType       String?   // VILLA, TOWNHOUSE, APARTMENT_BLOCK, COMMERCIAL_LOT
+  premiumType       String?   // CORNER, PARK_FACING, MAIN_ROAD, etc.
   inventoryItemId   String?   @unique
   inventoryItem     InventoryItem? @relation(fields: [inventoryItemId], references: [id])
   organizationId    String
@@ -2812,4 +2825,129 @@ enum CollectionActivityType {
   NOTE
   PROMISE
   ESCALATION
+}
+
+// ─── GIS Phase 2-3: Phase Readiness, Construction, Handover & FM ─────────────
+
+model PhaseReadinessRule {
+  id             String       @id @default(cuid())
+  phaseId        String
+  phase          Phase        @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  ruleType       String       // ACCESS_ROAD, WATER, SEWER, POWER, TELECOM, PERMITS, SERVICES, LANDSCAPING
+  ruleLabel      String
+  ruleLabelAr    String
+  isMet          Boolean      @default(false)
+  evidence       String?      // Reference to approval/document
+  notes          String?
+  checkedBy      String?
+  checkedAt      DateTime?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([phaseId])
+  @@index([organizationId])
+}
+
+model ConstructionPackage {
+  id              String       @id @default(cuid())
+  projectId       String
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  phaseId         String?
+  name            String
+  nameArabic      String?
+  packageType     String       // ROADS, UTILITIES, BUILDINGS, LANDSCAPING, MIXED
+  contractorName  String?
+  contractorId    String?
+  plannedStart    DateTime?
+  plannedFinish   DateTime?
+  actualStart     DateTime?
+  actualFinish    DateTime?
+  progressPercent Decimal      @default(0)
+  status          String       @default("NOT_STARTED") // NOT_STARTED, MOBILIZED, IN_PROGRESS, SUBSTANTIALLY_COMPLETE, COMPLETED
+  boundaryGeoJson Json?
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([organizationId])
+}
+
+model HandoverRecord {
+  id                  String       @id @default(cuid())
+  projectId           String
+  project             Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetType           String       // BUILDING, ROAD, UTILITY, PARK, FACILITY
+  assetId             String       // Polymorphic reference to the asset
+  assetName           String
+  assetNameArabic     String?
+  inspectionStatus    String       @default("PENDING") // PENDING, IN_PROGRESS, PASSED, FAILED
+  inspectionDate      DateTime?
+  inspectorId         String?
+  criticalDefectCount Int          @default(0)
+  minorDefectCount    Int          @default(0)
+  handoverStatus      String       @default("PENDING") // PENDING, READY, HANDED_OVER, REJECTED
+  handoverDate        DateTime?
+  receiverEntity      String?
+  handoverPackageUrl  String?
+  notes               String?
+  geometry            Json?
+  organizationId      String
+  organization        Organization @relation(fields: [organizationId], references: [id])
+  defects             HandoverDefect[]
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([organizationId])
+}
+
+model HandoverDefect {
+  id                  String         @id @default(cuid())
+  handoverRecordId    String
+  handoverRecord      HandoverRecord @relation(fields: [handoverRecordId], references: [id], onDelete: Cascade)
+  title               String
+  titleArabic         String?
+  description         String?
+  severity            String         // CRITICAL, MAJOR, MINOR, COSMETIC
+  status              String         @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, VERIFIED, WONT_FIX
+  locationDescription String?
+  locationGeoJson     Json?
+  photoUrls           String[]
+  assignedTo          String?
+  resolvedAt          DateTime?
+  verifiedAt          DateTime?
+  organizationId      String
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@index([handoverRecordId])
+}
+
+model OperationalAsset {
+  id                String       @id @default(cuid())
+  projectId         String
+  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assetCode         String       // Auto-generated: PRJ-ROAD-001
+  assetClass        String       // ROAD, STREETLIGHT, TREE, VALVE, PUMP, SUBSTATION, PLAYGROUND, BENCH, SIGN, BUILDING_ASSET
+  assetName         String
+  assetNameArabic   String?
+  installationDate  DateTime?
+  warrantyEndDate   DateTime?
+  maintenanceZone   String?
+  operationalOwner  String?
+  operationalStatus String       @default("ACTIVE") // ACTIVE, INACTIVE, UNDER_REPAIR, DECOMMISSIONED
+  specifications    Json?
+  geometry          Json?
+  sourceHandoverId  String?
+  organizationId    String
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  @@index([projectId])
+  @@index([organizationId])
 }

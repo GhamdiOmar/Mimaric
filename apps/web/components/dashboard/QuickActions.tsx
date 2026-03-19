@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, FileText, UserPlus, Receipt } from "lucide-react";
+import { Plus, FileText, UserPlus, Receipt, Globe } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent } from "@repo/ui";
 import Link from "next/link";
@@ -12,6 +12,7 @@ const actions = [
   { label: { ar: "عقد جديد", en: "New Contract" }, icon: FileText, href: "/dashboard/sales/contracts", color: "text-secondary bg-secondary/10" },
   { label: { ar: "إضافة عميل", en: "Add Customer" }, icon: UserPlus, href: "/dashboard/sales/customers", color: "text-info bg-info/10" },
   { label: { ar: "إنشاء فاتورة", en: "Create Invoice" }, icon: Receipt, href: "/dashboard/finance", color: "text-amber-500 bg-amber-500/10" },
+  { label: { ar: "الخريطة التفاعلية", en: "GIS Map" }, icon: Globe, href: "/dashboard/gis", color: "text-emerald-600 bg-emerald-600/10" },
 ];
 
 export function QuickActions() {

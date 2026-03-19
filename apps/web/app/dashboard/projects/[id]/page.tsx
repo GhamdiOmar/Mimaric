@@ -42,6 +42,7 @@ import {
   ToggleRight,
   Play,
   Square,
+  Globe,
 } from "lucide-react";
 import { Button, Badge, SARAmount, Card } from "@repo/ui";
 import {
@@ -528,6 +529,12 @@ export default function ProjectDetailPage() {
               ? (lang === "ar" ? "عرض التخطيط" : "View Planning")
               : (lang === "ar" ? "فتح في التخطيط" : "Open in Planning")}
           </Button>
+          <Link href={`/dashboard/gis?project=${id}`}>
+            <Button variant="outline" size="sm" style={{ display: "inline-flex" }}>
+              <Globe className="w-4 h-4 me-1.5" />
+              {lang === "ar" ? "عرض على الخريطة" : "View on Map"}
+            </Button>
+          </Link>
           <Link href={`/dashboard/units?project=${id}`}>
             <Button variant="secondary" size="sm" className="gap-2">
               <Building2 className="h-3.5 w-3.5" />

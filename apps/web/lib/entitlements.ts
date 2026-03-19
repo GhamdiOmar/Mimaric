@@ -19,6 +19,7 @@ export const FEATURE_KEYS = {
   PLANNING_ACCESS: "planning.access",
   REPORTS_EXPORT: "reports.export",
   PII_ENCRYPTION: "pii.encryption",
+  GIS_ACCESS: "gis.access",
   AUDIT_ACCESS: "audit.access",
   API_ACCESS: "api.access",
   CUSTOM_BRANDING: "custom.branding",

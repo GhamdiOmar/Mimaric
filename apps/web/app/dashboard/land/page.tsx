@@ -2,7 +2,7 @@
 
 import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
-import { MapPin, Plus, Loader2, Search, Eye, Navigation, Download, LandPlot, FileCheck, DollarSign, Trash2 } from "lucide-react";
+import { MapPin, Plus, Loader2, Search, Eye, Navigation, Download, LandPlot, FileCheck, DollarSign, Trash2, Globe } from "lucide-react";
 import { Button, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Card, CardContent, KPICard, PageIntro, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
 import Link from "next/link";
 import { getLandParcels, createLandParcel, deleteLandParcel } from "../../actions/land";
@@ -96,6 +96,12 @@ export default function LandPage() {
               <Plus className="h-4 w-4" />
               {lang === "ar" ? "إضافة قطعة" : "Add Parcel"}
             </Button>
+            <Link href="/dashboard/gis/land-bank">
+              <Button variant="outline" size="sm" style={{ display: "inline-flex" }}>
+                <Globe className="w-4 h-4 me-1.5" />
+                {lang === "ar" ? "خريطة بنك الأراضي" : "Land Bank Map"}
+              </Button>
+            </Link>
             <Button variant="outline" className="gap-2" style={{ display: "inline-flex" }} onClick={handleExport}>
               <Download className="h-4 w-4" />
               {lang === "ar" ? "تصدير" : "Export"}
