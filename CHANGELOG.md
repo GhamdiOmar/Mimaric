@@ -1,5 +1,34 @@
 # Changelog — Mimaric PropTech
 
+## [2.1.0] — 2026-03-19
+
+### GIS Platform — Full Spatial Intelligence (Phases 1-3)
+
+**Phase 1 — Foundation & Interactive Map**
+- MapLibre GL JS map engine (GPU-accelerated, vector tiles, Saudi imagery ready)
+- GIS Hub (/dashboard/gis) with project selector, layer panel, feature click
+- Sales Map (/dashboard/gis/sales) with plot status coloring and filter pills
+- GIS Overview (/dashboard/gis/overview) with KPI dashboard, mini-map, charts
+- 6 reusable map components: MapView, Controls, Popup, Legend, LayerPanel, Store
+
+**Phase 2 — Planning Intelligence**
+- Land Bank Map (/dashboard/gis/land-bank) with acquisition pipeline and scorecards
+- Phase Readiness (/dashboard/gis/phases) with checklist management and readiness scoring
+
+**Phase 3 — Delivery & Operations**
+- Construction Progress (/dashboard/gis/construction) with package CRUD and progress tracking
+- Handover & Defects (/dashboard/gis/handover) with inspection records and defect management
+- Operational Asset Registry (/dashboard/gis/assets) with asset creation, filtering, export
+
+**Infrastructure**
+- 5 new Prisma models: PhaseReadinessRule, ConstructionPackage, HandoverRecord, HandoverDefect, OperationalAsset
+- 6 server action files with full multi-tenancy (organizationId filtering)
+- 3 new permissions: gis:read, gis:write, gis:export across 5 roles
+- Cross-module navigation: "View on Map" buttons in Projects, Land, Sales, Planning, Maintenance
+- Deep-link support (?project=id) on all 8 GIS pages
+- GIS quick action on main Dashboard
+- All pages bilingual (Arabic RTL / English LTR)
+
 ## [2.0.1] — 2026-03-19
 
 ### UI Accessibility & UX Polish
