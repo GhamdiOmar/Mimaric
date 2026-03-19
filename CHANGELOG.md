@@ -1,5 +1,47 @@
 # Changelog — Mimaric PropTech
 
+## [2.0.1] — 2026-03-19
+
+### UI Accessibility & UX Polish
+- Add Documents module to sidebar navigation (was unreachable)
+- Add delete buttons: Customers, Land parcels (with cascade), Planning workspaces
+- Add export buttons: Rentals, Maintenance, Documents, Help/Tickets, Projects, Finance, Land, Planning
+- Add onboarding re-entry from Settings page (?mode=edit with pre-filled data)
+- Wire all 14 previously non-functional buttons across the application
+
+### Interaction & Feedback Improvements
+- Add loading spinners to all async buttons (finance, billing, reservations, settings, planning, help)
+- Add form validation with red borders and bilingual error text (maintenance, settings, help, planning)
+- Add skeleton loading states (billing, documents)
+- Add error state banners with retry buttons (dashboard, finance, billing, reservations)
+- Replace all alert()/confirm() with proper Dialog components and inline error displays
+- Add focus-visible ring styling to 15 select elements across 5 pages
+
+### Design System Compliance
+- Fix PageIntro heading to use semantic h1 tag (global CSS letter-spacing applies)
+- Fix KPICard padding to 8pt grid (p-5 → p-6)
+- Fix PageIntro badge and actions spacing to 4pt grid
+- Replace decorative colors with semantic palette (units, customers, projects, billing)
+- Landing Hero/Pricing CTAs now use Button component for proper 4-state support
+- Remove redundant inline letterSpacing overrides from auth pages
+
+### Decision Gates Fix
+- Add missing standard lifecycle transitions: PLANNING→UNDER_CONSTRUCTION→READY→HANDED_OVER
+- Change VALID_TRANSITIONS from single-string to arrays for multi-path support
+
+### Error Messages Overhaul
+- Update 283+ error messages across 55 server action files to be user-friendly
+- All errors now explain what went wrong and what the user should do next
+- Make 7 UI pages show bilingual error messages
+- Remove all technical/developer-facing error text from user-visible surfaces
+
+### Documentation
+- Capture fresh screenshots for all 18 module pages
+- Update Business Documentation, Technical White Paper, and 17 User Guides for v2.0
+- Replace embedded screenshots in all DOCX files
+
+---
+
 ## [2.0.0] — 2026-03-18
 
 ### Premium UI/UX Redesign
