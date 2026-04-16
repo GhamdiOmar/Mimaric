@@ -116,6 +116,12 @@ const ALL_PERMISSIONS: Permission[] = [
   "notifications:read",
   "billing:read", "billing:write", "billing:admin",
   "help:read", "help:create_ticket", "help:manage_tickets", "help:manage_permissions",
+  // Legacy v2 aliases
+  "units:read", "units:write", "units:delete",
+  "reservations:read", "reservations:write",
+  "preventive_maintenance:delete",
+  "finance:read", "finance:write",
+  "pricing:read", "launch:read",
 ];
 
 // ─── System Permissions (Mimaric platform staff only) ────────────────────────

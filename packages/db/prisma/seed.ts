@@ -99,12 +99,12 @@ async function main() {
   const hashedPassword = await bcrypt.hash("mimaric2026", 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@mimaric.sa" },
-    update: { password: hashedPassword, role: "COMPANY_ADMIN" },
+    update: { password: hashedPassword, role: "ADMIN" },
     create: {
       email: "admin@mimaric.sa",
       name: "Omar Al-Ghamdi",
       password: hashedPassword,
-      role: "COMPANY_ADMIN",
+      role: "ADMIN",
       organizationId: org.id,
       onboardingCompleted: true,
       accountType: "company",
@@ -123,7 +123,7 @@ async function main() {
       email: "ahmed@mimaric.sa",
       name: "Ahmed Al-Harbi",
       password: salesPassword,
-      role: "SALES_AGENT",
+      role: "AGENT",
       organizationId: org.id,
       onboardingCompleted: true,
       accountType: "company",
@@ -137,7 +137,7 @@ async function main() {
       email: "fatima@mimaric.sa",
       name: "Fatima Al-Rashid",
       password: financePassword,
-      role: "FINANCE_OFFICER",
+      role: "MANAGER",
       organizationId: org.id,
       onboardingCompleted: true,
       accountType: "company",
@@ -169,27 +169,27 @@ async function main() {
   await prisma.user.upsert({
     where: { email: "pm@mimaric.sa" },
     update: {},
-    create: { email: "pm@mimaric.sa", name: "Nasser Al-Zahrani", password: testPassword, role: "PROJECT_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+    create: { email: "pm@mimaric.sa", name: "Nasser Al-Zahrani", password: testPassword, role: "MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "sales_mgr@mimaric.sa" },
     update: {},
-    create: { email: "sales_mgr@mimaric.sa", name: "Huda Al-Maliki", password: testPassword, role: "SALES_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+    create: { email: "sales_mgr@mimaric.sa", name: "Huda Al-Maliki", password: testPassword, role: "MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "property_mgr@mimaric.sa" },
     update: {},
-    create: { email: "property_mgr@mimaric.sa", name: "Maryam Al-Subaie", password: testPassword, role: "PROPERTY_MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+    create: { email: "property_mgr@mimaric.sa", name: "Maryam Al-Subaie", password: testPassword, role: "MANAGER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "buyer@mimaric.sa" },
     update: {},
-    create: { email: "buyer@mimaric.sa", name: "Turki Al-Fadhli", password: testPassword, role: "BUYER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+    create: { email: "buyer@mimaric.sa", name: "Turki Al-Fadhli", password: testPassword, role: "USER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "tenant@mimaric.sa" },
     update: {},
-    create: { email: "tenant@mimaric.sa", name: "Reem Al-Harthy", password: testPassword, role: "TENANT", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
+    create: { email: "tenant@mimaric.sa", name: "Reem Al-Harthy", password: testPassword, role: "USER", organizationId: org.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "user@mimaric.sa" },
@@ -694,18 +694,18 @@ async function main() {
 
   await prisma.user.upsert({
     where: { email: "dummy@demo.sa" },
-    update: { password: dummyPw, role: "COMPANY_ADMIN", organizationId: dummyOrg.id },
-    create: { email: "dummy@demo.sa", name: "Dummy Admin", password: dummyPw, role: "COMPANY_ADMIN", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
+    update: { password: dummyPw, role: "ADMIN", organizationId: dummyOrg.id },
+    create: { email: "dummy@demo.sa", name: "Dummy Admin", password: dummyPw, role: "ADMIN", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "pm@demo.sa" },
-    update: { password: dummyPw, role: "PROJECT_MANAGER", organizationId: dummyOrg.id },
-    create: { email: "pm@demo.sa", name: "Sara Al-Qahtani", password: dummyPw, role: "PROJECT_MANAGER", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
+    update: { password: dummyPw, role: "MANAGER", organizationId: dummyOrg.id },
+    create: { email: "pm@demo.sa", name: "Sara Al-Qahtani", password: dummyPw, role: "MANAGER", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "sales@demo.sa" },
-    update: { password: dummyPw, role: "SALES_AGENT", organizationId: dummyOrg.id },
-    create: { email: "sales@demo.sa", name: "Khalid Al-Dosari", password: dummyPw, role: "SALES_AGENT", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
+    update: { password: dummyPw, role: "AGENT", organizationId: dummyOrg.id },
+    create: { email: "sales@demo.sa", name: "Khalid Al-Dosari", password: dummyPw, role: "AGENT", organizationId: dummyOrg.id, onboardingCompleted: true, accountType: "company" },
   });
   await prisma.user.upsert({
     where: { email: "tech@demo.sa" },

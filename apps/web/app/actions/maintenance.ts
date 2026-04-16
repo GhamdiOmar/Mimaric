@@ -229,7 +229,7 @@ export async function getAssignableUsers() {
   const users = await db.user.findMany({
     where: {
       organizationId: session.organizationId,
-      role: { in: ["TECHNICIAN", "PROPERTY_MANAGER", "PROJECT_MANAGER"] as any },
+      role: { in: ["TECHNICIAN", "MANAGER", "ADMIN"] as any },
     },
     select: { id: true, name: true, role: true },
     orderBy: { name: "asc" },

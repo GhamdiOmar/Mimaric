@@ -9,8 +9,7 @@ import { isSystemRole } from "../../lib/permissions";
 
 /** Roles that non-system users are allowed to request via self-service. */
 const REQUESTABLE_ROLES = [
-  "USER", "ACCOUNTANT", "TECHNICIAN", "PROPERTY_MANAGER",
-  "PROJECT_MANAGER", "SALES_AGENT", "COMPANY_ADMIN",
+  "USER", "TECHNICIAN", "AGENT", "MANAGER", "ADMIN",
 ];
 
 export async function createPermissionRequest(data: {

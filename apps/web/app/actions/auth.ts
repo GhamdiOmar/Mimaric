@@ -104,7 +104,7 @@ export async function registerUser(data: {
           name: data.name,
           email: normalizedEmail,
           password: hashedPassword,
-          role: "COMPANY_ADMIN",
+          role: "ADMIN",
           organizationId: org.id,
           accountType,
           onboardingCompleted: false,
