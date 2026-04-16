@@ -15,8 +15,6 @@ import {
   XCircle,
   Clock,
   MessageSquare,
-  Settings,
-  AlertTriangle,
   Download,
   Loader2,
 } from "lucide-react";
@@ -29,16 +27,13 @@ import { useSession } from "../../../components/SimpleSessionProvider";
 import { FAQ_ITEMS, FAQ_CATEGORIES, GUIDE_ITEMS, type FAQCategory } from "../../../lib/help-content";
 import { createPermissionRequest, getMyPermissionRequests } from "../../actions/permission-requests";
 import { getPendingPermissionRequests, reviewPermissionRequest } from "../../actions/permission-requests";
-import { createSupportTicket, getMySupportTickets, getAllSupportTickets, getHelpDashboardStats } from "../../actions/support-tickets";
+import { createSupportTicket, getMySupportTickets } from "../../actions/support-tickets";
 import { getPendingJoinRequests, reviewJoinRequest } from "../../actions/join-requests";
 
 const ROLE_OPTIONS = [
-  { value: "COMPANY_ADMIN", label: { ar: "مدير الشركة", en: "Company Admin" } },
-  { value: "PROJECT_MANAGER", label: { ar: "مدير المشاريع", en: "Project Manager" } },
-  { value: "SALES_MANAGER", label: { ar: "مدير المبيعات", en: "Sales Manager" } },
-  { value: "SALES_AGENT", label: { ar: "وكيل مبيعات", en: "Sales Agent" } },
-  { value: "PROPERTY_MANAGER", label: { ar: "مدير العقارات", en: "Property Manager" } },
-  { value: "FINANCE_OFFICER", label: { ar: "مسؤول مالي", en: "Finance Officer" } },
+  { value: "ADMIN", label: { ar: "مدير", en: "Admin" } },
+  { value: "MANAGER", label: { ar: "مدير عمليات", en: "Manager" } },
+  { value: "AGENT", label: { ar: "وكيل", en: "Agent" } },
   { value: "TECHNICIAN", label: { ar: "فني صيانة", en: "Technician" } },
 ];
 
@@ -58,15 +53,12 @@ const PRIORITY_OPTIONS = [
   { value: "URGENT", label: { ar: "عاجلة", en: "Urgent" } },
 ];
 
-type Tab = "overview" | "faq" | "tickets" | "permissions" | "org-admin" | "system-admin";
+type Tab = "overview" | "faq" | "tickets" | "permissions" | "org-admin";
 
 export default function HelpPage() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role ?? "USER";
   const isOrgAdmin = hasPermission(userRole, "help:manage_permissions");
-  const isSystemStaff = hasPermission(userRole, "help:manage_tickets");
-  // Backward compat: treat old isAdmin references
-  const isAdmin = isOrgAdmin || isSystemStaff;
   const { lang } = useLanguage();
   const [activeTab, setActiveTab] = React.useState<Tab>("overview");
 
@@ -91,8 +83,6 @@ export default function HelpPage() {
   // Admin state
   const [pendingRequests, setPendingRequests] = React.useState<any[]>([]);
   const [pendingJoinRequests, setPendingJoinRequests] = React.useState<any[]>([]);
-  const [allTickets, setAllTickets] = React.useState<any[]>([]);
-  const [stats, setStats] = React.useState<any>(null);
   const [reviewNote, setReviewNote] = React.useState("");
   const [reviewingId, setReviewingId] = React.useState<string | null>(null);
   const [reviewActionLoading, setReviewActionLoading] = React.useState(false);
@@ -109,11 +99,8 @@ export default function HelpPage() {
     } else if (activeTab === "org-admin" && isOrgAdmin) {
       getPendingPermissionRequests().then(setPendingRequests).catch(() => {});
       getPendingJoinRequests().then(setPendingJoinRequests).catch(() => {});
-    } else if (activeTab === "system-admin" && isSystemStaff) {
-      getAllSupportTickets().then(setAllTickets).catch(() => {});
-      getHelpDashboardStats().then(setStats).catch(() => {});
     }
-  }, [activeTab, isOrgAdmin, isSystemStaff]);
+  }, [activeTab, isOrgAdmin]);
 
   // Filter FAQs
   const filteredFaqs = FAQ_ITEMS.filter((item) => {
@@ -185,8 +172,6 @@ export default function HelpPage() {
       setReviewNote("");
       const reqs = await getPendingPermissionRequests();
       setPendingRequests(reqs);
-      const s = await getHelpDashboardStats();
-      setStats(s);
     } catch (e: any) {
       alert(e.message);
     } finally {
@@ -200,7 +185,6 @@ export default function HelpPage() {
     tickets: Ticket,
     permissions: ShieldCheck,
     "org-admin": ShieldCheck,
-    "system-admin": Settings,
   };
 
   const tabs: { key: Tab; label: { ar: string; en: string }; adminOnly?: boolean }[] = [
@@ -209,7 +193,6 @@ export default function HelpPage() {
     { key: "tickets", label: { ar: "تذاكري", en: "My Tickets" } },
     { key: "permissions", label: { ar: "طلب صلاحيات", en: "Request Permissions" } },
     ...(isOrgAdmin ? [{ key: "org-admin" as Tab, label: { ar: "إدارة المنظمة", en: "Org Management" }, adminOnly: true }] : []),
-    ...(isSystemStaff ? [{ key: "system-admin" as Tab, label: { ar: "إدارة النظام", en: "System Admin" }, adminOnly: true }] : []),
   ];
 
   const statusBadge = (status: string) => {
@@ -261,7 +244,7 @@ export default function HelpPage() {
   };
 
   const handleExportTickets = () => {
-    const tickets = isSystemStaff && activeTab === "system-admin" ? allTickets : myTickets;
+    const tickets = myTickets;
     exportToExcel({
       data: tickets,
       columns: [
@@ -335,23 +318,6 @@ export default function HelpPage() {
             </button>
           </div>
 
-          {/* System Staff Stats */}
-          {isSystemStaff && stats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-muted-foreground">{lang === "ar" ? "تذاكر مفتوحة" : "Open Tickets"}</p>
-                <p className="text-2xl font-bold text-foreground mt-1">{stats.openTickets}</p>
-              </div>
-              <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-muted-foreground">{lang === "ar" ? "قيد المعالجة" : "In Progress"}</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">{stats.inProgressTickets}</p>
-              </div>
-              <div className="bg-card p-4 rounded-md border border-border">
-                <p className="text-xs text-muted-foreground">{lang === "ar" ? "طلبات صلاحيات معلقة" : "Pending Requests"}</p>
-                <p className="text-2xl font-bold text-amber-600 mt-1">{stats.pendingRequests}</p>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -742,61 +708,6 @@ export default function HelpPage() {
         </div>
       )}
 
-      {/* System Admin Tab — visible to SYSTEM_ADMIN/SYSTEM_SUPPORT (via help:manage_tickets) */}
-      {activeTab === "system-admin" && isSystemStaff && (
-        <div className="space-y-6">
-          {/* All Tickets */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-foreground">{lang === "ar" ? "جميع التذاكر" : "All Tickets"}</h2>
-              <Button variant="outline" size="sm" style={{ display: "inline-flex" }} onClick={handleExportTickets}>
-                <Download className="h-4 w-4" />
-                {lang === "ar" ? "تصدير التذاكر" : "Export Tickets"}
-              </Button>
-            </div>
-            <div className="bg-card rounded-md border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
-                  <tr>
-                    <th className="px-3 py-2 text-start">#</th>
-                    <th className="px-3 py-2 text-start">{lang === "ar" ? "المستخدم" : "User"}</th>
-                    <th className="px-3 py-2 text-start">{lang === "ar" ? "الموضوع" : "Subject"}</th>
-                    <th className="px-3 py-2 text-start">{lang === "ar" ? "الفئة" : "Category"}</th>
-                    <th className="px-3 py-2 text-center">{lang === "ar" ? "الأولوية" : "Priority"}</th>
-                    <th className="px-3 py-2 text-center">{lang === "ar" ? "الحالة" : "Status"}</th>
-                    <th className="px-3 py-2 text-start">{lang === "ar" ? "التاريخ" : "Date"}</th>
-                    <th className="px-3 py-2 text-center">{lang === "ar" ? "إجراء" : "Action"}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {allTickets.length === 0 ? (
-                    <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">{lang === "ar" ? "لا توجد تذاكر" : "No tickets"}</td></tr>
-                  ) : (
-                    allTickets.map((ticket: any) => (
-                      <tr key={ticket.id} className="hover:bg-muted/10 transition-colors">
-                        <td className="px-3 py-2 font-mono text-xs">{ticket.ticketNumber}</td>
-                        <td className="px-3 py-2 text-xs">{ticket.user?.name ?? ticket.user?.email}</td>
-                        <td className="px-3 py-2">
-                          <Link href={`/dashboard/help/tickets/${ticket.id}`} className="text-primary hover:underline font-medium text-xs">{ticket.subject}</Link>
-                        </td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground">{categoryLabel(ticket.category)}</td>
-                        <td className="px-3 py-2 text-center">{priorityBadge(ticket.priority)}</td>
-                        <td className="px-3 py-2 text-center">{statusBadge(ticket.status)}</td>
-                        <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(ticket.createdAt).toLocaleDateString("en-CA")}</td>
-                        <td className="px-3 py-2 text-center">
-                          <Link href={`/dashboard/help/tickets/${ticket.id}`} className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 transition-colors">
-                            {lang === "ar" ? "عرض" : "View"}
-                          </Link>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

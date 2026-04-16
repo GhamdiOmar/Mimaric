@@ -6,24 +6,27 @@ export interface NavItem {
   href: string;
   section: "core" | "operations" | "system";
   permission?: Permission;
+  /** "tenant" = hide from platform staff; "platform" = hide from tenant users; omit = show to all */
+  audience?: "tenant" | "platform";
 }
 
 export const navItems: NavItem[] = [
-  // Core
-  { label: { ar: "الرئيسية", en: "Dashboard" }, icon: "LayoutGrid", href: "/dashboard", section: "core", permission: "dashboard:read" },
-  { label: { ar: "إدارة العملاء", en: "CRM" }, icon: "Users", href: "/dashboard/crm", section: "core", permission: "crm:read" },
-  { label: { ar: "العقارات", en: "Properties" }, icon: "Building2", href: "/dashboard/properties", section: "core", permission: "properties:read" },
-  { label: { ar: "الصفقات", en: "Deals" }, icon: "TrendingUp", href: "/dashboard/deals", section: "core", permission: "deals:read" },
-  { label: { ar: "العقود", en: "Contracts" }, icon: "FileText", href: "/dashboard/contracts", section: "core", permission: "contracts:read" },
+  // Core — tenant only
+  { label: { ar: "الرئيسية", en: "Dashboard" }, icon: "LayoutGrid", href: "/dashboard", section: "core", permission: "dashboard:read", audience: "tenant" },
+  { label: { ar: "إدارة العملاء", en: "CRM" }, icon: "Users", href: "/dashboard/crm", section: "core", permission: "crm:read", audience: "tenant" },
+  { label: { ar: "العقارات", en: "Properties" }, icon: "Building2", href: "/dashboard/properties", section: "core", permission: "properties:read", audience: "tenant" },
+  { label: { ar: "الصفقات", en: "Deals" }, icon: "TrendingUp", href: "/dashboard/deals", section: "core", permission: "deals:read", audience: "tenant" },
+  { label: { ar: "العقود", en: "Contracts" }, icon: "FileText", href: "/dashboard/contracts", section: "core", permission: "contracts:read", audience: "tenant" },
 
-  // Operations
-  { label: { ar: "المدفوعات", en: "Payments" }, icon: "CreditCard", href: "/dashboard/payments", section: "operations", permission: "payments:read" },
-  { label: { ar: "الصيانة", en: "Maintenance" }, icon: "Wrench", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read" },
+  // Operations — tenant only
+  { label: { ar: "المدفوعات", en: "Payments" }, icon: "CreditCard", href: "/dashboard/payments", section: "operations", permission: "payments:read", audience: "tenant" },
+  { label: { ar: "الصيانة", en: "Maintenance" }, icon: "Wrench", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read", audience: "tenant" },
 
   // System
-  { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "Receipt", href: "/dashboard/billing", section: "system", permission: "billing:read" },
-  { label: { ar: "إدارة المنصة", en: "Admin" }, icon: "ShieldCheck", href: "/dashboard/admin", section: "system", permission: "billing:admin" },
-  { label: { ar: "إعدادات SEO", en: "SEO Settings" }, icon: "SearchCheck", href: "/dashboard/admin/seo", section: "system", permission: "billing:admin" },
+  { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "Receipt", href: "/dashboard/billing", section: "system", permission: "billing:read", audience: "tenant" },
+  { label: { ar: "إدارة المنصة", en: "Admin" }, icon: "ShieldCheck", href: "/dashboard/admin", section: "system", permission: "billing:admin", audience: "platform" },
+  { label: { ar: "إعدادات SEO", en: "SEO Settings" }, icon: "SearchCheck", href: "/dashboard/admin/seo", section: "system", permission: "billing:admin", audience: "platform" },
+  { label: { ar: "تذاكر الدعم", en: "Support Tickets" }, icon: "TicketCheck", href: "/dashboard/admin/tickets", section: "system", permission: "billing:admin", audience: "platform" },
   { label: { ar: "الإعدادات", en: "Settings" }, icon: "Settings", href: "/dashboard/settings", section: "system", permission: "organization:read" },
 ];
 

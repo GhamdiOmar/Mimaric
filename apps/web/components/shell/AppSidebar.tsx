@@ -5,19 +5,20 @@ import {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
   Settings, PanelLeftClose, PanelLeftOpen, HelpCircle, X, FolderOpen,
+  SearchCheck, TicketCheck,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "../LanguageProvider";
-import { hasPermission } from "../../lib/permissions";
+import { hasPermission, isSystemRole } from "../../lib/permissions";
 import { MimaricLogo } from "../brand/MimaricLogo";
 import { navItems, sectionLabels, type NavItem } from "./nav-items";
 
 const iconMap: Record<string, React.ElementType> = {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
-  Settings, FolderOpen,
+  Settings, FolderOpen, SearchCheck, TicketCheck,
 };
 
 interface AppSidebarProps {
@@ -32,9 +33,14 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
   const pathname = usePathname();
   const { lang } = useLanguage();
 
-  const filteredItems = navItems.filter((item) =>
-    !item.permission || hasPermission(userRole, item.permission)
-  );
+  const isPlatformUser = isSystemRole(userRole);
+
+  const filteredItems = navItems.filter((item) => {
+    if (item.permission && !hasPermission(userRole, item.permission)) return false;
+    if (item.audience === "tenant" && isPlatformUser) return false;
+    if (item.audience === "platform" && !isPlatformUser) return false;
+    return true;
+  });
 
   const sections = ["core", "operations", "system"] as const;
 
@@ -143,13 +149,15 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
             {isCollapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}
             {showLabel && <span>{lang === "ar" ? "طي القائمة" : "Collapse"}</span>}
           </button>
-          <Link
-            href="/dashboard/help"
-            className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white/80 transition-all min-h-[40px]"
-          >
-            <HelpCircle className="h-[18px] w-[18px]" />
-            {showLabel && <span>{lang === "ar" ? "المساعدة" : "Help"}</span>}
-          </Link>
+          {!isPlatformUser && (
+            <Link
+              href="/dashboard/help"
+              className="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white/80 transition-all min-h-[40px]"
+            >
+              <HelpCircle className="h-[18px] w-[18px]" />
+              {showLabel && <span>{lang === "ar" ? "المساعدة" : "Help"}</span>}
+            </Link>
+          )}
         </div>
       </aside>
     </>

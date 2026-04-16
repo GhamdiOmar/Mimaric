@@ -16,8 +16,10 @@ import {
   Circle,
 } from "lucide-react";
 import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent, Button } from "@repo/ui";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "../../components/LanguageProvider";
 import { useSession } from "../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../lib/permissions";
 import {
   getDashboardV3Stats,
   getDashboardRecentDeals,
@@ -114,6 +116,13 @@ function formatDueDate(dateStr: string, lang: "ar" | "en"): string {
 export default function DashboardPage() {
   const { lang } = useLanguage();
   const { data: session } = useSession();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (session && isSystemRole(session.user?.role ?? "")) {
+      router.replace("/dashboard/admin");
+    }
+  }, [session, router]);
 
   const [stats, setStats] = React.useState<V3Stats | null>(null);
   const [deals, setDeals] = React.useState<Deal[]>([]);
