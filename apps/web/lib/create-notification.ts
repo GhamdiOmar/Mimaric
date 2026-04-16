@@ -40,7 +40,7 @@ export async function notifyAdmins(params: {
   const admins = await db.user.findMany({
     where: {
       organizationId: params.organizationId,
-      role: { in: ["COMPANY_ADMIN", "SYSTEM_ADMIN", "SYSTEM_SUPPORT"] },
+      role: { in: ["ADMIN", "SYSTEM_ADMIN", "SYSTEM_SUPPORT"] },
     },
     select: { id: true },
   });

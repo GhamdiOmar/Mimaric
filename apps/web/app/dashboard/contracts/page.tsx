@@ -30,7 +30,7 @@ import {
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
-import { getContracts, createContract } from "../../actions/contracts";
+import { getContracts, createContract, updateContractStatus } from "../../actions/contracts";
 import { getCustomers } from "../../actions/customers";
 import { getUnitsWithBuildings } from "../../actions/units";
 import { getReservationById } from "../../actions/reservations";
@@ -124,6 +124,16 @@ export default function ContractsPage() {
       .then((data) => setAllContracts(data as Contract[]))
       .catch(() => toast.error(lang === "ar" ? "تعذّر تحميل العقود" : "Failed to load contracts"))
       .finally(() => setLoading(false));
+  }
+
+  async function handleSignContract(contractId: string) {
+    try {
+      await updateContractStatus(contractId, "SIGNED");
+      toast.success(lang === "ar" ? "تم توقيع العقد بنجاح" : "Contract signed successfully");
+      loadContracts();
+    } catch (err: any) {
+      toast.error(err.message || (lang === "ar" ? "حدث خطأ أثناء التوقيع" : "Failed to sign contract"));
+    }
   }
 
   React.useEffect(() => {
@@ -405,7 +415,7 @@ export default function ContractsPage() {
                   <TableCell>
                     <div className="text-sm">
                       <p className="font-medium">{lang === "ar" ? "وحدة" : "Unit"} {c.unit.number}</p>
-                      <p className="text-gray-500 text-xs">{c.unit.building.name}</p>
+                      <p className="text-gray-500 text-xs">{c.unit.buildingName ?? c.unit.city ?? "—"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{SAR(Number(c.amount))}</TableCell>
@@ -420,12 +430,16 @@ export default function ContractsPage() {
                       : <span className="text-gray-400">—</span>}
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/dashboard/contracts/${c.id}`}
-                      className="text-xs text-purple-600 hover:text-purple-800 font-medium"
-                    >
-                      {lang === "ar" ? "عرض" : "View"}
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      {(c.status === "DRAFT" || c.status === "SENT") && (
+                        <button
+                          onClick={() => handleSignContract(c.id)}
+                          className="text-xs text-green-600 hover:text-green-800 font-medium"
+                        >
+                          {lang === "ar" ? "توقيع" : "Sign"}
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -455,7 +469,7 @@ export default function ContractsPage() {
                   <TableCell>
                     <div className="text-sm">
                       <p className="font-medium">{lang === "ar" ? "وحدة" : "Unit"} {c.unit.number}</p>
-                      <p className="text-gray-500 text-xs">{c.unit.building.name}</p>
+                      <p className="text-gray-500 text-xs">{c.unit.buildingName ?? c.unit.city ?? "—"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{SAR(Number(c.amount))}</TableCell>
@@ -475,12 +489,16 @@ export default function ContractsPage() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/dashboard/contracts/${c.id}`}
-                      className="text-xs text-purple-600 hover:text-purple-800 font-medium"
-                    >
-                      {lang === "ar" ? "عرض" : "View"}
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      {(c.status === "DRAFT" || c.status === "SENT") && (
+                        <button
+                          onClick={() => handleSignContract(c.id)}
+                          className="text-xs text-green-600 hover:text-green-800 font-medium"
+                        >
+                          {lang === "ar" ? "توقيع" : "Sign"}
+                        </button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

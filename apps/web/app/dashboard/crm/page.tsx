@@ -25,6 +25,7 @@ import {
   Pencil,
   Link2,
   CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import {
   Button,
@@ -192,6 +193,7 @@ function CustomerDrawer({
   customer,
   onClose,
   onCustomerUpdated,
+  onMarkLost,
   lang,
   teamMembers,
   assignments,
@@ -199,6 +201,7 @@ function CustomerDrawer({
   customer: any;
   onClose: () => void;
   onCustomerUpdated: (updated: any) => void;
+  onMarkLost?: (customerId: string, customerName: string) => void;
   lang: "ar" | "en";
   teamMembers: any[];
   assignments: any[];
@@ -292,7 +295,18 @@ function CustomerDrawer({
         budget: editForm.budget ? Number(editForm.budget) : undefined,
         propertyTypeInterest: editForm.propertyTypeInterest || undefined,
       });
-      onCustomerUpdated({ ...customer, ...updated });
+      // Only merge non-PII fields from server response to avoid showing encrypted ciphertext.
+      // PII fields (phone, email, nationalId) stay from the current decrypted customer state.
+      onCustomerUpdated({
+        ...customer,
+        name: updated.name,
+        nameArabic: updated.nameArabic,
+        source: updated.source,
+        agentId: updated.agentId,
+        agent: updated.agent,
+        budget: updated.budget,
+        propertyTypeInterest: updated.propertyTypeInterest,
+      });
       setEditSuccess(true);
       showToast(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
       setTimeout(() => {
@@ -538,16 +552,30 @@ function CustomerDrawer({
                 {(SOURCE_LABELS[customer.source] as { ar: string; en: string })[lang]}
               </span>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              style={{ display: "inline-flex" }}
-              className="ms-auto gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
-              onClick={handleConvertToDeal}
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-              {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
-            </Button>
+            <div className="ms-auto flex items-center gap-2">
+              {!["LOST", "CONVERTED", "ACTIVE_TENANT"].includes(customer.status) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  style={{ display: "inline-flex" }}
+                  className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/5"
+                  onClick={() => onMarkLost?.(customer.id, customer.name)}
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  {lang === "ar" ? "تحديد كخسارة" : "Mark as Lost"}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                style={{ display: "inline-flex" }}
+                className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+                onClick={handleConvertToDeal}
+              >
+                <ArrowRight className="h-3.5 w-3.5" />
+                {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
+              </Button>
+            </div>
           </div>
 
           {/* Budget + Property Interest */}
@@ -2115,6 +2143,11 @@ export default function CRMPage() {
               prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
             );
             loadData();
+          }}
+          onMarkLost={(id, name) => {
+            setLostTarget({ id, name });
+            setLostReason("");
+            setShowLostModal(true);
           }}
           lang={lang}
           teamMembers={teamMembers}

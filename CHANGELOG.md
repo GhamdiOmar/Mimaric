@@ -1,5 +1,53 @@
 # Changelog — Mimaric PropTech
 
+## [3.1.0] — 2026-04-16
+
+### Mimaric v3.1 — Full Prospect-to-Close Cycle
+
+**Strategy:** Link CRM → Properties → Deals → Contracts with automatic status propagation. An agent can now take a lead from "New" to "Converted/Tenant" without manually updating any status.
+
+#### New Feature: CustomerPropertyInterest
+
+- New `CustomerPropertyInterest` model linking Customer ↔ Unit with `PropertyIntent` (BUY/RENT) and `InterestStatus` (ACTIVE/CONVERTED/DROPPED)
+- 5 new server actions in `customer-interests.ts`: `addCustomerInterest`, `dropCustomerInterest`, `convertInterestToDeal`, `getCustomerInterests`, `getCustomerInterestsForUnit`
+- Guard: unit must be AVAILABLE or RESERVED to link; upsert reactivates DROPPED interests
+
+#### CRM Drawer Enhancements
+
+- **Edit Profile modal**: Edit name (EN + AR), phone, email, source, agent, budget, property type interest — with phone/email encryption preserved
+- **Interested Properties section**: Link specific properties to a customer with BUY/RENT intent; status badges (ACTIVE/CONVERTED/DROPPED); "Convert to Deal" and "Drop" actions per interest row
+- **Linked Deals & Contracts section**: Shows active reservations and signed contracts directly in the drawer
+- **Mark as Lost button**: Added to drawer for customers in RESERVED/CONFIRMED status (not reachable via Kanban drag) — triggers the LOST reason modal and cascades cancellations
+
+#### Properties Drawer Enhancement
+
+- **Interested Customers section**: Lists all customers with ACTIVE interest in a unit, with intent badge (BUY/RENT), agent name, and "View Profile" link to CRM
+
+#### Deals Page: URL Pre-fill
+
+- `?unitId`, `?intent`, `?amount` query params pre-fill the reservation form when navigating from an interest record via "Convert to Deal"
+
+#### Contracts Page: ?dealId Pre-fill
+
+- `?dealId` URL param fetches the linked reservation and pre-fills customer + unit in the new contract modal
+
+#### Status Cascade Fixes
+
+- **Bug fix:** Cancelling/expiring a reservation now reverts customer status → QUALIFIED (was staying RESERVED)
+- **Bug fix:** Marking customer LOST now cancels all active reservations → Units revert to AVAILABLE, interests set to DROPPED
+- **Bug fix:** DRAFT contracts can now transition directly to SIGNED (DRAFT → SIGNED added to state machine)
+
+#### Customer Edit Bug Fix
+
+- **Bug fix:** After editing a customer profile, the drawer no longer shows encrypted phone ciphertext. Non-PII fields only are merged from server response; PII fields retain the decrypted value from drawer state.
+
+#### Other Fixes
+
+- Role name fix in `create-notification.ts`: COMPANY_ADMIN → ADMIN
+- Prisma Decimal serialization fix: `JSON.parse(JSON.stringify())` applied to remaining customer action returns
+
+---
+
 ## [3.0.1] — 2026-04-16
 
 ### CRM SOP Compliance — 7 Gap Fixes + Serialization Fix

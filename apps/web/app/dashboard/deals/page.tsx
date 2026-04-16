@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Ban,
   Eye,
+  CheckCircle,
 } from "lucide-react";
 import {
   Button,
@@ -229,6 +230,16 @@ export default function DealsPage() {
     }
   }
 
+  async function handleConfirmDeal(dealId: string) {
+    try {
+      await updateReservationStatus(dealId, "CONFIRMED");
+      toast.success(lang === "ar" ? "تم تأكيد الصفقة" : "Deal confirmed");
+      loadDeals();
+    } catch (err: any) {
+      toast.error(err.message || (lang === "ar" ? "حدث خطأ أثناء التأكيد" : "Failed to confirm deal"));
+    }
+  }
+
   async function handleCancel() {
     if (!cancelDeal) return;
     setCancelling(true);
@@ -390,6 +401,15 @@ export default function DealsPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      {can("deals:write") && deal.status === "PENDING" && (
+                        <button
+                          onClick={() => handleConfirmDeal(deal.id)}
+                          className="text-gray-400 hover:text-green-600 transition-colors"
+                          title={lang === "ar" ? "تأكيد الصفقة" : "Confirm Deal"}
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                      )}
                       {deal.status === "CONFIRMED" && (
                         <Link
                           href={`/dashboard/contracts?dealId=${deal.id}`}

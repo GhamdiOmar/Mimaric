@@ -6,7 +6,7 @@ import { requirePermission } from "../../lib/auth-helpers";
 import { logAuditEvent } from "../../lib/audit";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  DRAFT: ["SENT", "CANCELLED"],
+  DRAFT: ["SENT", "SIGNED", "CANCELLED"],
   SENT: ["SIGNED", "CANCELLED"],
   SIGNED: ["VOID"],
   CANCELLED: [],

@@ -35,7 +35,7 @@ export async function updateCustomerStatus(customerId: string, status: any, lost
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { field: "status", newStatus: status }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/crm");
-  return customer;
+  return JSON.parse(JSON.stringify(customer));
 }
 
 export async function createCustomer(data: {
@@ -99,7 +99,7 @@ export async function createCustomer(data: {
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Customer", resourceId: customer.id, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/crm");
-  return customer;
+  return JSON.parse(JSON.stringify(customer));
 }
 
 export async function getCustomer(customerId: string) {
@@ -183,7 +183,7 @@ export async function updateCustomer(
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { fields: Object.keys(data) }, organizationId: session.organizationId });
 
   revalidatePath("/dashboard/crm");
-  return customer;
+  return JSON.parse(JSON.stringify(customer));
 }
 
 export async function getCustomers(filters?: {
