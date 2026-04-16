@@ -14,13 +14,14 @@ import {
   UserPlus,
   TrendingUp,
   Star,
-  Clock,
-  ChevronRight,
   Phone,
   Mail,
   MapPin,
   Calendar,
   Activity,
+  ChevronRight,
+  AlertTriangle,
+  ArrowRight,
 } from "lucide-react";
 import {
   Button,
@@ -28,7 +29,6 @@ import {
   Input,
   Card,
   PageIntro,
-  FilterBar,
   KPICard,
   Dialog,
   DialogContent,
@@ -44,11 +44,13 @@ import {
   deleteCustomer,
   updateCustomerStatus,
 } from "../../actions/customers";
+import { getTeamMembers } from "../../actions/team";
 import { usePermissions } from "../../../hooks/usePermissions";
+import CustomerActivityTimeline from "../../../components/CustomerActivityTimeline";
 
-// ─── Customer status config ───────────────────────────────────────────────────
+// ─── Pipeline Stage Config ────────────────────────────────────────────────────
 
-const customerStatuses = [
+const PIPELINE_STAGES = [
   {
     key: "NEW",
     label: { ar: "جديد", en: "New Lead" },
@@ -56,8 +58,8 @@ const customerStatuses = [
     dotColor: "bg-blue-500",
   },
   {
-    key: "INTERESTED",
-    label: { ar: "مهتم", en: "Interested" },
+    key: "CONTACTED",
+    label: { ar: "تم التواصل", en: "Contacted" },
     color: "bg-violet-500/10 text-violet-600 border-violet-200 dark:border-violet-800",
     dotColor: "bg-violet-500",
   },
@@ -74,14 +76,72 @@ const customerStatuses = [
     dotColor: "bg-orange-500",
   },
   {
-    key: "RESERVED",
-    label: { ar: "محجوز", en: "Reserved" },
+    key: "NEGOTIATION",
+    label: { ar: "تفاوض", en: "Negotiation" },
     color: "bg-green-500/10 text-green-600 border-green-200 dark:border-green-800",
     dotColor: "bg-green-500",
   },
 ];
 
-const sourceLabels: Record<string, { ar: string; en: string }> = {
+// Legacy statuses not shown in kanban but valid for filter/display
+const ALL_STATUS_CONFIGS = [
+  ...PIPELINE_STAGES,
+  {
+    key: "INTERESTED",
+    label: { ar: "مهتم", en: "Interested" },
+    color: "bg-violet-500/10 text-violet-600 border-violet-200 dark:border-violet-800",
+    dotColor: "bg-violet-500",
+  },
+  {
+    key: "RESERVED",
+    label: { ar: "محجوز", en: "Reserved" },
+    color: "bg-teal-500/10 text-teal-600 border-teal-200 dark:border-teal-800",
+    dotColor: "bg-teal-500",
+  },
+  {
+    key: "CONVERTED",
+    label: { ar: "تم التحويل", en: "Converted" },
+    color: "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-800",
+    dotColor: "bg-emerald-500",
+  },
+  {
+    key: "LOST",
+    label: { ar: "خسارة", en: "Lost" },
+    color: "bg-red-500/10 text-red-600 border-red-200 dark:border-red-800",
+    dotColor: "bg-red-500",
+  },
+  {
+    key: "ACTIVE_TENANT",
+    label: { ar: "مستأجر نشط", en: "Active Tenant" },
+    color: "bg-cyan-500/10 text-cyan-600 border-cyan-200 dark:border-cyan-800",
+    dotColor: "bg-cyan-500",
+  },
+  {
+    key: "PAST_TENANT",
+    label: { ar: "مستأجر سابق", en: "Past Tenant" },
+    color: "bg-slate-500/10 text-slate-600 border-slate-200 dark:border-slate-800",
+    dotColor: "bg-slate-500",
+  },
+];
+
+const LOST_REASONS = [
+  { key: "BUDGET", label: { ar: "الميزانية غير مناسبة", en: "Budget mismatch" } },
+  { key: "NO_RESPONSE", label: { ar: "لا يوجد رد", en: "No response" } },
+  { key: "COMPETITOR", label: { ar: "اختار منافساً", en: "Chose competitor" } },
+  { key: "NO_MATCH", label: { ar: "لا يوجد عقار مناسب", en: "No suitable property" } },
+  { key: "OTHER", label: { ar: "سبب آخر", en: "Other reason" } },
+];
+
+const PROPERTY_TYPES = [
+  { key: "APARTMENT", label: { ar: "شقة", en: "Apartment" } },
+  { key: "VILLA", label: { ar: "فيلا", en: "Villa" } },
+  { key: "OFFICE", label: { ar: "مكتب", en: "Office" } },
+  { key: "RETAIL", label: { ar: "تجاري", en: "Retail" } },
+  { key: "WAREHOUSE", label: { ar: "مستودع", en: "Warehouse" } },
+  { key: "LAND", label: { ar: "أرض", en: "Land" } },
+];
+
+const SOURCE_LABELS: Record<string, { ar: string; en: string }> = {
   REFERRAL: { ar: "إحالة", en: "Referral" },
   WALK_IN: { ar: "زيارة مباشرة", en: "Walk-in" },
   ONLINE: { ar: "إنترنت", en: "Online" },
@@ -92,15 +152,10 @@ const sourceLabels: Record<string, { ar: string; en: string }> = {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const DEFAULT_STATUS_CONFIG = customerStatuses[0] ?? {
-  key: "NEW",
-  label: { ar: "جديد", en: "New Lead" },
-  color: "bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800",
-  dotColor: "bg-blue-500",
-};
+const DEFAULT_STATUS_CONFIG = ALL_STATUS_CONFIGS[0]!;
 
 function getStatusConfig(key: string) {
-  return customerStatuses.find((s) => s.key === key) ?? DEFAULT_STATUS_CONFIG;
+  return ALL_STATUS_CONFIGS.find((s) => s.key === key) ?? DEFAULT_STATUS_CONFIG;
 }
 
 function maskPhone(phone: string) {
@@ -120,6 +175,11 @@ function CustomerDrawer({
   lang: "ar" | "en";
 }) {
   const statusCfg = getStatusConfig(customer.status);
+
+  function handleConvertToDeal() {
+    const params = new URLSearchParams({ customerId: customer.id, customerName: customer.name });
+    window.location.href = `/dashboard/deals?${params.toString()}`;
+  }
 
   return (
     <>
@@ -164,8 +224,8 @@ function CustomerDrawer({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Status Badge */}
-          <div className="flex items-center gap-2">
+          {/* Status + Convert to Deal */}
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border",
@@ -175,12 +235,68 @@ function CustomerDrawer({
               <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dotColor)} />
               {statusCfg.label[lang]}
             </span>
-            {customer.source && sourceLabels[customer.source] && (
+            {customer.source && SOURCE_LABELS[customer.source] && (
               <span className="text-xs text-muted-foreground border border-border rounded-full px-2.5 py-1">
-                {(sourceLabels[customer.source] as { ar: string; en: string })[lang]}
+                {(SOURCE_LABELS[customer.source] as { ar: string; en: string })[lang]}
               </span>
             )}
+            <Button
+              size="sm"
+              variant="outline"
+              style={{ display: "inline-flex" }}
+              className="ms-auto gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+              onClick={handleConvertToDeal}
+            >
+              <ArrowRight className="h-3.5 w-3.5" />
+              {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
+            </Button>
           </div>
+
+          {/* Budget + Property Interest */}
+          {(customer.budget || customer.propertyTypeInterest) && (
+            <div className="space-y-3">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "تفضيلات العميل" : "Client Preferences"}
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {customer.budget && (
+                  <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5">
+                      {lang === "ar" ? "الميزانية" : "Budget"}
+                    </p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {Number(customer.budget).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} {lang === "ar" ? "ريال" : "SAR"}
+                    </p>
+                  </div>
+                )}
+                {customer.propertyTypeInterest && (
+                  <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+                    <p className="text-[10px] text-muted-foreground mb-0.5">
+                      {lang === "ar" ? "نوع العقار" : "Property Type"}
+                    </p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {PROPERTY_TYPES.find(pt => pt.key === customer.propertyTypeInterest)?.label[lang] ?? customer.propertyTypeInterest}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Lost Reason */}
+          {customer.status === "LOST" && customer.lostReason && (
+            <div className="flex items-start gap-2.5 p-3 rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800">
+              <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-red-700 dark:text-red-300">
+                  {lang === "ar" ? "سبب الخسارة" : "Lost Reason"}
+                </p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                  {LOST_REASONS.find(r => r.key === customer.lostReason)?.label[lang] ?? customer.lostReason}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Contact Info */}
           <div className="space-y-3">
@@ -215,7 +331,7 @@ function CustomerDrawer({
             </div>
           </div>
 
-          {/* Personal Details (if present) */}
+          {/* Personal Details */}
           {(customer.gender || customer.dateOfBirth || customer.maritalStatus) && (
             <div className="space-y-3">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -229,12 +345,8 @@ function CustomerDrawer({
                     </p>
                     <p className="text-sm font-semibold text-foreground capitalize">
                       {customer.gender === "MALE"
-                        ? lang === "ar"
-                          ? "ذكر"
-                          : "Male"
-                        : lang === "ar"
-                          ? "أنثى"
-                          : "Female"}
+                        ? lang === "ar" ? "ذكر" : "Male"
+                        : lang === "ar" ? "أنثى" : "Female"}
                     </p>
                   </div>
                 )}
@@ -265,25 +377,13 @@ function CustomerDrawer({
             </div>
           )}
 
-          {/* Activity Timeline — Placeholder */}
+          {/* Activity Timeline */}
           <div className="space-y-3">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
               <Activity className="h-3.5 w-3.5" />
               {lang === "ar" ? "سجل النشاط" : "Activity Timeline"}
             </h3>
-            <div className="rounded-xl border border-dashed border-border bg-muted/10 p-6 flex flex-col items-center justify-center text-center gap-2">
-              <Clock className="h-8 w-8 text-muted-foreground/30" />
-              <p className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar"
-                  ? "سجل النشاط قادم قريباً"
-                  : "Activity log coming soon"}
-              </p>
-              <p className="text-[10px] text-muted-foreground/60">
-                {lang === "ar"
-                  ? "سيتم هنا عرض جميع التفاعلات والأحداث المرتبطة بهذا العميل"
-                  : "All interactions and events for this contact will appear here"}
-              </p>
-            </div>
+            <CustomerActivityTimeline customerId={customer.id} />
           </div>
         </div>
 
@@ -370,13 +470,11 @@ function KanbanCard({
             </span>
           </div>
         )}
-        {customer.email && (
+        {customer.budget && (
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Mail className="h-3 w-3 shrink-0" />
+            <Star className="h-3 w-3 shrink-0" />
             <span className="truncate">
-              {showPii
-                ? customer.email
-                : customer.email.replace(/(.{2}).*(@.*)/, "$1•••$2")}
+              {Number(customer.budget).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} {lang === "ar" ? "ر.س" : "SAR"}
             </span>
           </div>
         )}
@@ -384,9 +482,9 @@ function KanbanCard({
 
       {/* Footer */}
       <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between gap-2">
-        {customer.source && sourceLabels[customer.source] && (
+        {customer.source && SOURCE_LABELS[customer.source] && (
           <span className="text-[10px] text-muted-foreground">
-            {(sourceLabels[customer.source] as { ar: string; en: string })[lang]}
+            {(SOURCE_LABELS[customer.source] as { ar: string; en: string })[lang]}
           </span>
         )}
         <button
@@ -403,35 +501,42 @@ function KanbanCard({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
+const EMPTY_NEW_CUSTOMER = {
+  name: "",
+  phone: "",
+  email: "",
+  nationalId: "",
+  nameArabic: "",
+  source: "",
+  status: "NEW",
+  personType: "",
+  gender: "",
+  dateOfBirth: "",
+  nationality: "",
+  maritalStatus: "",
+  budget: "",
+  propertyTypeInterest: "",
+  agentId: "",
+};
+
 export default function CRMPage() {
   const { lang } = useLanguage();
   const { can } = usePermissions();
 
   const [customers, setCustomers] = React.useState<any[]>([]);
+  const [teamMembers, setTeamMembers] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [viewMode, setViewMode] = React.useState<"kanban" | "list">("kanban");
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
+  const [showLost, setShowLost] = React.useState(false);
   const [showPii, setShowPii] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
   // Add modal
   const [showAddModal, setShowAddModal] = React.useState(false);
-  const [newCustomer, setNewCustomer] = React.useState({
-    name: "",
-    phone: "",
-    email: "",
-    nationalId: "",
-    nameArabic: "",
-    source: "",
-    status: "NEW",
-    personType: "",
-    gender: "",
-    dateOfBirth: "",
-    nationality: "",
-    maritalStatus: "",
-  });
+  const [newCustomer, setNewCustomer] = React.useState(EMPTY_NEW_CUSTOMER);
 
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
@@ -441,7 +546,13 @@ export default function CRMPage() {
   // Profile drawer
   const [drawerCustomer, setDrawerCustomer] = React.useState<any>(null);
 
-  // Drag state (for Kanban)
+  // Lost reason modal (triggered when dropping into LOST)
+  const [showLostModal, setShowLostModal] = React.useState(false);
+  const [lostTarget, setLostTarget] = React.useState<{ id: string; name: string } | null>(null);
+  const [lostReason, setLostReason] = React.useState("");
+  const [savingLost, setSavingLost] = React.useState(false);
+
+  // Drag state
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = React.useState<string | null>(null);
 
@@ -453,15 +564,16 @@ export default function CRMPage() {
   // ─── Load ───────────────────────────────────────────────────────────────────
 
   React.useEffect(() => {
-    loadCustomers();
+    loadData();
   }, []);
 
-  async function loadCustomers() {
+  async function loadData() {
     try {
       setLoading(true);
-      const data = await getCustomers();
+      const [data, members] = await Promise.all([getCustomers(), getTeamMembers()]);
       setCustomers(data);
-    } catch (err: any) {
+      setTeamMembers(members.filter((m: any) => ["ADMIN", "MANAGER", "AGENT"].includes(m.role)));
+    } catch {
       setError(
         lang === "ar"
           ? "تعذّر تحميل بيانات العملاء. يرجى المحاولة مجدداً."
@@ -484,20 +596,21 @@ export default function CRMPage() {
         c.phone?.includes(q) ||
         c.email?.toLowerCase().includes(q);
       const matchStatus = !statusFilter || c.status === statusFilter;
-      return matchSearch && matchStatus;
+      const matchLost = showLost ? c.status === "LOST" : c.status !== "LOST";
+      return matchSearch && matchStatus && (statusFilter ? true : matchLost);
     });
-  }, [customers, search, statusFilter]);
+  }, [customers, search, statusFilter, showLost]);
 
   // ─── KPIs ───────────────────────────────────────────────────────────────────
 
   const kpis = React.useMemo(
     () => ({
-      total: customers.length,
+      total: customers.filter((c) => c.status !== "LOST").length,
       newLeads: customers.filter((c) => c.status === "NEW").length,
-      qualified: customers.filter(
-        (c) => c.status === "QUALIFIED" || c.status === "VIEWING"
+      inProgress: customers.filter((c) =>
+        ["CONTACTED", "QUALIFIED", "VIEWING", "NEGOTIATION"].includes(c.status)
       ).length,
-      reserved: customers.filter((c) => c.status === "RESERVED").length,
+      lost: customers.filter((c) => c.status === "LOST").length,
     }),
     [customers]
   );
@@ -510,15 +623,23 @@ export default function CRMPage() {
   }
 
   async function handleDrop(status: string) {
-    if (!draggingId || draggingId === null) return;
-    const prev = customers;
-    setCustomers((c) =>
-      c.map((cust) =>
-        cust.id === draggingId ? { ...cust, status } : cust
-      )
-    );
+    if (!draggingId) return;
+    const customer = customers.find((c) => c.id === draggingId);
     setDraggingId(null);
     setDragOverStatus(null);
+
+    if (status === "LOST") {
+      // Open the lost reason modal instead of immediately updating
+      setLostTarget({ id: draggingId, name: customer?.name ?? "" });
+      setLostReason("");
+      setShowLostModal(true);
+      return;
+    }
+
+    const prev = customers;
+    setCustomers((c) =>
+      c.map((cust) => (cust.id === draggingId ? { ...cust, status } : cust))
+    );
     try {
       await updateCustomerStatus(draggingId, status);
     } catch {
@@ -528,6 +649,35 @@ export default function CRMPage() {
           ? "فشل تحديث حالة العميل. يرجى المحاولة مجدداً."
           : "Failed to update status. Please try again."
       );
+    }
+  }
+
+  // ─── Mark as Lost (with reason) ─────────────────────────────────────────────
+
+  async function confirmLost() {
+    if (!lostTarget || !lostReason) return;
+    setSavingLost(true);
+    const prev = customers;
+    setCustomers((c) =>
+      c.map((cust) =>
+        cust.id === lostTarget.id
+          ? { ...cust, status: "LOST", lostReason }
+          : cust
+      )
+    );
+    try {
+      await updateCustomerStatus(lostTarget.id, "LOST", lostReason);
+      setShowLostModal(false);
+      setLostTarget(null);
+    } catch {
+      setCustomers(prev);
+      setError(
+        lang === "ar"
+          ? "فشل تحديث حالة العميل. يرجى المحاولة مجدداً."
+          : "Failed to update status. Please try again."
+      );
+    } finally {
+      setSavingLost(false);
     }
   }
 
@@ -558,23 +708,13 @@ export default function CRMPage() {
         dateOfBirth: newCustomer.dateOfBirth || undefined,
         nationality: newCustomer.nationality || undefined,
         maritalStatus: newCustomer.maritalStatus || undefined,
+        budget: newCustomer.budget ? Number(newCustomer.budget) : undefined,
+        propertyTypeInterest: newCustomer.propertyTypeInterest || undefined,
+        agentId: newCustomer.agentId || undefined,
       });
       setCustomers((prev) => [created, ...prev]);
       setShowAddModal(false);
-      setNewCustomer({
-        name: "",
-        phone: "",
-        email: "",
-        nationalId: "",
-        nameArabic: "",
-        source: "",
-        status: "NEW",
-        personType: "",
-        gender: "",
-        dateOfBirth: "",
-        nationality: "",
-        maritalStatus: "",
-      });
+      setNewCustomer(EMPTY_NEW_CUSTOMER);
     } catch (err: any) {
       setError(
         err?.message ||
@@ -619,13 +759,15 @@ export default function CRMPage() {
 
   function handleExport() {
     const rows = [
-      ["Name", "Phone", "Email", "Status", "Source"],
+      ["Name", "Phone", "Email", "Status", "Source", "Budget", "Property Interest"],
       ...filteredCustomers.map((c) => [
         c.name,
         showPii ? c.phone : maskPhone(c.phone),
         showPii ? (c.email ?? "") : "",
         c.status,
         c.source ?? "",
+        c.budget ?? "",
+        c.propertyTypeInterest ?? "",
       ]),
     ];
     const csv = rows.map((r) => r.join(",")).join("\n");
@@ -647,6 +789,18 @@ export default function CRMPage() {
       </div>
     );
   }
+
+  // Kanban columns — pipeline stages only (LOST shown as separate toggle section)
+  const kanbanColumns = showLost
+    ? [
+        {
+          key: "LOST",
+          label: { ar: "خسارة", en: "Lost" },
+          color: "bg-red-500/10 text-red-600 border-red-200 dark:border-red-800",
+          dotColor: "bg-red-500",
+        },
+      ]
+    : PIPELINE_STAGES;
 
   return (
     <div
@@ -676,12 +830,8 @@ export default function CRMPage() {
               >
                 <Eye className="h-3.5 w-3.5" />
                 {showPii
-                  ? lang === "ar"
-                    ? "إخفاء البيانات الحساسة"
-                    : "Hide PII"
-                  : lang === "ar"
-                    ? "عرض البيانات الحساسة"
-                    : "Show PII"}
+                  ? lang === "ar" ? "إخفاء البيانات الحساسة" : "Hide PII"
+                  : lang === "ar" ? "عرض البيانات الحساسة" : "Show PII"}
               </button>
             )}
             {canExport && (
@@ -716,10 +866,7 @@ export default function CRMPage() {
       {error && (
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-          <button
-            onClick={() => setError(null)}
-            className="text-red-400 hover:text-red-600"
-          >
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -728,13 +875,9 @@ export default function CRMPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KPICard
-          label={lang === "ar" ? "إجمالي جهات الاتصال" : "Total Contacts"}
+          label={lang === "ar" ? "إجمالي جهات الاتصال" : "Active Contacts"}
           value={kpis.total}
-          subtitle={
-            lang === "ar"
-              ? "جميع العملاء المسجلين في المنصة"
-              : "All registered contacts"
-          }
+          subtitle={lang === "ar" ? "جميع العملاء النشطين" : "All active contacts"}
           icon={<Users className="h-[18px] w-[18px]" />}
           accentColor="primary"
           loading={loading}
@@ -742,37 +885,25 @@ export default function CRMPage() {
         <KPICard
           label={lang === "ar" ? "عملاء جدد" : "New Leads"}
           value={kpis.newLeads}
-          subtitle={
-            lang === "ar"
-              ? "عملاء محتملون في المرحلة الأولى"
-              : "Prospects in the first stage"
-          }
+          subtitle={lang === "ar" ? "بانتظار التواصل" : "Awaiting first contact"}
           icon={<UserPlus className="h-[18px] w-[18px]" />}
           accentColor="info"
           loading={loading}
         />
         <KPICard
-          label={lang === "ar" ? "مؤهّلون / معاينة" : "Qualified / Viewing"}
-          value={kpis.qualified}
-          subtitle={
-            lang === "ar"
-              ? "عملاء في مراحل متقدمة من العملية"
-              : "Contacts in advanced pipeline stages"
-          }
+          label={lang === "ar" ? "في خط الأنابيب" : "In Pipeline"}
+          value={kpis.inProgress}
+          subtitle={lang === "ar" ? "في مراحل متقدمة" : "Contacted through Negotiation"}
           icon={<TrendingUp className="h-[18px] w-[18px]" />}
           accentColor="warning"
           loading={loading}
         />
         <KPICard
-          label={lang === "ar" ? "محجوزون" : "Reserved"}
-          value={kpis.reserved}
-          subtitle={
-            lang === "ar"
-              ? "عملاء أتمّوا عملية الحجز"
-              : "Contacts who completed reservation"
-          }
-          icon={<Star className="h-[18px] w-[18px]" />}
-          accentColor="secondary"
+          label={lang === "ar" ? "خسائر" : "Lost Leads"}
+          value={kpis.lost}
+          subtitle={lang === "ar" ? "عملاء خرجوا من المسار" : "Exited pipeline"}
+          icon={<AlertTriangle className="h-[18px] w-[18px]" />}
+          accentColor="warning"
           loading={loading}
         />
       </div>
@@ -783,25 +914,23 @@ export default function CRMPage() {
           {/* Status filters */}
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setStatusFilter("")}
+              onClick={() => { setStatusFilter(""); setShowLost(false); }}
               className={cn(
                 "px-3.5 py-2 rounded-full text-sm font-medium border transition-colors",
-                !statusFilter
+                !statusFilter && !showLost
                   ? "border-primary/30 bg-primary/15 text-foreground"
                   : "border-border bg-card text-muted-foreground hover:bg-muted/50"
               )}
               style={{ display: "inline-flex" }}
             >
-              {lang === "ar" ? "الكل" : "All"} {customers.length}
+              {lang === "ar" ? "الكل" : "All"} {customers.filter(c => c.status !== "LOST").length}
             </button>
-            {customerStatuses.map((s) => {
+            {PIPELINE_STAGES.map((s) => {
               const count = customers.filter((c) => c.status === s.key).length;
               return (
                 <button
                   key={s.key}
-                  onClick={() =>
-                    setStatusFilter(statusFilter === s.key ? "" : s.key)
-                  }
+                  onClick={() => { setStatusFilter(statusFilter === s.key ? "" : s.key); setShowLost(false); }}
                   className={cn(
                     "px-3.5 py-2 rounded-full text-sm font-medium border transition-colors",
                     statusFilter === s.key
@@ -814,6 +943,19 @@ export default function CRMPage() {
                 </button>
               );
             })}
+            {/* Lost toggle */}
+            <button
+              onClick={() => { setShowLost((v) => !v); setStatusFilter(""); }}
+              className={cn(
+                "px-3.5 py-2 rounded-full text-sm font-medium border transition-colors",
+                showLost
+                  ? "border-red-400/30 bg-red-500/10 text-red-700 dark:text-red-400"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/50"
+              )}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "خسائر" : "Lost"} {kpis.lost}
+            </button>
           </div>
 
           {/* View toggle */}
@@ -864,8 +1006,15 @@ export default function CRMPage() {
 
       {/* ── Kanban Board ── */}
       {viewMode === "kanban" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 overflow-x-auto pb-4">
-          {customerStatuses.map((status) => {
+        <div
+          className={cn(
+            "grid gap-4 overflow-x-auto pb-4",
+            showLost
+              ? "grid-cols-1 max-w-sm"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+          )}
+        >
+          {kanbanColumns.map((status) => {
             const colCustomers = filteredCustomers.filter(
               (c) => c.status === status.key
             );
@@ -878,24 +1027,18 @@ export default function CRMPage() {
                   "flex flex-col gap-3 min-h-[400px] rounded-xl p-3 transition-colors",
                   isDragOver
                     ? "bg-primary/5 ring-2 ring-primary/20"
-                    : "bg-muted/20"
+                    : status.key === "LOST"
+                      ? "bg-red-50/50 dark:bg-red-900/10"
+                      : "bg-muted/20"
                 )}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOverStatus(status.key);
-                }}
+                onDragOver={(e) => { e.preventDefault(); setDragOverStatus(status.key); }}
                 onDragLeave={() => setDragOverStatus(null)}
                 onDrop={() => handleDrop(status.key)}
               >
                 {/* Column header */}
                 <div className="flex items-center justify-between mb-1 px-1">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "h-2 w-2 rounded-full",
-                        status.dotColor
-                      )}
-                    />
+                    <span className={cn("h-2 w-2 rounded-full", status.dotColor)} />
                     <span className="text-xs font-bold text-foreground">
                       {status.label[lang]}
                     </span>
@@ -919,14 +1062,11 @@ export default function CRMPage() {
                   />
                 ))}
 
-                {/* Add shortcut */}
-                {canWrite && (
+                {/* Add shortcut (not on LOST column) */}
+                {canWrite && !showLost && (
                   <button
                     onClick={() => {
-                      setNewCustomer((prev) => ({
-                        ...prev,
-                        status: status.key,
-                      }));
+                      setNewCustomer((prev) => ({ ...prev, status: status.key }));
                       setShowAddModal(true);
                     }}
                     className="mt-auto flex items-center justify-center gap-1.5 p-2 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors text-xs font-medium"
@@ -956,7 +1096,7 @@ export default function CRMPage() {
                     {lang === "ar" ? "الهاتف" : "Phone"}
                   </th>
                   <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "البريد" : "Email"}
+                    {lang === "ar" ? "الميزانية" : "Budget"}
                   </th>
                   <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {lang === "ar" ? "الحالة" : "Status"}
@@ -971,30 +1111,21 @@ export default function CRMPage() {
                 {filteredCustomers.map((c) => {
                   const statusCfg = getStatusConfig(c.status);
                   return (
-                    <tr
-                      key={c.id}
-                      className="hover:bg-muted/20 transition-colors group"
-                    >
+                    <tr key={c.id} className="hover:bg-muted/20 transition-colors group">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="font-semibold text-foreground">
-                            {c.name}
-                          </p>
+                          <p className="font-semibold text-foreground">{c.name}</p>
                           {c.nameArabic && c.nameArabic !== c.name && (
-                            <p className="text-xs text-muted-foreground">
-                              {c.nameArabic}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{c.nameArabic}</p>
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-3 font-mono text-sm text-muted-foreground">
                         {showPii ? c.phone : maskPhone(c.phone)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-[180px] truncate">
-                        {c.email
-                          ? showPii
-                            ? c.email
-                            : c.email.replace(/(.{2}).*(@.*)/, "$1•••$2")
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {c.budget
+                          ? `${Number(c.budget).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} ${lang === "ar" ? "ر.س" : "SAR"}`
                           : "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -1004,18 +1135,13 @@ export default function CRMPage() {
                             statusCfg.color
                           )}
                         >
-                          <span
-                            className={cn(
-                              "h-1.5 w-1.5 rounded-full",
-                              statusCfg.dotColor
-                            )}
-                          />
+                          <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dotColor)} />
                           {statusCfg.label[lang]}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {c.source && sourceLabels[c.source]
-                          ? (sourceLabels[c.source] as { ar: string; en: string })[lang]
+                        {c.source && SOURCE_LABELS[c.source]
+                          ? (SOURCE_LABELS[c.source] as { ar: string; en: string })[lang]
                           : "—"}
                       </td>
                       <td className="px-4 py-3">
@@ -1042,7 +1168,6 @@ export default function CRMPage() {
               </tbody>
             </table>
 
-            {/* Empty state */}
             {filteredCustomers.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
@@ -1078,14 +1203,9 @@ export default function CRMPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h2 className="text-lg font-bold text-foreground">
-                {lang === "ar"
-                  ? "إضافة عميل / عقار جديد"
-                  : "Add Lead / Client"}
+                {lang === "ar" ? "إضافة عميل / عقار جديد" : "Add Lead / Client"}
               </h2>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -1099,9 +1219,7 @@ export default function CRMPage() {
                   </label>
                   <Input
                     value={newCustomer.name}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, name: e.target.value })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })}
                     placeholder={lang === "ar" ? "الاسم بالكامل" : "Full name"}
                     autoFocus
                   />
@@ -1112,12 +1230,7 @@ export default function CRMPage() {
                   </label>
                   <Input
                     value={newCustomer.nameArabic}
-                    onChange={(e) =>
-                      setNewCustomer({
-                        ...newCustomer,
-                        nameArabic: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, nameArabic: e.target.value })}
                     placeholder="الاسم بالعربية"
                   />
                 </div>
@@ -1127,9 +1240,7 @@ export default function CRMPage() {
                   </label>
                   <Input
                     value={newCustomer.phone}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, phone: e.target.value })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
                     placeholder="+966 5x xxx xxxx"
                     dir="ltr"
                   />
@@ -1141,26 +1252,8 @@ export default function CRMPage() {
                   <Input
                     type="email"
                     value={newCustomer.email}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, email: e.target.value })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
                     placeholder="email@example.com"
-                    dir="ltr"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground">
-                    {lang === "ar" ? "رقم الهوية" : "National ID"}
-                  </label>
-                  <Input
-                    value={newCustomer.nationalId}
-                    onChange={(e) =>
-                      setNewCustomer({
-                        ...newCustomer,
-                        nationalId: e.target.value,
-                      })
-                    }
-                    placeholder="10x xxx xxxx"
                     dir="ltr"
                   />
                 </div>
@@ -1170,18 +1263,12 @@ export default function CRMPage() {
                   </label>
                   <select
                     value={newCustomer.source}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, source: e.target.value })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, source: e.target.value })}
                     className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <option value="">
-                      {lang === "ar" ? "اختر المصدر" : "Select source"}
-                    </option>
-                    {Object.entries(sourceLabels).map(([key, label]) => (
-                      <option key={key} value={key}>
-                        {label[lang]}
-                      </option>
+                    <option value="">{lang === "ar" ? "اختر المصدر" : "Select source"}</option>
+                    {Object.entries(SOURCE_LABELS).map(([key, label]) => (
+                      <option key={key} value={key}>{label[lang]}</option>
                     ))}
                   </select>
                 </div>
@@ -1191,50 +1278,95 @@ export default function CRMPage() {
                   </label>
                   <select
                     value={newCustomer.status}
-                    onChange={(e) =>
-                      setNewCustomer({ ...newCustomer, status: e.target.value })
-                    }
+                    onChange={(e) => setNewCustomer({ ...newCustomer, status: e.target.value })}
                     className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    {customerStatuses.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label[lang]}
-                      </option>
+                    {PIPELINE_STAGES.map((s) => (
+                      <option key={s.key} value={s.key}>{s.label[lang]}</option>
                     ))}
                   </select>
                 </div>
+
+                {/* CRM fields: Budget + Property Type */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">
+                    {lang === "ar" ? "الميزانية (ريال)" : "Budget (SAR)"}
+                  </label>
+                  <Input
+                    type="number"
+                    value={newCustomer.budget}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, budget: e.target.value })}
+                    placeholder={lang === "ar" ? "مثال: 500000" : "e.g. 500000"}
+                    dir="ltr"
+                    min="0"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground">
+                    {lang === "ar" ? "نوع العقار المطلوب" : "Property Interest"}
+                  </label>
+                  <select
+                    value={newCustomer.propertyTypeInterest}
+                    onChange={(e) => setNewCustomer({ ...newCustomer, propertyTypeInterest: e.target.value })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">{lang === "ar" ? "اختر النوع" : "Select type"}</option>
+                    {PROPERTY_TYPES.map((pt) => (
+                      <option key={pt.key} value={pt.key}>{pt.label[lang]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Agent Assignment */}
+                {teamMembers.length > 0 && (
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-xs font-bold text-muted-foreground">
+                      {lang === "ar" ? "تعيين المسؤول" : "Assign Agent"}
+                    </label>
+                    <select
+                      value={newCustomer.agentId}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, agentId: e.target.value })}
+                      className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">{lang === "ar" ? "غير معين" : "Unassigned"}</option>
+                      {teamMembers.map((m: any) => (
+                        <option key={m.id} value={m.id}>{m.name ?? m.email}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Optional Absher fields */}
               <details className="group">
                 <summary className="cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors list-none flex items-center gap-2 py-1">
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
-                  {lang === "ar"
-                    ? "بيانات إضافية (أبشر)"
-                    : "Additional Details (Absher)"}
+                  {lang === "ar" ? "بيانات إضافية (أبشر)" : "Additional Details (Absher)"}
                 </summary>
                 <div className="pt-3 grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-muted-foreground">
+                      {lang === "ar" ? "رقم الهوية" : "National ID"}
+                    </label>
+                    <Input
+                      value={newCustomer.nationalId}
+                      onChange={(e) => setNewCustomer({ ...newCustomer, nationalId: e.target.value })}
+                      placeholder="10x xxx xxxx"
+                      dir="ltr"
+                    />
+                  </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground">
                       {lang === "ar" ? "نوع الشخص" : "Person Type"}
                     </label>
                     <select
                       value={newCustomer.personType}
-                      onChange={(e) =>
-                        setNewCustomer({
-                          ...newCustomer,
-                          personType: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setNewCustomer({ ...newCustomer, personType: e.target.value })}
                       className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">—</option>
-                      <option value="INDIVIDUAL">
-                        {lang === "ar" ? "فرد" : "Individual"}
-                      </option>
-                      <option value="COMPANY">
-                        {lang === "ar" ? "شركة" : "Company"}
-                      </option>
+                      <option value="INDIVIDUAL">{lang === "ar" ? "فرد" : "Individual"}</option>
+                      <option value="COMPANY">{lang === "ar" ? "شركة" : "Company"}</option>
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -1243,21 +1375,12 @@ export default function CRMPage() {
                     </label>
                     <select
                       value={newCustomer.gender}
-                      onChange={(e) =>
-                        setNewCustomer({
-                          ...newCustomer,
-                          gender: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setNewCustomer({ ...newCustomer, gender: e.target.value })}
                       className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">—</option>
-                      <option value="MALE">
-                        {lang === "ar" ? "ذكر" : "Male"}
-                      </option>
-                      <option value="FEMALE">
-                        {lang === "ar" ? "أنثى" : "Female"}
-                      </option>
+                      <option value="MALE">{lang === "ar" ? "ذكر" : "Male"}</option>
+                      <option value="FEMALE">{lang === "ar" ? "أنثى" : "Female"}</option>
                     </select>
                   </div>
                   <div className="space-y-1">
@@ -1266,12 +1389,7 @@ export default function CRMPage() {
                     </label>
                     <Input
                       value={newCustomer.nationality}
-                      onChange={(e) =>
-                        setNewCustomer({
-                          ...newCustomer,
-                          nationality: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setNewCustomer({ ...newCustomer, nationality: e.target.value })}
                       placeholder={lang === "ar" ? "سعودي" : "Saudi"}
                     />
                   </div>
@@ -1281,48 +1399,30 @@ export default function CRMPage() {
                     </label>
                     <select
                       value={newCustomer.maritalStatus}
-                      onChange={(e) =>
-                        setNewCustomer({
-                          ...newCustomer,
-                          maritalStatus: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setNewCustomer({ ...newCustomer, maritalStatus: e.target.value })}
                       className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">—</option>
-                      <option value="SINGLE">
-                        {lang === "ar" ? "أعزب" : "Single"}
-                      </option>
-                      <option value="MARRIED">
-                        {lang === "ar" ? "متزوج" : "Married"}
-                      </option>
-                      <option value="DIVORCED">
-                        {lang === "ar" ? "مطلق" : "Divorced"}
-                      </option>
-                      <option value="WIDOWED">
-                        {lang === "ar" ? "أرمل" : "Widowed"}
-                      </option>
+                      <option value="SINGLE">{lang === "ar" ? "أعزب" : "Single"}</option>
+                      <option value="MARRIED">{lang === "ar" ? "متزوج" : "Married"}</option>
+                      <option value="DIVORCED">{lang === "ar" ? "مطلق" : "Divorced"}</option>
+                      <option value="WIDOWED">{lang === "ar" ? "أرمل" : "Widowed"}</option>
                     </select>
                   </div>
-                  <div className="col-span-2 space-y-1">
+                  <div className="space-y-1">
                     <label className="text-xs font-bold text-muted-foreground">
                       {lang === "ar" ? "تاريخ الميلاد" : "Date of Birth"}
                     </label>
                     <Input
                       type="date"
                       value={newCustomer.dateOfBirth}
-                      onChange={(e) =>
-                        setNewCustomer({
-                          ...newCustomer,
-                          dateOfBirth: e.target.value,
-                        })
-                      }
+                      onChange={(e) => setNewCustomer({ ...newCustomer, dateOfBirth: e.target.value })}
                     />
                   </div>
                 </div>
               </details>
 
-              {/* Inline error in modal */}
+              {/* Inline error */}
               {error && (
                 <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
                   {error}
@@ -1334,10 +1434,7 @@ export default function CRMPage() {
               <Button
                 variant="secondary"
                 style={{ display: "inline-flex" }}
-                onClick={() => {
-                  setShowAddModal(false);
-                  setError(null);
-                }}
+                onClick={() => { setShowAddModal(false); setError(null); }}
                 disabled={saving}
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}
@@ -1356,6 +1453,62 @@ export default function CRMPage() {
         </div>
       )}
 
+      {/* ── Lost Reason Modal ── */}
+      <Dialog open={showLostModal} onOpenChange={(open) => { if (!open) setShowLostModal(false); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "تحديد سبب الخسارة" : "Mark as Lost"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `الرجاء تحديد سبب خسارة العميل "${lostTarget?.name}"`
+                : `Please select why "${lostTarget?.name}" was lost`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            {LOST_REASONS.map((reason) => (
+              <button
+                key={reason.key}
+                type="button"
+                onClick={() => setLostReason(reason.key)}
+                className={cn(
+                  "w-full text-start px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
+                  lostReason === reason.key
+                    ? "border-red-400/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                    : "border-border bg-card text-foreground hover:bg-muted/30"
+                )}
+                style={{ display: "block" }}
+              >
+                {reason.label[lang]}
+              </button>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowLostModal(false)}
+              disabled={savingLost}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="danger"
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={confirmLost}
+              disabled={!lostReason || savingLost}
+            >
+              {savingLost && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "تأكيد الخسارة" : "Confirm Lost"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Delete Dialog ── */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
@@ -1369,17 +1522,12 @@ export default function CRMPage() {
                 : `Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
             </DialogDescription>
           </DialogHeader>
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <DialogFooter>
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
-              onClick={() => {
-                setShowDeleteDialog(false);
-                setError(null);
-              }}
+              onClick={() => { setShowDeleteDialog(false); setError(null); }}
               disabled={deleting}
             >
               {lang === "ar" ? "إلغاء" : "Cancel"}

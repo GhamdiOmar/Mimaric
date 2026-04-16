@@ -196,8 +196,11 @@ model Customer {
   preferredLanguage    String?  @default("ar")
   authorizedSignatory  String?   // For corporate buyers
   companyDocuments     Json?     // For corporate buyers
-  status         CustomerStatus @default(NEW)
-  source         String?
+  status               CustomerStatus @default(NEW)
+  source               String?
+  budget               Decimal?       // Customer's budget in SAR
+  propertyTypeInterest String?        // e.g. "APARTMENT", "VILLA", "OFFICE"
+  lostReason           String?        // Reason for LOST status
   organizationId String
   organization   Organization  @relation(fields: [organizationId], references: [id])
   agentId        String?
@@ -230,9 +233,11 @@ enum Gender {
 
 enum CustomerStatus {
   NEW
+  CONTACTED
   INTERESTED
   QUALIFIED
   VIEWING
+  NEGOTIATION
   RESERVED
   CONVERTED
   LOST

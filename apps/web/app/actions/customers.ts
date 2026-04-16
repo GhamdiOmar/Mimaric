@@ -8,12 +8,12 @@ import { encryptCustomerData, decryptCustomerData, decryptCustomerList } from ".
 import { maskCustomerPii } from "../../lib/pii-masking";
 import { hashForSearch } from "../../lib/encryption";
 
-export async function updateCustomerStatus(customerId: string, status: any) {
+export async function updateCustomerStatus(customerId: string, status: any, lostReason?: string) {
   const session = await requirePermission("customers:write");
 
   const customer = await db.customer.update({
     where: { id: customerId, organizationId: session.organizationId },
-    data: { status },
+    data: { status, ...(lostReason !== undefined ? { lostReason } : {}) },
   });
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { field: "status", newStatus: status }, organizationId: session.organizationId });
@@ -39,6 +39,9 @@ export async function createCustomer(data: {
   maritalStatus?: string;
   address?: any;
   documentInfo?: any;
+  budget?: number;
+  propertyTypeInterest?: string;
+  agentId?: string;
 }) {
   const session = await requirePermission("customers:write");
 
@@ -70,6 +73,9 @@ export async function createCustomer(data: {
       maritalStatus: data.maritalStatus || undefined,
       address: data.address || undefined,
       documentInfo: data.documentInfo || undefined,
+      budget: data.budget ?? undefined,
+      propertyTypeInterest: data.propertyTypeInterest || undefined,
+      agentId: data.agentId || undefined,
       organizationId: session.organizationId,
     },
   });
