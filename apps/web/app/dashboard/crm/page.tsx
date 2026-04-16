@@ -22,6 +22,9 @@ import {
   ChevronRight,
   AlertTriangle,
   ArrowRight,
+  Pencil,
+  Link2,
+  CheckCircle2,
 } from "lucide-react";
 import {
   Button,
@@ -43,10 +46,19 @@ import {
   createCustomer,
   deleteCustomer,
   updateCustomerStatus,
+  updateCustomer,
+  getCustomerUnitAssignments,
 } from "../../actions/customers";
 import { getTeamMembers } from "../../actions/team";
 import { usePermissions } from "../../../hooks/usePermissions";
 import CustomerActivityTimeline from "../../../components/CustomerActivityTimeline";
+import {
+  getCustomerInterests,
+  addCustomerInterest,
+  dropCustomerInterest,
+  convertInterestToDeal,
+  getAvailableUnitsForInterest,
+} from "../../actions/customer-interests";
 
 // ─── Pipeline Stage Config ────────────────────────────────────────────────────
 
@@ -163,23 +175,276 @@ function maskPhone(phone: string) {
   return phone.slice(0, 3) + "•••" + phone.slice(-3);
 }
 
+function formatSAR(amount: number | string | null | undefined, locale: string) {
+  if (!amount) return "—";
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+  if (isNaN(num)) return "—";
+  return new Intl.NumberFormat(locale === "ar" ? "ar-SA" : "en-SA", {
+    style: "currency",
+    currency: "SAR",
+    maximumFractionDigits: 0,
+  }).format(num);
+}
+
 // ─── Customer Profile Drawer ──────────────────────────────────────────────────
 
 function CustomerDrawer({
   customer,
   onClose,
+  onCustomerUpdated,
   lang,
+  teamMembers,
+  assignments,
 }: {
   customer: any;
   onClose: () => void;
+  onCustomerUpdated: (updated: any) => void;
   lang: "ar" | "en";
+  teamMembers: any[];
+  assignments: any[];
 }) {
   const statusCfg = getStatusConfig(customer.status);
+
+  // ── Feature A: Edit modal state ──
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({
+    name: customer.name ?? "",
+    nameArabic: customer.nameArabic ?? "",
+    phone: customer.phone ?? "",
+    email: customer.email ?? "",
+    source: customer.source ?? "",
+    agentId: customer.agentId ?? customer.agent?.id ?? "",
+    budget: customer.budget ? String(customer.budget) : "",
+    propertyTypeInterest: customer.propertyTypeInterest ?? "",
+  });
+  const [savingEdit, setSavingEdit] = React.useState(false);
+  const [editError, setEditError] = React.useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = React.useState(false);
+
+  // ── Feature B: Interests state ──
+  const [interests, setInterests] = React.useState<any[]>([]);
+  const [loadingInterests, setLoadingInterests] = React.useState(false);
+  const [showLinkModal, setShowLinkModal] = React.useState(false);
+  const [availableUnits, setAvailableUnits] = React.useState<any[]>([]);
+  const [loadingUnits, setLoadingUnits] = React.useState(false);
+  const [linkUnitSearch, setLinkUnitSearch] = React.useState("");
+  const [linkSelectedUnit, setLinkSelectedUnit] = React.useState<any | null>(null);
+  const [linkIntent, setLinkIntent] = React.useState<"BUY" | "RENT" | "">("");
+  const [savingLink, setSavingLink] = React.useState(false);
+  const [linkError, setLinkError] = React.useState<string | null>(null);
+
+  const [showDropConfirm, setShowDropConfirm] = React.useState(false);
+  const [droppingInterest, setDroppingInterest] = React.useState<any | null>(null);
+  const [droppingLoading, setDroppingLoading] = React.useState(false);
+
+  const [showConvertDealModal, setShowConvertDealModal] = React.useState(false);
+  const [convertingInterest, setConvertingInterest] = React.useState<any | null>(null);
+  const [convertAmount, setConvertAmount] = React.useState("");
+  const [convertExpiry, setConvertExpiry] = React.useState("");
+  const [savingConvert, setSavingConvert] = React.useState(false);
+  const [convertError, setConvertError] = React.useState<string | null>(null);
+
+  const [drawerToast, setDrawerToast] = React.useState<string | null>(null);
+
+  // Load interests when drawer opens
+  React.useEffect(() => {
+    loadInterests(customer.id);
+  }, [customer.id]);
+
+  async function loadInterests(customerId: string) {
+    setLoadingInterests(true);
+    try {
+      const data = await getCustomerInterests(customerId);
+      setInterests(data);
+    } catch {
+      // silent — non-critical section
+    } finally {
+      setLoadingInterests(false);
+    }
+  }
+
+  function showToast(msg: string) {
+    setDrawerToast(msg);
+    setTimeout(() => setDrawerToast(null), 3000);
+  }
 
   function handleConvertToDeal() {
     const params = new URLSearchParams({ customerId: customer.id, customerName: customer.name });
     window.location.href = `/dashboard/deals?${params.toString()}`;
   }
+
+  // ── Feature A: Edit submit ──
+  async function handleEditSubmit() {
+    if (!editForm.name.trim()) {
+      setEditError(lang === "ar" ? "الاسم حقل مطلوب." : "Name is required.");
+      return;
+    }
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const updated = await updateCustomer(customer.id, {
+        name: editForm.name,
+        nameArabic: editForm.nameArabic || undefined,
+        phone: editForm.phone || undefined,
+        email: editForm.email || undefined,
+        source: editForm.source || undefined,
+        agentId: editForm.agentId || undefined,
+        budget: editForm.budget ? Number(editForm.budget) : undefined,
+        propertyTypeInterest: editForm.propertyTypeInterest || undefined,
+      });
+      onCustomerUpdated({ ...customer, ...updated });
+      setEditSuccess(true);
+      showToast(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
+      setTimeout(() => {
+        setShowEditModal(false);
+        setEditSuccess(false);
+      }, 800);
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      const isFriendly = msg.length < 200 && !msg.includes("Prisma") && !msg.includes("Invalid `") && !msg.includes("invocation");
+      setEditError(
+        isFriendly && msg
+          ? msg
+          : lang === "ar"
+            ? "تعذّر حفظ التغييرات. يرجى التحقق من البيانات والمحاولة مجدداً."
+            : "Failed to save changes. Please check the details and try again."
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  // ── Feature B: Link property ──
+  async function openLinkModal() {
+    setShowLinkModal(true);
+    setLinkUnitSearch("");
+    setLinkSelectedUnit(null);
+    setLinkIntent("");
+    setLinkError(null);
+    setLoadingUnits(true);
+    try {
+      const units = await getAvailableUnitsForInterest();
+      setAvailableUnits(units);
+    } catch {
+      setLinkError(
+        lang === "ar"
+          ? "تعذّر تحميل العقارات المتاحة. يرجى المحاولة مجدداً."
+          : "Failed to load available properties. Please try again."
+      );
+    } finally {
+      setLoadingUnits(false);
+    }
+  }
+
+  const filteredUnits = React.useMemo(() => {
+    const q = linkUnitSearch.trim().toLowerCase();
+    if (!q) return availableUnits;
+    return availableUnits.filter(
+      (u) =>
+        u.number?.toLowerCase().includes(q) ||
+        u.city?.toLowerCase().includes(q) ||
+        u.type?.toLowerCase().includes(q) ||
+        u.buildingName?.toLowerCase().includes(q)
+    );
+  }, [availableUnits, linkUnitSearch]);
+
+  async function handleConfirmLink() {
+    if (!linkSelectedUnit || !linkIntent) return;
+    setSavingLink(true);
+    setLinkError(null);
+    try {
+      await addCustomerInterest(customer.id, linkSelectedUnit.id, linkIntent as "BUY" | "RENT");
+      await loadInterests(customer.id);
+      setShowLinkModal(false);
+      showToast(lang === "ar" ? "تم ربط العقار بنجاح" : "Property linked successfully");
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      const isFriendly = msg.length < 200 && !msg.includes("Prisma") && !msg.includes("Invalid `");
+      setLinkError(
+        isFriendly && msg
+          ? msg
+          : lang === "ar"
+            ? "تعذّر ربط العقار. يرجى المحاولة مجدداً."
+            : "Failed to link property. Please try again."
+      );
+    } finally {
+      setSavingLink(false);
+    }
+  }
+
+  async function handleDropInterest() {
+    if (!droppingInterest) return;
+    setDroppingLoading(true);
+    try {
+      await dropCustomerInterest(droppingInterest.id);
+      await loadInterests(customer.id);
+      setShowDropConfirm(false);
+      setDroppingInterest(null);
+      showToast(lang === "ar" ? "تم إسقاط الاهتمام" : "Interest dropped");
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      const isFriendly = msg.length < 200 && !msg.includes("Prisma");
+      showToast(
+        isFriendly && msg
+          ? msg
+          : lang === "ar"
+            ? "تعذّر إسقاط الاهتمام. يرجى المحاولة مجدداً."
+            : "Failed to drop interest. Please try again."
+      );
+    } finally {
+      setDroppingLoading(false);
+    }
+  }
+
+  function openConvertModal(interest: any) {
+    setConvertingInterest(interest);
+    const defaultAmount =
+      interest.intent === "RENT"
+        ? interest.unit?.rentalPrice
+        : interest.unit?.markupPrice;
+    setConvertAmount(defaultAmount ? String(defaultAmount) : "");
+    setConvertExpiry("");
+    setConvertError(null);
+    setShowConvertDealModal(true);
+  }
+
+  async function handleConvertInterest() {
+    if (!convertingInterest || !convertAmount || !convertExpiry) {
+      setConvertError(
+        lang === "ar"
+          ? "يرجى تحديد المبلغ وتاريخ الانتهاء."
+          : "Please enter the amount and expiry date."
+      );
+      return;
+    }
+    setSavingConvert(true);
+    setConvertError(null);
+    try {
+      await convertInterestToDeal(convertingInterest.id, {
+        amount: Number(convertAmount),
+        expiresAt: new Date(convertExpiry),
+      });
+      setShowConvertDealModal(false);
+      showToast(lang === "ar" ? "تم إنشاء الصفقة بنجاح" : "Deal created successfully");
+      setTimeout(() => {
+        window.location.href = "/dashboard/deals";
+      }, 1200);
+    } catch (err: any) {
+      const msg = err?.message ?? "";
+      const isFriendly = msg.length < 200 && !msg.includes("Prisma") && !msg.includes("Invalid `");
+      setConvertError(
+        isFriendly && msg
+          ? msg
+          : lang === "ar"
+            ? "تعذّر إنشاء الصفقة. يرجى المحاولة مجدداً."
+            : "Failed to create deal. Please try again."
+      );
+    } finally {
+      setSavingConvert(false);
+    }
+  }
+
+  const todayStr = new Date().toISOString().split("T")[0];
 
   return (
     <>
@@ -214,13 +479,46 @@ function CustomerDrawer({
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Feature A: Edit Profile button */}
+            <button
+              onClick={() => {
+                setEditForm({
+                  name: customer.name ?? "",
+                  nameArabic: customer.nameArabic ?? "",
+                  phone: customer.phone ?? "",
+                  email: customer.email ?? "",
+                  source: customer.source ?? "",
+                  agentId: customer.agentId ?? customer.agent?.id ?? "",
+                  budget: customer.budget ? String(customer.budget) : "",
+                  propertyTypeInterest: customer.propertyTypeInterest ?? "",
+                });
+                setEditError(null);
+                setEditSuccess(false);
+                setShowEditModal(true);
+              }}
+              className="h-8 px-3 rounded-lg border border-border flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+              title={lang === "ar" ? "تعديل الملف" : "Edit Profile"}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              {lang === "ar" ? "تعديل" : "Edit"}
+            </button>
+            <button
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Toast */}
+        {drawerToast && (
+          <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-xs font-medium animate-in fade-in duration-200">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            {drawerToast}
+          </div>
+        )}
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -385,6 +683,197 @@ function CustomerDrawer({
             </h3>
             <CustomerActivityTimeline customerId={customer.id} />
           </div>
+
+          {/* ── Feature B: Interested Properties ── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                <Link2 className="h-3.5 w-3.5" />
+                {lang === "ar" ? "الاهتمامات / Interested Properties" : "Interested Properties / الاهتمامات"}
+              </h3>
+              <button
+                onClick={openLinkModal}
+                className="flex items-center gap-1 text-[10px] font-semibold text-primary border border-primary/30 rounded-md px-2 py-1 hover:bg-primary/5 transition-colors"
+                style={{ display: "inline-flex" }}
+              >
+                <Plus className="h-3 w-3" />
+                {lang === "ar" ? "ربط عقار" : "Link Property"}
+              </button>
+            </div>
+
+            {loadingInterests ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : interests.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                {lang === "ar"
+                  ? "لا توجد اهتمامات مرتبطة / No properties linked yet"
+                  : "No properties linked yet / لا توجد اهتمامات مرتبطة"}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {interests.map((interest) => {
+                  const price =
+                    interest.intent === "RENT"
+                      ? interest.unit?.rentalPrice
+                      : interest.unit?.markupPrice;
+                  return (
+                    <div
+                      key={interest.id}
+                      className="p-3 rounded-lg border border-border/50 bg-muted/10 space-y-2"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-foreground bg-muted/40 px-2 py-0.5 rounded">
+                              {interest.unit?.number ?? "—"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                              {PROPERTY_TYPES.find(pt => pt.key === interest.unit?.type)?.label[lang] ?? interest.unit?.type ?? "—"}
+                            </span>
+                            {interest.unit?.city && (
+                              <span className="text-[10px] text-muted-foreground truncate">
+                                {interest.unit.city}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            {price && (
+                              <span className="text-xs font-semibold text-foreground">
+                                {formatSAR(price, lang)}
+                              </span>
+                            )}
+                            <span
+                              className={cn(
+                                "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                                interest.intent === "BUY"
+                                  ? "bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-800"
+                                  : "bg-violet-500/10 text-violet-600 border-violet-200 dark:border-violet-800"
+                              )}
+                            >
+                              {interest.intent === "BUY"
+                                ? lang === "ar" ? "شراء" : "Buy"
+                                : lang === "ar" ? "إيجار" : "Rent"}
+                            </span>
+                            <span
+                              className={cn(
+                                "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                                interest.status === "ACTIVE"
+                                  ? "bg-green-500/10 text-green-600 border-green-200 dark:border-green-800"
+                                  : interest.status === "CONVERTED"
+                                    ? "bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800"
+                                    : "bg-slate-500/10 text-slate-500 border-slate-200 dark:border-slate-700"
+                              )}
+                            >
+                              {interest.status === "ACTIVE"
+                                ? lang === "ar" ? "نشط" : "Active"
+                                : interest.status === "CONVERTED"
+                                  ? lang === "ar" ? "محوّل" : "Converted"
+                                  : lang === "ar" ? "مُسقط" : "Dropped"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions — only for ACTIVE interests */}
+                      {interest.status === "ACTIVE" && (
+                        <div className="flex items-center gap-2 pt-1 border-t border-border/40">
+                          <button
+                            onClick={() => openConvertModal(interest)}
+                            className="flex items-center gap-1 text-[10px] font-semibold text-white bg-primary rounded px-2 py-1 hover:bg-primary/90 transition-colors"
+                            style={{ display: "inline-flex" }}
+                          >
+                            <ArrowRight className="h-3 w-3" />
+                            {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDroppingInterest(interest);
+                              setShowDropConfirm(true);
+                            }}
+                            className="flex items-center gap-1 text-[10px] font-semibold text-destructive border border-destructive/30 rounded px-2 py-1 hover:bg-destructive/5 transition-colors"
+                            style={{ display: "inline-flex" }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            {lang === "ar" ? "إسقاط" : "Drop"}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* ── Feature C: Deals & Contracts ── */}
+          <div className="space-y-3">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "الصفقات والعقود / Deals & Contracts" : "Deals & Contracts / الصفقات والعقود"}
+            </h3>
+
+            {assignments.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+                {lang === "ar"
+                  ? "لا توجد صفقات أو عقود نشطة"
+                  : "No active deals or contracts"}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {assignments.map((item: any, idx: number) => {
+                  const isReservation = item.type === "reservation";
+                  const isLease = item.type === "lease";
+                  const href = isReservation ? "/dashboard/deals" : "/dashboard/contracts";
+                  const typeLabel = isReservation
+                    ? lang === "ar" ? "حجز" : "Reservation"
+                    : isLease
+                      ? lang === "ar" ? "إيجار" : "Lease"
+                      : lang === "ar" ? "بيع" : "Sale";
+
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 p-3 rounded-lg border border-border/50 bg-muted/10"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-bold text-foreground">
+                            {item.unitNumber ?? item.unitId}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                            {typeLabel}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {item.building}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span
+                            className={cn(
+                              "text-[10px] font-semibold px-2 py-0.5 rounded-full border",
+                              item.status === "CONFIRMED" || item.status === "SIGNED" || item.status === "ACTIVE"
+                                ? "bg-green-500/10 text-green-600 border-green-200 dark:border-green-800"
+                                : "bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-800"
+                            )}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+                      </div>
+                      <a
+                        href={href}
+                        className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline underline-offset-2 shrink-0"
+                      >
+                        {lang === "ar" ? "عرض" : "View"}
+                        <ChevronRight className="h-3 w-3" />
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer */}
@@ -399,6 +888,409 @@ function CustomerDrawer({
           </Button>
         </div>
       </div>
+
+      {/* ── Feature A: Edit Profile Modal ── */}
+      <Dialog open={showEditModal} onOpenChange={(open) => { if (!open) setShowEditModal(false); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"} className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "تعديل الملف الشخصي" : "Edit Profile"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? `تعديل بيانات ${customer.name}`
+                : `Update details for ${customer.name}`}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 py-2">
+            <div className="col-span-2 space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "الاسم الكامل *" : "Full Name *"}
+              </label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                placeholder={lang === "ar" ? "الاسم بالكامل" : "Full name"}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "الاسم بالعربية" : "Arabic Name"}
+              </label>
+              <Input
+                value={editForm.nameArabic}
+                onChange={(e) => setEditForm({ ...editForm, nameArabic: e.target.value })}
+                placeholder="الاسم بالعربية"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "رقم الجوال" : "Phone"}
+              </label>
+              <Input
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                placeholder="+966 5x xxx xxxx"
+                dir="ltr"
+              />
+            </div>
+            <div className="col-span-2 space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "البريد الإلكتروني" : "Email"}
+              </label>
+              <Input
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                placeholder="email@example.com"
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "المصدر" : "Source"}
+              </label>
+              <select
+                value={editForm.source}
+                onChange={(e) => setEditForm({ ...editForm, source: e.target.value })}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">{lang === "ar" ? "اختر المصدر" : "Select source"}</option>
+                {Object.entries(SOURCE_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>{label[lang]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "الميزانية (ريال)" : "Budget (SAR)"}
+              </label>
+              <Input
+                type="number"
+                value={editForm.budget}
+                onChange={(e) => setEditForm({ ...editForm, budget: e.target.value })}
+                placeholder={lang === "ar" ? "مثال: 500000" : "e.g. 500000"}
+                dir="ltr"
+                min="0"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "نوع العقار المطلوب" : "Property Interest"}
+              </label>
+              <select
+                value={editForm.propertyTypeInterest}
+                onChange={(e) => setEditForm({ ...editForm, propertyTypeInterest: e.target.value })}
+                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">{lang === "ar" ? "اختر النوع" : "Select type"}</option>
+                {PROPERTY_TYPES.map((pt) => (
+                  <option key={pt.key} value={pt.key}>{pt.label[lang]}</option>
+                ))}
+              </select>
+            </div>
+            {teamMembers.length > 0 && (
+              <div className="col-span-2 space-y-1">
+                <label className="text-xs font-bold text-muted-foreground">
+                  {lang === "ar" ? "المسؤول" : "Agent"}
+                </label>
+                <select
+                  value={editForm.agentId}
+                  onChange={(e) => setEditForm({ ...editForm, agentId: e.target.value })}
+                  className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">{lang === "ar" ? "غير معين" : "Unassigned"}</option>
+                  {teamMembers.map((m: any) => (
+                    <option key={m.id} value={m.id}>{m.name ?? m.email}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {editError && (
+            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+              {editError}
+            </p>
+          )}
+          {editSuccess && (
+            <p className="text-sm text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              {lang === "ar" ? "تم الحفظ بنجاح" : "Saved successfully"}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowEditModal(false)}
+              disabled={savingEdit}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={handleEditSubmit}
+              disabled={savingEdit}
+            >
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "حفظ التغييرات" : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Feature B: Link Property Modal ── */}
+      <Dialog open={showLinkModal} onOpenChange={(open) => { if (!open) setShowLinkModal(false); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"} className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "ربط عقار / Link Property" : "Link Property / ربط عقار"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? "اختر عقاراً متاحاً وحدد نية العميل (شراء أو إيجار)"
+                : "Select an available property and set the client's intent (buy or rent)"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={linkUnitSearch}
+                onChange={(e) => setLinkUnitSearch(e.target.value)}
+                placeholder={lang === "ar" ? "ابحث برقم الوحدة أو المدينة..." : "Search by unit number or city..."}
+                className="w-full h-10 bg-background border border-input rounded-lg ps-10 pe-4 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+              />
+            </div>
+
+            {/* Unit list */}
+            {loadingUnits ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredUnits.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                {lang === "ar" ? "لا توجد وحدات متاحة" : "No available units found"}
+              </p>
+            ) : (
+              <div className="max-h-48 overflow-y-auto space-y-1.5 border border-border rounded-lg p-2">
+                {filteredUnits.map((unit) => (
+                  <button
+                    key={unit.id}
+                    type="button"
+                    onClick={() => {
+                      setLinkSelectedUnit(unit);
+                      setLinkIntent("");
+                    }}
+                    className={cn(
+                      "w-full text-start p-2.5 rounded-lg border transition-colors",
+                      linkSelectedUnit?.id === unit.id
+                        ? "border-primary/40 bg-primary/5"
+                        : "border-border hover:bg-muted/30"
+                    )}
+                    style={{ display: "block" }}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-bold text-foreground">{unit.number}</span>
+                        <span className="text-[10px] text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                          {PROPERTY_TYPES.find(pt => pt.key === unit.type)?.label[lang] ?? unit.type}
+                        </span>
+                        {unit.city && (
+                          <span className="text-[10px] text-muted-foreground">{unit.city}</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground text-end shrink-0">
+                        {unit.markupPrice && <div>{formatSAR(unit.markupPrice, lang)}</div>}
+                        {unit.rentalPrice && <div className="text-violet-600">{formatSAR(unit.rentalPrice, lang)}/{lang === "ar" ? "شهر" : "mo"}</div>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Intent selection — shown after unit is selected */}
+            {linkSelectedUnit && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground">
+                  {lang === "ar" ? "نية العميل" : "Client Intent"}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLinkIntent("BUY")}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg border text-sm font-semibold transition-colors",
+                      linkIntent === "BUY"
+                        ? "border-blue-400/50 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                        : "border-border text-muted-foreground hover:bg-muted/30"
+                    )}
+                    style={{ display: "inline-flex", justifyContent: "center" }}
+                  >
+                    {lang === "ar" ? "شراء" : "Buy"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLinkIntent("RENT")}
+                    className={cn(
+                      "flex-1 py-2 rounded-lg border text-sm font-semibold transition-colors",
+                      linkIntent === "RENT"
+                        ? "border-violet-400/50 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+                        : "border-border text-muted-foreground hover:bg-muted/30"
+                    )}
+                    style={{ display: "inline-flex", justifyContent: "center" }}
+                  >
+                    {lang === "ar" ? "إيجار" : "Rent"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {linkError && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                {linkError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowLinkModal(false)}
+              disabled={savingLink}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={handleConfirmLink}
+              disabled={!linkSelectedUnit || !linkIntent || savingLink}
+            >
+              {savingLink && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "ربط العقار" : "Link Property"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Feature B: Drop Interest Confirm ── */}
+      <Dialog open={showDropConfirm} onOpenChange={(open) => { if (!open) setShowDropConfirm(false); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "إسقاط الاهتمام" : "Drop Interest"}
+            </DialogTitle>
+            <DialogDescription>
+              {lang === "ar"
+                ? "هل تريد إسقاط هذا الاهتمام؟ / Drop this interest?"
+                : "Drop this interest? / هل تريد إسقاط هذا الاهتمام؟"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowDropConfirm(false)}
+              disabled={droppingLoading}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              variant="danger"
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={handleDropInterest}
+              disabled={droppingLoading}
+            >
+              {droppingLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "إسقاط" : "Drop"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Feature B: Convert to Deal Modal ── */}
+      <Dialog open={showConvertDealModal} onOpenChange={(open) => { if (!open) setShowConvertDealModal(false); }}>
+        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
+          <DialogHeader>
+            <DialogTitle>
+              {lang === "ar" ? "تحويل لصفقة / Convert to Deal" : "Convert to Deal / تحويل لصفقة"}
+            </DialogTitle>
+            <DialogDescription>
+              {convertingInterest && (
+                <>
+                  {lang === "ar" ? "وحدة: " : "Unit: "}
+                  <strong>{convertingInterest.unit?.number}</strong>
+                  {convertingInterest.unit?.city ? ` — ${convertingInterest.unit.city}` : ""}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "المبلغ (ريال)" : "Amount (SAR)"}
+              </label>
+              <Input
+                type="number"
+                value={convertAmount}
+                onChange={(e) => setConvertAmount(e.target.value)}
+                placeholder={lang === "ar" ? "أدخل المبلغ" : "Enter amount"}
+                dir="ltr"
+                min="0"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground">
+                {lang === "ar" ? "تاريخ انتهاء الحجز *" : "Reservation Expiry Date *"}
+              </label>
+              <Input
+                type="date"
+                value={convertExpiry}
+                onChange={(e) => setConvertExpiry(e.target.value)}
+                min={todayStr}
+              />
+            </div>
+
+            {convertError && (
+              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2">
+                {convertError}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowConvertDealModal(false)}
+              disabled={savingConvert}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              onClick={handleConvertInterest}
+              disabled={!convertAmount || !convertExpiry || savingConvert}
+            >
+              {savingConvert && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "إنشاء الصفقة" : "Create Deal"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -545,6 +1437,8 @@ export default function CRMPage() {
 
   // Profile drawer
   const [drawerCustomer, setDrawerCustomer] = React.useState<any>(null);
+  const [drawerAssignments, setDrawerAssignments] = React.useState<any[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = React.useState(false);
 
   // Lost reason modal (triggered when dropping into LOST)
   const [showLostModal, setShowLostModal] = React.useState(false);
@@ -566,6 +1460,27 @@ export default function CRMPage() {
   React.useEffect(() => {
     loadData();
   }, []);
+
+  // Load assignments when drawer customer changes
+  React.useEffect(() => {
+    if (drawerCustomer) {
+      loadAssignments(drawerCustomer.id);
+    } else {
+      setDrawerAssignments([]);
+    }
+  }, [drawerCustomer?.id]);
+
+  async function loadAssignments(customerId: string) {
+    setLoadingAssignments(true);
+    try {
+      const data = await getCustomerUnitAssignments(customerId);
+      setDrawerAssignments(data);
+    } catch {
+      // silent
+    } finally {
+      setLoadingAssignments(false);
+    }
+  }
 
   async function loadData() {
     try {
@@ -716,11 +1631,15 @@ export default function CRMPage() {
       setShowAddModal(false);
       setNewCustomer(EMPTY_NEW_CUSTOMER);
     } catch (err: any) {
+      // Only surface friendly messages — never raw Prisma/technical errors
+      const msg = err?.message ?? "";
+      const isFriendly = msg.length < 200 && !msg.includes("Prisma") && !msg.includes("Invalid `") && !msg.includes("invocation");
       setError(
-        err?.message ||
-          (lang === "ar"
-            ? "فشل إنشاء العميل. يرجى المحاولة مجدداً."
-            : "Failed to create contact. Please try again.")
+        isFriendly && msg
+          ? msg
+          : lang === "ar"
+            ? "تعذّر حفظ جهة الاتصال. يرجى التحقق من البيانات والمحاولة مجدداً."
+            : "Failed to save contact. Please check the details and try again."
       );
     } finally {
       setSaving(false);
@@ -1190,7 +2109,16 @@ export default function CRMPage() {
         <CustomerDrawer
           customer={drawerCustomer}
           onClose={() => setDrawerCustomer(null)}
+          onCustomerUpdated={(updated) => {
+            setDrawerCustomer(updated);
+            setCustomers((prev) =>
+              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+            );
+            loadData();
+          }}
           lang={lang}
+          teamMembers={teamMembers}
+          assignments={drawerAssignments}
         />
       )}
 
