@@ -1,23 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { MapPin, Rocket, Compass } from "lucide-react";
+import { MapPin, Rocket } from "lucide-react";
 import { KPICard, SARAmount, Card, CardContent } from "@repo/ui";
 import { useLanguage } from "../LanguageProvider";
 
 interface MetricsTabsProps {
   landStats: any;
   offPlanStats: any;
-  planningStats: any;
 }
 
 const tabs = [
   { key: "land", label: { ar: "الأراضي", en: "Land" }, icon: MapPin },
   { key: "offplan", label: { ar: "البيع على الخارطة", en: "Off-Plan" }, icon: Rocket },
-  { key: "planning", label: { ar: "التخطيط", en: "Planning" }, icon: Compass },
 ] as const;
 
-export function MetricsTabs({ landStats, offPlanStats, planningStats }: MetricsTabsProps) {
+export function MetricsTabs({ landStats, offPlanStats }: MetricsTabsProps) {
   const { lang } = useLanguage();
   const [activeTab, setActiveTab] = React.useState<string>("land");
 
@@ -43,18 +41,6 @@ export function MetricsTabs({ landStats, offPlanStats, planningStats }: MetricsT
             <KPICard compact label={lang === "ar" ? "إجمالي المخزون" : "Total Inventory"} value={formatNumber(offPlanStats.totalInventory)} accentColor="secondary" />
             <KPICard compact label={lang === "ar" ? "معدل التحويل" : "Conversion Rate"} value={`${offPlanStats.conversionRate}%`} accentColor="accent" />
             <KPICard compact label={lang === "ar" ? "قيمة المبيعات" : "Pipeline Value"} value={<SARAmount value={offPlanStats.pipelineValue} compact size={16} />} accentColor="secondary" />
-          </div>
-        );
-      case "planning":
-        if (!planningStats || planningStats.totalWorkspaces === 0) {
-          return <p className="text-sm text-muted-foreground text-center py-6">{lang === "ar" ? "لا توجد بيانات تخطيط" : "No planning data"}</p>;
-        }
-        return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <KPICard compact label={lang === "ar" ? "مساحات العمل" : "Workspaces"} value={formatNumber(planningStats.totalWorkspaces)} accentColor="primary" />
-            <KPICard compact label={lang === "ar" ? "مساحات نشطة" : "Active"} value={formatNumber(planningStats.activeWorkspaces)} accentColor="secondary" />
-            <KPICard compact label={lang === "ar" ? "سيناريوهات معتمدة" : "Approved"} value={formatNumber(planningStats.approvedBaselines)} accentColor="accent" />
-            <KPICard compact label={lang === "ar" ? "معدل الامتثال" : "Compliance"} value={`${planningStats.avgComplianceScore}%`} accentColor={planningStats.avgComplianceScore >= 70 ? "secondary" : "warning"} />
           </div>
         );
       default:

@@ -10,11 +10,8 @@ export async function createReservation(data: {
   unitId: string;
   amount: number;
   expiresAt: Date;
-  inventoryItemId?: string;
   depositRequired?: boolean;
   depositAmount?: number;
-  salesChannel?: string;
-  expiryPolicy?: string;
 }) {
   const session = await requirePermission("reservations:write");
 
@@ -40,24 +37,13 @@ export async function createReservation(data: {
   const reservation = await db.$transaction(async (tx) => {
     // Check unit availability inside transaction
     const unit = await tx.unit.findFirst({
-      where: { id: data.unitId },
-      include: { building: { include: { project: true } } },
+      where: { id: data.unitId, organizationId: session.organizationId },
     });
-    if (!unit || unit.building.project.organizationId !== session.organizationId) {
+    if (!unit) {
       throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
     }
     if (unit.status !== "AVAILABLE") {
       throw new Error("This unit is no longer available for reservation. It may have been reserved or sold. Please select another unit.");
-    }
-
-    // RED: Release check for inventory items
-    if (data.inventoryItemId) {
-      const invItem = await tx.inventoryItem.findFirst({
-        where: { id: data.inventoryItemId },
-      });
-      if (invItem && invItem.releaseStatus !== "RELEASED") {
-        throw new Error("This inventory item has not been released for sale yet. Please wait for the item to be released before reserving.");
-      }
     }
 
     // Create reservation
@@ -69,11 +55,8 @@ export async function createReservation(data: {
         expiresAt: data.expiresAt,
         userId: session.userId,
         status: "PENDING",
-        inventoryItemId: data.inventoryItemId,
         depositRequired: data.depositRequired ?? false,
         depositAmount: data.depositAmount,
-        salesChannel: data.salesChannel as any,
-        expiryPolicy: data.expiryPolicy,
       },
     });
 
@@ -99,12 +82,11 @@ export async function createReservation(data: {
     action: "CREATE",
     resource: "Reservation",
     resourceId: reservation.id,
-    metadata: { depositRequired: data.depositRequired, salesChannel: data.salesChannel },
+    metadata: { depositRequired: data.depositRequired },
     organizationId: session.organizationId,
   });
 
-  revalidatePath("/dashboard/units");
-  revalidatePath("/dashboard/sales/reservations");
+  revalidatePath("/dashboard/deals");
   return JSON.parse(JSON.stringify(reservation));
 }
 
@@ -116,7 +98,7 @@ export async function getReservations() {
       customer: { organizationId: session.organizationId },
     },
     include: {
-      unit: { include: { building: { include: { project: true } } } },
+      unit: true,
       customer: true,
     },
     orderBy: { createdAt: "desc" },
@@ -175,8 +157,7 @@ export async function updateReservationStatus(
     organizationId: session.organizationId,
   });
 
-  revalidatePath("/dashboard/units");
-  revalidatePath("/dashboard/sales/reservations");
+  revalidatePath("/dashboard/deals");
   return JSON.parse(JSON.stringify(updated));
 }
 
@@ -195,10 +176,6 @@ export async function requestReservationExtension(
   });
   if (!reservation || reservation.customer.organizationId !== session.organizationId) {
     throw new Error("Reservation not found or you don't have access. Please refresh the page and try again.");
-  }
-
-  if (reservation.extensionCount >= reservation.maxExtensions) {
-    throw new Error("This reservation has reached the maximum number of allowed extensions. Please contact your administrator for assistance.");
   }
 
   const extension = await db.reservationExtension.create({
@@ -237,7 +214,6 @@ export async function approveReservationExtension(extensionId: string) {
       where: { id: extension.reservationId },
       data: {
         expiresAt: extension.newExpiresAt,
-        extensionCount: { increment: 1 },
       },
     }),
   ]);
@@ -253,7 +229,7 @@ export async function approveReservationExtension(extensionId: string) {
     organizationId: session.organizationId,
   });
 
-  revalidatePath("/dashboard/sales/reservations");
+  revalidatePath("/dashboard/deals");
   return { success: true };
 }
 

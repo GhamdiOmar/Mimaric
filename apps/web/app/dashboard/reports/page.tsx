@@ -211,7 +211,7 @@ export default function ReportsPage() {
             },
             {
               title: "حسب المشروع",
-              rows: data.projects.map((p) => ({
+              rows: data.projects.map((p: { name: string; occupied: number; total: number; rate: number }) => ({
                 label: p.name,
                 value: `${p.occupied}/${p.total} (${p.rate}%)`,
               })),

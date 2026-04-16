@@ -81,9 +81,8 @@ export async function getUnitRevenueBreakdown() {
   const orgId = session.organizationId;
 
   const units = await db.unit.findMany({
-    where: { building: { project: { organizationId: orgId } } },
+    where: { organizationId: orgId },
     include: {
-      building: { select: { name: true } },
       leases: {
         where: { status: "ACTIVE" },
         include: { installments: { where: { status: "PAID" }, select: { amount: true } } },
@@ -103,7 +102,7 @@ export async function getUnitRevenueBreakdown() {
       return {
         id: u.id,
         number: u.number,
-        building: u.building.name,
+        building: u.buildingName ?? u.city ?? "—",
         rentIncome,
         maintenanceCost,
         netIncome: rentIncome - maintenanceCost,
@@ -112,140 +111,3 @@ export async function getUnitRevenueBreakdown() {
   ));
 }
 
-export async function getLandInvestmentSummary() {
-  const session = await requirePermission("finance:read");
-  const orgId = session.organizationId;
-
-  const lands = await db.project.findMany({
-    where: {
-      organizationId: orgId,
-      status: { in: ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"] as any },
-    },
-    select: { acquisitionPrice: true, estimatedValueSar: true },
-  });
-
-  const totalAcquisitionCost = lands.reduce((s, l) => s + Number(l.acquisitionPrice ?? 0), 0);
-  const totalEstimatedValue = lands.reduce((s, l) => s + Number(l.estimatedValueSar ?? 0), 0);
-  const unrealizedGainLoss = totalEstimatedValue - totalAcquisitionCost;
-
-  return { totalAcquisitionCost, totalEstimatedValue, unrealizedGainLoss };
-}
-
-/**
- * Off-plan inventory revenue summary — pipeline, reserved, sold values + conversion.
- */
-/**
- * Project-level P&L — aggregates land cost, development costs, revenue, and maintenance.
- */
-export async function getProjectFinancials(projectId: string) {
-  const session = await requirePermission("finance:read");
-  const orgId = session.organizationId;
-
-  const project = await db.project.findFirst({
-    where: { id: projectId, organizationId: orgId },
-    select: { acquisitionPrice: true, estimatedValueSar: true },
-  });
-  if (!project) throw new Error("Project not found or you don't have access to it. Please check the project ID and try again.");
-
-  const landCost = Number(project.acquisitionPrice ?? 0);
-
-  // Development costs: infrastructure items
-  const infraItems = await db.infrastructureReadiness.findMany({
-    where: { projectId, organizationId: orgId },
-    select: { actualCostSar: true, estimatedCostSar: true },
-  });
-  const developmentCost = infraItems.reduce(
-    (s, i) => s + Number(i.actualCostSar ?? i.estimatedCostSar ?? 0), 0
-  );
-
-  // Sale revenue: signed contracts via buildings→units→contracts
-  const saleContracts = await db.contract.findMany({
-    where: {
-      customer: { organizationId: orgId },
-      status: "SIGNED",
-      type: "SALE",
-      unit: { building: { projectId } },
-    },
-    select: { amount: true },
-  });
-  const saleRevenue = saleContracts.reduce((s, c) => s + Number(c.amount), 0);
-
-  // Rental income: paid installments via buildings→units→leases→installments
-  const paidInstallments = await db.rentInstallment.findMany({
-    where: {
-      status: "PAID",
-      lease: { unit: { building: { projectId } } },
-    },
-    select: { amount: true },
-  });
-  const rentalIncome = paidInstallments.reduce((s, i) => s + Number(i.amount), 0);
-
-  // Maintenance costs
-  const maintenanceRequests = await db.maintenanceRequest.findMany({
-    where: {
-      organizationId: orgId,
-      unit: { building: { projectId } },
-    },
-    select: { actualCost: true },
-  });
-  const maintenanceCosts = maintenanceRequests.reduce(
-    (s, r) => s + Number(r.actualCost ?? 0), 0
-  );
-
-  // Off-plan sold inventory value
-  const soldInventory = await db.inventoryItem.findMany({
-    where: { projectId, organizationId: orgId, status: "SOLD_INV" },
-    select: { finalPriceSar: true, basePriceSar: true },
-  });
-  const offPlanSoldValue = soldInventory.reduce(
-    (s, i) => s + Number(i.finalPriceSar ?? i.basePriceSar ?? 0), 0
-  );
-
-  const totalCosts = landCost + developmentCost + maintenanceCosts;
-  const totalRevenue = saleRevenue + rentalIncome + offPlanSoldValue;
-  const netPL = totalRevenue - totalCosts;
-
-  return {
-    landCost,
-    developmentCost,
-    maintenanceCosts,
-    totalCosts,
-    saleRevenue,
-    rentalIncome,
-    offPlanSoldValue,
-    totalRevenue,
-    netPL,
-  };
-}
-
-export async function getOffPlanRevenueSummary() {
-  const session = await requirePermission("finance:read");
-  const orgId = session.organizationId;
-
-  const items = await db.inventoryItem.findMany({
-    where: { organizationId: orgId },
-    select: { status: true, finalPriceSar: true, basePriceSar: true },
-  });
-
-  const getPrice = (i: { finalPriceSar: any; basePriceSar: any }) =>
-    i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0;
-
-  const pipelineValue = items
-    .filter((i) => ["AVAILABLE_INV", "RESERVED_INV"].includes(i.status))
-    .reduce((sum, i) => sum + getPrice(i), 0);
-
-  const reservedValue = items
-    .filter((i) => i.status === "RESERVED_INV")
-    .reduce((sum, i) => sum + getPrice(i), 0);
-
-  const soldValue = items
-    .filter((i) => i.status === "SOLD_INV")
-    .reduce((sum, i) => sum + getPrice(i), 0);
-
-  const total = items.length;
-  const soldCount = items.filter((i) => i.status === "SOLD_INV").length;
-  const reservedCount = items.filter((i) => i.status === "RESERVED_INV").length;
-  const conversionRate = total > 0 ? Math.round(((soldCount + reservedCount) / total) * 100) : 0;
-
-  return { pipelineValue, reservedValue, soldValue, conversionRate, total, soldCount, reservedCount };
-}

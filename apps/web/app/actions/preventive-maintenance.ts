@@ -48,7 +48,6 @@ export async function createPreventivePlan(data: {
   category?: string;
   priority?: string;
   unitId?: string;
-  buildingId?: string;
   recurrenceType: string;
   recurrenceInterval?: number;
   startDate: string;
@@ -69,7 +68,6 @@ export async function createPreventivePlan(data: {
       category: (data.category as any) ?? "GENERAL",
       priority: (data.priority as any) ?? "MEDIUM",
       unitId: data.unitId || undefined,
-      buildingId: data.buildingId || undefined,
       recurrenceType: data.recurrenceType as any,
       recurrenceInterval: interval,
       startDate,
@@ -93,7 +91,6 @@ export async function getPreventivePlans(filters?: {
   isActive?: boolean;
   category?: string;
   unitId?: string;
-  buildingId?: string;
 }) {
   const session = await requirePermission("preventive_maintenance:read");
 
@@ -101,12 +98,11 @@ export async function getPreventivePlans(filters?: {
   if (filters?.isActive !== undefined) where.isActive = filters.isActive;
   if (filters?.category) where.category = filters.category;
   if (filters?.unitId) where.unitId = filters.unitId;
-  if (filters?.buildingId) where.buildingId = filters.buildingId;
 
   const plans = await db.preventiveMaintenancePlan.findMany({
     where,
     include: {
-      unit: { select: { id: true, number: true, building: { select: { name: true } } } },
+      unit: { select: { id: true, number: true } },
       _count: { select: { workOrders: true } },
     },
     orderBy: { nextRunDate: "asc" },
@@ -124,7 +120,6 @@ export async function updatePreventivePlan(
     category?: string;
     priority?: string;
     unitId?: string | null;
-    buildingId?: string | null;
     recurrenceType?: string;
     recurrenceInterval?: number;
     startDate?: string;
@@ -147,7 +142,6 @@ export async function updatePreventivePlan(
   if (data.category !== undefined) updateData.category = data.category;
   if (data.priority !== undefined) updateData.priority = data.priority;
   if (data.unitId !== undefined) updateData.unitId = data.unitId || null;
-  if (data.buildingId !== undefined) updateData.buildingId = data.buildingId || null;
   if (data.assignToId !== undefined) updateData.assignToId = data.assignToId || null;
   if (data.estimatedCost !== undefined) updateData.estimatedCost = data.estimatedCost;
   if (data.estimatedHours !== undefined) updateData.estimatedHours = data.estimatedHours;
@@ -272,15 +266,3 @@ export async function generateWorkOrdersFromPlans() {
   return { created, total: duePlans.length };
 }
 
-// ─── Get Buildings for Plan Selectors ────────────────────────────────────────
-
-export async function getBuildingsForPlans() {
-  const session = await requirePermission("preventive_maintenance:read");
-
-  const buildings = await db.building.findMany({
-    where: { project: { organizationId: session.organizationId } },
-    select: { id: true, name: true, project: { select: { name: true } } },
-    orderBy: { name: "asc" },
-  });
-  return buildings;
-}

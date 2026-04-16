@@ -1,470 +1,204 @@
-/**
- * PDPL & NCA Compliance — Role-Based Permission System
- *
- * Two-tier SaaS architecture:
- *   System tier  — SYSTEM_ADMIN, SYSTEM_SUPPORT (Mimaric platform team)
- *   Customer tier — COMPANY_ADMIN + operational roles (tenant organizations)
- *
- * Static permission matrix mapping UserRole → Permission[].
- * Checked on every server action via requirePermission().
- */
+// ─── Permission Types (v3.0) ──────────────────────────────────────────────────
 
 export type Permission =
-  // Customers
+  // Dashboard
+  | "dashboard:read"
+
+  // CRM (Customers / Leads)
+  | "crm:read"
+  | "crm:write"
+  | "crm:delete"
+  | "crm:export"
+
+  // Customers (keep for backward compat with existing action guards)
   | "customers:read"
   | "customers:read_pii"
   | "customers:write"
   | "customers:delete"
   | "customers:export"
-  // Projects
-  | "projects:read"
-  | "projects:write"
-  | "projects:delete"
-  // Units
-  | "units:read"
-  | "units:write"
-  | "units:delete"
+
+  // Properties (Units)
+  | "properties:read"
+  | "properties:write"
+  | "properties:delete"
+
+  // Deals (Reservations)
+  | "deals:read"
+  | "deals:write"
+  | "deals:delete"
+
   // Contracts
   | "contracts:read"
   | "contracts:write"
   | "contracts:delete"
+
   // Leases
   | "leases:read"
   | "leases:write"
   | "leases:delete"
-  // Reservations
-  | "reservations:read"
-  | "reservations:write"
-  | "reservations:delete"
+
+  // Payments
+  | "payments:read"
+  | "payments:write"
+
   // Maintenance
   | "maintenance:read"
   | "maintenance:write"
   | "maintenance:delete"
+
   // Preventive Maintenance
   | "preventive_maintenance:read"
   | "preventive_maintenance:write"
-  | "preventive_maintenance:delete"
-  // Finance
-  | "finance:read"
-  | "finance:write"
-  // Organization
-  | "organization:read"
-  | "organization:write"
-  // Team
-  | "team:read"
-  | "team:write"
-  | "team:delete"
+
   // Documents
   | "documents:read"
   | "documents:write"
   | "documents:delete"
+
+  // Organization & Team
+  | "organization:read"
+  | "organization:write"
+  | "team:read"
+  | "team:write"
+  | "team:delete"
+
   // Reports
   | "reports:read"
   | "reports:export"
+
   // Audit
   | "audit:read"
-  // Dashboard
-  | "dashboard:read"
+
   // Notifications
   | "notifications:read"
-  // Land
-  | "land:read"
-  | "land:write"
-  | "land:delete"
-  | "land:export"
-  // Off-Plan Development Lifecycle
-  | "constraints:read"
-  | "constraints:write"
-  | "feasibility:read"
-  | "feasibility:write"
-  | "decision_gates:read"
-  | "decision_gates:write"
-  | "concept_plans:read"
-  | "concept_plans:write"
-  | "subdivision:read"
-  | "subdivision:write"
-  | "approvals:read"
-  | "approvals:write"
-  | "approvals:submit"
-  | "infrastructure:read"
-  | "infrastructure:write"
-  | "inventory:read"
-  | "inventory:write"
-  | "pricing:read"
-  | "pricing:write"
-  | "launch:read"
-  | "launch:write"
+
+  // Billing
+  | "billing:read"
+  | "billing:write"
+  | "billing:admin"
+
   // Help
   | "help:read"
   | "help:create_ticket"
-  | "help:manage_tickets"      // System-level: respond as staff, manage ticket status
-  | "help:manage_permissions"  // Org-level: manage join requests + permission requests
-  // Invitations
-  | "invitations:read"
-  | "invitations:write"
-  // Billing & Subscriptions
-  | "billing:read"             // View own org subscription/invoices
-  | "billing:write"            // Manage subscription (upgrade/downgrade/cancel)
-  | "billing:admin"            // System-level: manage all plans, view all subscriptions
-  // Wafi Compliance
-  | "escrow:read"
-  | "escrow:write"
-  | "escrow:approve"
-  | "consultant:read"
-  | "consultant:write"
-  | "milestones:read"
-  | "milestones:write"
-  | "milestones:certify"
-  | "milestones:upload_evidence"
-  | "wafi_contracts:read"
-  | "wafi_contracts:write"
-  | "delay_penalties:read"
-  | "delay_penalties:write"
-  | "wafi_license:read"
-  | "wafi_license:write"
-  | "etmam:read"
-  | "etmam:write"
-  | "etmam:sync"
-  // GIS
-  | "gis:read"
-  | "gis:write"
-  | "gis:export"
-  // Planning OS
-  | "planning:read"
-  | "planning:write"
-  | "planning:delete"
-  | "planning:import"
-  | "planning:geometry"
-  | "planning:scenarios"
-  | "planning:compliance"
-  | "planning:feasibility"
-  | "planning:approve"
-  | "planning:export"
-  // RED: Project Governance
-  | "projects:approve"
-  // RED: Inventory Management
-  | "inventory:import"
-  | "inventory:release"
-  // RED: Collections
-  | "collections:read"
-  | "collections:write"
-  | "collections:assign"
-  // RED: Handover
-  | "handover:read"
-  | "handover:write"
-  | "handover:approve"
-  // RED: Price Approvals
-  | "price_approval:read"
-  | "price_approval:write"
-  | "price_approval:approve"
-  // System (platform-level)
-  | "system:admin"
-  | "system:support";
+  | "help:manage_tickets"
+  | "help:manage_permissions"
 
-// ─── Company Admin Permissions (full org control, NO system access) ──────────
+  // ── Legacy v2 permission aliases (kept for backward compat with existing action guards) ──
+  | "units:read"
+  | "units:write"
+  | "units:delete"
+  | "reservations:read"
+  | "reservations:write"
+  | "preventive_maintenance:delete"
+  | "finance:read"
+  | "finance:write"
+  | "pricing:read"
+  | "launch:read";
 
-const COMPANY_ADMIN_PERMISSIONS: Permission[] = [
+// ─── All permissions list (used by SYSTEM_ADMIN) ──────────────────────────────
+
+const ALL_PERMISSIONS: Permission[] = [
+  "dashboard:read",
+  "crm:read", "crm:write", "crm:delete", "crm:export",
   "customers:read", "customers:read_pii", "customers:write", "customers:delete", "customers:export",
-  "projects:read", "projects:write", "projects:delete",
-  "units:read", "units:write", "units:delete",
+  "properties:read", "properties:write", "properties:delete",
+  "deals:read", "deals:write", "deals:delete",
   "contracts:read", "contracts:write", "contracts:delete",
   "leases:read", "leases:write", "leases:delete",
-  "reservations:read", "reservations:write", "reservations:delete",
+  "payments:read", "payments:write",
   "maintenance:read", "maintenance:write", "maintenance:delete",
-  "preventive_maintenance:read", "preventive_maintenance:write", "preventive_maintenance:delete",
-  "finance:read", "finance:write",
+  "preventive_maintenance:read", "preventive_maintenance:write",
+  "documents:read", "documents:write", "documents:delete",
   "organization:read", "organization:write",
   "team:read", "team:write", "team:delete",
-  "documents:read", "documents:write", "documents:delete",
   "reports:read", "reports:export",
   "audit:read",
-  "dashboard:read",
   "notifications:read",
-  "land:read", "land:write", "land:delete", "land:export",
-  // Off-Plan Development Lifecycle
-  "constraints:read", "constraints:write",
-  "feasibility:read", "feasibility:write",
-  "decision_gates:read", "decision_gates:write",
-  "concept_plans:read", "concept_plans:write",
-  "subdivision:read", "subdivision:write",
-  "approvals:read", "approvals:write", "approvals:submit",
-  "infrastructure:read", "infrastructure:write",
-  "inventory:read", "inventory:write",
-  "pricing:read", "pricing:write",
-  "launch:read", "launch:write",
-  "help:read", "help:create_ticket", "help:manage_permissions",
-  "invitations:read", "invitations:write",
-  // Planning OS (full access for company admin)
-  "planning:read", "planning:write", "planning:delete",
-  "planning:import", "planning:geometry", "planning:scenarios",
-  "planning:compliance", "planning:feasibility", "planning:approve", "planning:export",
-  // Billing
-  "billing:read", "billing:write",
-  // RED: Project Governance, Inventory, Collections, Handover, Price Approvals
-  "projects:approve",
-  "inventory:import", "inventory:release",
-  "collections:read", "collections:write", "collections:assign",
-  "handover:read", "handover:write", "handover:approve",
-  "price_approval:read", "price_approval:write", "price_approval:approve",
-  // GIS
-  "gis:read", "gis:write", "gis:export",
-  // Wafi Compliance
-  "escrow:read", "escrow:write", "escrow:approve",
-  "consultant:read", "consultant:write",
-  "milestones:read", "milestones:write",
-  "wafi_contracts:read", "wafi_contracts:write",
-  "delay_penalties:read", "delay_penalties:write",
-  "wafi_license:read", "wafi_license:write",
-  "etmam:read", "etmam:write", "etmam:sync",
+  "billing:read", "billing:write", "billing:admin",
+  "help:read", "help:create_ticket", "help:manage_tickets", "help:manage_permissions",
 ];
 
 // ─── System Permissions (Mimaric platform staff only) ────────────────────────
 
 const SYSTEM_ONLY_PERMISSIONS: Permission[] = [
-  "system:admin", "system:support", "help:manage_tickets", "billing:admin",
+  "billing:admin",
+  "help:manage_tickets",
 ];
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   // ── System tier (Mimaric platform team) ──────────────────────────────────
-  SYSTEM_ADMIN: [...COMPANY_ADMIN_PERMISSIONS, ...SYSTEM_ONLY_PERMISSIONS],
-  SYSTEM_SUPPORT: [...COMPANY_ADMIN_PERMISSIONS, "system:support", "help:manage_tickets", "billing:admin"],
+  SYSTEM_ADMIN: ALL_PERMISSIONS,
+
+  SYSTEM_SUPPORT: [
+    "dashboard:read",
+    "crm:read", "crm:write", "crm:delete", "crm:export",
+    "customers:read", "customers:read_pii", "customers:write", "customers:delete", "customers:export",
+    "properties:read", "properties:write", "properties:delete",
+    "deals:read", "deals:write", "deals:delete",
+    "contracts:read", "contracts:write", "contracts:delete",
+    "leases:read", "leases:write", "leases:delete",
+    "payments:read", "payments:write",
+    "maintenance:read", "maintenance:write", "maintenance:delete",
+    "preventive_maintenance:read", "preventive_maintenance:write",
+    "documents:read", "documents:write", "documents:delete",
+    "organization:read", "organization:write",
+    "team:read", "team:write", "team:delete",
+    "reports:read", "reports:export",
+    "audit:read",
+    "notifications:read",
+    "billing:read", "billing:admin",
+    "help:read", "help:create_ticket", "help:manage_tickets",
+  ],
 
   // ── Customer tier ────────────────────────────────────────────────────────
-  COMPANY_ADMIN: COMPANY_ADMIN_PERMISSIONS,
+  ADMIN: ALL_PERMISSIONS.filter((p) => !SYSTEM_ONLY_PERMISSIONS.includes(p)),
 
-  // ── Backward compatibility (deprecated — mapped via JWT) ─────────────────
-  SUPER_ADMIN: COMPANY_ADMIN_PERMISSIONS,
-  DEV_ADMIN: COMPANY_ADMIN_PERMISSIONS,
-
-  // ── Operational roles ────────────────────────────────────────────────────
-  PROJECT_MANAGER: [
+  MANAGER: [
     "dashboard:read",
-    "customers:read",
-    "projects:read", "projects:write",
-    "units:read", "units:write",
-    "contracts:read",
-    "leases:read",
-    "reservations:read",
+    "crm:read", "crm:write", "crm:export",
+    "customers:read", "customers:write", "customers:export",
+    "properties:read", "properties:write",
+    "deals:read", "deals:write",
+    "contracts:read", "contracts:write",
+    "leases:read", "leases:write",
+    "payments:read", "payments:write",
     "maintenance:read", "maintenance:write",
     "preventive_maintenance:read", "preventive_maintenance:write",
     "documents:read", "documents:write",
-    "reports:read",
-    "notifications:read",
-    "land:read", "land:write", "land:export",
-    // Off-Plan (read/write, no decision gate approval)
-    "constraints:read", "constraints:write",
-    "feasibility:read", "feasibility:write",
-    "decision_gates:read",
-    "concept_plans:read", "concept_plans:write",
-    "subdivision:read", "subdivision:write",
-    "approvals:read", "approvals:write", "approvals:submit",
-    "infrastructure:read", "infrastructure:write",
-    "inventory:read", "inventory:write",
-    "pricing:read",
-    "launch:read",
-    // Planning OS (planner/PM — edit everything, no approve/delete)
-    "planning:read", "planning:write",
-    "planning:import", "planning:geometry", "planning:scenarios",
-    "planning:compliance", "planning:feasibility", "planning:export",
-    // Wafi (read + write milestones, read escrow/contracts)
-    "escrow:read",
-    "consultant:read",
-    "milestones:read", "milestones:write",
-    "wafi_contracts:read",
-    "delay_penalties:read",
-    "wafi_license:read",
-    "etmam:read",
-    // GIS
-    "gis:read", "gis:write", "gis:export",
-    "help:read", "help:create_ticket",
-  ],
-
-  SALES_MANAGER: [
-    "dashboard:read",
-    "customers:read", "customers:read_pii", "customers:write", "customers:export",
-    "projects:read",
-    "units:read",
-    "contracts:read", "contracts:write",
-    "leases:read", "leases:write",
-    "reservations:read", "reservations:write",
-    "documents:read",
+    "organization:read",
+    "team:read",
     "reports:read", "reports:export",
     "notifications:read",
-    "land:read",
-    // Off-Plan (read + inventory/pricing/launch write for sales)
-    "inventory:read", "inventory:write",
-    "pricing:read", "pricing:write",
-    "launch:read", "launch:write",
-    // Planning OS (read-only for sales visibility)
-    "planning:read", "planning:export",
-    // GIS (read-only for sales map)
-    "gis:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  SALES_AGENT: [
-    "dashboard:read",
-    "customers:read", "customers:write",
-    "projects:read",
-    "units:read",
-    "contracts:read", "contracts:write",
-    "leases:read",
-    "reservations:read", "reservations:write",
-    "documents:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  PROPERTY_MANAGER: [
-    "dashboard:read",
-    "customers:read",
-    "projects:read",
-    "units:read", "units:write",
-    "contracts:read",
-    "leases:read", "leases:write",
-    "maintenance:read", "maintenance:write",
-    "preventive_maintenance:read", "preventive_maintenance:write",
-    "documents:read", "documents:write",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  FINANCE_OFFICER: [
-    "dashboard:read",
-    "customers:read",
-    "contracts:read",
-    "leases:read",
-    "finance:read", "finance:write",
-    "reports:read", "reports:export",
-    "notifications:read",
-    "land:read",
-    "maintenance:read",
-    // Off-Plan (read + pricing for financial review)
-    "feasibility:read",
-    "inventory:read",
-    "pricing:read", "pricing:write",
-    "launch:read",
-    // Planning OS (read + feasibility for financial review)
-    "planning:read", "planning:feasibility", "planning:export",
-    // GIS (read-only for financial review)
-    "gis:read",
-    // Wafi (escrow read/write, milestones read, contracts read/write)
-    "escrow:read", "escrow:write",
-    "milestones:read",
-    "wafi_contracts:read", "wafi_contracts:write",
-    "delay_penalties:read", "delay_penalties:write",
-    "wafi_license:read", "wafi_license:write",
-    "etmam:read", "etmam:write",
-    "help:read", "help:create_ticket",
     "billing:read",
+    "help:read", "help:create_ticket",
+  ],
+
+  AGENT: [
+    "dashboard:read",
+    "crm:read", "crm:write",
+    "customers:read", "customers:write",
+    "properties:read",
+    "deals:read", "deals:write",
+    "contracts:read",
+    "leases:read",
+    "payments:read",
+    "maintenance:read",
+    "documents:read",
+    "notifications:read",
+    "help:read", "help:create_ticket",
   ],
 
   TECHNICIAN: [
     "dashboard:read",
+    "properties:read",
     "maintenance:read", "maintenance:write",
-    "preventive_maintenance:read",
-    "units:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  // ── Wafi: Independent engineering consultant (project-scoped) ──────────
-  ENGINEERING_CONSULTANT: [
-    "dashboard:read",
-    "projects:read",           // Assigned projects only (scoped via ConsultantAssignment)
-    "milestones:read",
-    "milestones:certify",
-    "milestones:upload_evidence",
-    "consultant:read",
-    "escrow:read",
-    "documents:read", "documents:write",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  // ── RED: Specialized roles ──────────────────────────────────────────────
-  APPROVALS_MANAGER: [
-    "dashboard:read",
-    "approvals:read", "approvals:write", "approvals:submit",
-    "projects:read", "projects:approve",
-    "decision_gates:read", "decision_gates:write",
     "documents:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  ESCROW_CONTROLLER: [
-    "dashboard:read",
-    "escrow:read", "escrow:write", "escrow:approve",
-    "finance:read",
-    "contracts:read",
-    "documents:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  COLLECTIONS_OFFICER: [
-    "dashboard:read",
-    "collections:read", "collections:write",
-    "contracts:read",
-    "customers:read",
-    "finance:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  HANDOVER_OFFICER: [
-    "dashboard:read",
-    "handover:read", "handover:write",
-    "projects:read",
-    "units:read",
-    "milestones:read",
-    "documents:read", "documents:write",
-    "notifications:read",
-    // GIS (read-only for handover context)
-    "gis:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  QA_INSPECTOR: [
-    "dashboard:read",
-    "milestones:read", "milestones:certify",
-    "projects:read",
-    "documents:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  VENDOR_CONTRACTOR: [
-    "dashboard:read",
-    "maintenance:read",
-    "documents:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  BUYER: [
-    "dashboard:read",
-    "units:read",
-    "contracts:read",
-    "reservations:read",
-    "notifications:read",
-    "help:read", "help:create_ticket",
-  ],
-
-  TENANT: [
-    "dashboard:read",
-    "units:read",
-    "contracts:read",
-    "leases:read",
-    "maintenance:read", "maintenance:write",
     "notifications:read",
     "help:read", "help:create_ticket",
   ],
 
   USER: [
     "dashboard:read",
-    "units:read",
     "notifications:read",
     "help:read", "help:create_ticket",
   ],
@@ -477,11 +211,7 @@ export const SYSTEM_ROLES: string[] = ["SYSTEM_ADMIN", "SYSTEM_SUPPORT"];
 
 /** Roles that customers can assign to their team members */
 export const CUSTOMER_ASSIGNABLE_ROLES: string[] = [
-  "COMPANY_ADMIN", "PROJECT_MANAGER", "SALES_MANAGER", "SALES_AGENT",
-  "PROPERTY_MANAGER", "FINANCE_OFFICER", "TECHNICIAN", "ENGINEERING_CONSULTANT",
-  "APPROVALS_MANAGER", "ESCROW_CONTROLLER", "COLLECTIONS_OFFICER",
-  "HANDOVER_OFFICER", "QA_INSPECTOR", "VENDOR_CONTRACTOR",
-  "BUYER", "TENANT", "USER",
+  "ADMIN", "MANAGER", "AGENT", "TECHNICIAN", "USER",
 ];
 
 /** Check if a role is a system (Mimaric platform) role */

@@ -33,7 +33,7 @@ export default function ProjectStatusChart() {
     getProjectStatusDistribution()
       .then((dist) => {
         setData(
-          dist.map((d) => ({
+          dist.map((d: { status: string; count: number }) => ({
             name: STATUS_LABELS[d.status] ?? d.status,
             count: d.count,
             status: d.status,

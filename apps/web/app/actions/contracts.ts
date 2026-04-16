@@ -50,10 +50,8 @@ export async function createContract(data: {
   autoRenewal?: boolean;
   maintenanceResponsibility?: string;
   noticePeriodDays?: number;
-  // Wafi/Sale fields (SALE)
+  // Sale fields
   deliveryDate?: string;
-  wafiLicenseRef?: string;
-  escrowAccountRef?: string;
   // Shared
   notes?: string;
 }) {
@@ -72,10 +70,9 @@ export async function createContract(data: {
 
   // Verify unit belongs to org
   const unit = await db.unit.findFirst({
-    where: { id: data.unitId },
-    include: { building: { include: { project: true } } },
+    where: { id: data.unitId, organizationId: session.organizationId },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+  if (!unit) {
     throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
@@ -180,8 +177,6 @@ export async function createContract(data: {
         status: "DRAFT",
         contractNumber,
         deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : undefined,
-        wafiLicenseRef: data.wafiLicenseRef,
-        escrowAccountRef: data.escrowAccountRef,
         notes: data.notes,
       },
     });
@@ -189,7 +184,7 @@ export async function createContract(data: {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Contract", resourceId: contract.id, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/contracts");
+  revalidatePath("/dashboard/contracts");
   return JSON.parse(JSON.stringify(contract));
 }
 
@@ -200,7 +195,7 @@ export async function getContract(contractId: string) {
     where: { id: contractId },
     include: {
       customer: true,
-      unit: { include: { building: { include: { project: true } } } },
+      unit: true,
       lease: { include: { installments: { orderBy: { dueDate: "asc" } } } },
     },
   });
@@ -226,7 +221,7 @@ export async function getContracts(filters?: { status?: string; type?: string })
     where,
     include: {
       customer: true,
-      unit: { include: { building: true } },
+      unit: true,
       lease: { select: { id: true, startDate: true, endDate: true, status: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -277,31 +272,6 @@ export async function updateContractStatus(
       data: { status: "CONVERTED" },
     });
 
-    // Auto-post to escrow
-    try {
-      const unit = await db.unit.findUnique({
-        where: { id: contract.unitId },
-        include: { building: { select: { projectId: true } } },
-      });
-      if (unit?.building?.projectId) {
-        const escrow = await db.escrowAccount.findFirst({
-          where: { projectId: unit.building.projectId },
-        });
-        if (escrow) {
-          await db.escrowTransaction.create({
-            data: {
-              escrowAccountId: escrow.id,
-              type: "BUYER_DEPOSIT",
-              amount: contract.amount,
-              description: `Sale contract signed — Unit ${unit.number}`,
-              status: "PROCESSED",
-            },
-          });
-        }
-      }
-    } catch {
-      // Best-effort
-    }
   }
 
   // LEASE contract signed → unit RENTED, lease ACTIVE
@@ -355,40 +325,13 @@ export async function updateContractStatus(
       });
     }
 
-    // Reverse escrow on VOID of signed contract
-    if (status === "VOID" && contract.status === "SIGNED") {
-      try {
-        const unit = await db.unit.findUnique({
-          where: { id: contract.unitId },
-          include: { building: { select: { projectId: true } } },
-        });
-        if (unit?.building?.projectId) {
-          const escrow = await db.escrowAccount.findFirst({
-            where: { projectId: unit.building.projectId },
-          });
-          if (escrow) {
-            await db.escrowTransaction.create({
-              data: {
-                escrowAccountId: escrow.id,
-                type: "REFUND",
-                amount: contract.amount,
-                description: `Contract voided — Unit ${unit.number}`,
-                status: "PROCESSED",
-              },
-            });
-          }
-        }
-      } catch {
-        // Best-effort
-      }
-    }
   }
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Contract", resourceId: contractId, metadata: { previousStatus: contract.status, newStatus: status }, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/contracts");
-  revalidatePath("/dashboard/units");
-  revalidatePath("/dashboard/rentals");
+  revalidatePath("/dashboard/contracts");
+  revalidatePath("/dashboard/properties");
+  revalidatePath("/dashboard/contracts");
   return JSON.parse(JSON.stringify(updated));
 }
 
@@ -422,8 +365,8 @@ export async function deleteContract(contractId: string) {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "DELETE", resource: "Contract", resourceId: contractId, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/contracts");
-  revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/contracts");
+  revalidatePath("/dashboard/properties");
 }
 
 // ─── RED: Contract Amount & Signature Enhancements ──────────────────────────
@@ -435,7 +378,7 @@ export async function updateContractAmounts(
   const session = await requirePermission("contracts:write");
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+    where: { id: contractId, unit: { organizationId: session.organizationId } },
   });
   if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
@@ -464,7 +407,7 @@ export async function updateContractAmounts(
     organizationId: session.organizationId,
   });
 
-  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
+  revalidatePath(`/dashboard/contracts/${contractId}`);
   return JSON.parse(JSON.stringify(updated));
 }
 
@@ -472,7 +415,7 @@ export async function recordBuyerSignature(contractId: string, signatureUrl: str
   const session = await requirePermission("contracts:write");
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+    where: { id: contractId, unit: { organizationId: session.organizationId } },
   });
   if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 
@@ -495,37 +438,7 @@ export async function recordBuyerSignature(contractId: string, signatureUrl: str
     organizationId: session.organizationId,
   });
 
-  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
+  revalidatePath(`/dashboard/contracts/${contractId}`);
   return JSON.parse(JSON.stringify(updated));
 }
 
-export async function recordDeveloperSignature(contractId: string, signatureUrl: string) {
-  const session = await requirePermission("contracts:write");
-
-  const contract = await db.contract.findFirst({
-    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
-  });
-  if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
-
-  const updated = await db.contract.update({
-    where: { id: contractId },
-    data: {
-      developerSignedAt: new Date(),
-      developerSignatureUrl: signatureUrl,
-    },
-  });
-
-  logAuditEvent({
-    userId: session.userId,
-    userEmail: session.email,
-    userRole: session.role,
-    action: "UPDATE",
-    resource: "Contract",
-    resourceId: contractId,
-    metadata: { event: "developer_signature_recorded" },
-    organizationId: session.organizationId,
-  });
-
-  revalidatePath(`/dashboard/sales/contracts/${contractId}`);
-  return JSON.parse(JSON.stringify(updated));
-}

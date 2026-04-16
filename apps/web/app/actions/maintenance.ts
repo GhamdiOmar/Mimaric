@@ -98,7 +98,7 @@ export async function getMaintenanceRequests(filters?: {
   const results = await db.maintenanceRequest.findMany({
     where,
     include: {
-      unit: { include: { building: true } },
+      unit: true,
       assignedTo: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -114,7 +114,7 @@ export async function getMaintenanceRequest(id: string) {
   const request = await db.maintenanceRequest.findFirst({
     where: { id, organizationId: session.organizationId },
     include: {
-      unit: { include: { building: { include: { project: true } } } },
+      unit: true,
       assignedTo: { select: { id: true, name: true, email: true } },
       preventivePlan: true,
     },
@@ -287,16 +287,14 @@ export async function getMaintenanceForUnit(unitId: string) {
 
 // ─── Get Maintenance for Project ──────────────────────────────────────────────
 
-export async function getMaintenanceForProject(projectId: string) {
+export async function getMaintenanceForProject(_projectId: string) {
   const session = await requirePermission("maintenance:read");
 
+  // Building model removed — return all org maintenance requests
   const results = await db.maintenanceRequest.findMany({
-    where: {
-      organizationId: session.organizationId,
-      unit: { building: { projectId } },
-    },
+    where: { organizationId: session.organizationId },
     include: {
-      unit: { include: { building: true } },
+      unit: true,
       assignedTo: { select: { id: true, name: true } },
     },
     orderBy: { createdAt: "desc" },
@@ -310,8 +308,7 @@ export async function getUnitsForMaintenance() {
   const session = await requirePermission("maintenance:read");
 
   const units = await db.unit.findMany({
-    where: { building: { project: { organizationId: session.organizationId } } },
-    include: { building: { select: { name: true, project: { select: { name: true } } } } },
+    where: { organizationId: session.organizationId },
     orderBy: { number: "asc" },
   });
   return JSON.parse(JSON.stringify(units));

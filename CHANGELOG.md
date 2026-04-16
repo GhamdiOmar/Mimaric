@@ -1,5 +1,48 @@
 # Changelog — Mimaric PropTech
 
+## [3.0.0] — 2026-04-16
+
+### Mimaric v3.0 — Universal Real Estate Operating Core
+
+**Strategy:** Refactor, NOT rebuild. Mimaric pivots from a niche Saudi developer tool to a Universal Real Estate OS serving brokerages, property managers, and developers.
+
+#### What Changed
+
+**New Modules (moved/renamed from buried routes):**
+- CRM (`/dashboard/crm`) — full Kanban pipeline with 5 stages, activity timeline, PII toggle, lead management
+- Properties (`/dashboard/properties`) — standalone unit portfolio, decoupled from Projects/Buildings
+- Deals (`/dashboard/deals`) — reservation pipeline renamed for clarity, linked to CRM + Properties
+- Contracts (`/dashboard/contracts`) — merged Sale + Lease contracts in a single tabbed view
+- Payments (`/dashboard/payments`) — unified installment tracker (sale + lease), 3 KPI banners
+- Dashboard — redesigned with 6 v3.0 KPI cards and 3 activity widgets (Recent Deals, Payment Deadlines, Maintenance Status)
+
+**Architecture Changes:**
+- Unit model decoupled: `Unit → Organization` (direct FK) — no longer requires Project/Building hierarchy
+- Added `CustomerActivity` model for CRM activity timeline (CALL, EMAIL, MEETING, SITE_VISIT, NOTE, WHATSAPP)
+- `CustomerActivityTimeline` client component with log form, delete, RTL-safe layout
+- 301 redirects: `/dashboard/units` → `/properties`, `/sales/*` → `/deals`, `/rentals/*` → `/contracts`, `/finance/*` → `/payments`
+- Onboarding simplified to 3 steps: Company Info → Add First Property → Done
+
+**Removed (permanently):**
+- GIS Platform (8 pages, 6 action files, 5 map components, maplibre-gl/leaflet/turf npm deps)
+- Planning OS (full Planning Workspace + Subdivision system)
+- Land Acquisition module
+- Project Management (14-stage developer lifecycle)
+- Wafi / Off-Plan Compliance module (escrow, construction milestones, WafiContract)
+- Collections module
+- Finance section (collapsed into Payments)
+
+**Permissions & Roles:**
+- UserRole reduced from 21 → 7: SYSTEM_ADMIN, SYSTEM_SUPPORT, ADMIN, MANAGER, AGENT, TECHNICIAN, USER
+- Permissions reduced from ~162 → ~50, scoped to v3.0 modules
+- RBAC matrix updated for all 7 roles
+
+**Scale:**
+- Page routes: 60+ → ~22 (-38)
+- Server action files: 77 → 39 (-38 deleted, 11 updated)
+- Prisma models: ~100 → ~65 (-35)
+- npm bundle: ~3MB smaller (maplibre-gl + leaflet + turf removed)
+
 ## [2.1.0] — 2026-03-19
 
 ### GIS Platform — Full Spatial Intelligence (Phases 1-3)

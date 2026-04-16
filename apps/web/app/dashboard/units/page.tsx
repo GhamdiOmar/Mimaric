@@ -4,18 +4,9 @@ import { useLanguage } from "../../../components/LanguageProvider";
 import * as React from "react";
 import {
   Building2,
-  Check,
-  Filter,
   Search,
-  ExternalLink,
   Plus,
   Loader2,
-  Package,
-  Map,
-  BarChart3,
-  Store,
-  Tag,
-  ArrowRight,
   Wrench,
   X,
   Eye,
@@ -42,7 +33,6 @@ import {
   TableHead,
   TableCell,
   PageIntro,
-  FilterBar,
   StatusBadge,
   KPICard,
   Dialog,
@@ -57,16 +47,11 @@ import {
   getUnitsWithBuildings,
   massUpdateUnits,
   createUnit,
-  getBuildings,
   deleteUnit,
   getUnitFinancialSummary,
   getActiveContractForUnit,
 } from "../../actions/units";
 import { getMaintenanceForUnit } from "../../actions/maintenance";
-import {
-  getAllInventoryItems,
-  getGlobalInventoryStats,
-} from "../../actions/inventory";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -87,47 +72,6 @@ const unitStatusLabels: Record<string, { ar: string; en: string }> = {
   MAINTENANCE: { ar: "صيانة", en: "Maintenance" },
 };
 
-const invStatusConfig: Record<
-  string,
-  { ar: string; en: string; color: string }
-> = {
-  UNRELEASED: {
-    ar: "لم تُطلق",
-    en: "Unreleased",
-    color: "bg-muted text-muted-foreground",
-  },
-  AVAILABLE_INV: {
-    ar: "متاح",
-    en: "Available",
-    color: "bg-success/10 text-success",
-  },
-  RESERVED_INV: {
-    ar: "محجوز",
-    en: "Reserved",
-    color: "bg-primary/10 text-primary",
-  },
-  SOLD_INV: { ar: "مباع", en: "Sold", color: "bg-muted text-muted-foreground" },
-  HELD_INV: {
-    ar: "محتجز",
-    en: "Held",
-    color: "bg-muted text-muted-foreground",
-  },
-  WITHDRAWN: {
-    ar: "مسحوب",
-    en: "Withdrawn",
-    color: "bg-destructive/10 text-destructive",
-  },
-};
-
-const productTypeLabels: Record<string, { ar: string; en: string }> = {
-  VILLA_PLOT: { ar: "قطعة فيلا", en: "Villa Plot" },
-  TOWNHOUSE_PLOT: { ar: "تاون هاوس", en: "Townhouse" },
-  DUPLEX_PLOT: { ar: "دوبلكس", en: "Duplex" },
-  APARTMENT_PLOT: { ar: "شقة", en: "Apartment" },
-  COMMERCIAL_LOT: { ar: "تجاري", en: "Commercial" },
-  MIXED_USE_LOT: { ar: "متعدد", en: "Mixed Use" },
-  RAW_LAND_PLOT: { ar: "أرض خام", en: "Raw Land" },
-};
 
 export default function AdvancedUnitMatrixPageWrapper() {
   return (
@@ -145,24 +89,20 @@ export default function AdvancedUnitMatrixPageWrapper() {
 
 function AdvancedUnitMatrixPage() {
   const searchParams = useSearchParams();
-  const projectFilter = searchParams.get("project") || "";
   const { lang } = useLanguage();
   const [selectedUnits, setSelectedUnits] = React.useState<string[]>([]);
   const [units, setUnits] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [updating, setUpdating] = React.useState(false);
   const [showAddModal, setShowAddModal] = React.useState(false);
-  const [buildings, setBuildings] = React.useState<any[]>([]);
   const [showPriceModal, setShowPriceModal] = React.useState(false);
   const [bulkPrice, setBulkPrice] = React.useState("");
-  const [selectedProject, setSelectedProject] = React.useState(projectFilter);
   const [viewMode, setViewMode] = React.useState<"cards" | "table">("cards");
   const [unitSearch, setUnitSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
   const [newUnit, setNewUnit] = React.useState({
     number: "",
     type: "APARTMENT",
-    buildingId: "",
     area: "",
     price: "",
     markupPrice: "",
@@ -176,19 +116,6 @@ function AdvancedUnitMatrixPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   // Deleting state (separate from updating for granularity)
   const [deleting, setDeleting] = React.useState(false);
-
-  // Tab state
-  const [activeTab, setActiveTab] = React.useState<"units" | "inventory">(
-    "units"
-  );
-
-  // Inventory state
-  const [inventoryItems, setInventoryItems] = React.useState<any[]>([]);
-  const [inventoryStats, setInventoryStats] = React.useState<any>(null);
-  const [loadingInventory, setLoadingInventory] = React.useState(false);
-  const [invSearch, setInvSearch] = React.useState("");
-  const [invStatusFilter, setInvStatusFilter] = React.useState("");
-  const [invProjectFilter, setInvProjectFilter] = React.useState("");
 
   // Unit detail modal
   const [detailUnit, setDetailUnit] = React.useState<any>(null);
@@ -243,43 +170,7 @@ function AdvancedUnitMatrixPage() {
       }
     }
     loadUnits();
-
-    async function loadBuildings() {
-      try {
-        const data = await getBuildings();
-        setBuildings(data);
-        const firstBuilding = data?.[0];
-        if (firstBuilding) {
-          setNewUnit((prev) => ({ ...prev, buildingId: firstBuilding.id }));
-        }
-      } catch (err) {
-        console.error("Failed to fetch buildings");
-      }
-    }
-    loadBuildings();
   }, []);
-
-  // Load inventory data when inventory tab is selected
-  React.useEffect(() => {
-    if (activeTab !== "inventory") return;
-    if (inventoryItems.length > 0) return; // already loaded
-    async function loadInventory() {
-      setLoadingInventory(true);
-      try {
-        const [items, stats] = await Promise.all([
-          getAllInventoryItems(),
-          getGlobalInventoryStats(),
-        ]);
-        setInventoryItems(items);
-        setInventoryStats(stats);
-      } catch (err) {
-        console.error("Failed to fetch inventory", err);
-      } finally {
-        setLoadingInventory(false);
-      }
-    }
-    loadInventory();
-  }, [activeTab]);
 
   const toggleSelect = (id: string) => {
     setSelectedUnits((prev) =>
@@ -326,7 +217,6 @@ function AdvancedUnitMatrixPage() {
       setNewUnit({
         number: "",
         type: "APARTMENT",
-        buildingId: buildings[0]?.id || "",
         area: "",
         price: "",
         markupPrice: "",
@@ -387,16 +277,15 @@ function AdvancedUnitMatrixPage() {
     }
   };
 
-  // Filtered units based on search, project, and status
+  // Filtered units based on search and status
   const filteredUnits = React.useMemo(() => {
     return units.filter((u: any) => {
       const q = unitSearch.trim().toLowerCase();
-      const matchesSearch = !q || u.number?.toLowerCase().includes(q) || u.building?.name?.toLowerCase().includes(q) || u.building?.project?.name?.toLowerCase().includes(q);
-      const matchesProject = !selectedProject || u.building?.project?.id === selectedProject;
+      const matchesSearch = !q || u.number?.toLowerCase().includes(q) || u.buildingName?.toLowerCase().includes(q) || u.city?.toLowerCase().includes(q);
       const matchesStatus = !statusFilter || u.status === statusFilter;
-      return matchesSearch && matchesProject && matchesStatus;
+      return matchesSearch && matchesStatus;
     });
-  }, [units, unitSearch, selectedProject, statusFilter]);
+  }, [units, unitSearch, statusFilter]);
 
   // Status counts for pills
   const statusCounts = React.useMemo(() => ({
@@ -489,28 +378,8 @@ function AdvancedUnitMatrixPage() {
         />
       </div>
 
-      {/* Tab Bar */}
-      <FilterBar
-        filters={[
-          {
-            label: lang === "ar" ? "الوحدات المادية" : "Physical Units",
-            value: "units",
-            count: units.length,
-          },
-          {
-            label: lang === "ar" ? "مخزون على الخارطة" : "Off-Plan Inventory",
-            value: "inventory",
-            count: inventoryStats?.total,
-          },
-        ]}
-        activeFilter={activeTab}
-        onFilterChange={(value) =>
-          setActiveTab(value as "units" | "inventory")
-        }
-      />
-
-      {/* ═══ PHYSICAL UNITS TAB ═══ */}
-      {activeTab === "units" && (
+      {/* ═══ PHYSICAL UNITS ═══ */}
+      {true && (
         <>
           {/* Bulk Action Bar (Floating) */}
           {selectedUnits.length > 0 && (
@@ -645,22 +514,6 @@ function AdvancedUnitMatrixPage() {
                   className="w-full h-10 bg-background border border-input rounded-xl ps-10 pe-4 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
                 />
               </div>
-              <select
-                value={selectedProject}
-                onChange={(e) => setSelectedProject(e.target.value)}
-                className="h-10 px-3 bg-background border border-input rounded-xl text-sm outline-none"
-              >
-                <option value="">{lang === "ar" ? "كل المشاريع" : "All Projects"}</option>
-                {(() => {
-                  const projectMap: Record<string, string> = {};
-                  buildings.forEach((b: any) => {
-                    if (b.project?.id && b.project?.name) projectMap[b.project.id] = b.project.name;
-                  });
-                  return Object.entries(projectMap).map(([id, name]) => (
-                    <option key={id} value={id}>{name}</option>
-                  ));
-                })()}
-              </select>
             </div>
           </Card>
 
@@ -687,7 +540,7 @@ function AdvancedUnitMatrixPage() {
                   {/* Unit code hero */}
                   <h3 className="text-2xl font-extrabold text-primary/80 tabular-nums">{unit.number}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {unit.building?.name || "—"} · {unit.building?.project?.name || "—"}
+                    {unit.buildingName || unit.city || "—"}
                   </p>
 
                   {/* Info grid */}
@@ -742,8 +595,7 @@ function AdvancedUnitMatrixPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>{lang === "ar" ? "رقم الوحدة" : "Unit #"}</TableHead>
-                      <TableHead>{lang === "ar" ? "المشروع" : "Project"}</TableHead>
-                      <TableHead>{lang === "ar" ? "المبنى" : "Building"}</TableHead>
+                      <TableHead>{lang === "ar" ? "المبنى / المدينة" : "Building / City"}</TableHead>
                       <TableHead>{lang === "ar" ? "النوع" : "Type"}</TableHead>
                       <TableHead>{lang === "ar" ? "المساحة" : "Area"}</TableHead>
                       <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
@@ -754,8 +606,7 @@ function AdvancedUnitMatrixPage() {
                     {filteredUnits.map((unit: any) => (
                       <TableRow key={unit.id} className="cursor-pointer hover:bg-muted/30" onClick={() => openUnitDetail(unit)}>
                         <TableCell className="font-bold text-primary/80 tabular-nums">{unit.number}</TableCell>
-                        <TableCell>{unit.building?.project?.name || "—"}</TableCell>
-                        <TableCell>{unit.building?.name || "—"}</TableCell>
+                        <TableCell>{unit.buildingName || unit.city || "—"}</TableCell>
                         <TableCell>{unitTypeLabels[unit.type]?.[lang] ?? unit.type}</TableCell>
                         <TableCell className="tabular-nums">{unit.area} m²</TableCell>
                         <TableCell><StatusBadge entityType="unit" status={unit.status} label={unitStatusLabels[unit.status]?.[lang] ?? unit.status} /></TableCell>
@@ -770,312 +621,7 @@ function AdvancedUnitMatrixPage() {
         </>
       )}
 
-      {/* ═══ OFF-PLAN INVENTORY TAB ═══ */}
-      {activeTab === "inventory" &&
-        (loadingInventory ? (
-          <div className="flex h-[calc(100vh-350px)] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* KPI Cards */}
-            {inventoryStats && (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 px-2">
-                <Card className="rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
-                      <Package className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {lang === "ar" ? "إجمالي المخزون" : "Total Items"}
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-primary font-latin">
-                    {inventoryStats.total}
-                  </p>
-                </Card>
-                <Card className="rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-md bg-secondary/10 flex items-center justify-center">
-                      <Store className="h-4 w-4 text-secondary" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {lang === "ar" ? "متاح" : "Available"}
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-secondary font-latin">
-                    {inventoryStats.available}
-                  </p>
-                </Card>
-                <Card className="rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-md bg-amber-500/10 flex items-center justify-center">
-                      <Tag className="h-4 w-4 text-amber-600" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {lang === "ar" ? "محجوز" : "Reserved"}
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-amber-600 font-latin">
-                    {inventoryStats.reserved}
-                  </p>
-                </Card>
-                <Card className="rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-md bg-info/10 flex items-center justify-center">
-                      <BarChart3 className="h-4 w-4 text-info" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {lang === "ar" ? "مباع" : "Sold"}
-                    </span>
-                  </div>
-                  <p className="text-2xl font-bold text-info font-latin">
-                    {inventoryStats.sold}
-                  </p>
-                </Card>
-                <Card className="rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="h-8 w-8 rounded-md bg-amber-500/10 flex items-center justify-center">
-                      <DollarSign className="h-4 w-4 text-amber-500" />
-                    </div>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                      {lang === "ar" ? "قيمة المخزون" : "Pipeline Value"}
-                    </span>
-                  </div>
-                  <p className="text-lg font-bold text-primary">
-                    <SARAmount
-                      value={inventoryStats.totalValue}
-                      size={12}
-                      compact
-                    />
-                  </p>
-                </Card>
-              </div>
-            )}
-
-            {/* Inventory Table */}
-            <Card className="overflow-hidden">
-              {/* Toolbar */}
-              <div className="p-4 border-b border-border bg-muted/10 flex flex-col md:flex-row gap-4 items-center justify-between">
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                  <div className="relative w-full md:w-64">
-                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={invSearch}
-                      onChange={(e) => setInvSearch(e.target.value)}
-                      placeholder={
-                        lang === "ar"
-                          ? "بحث في المخزون..."
-                          : "Search inventory..."
-                      }
-                      className="w-full h-9 bg-background border border-input rounded-md py-2 pr-10 pl-4 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:border-ring"
-                    />
-                  </div>
-                  <select
-                    value={invStatusFilter}
-                    onChange={(e) => setInvStatusFilter(e.target.value)}
-                    className="h-9 px-3 bg-background border border-input rounded-md text-xs outline-none"
-                  >
-                    <option value="">
-                      {lang === "ar" ? "كل الحالات" : "All Statuses"}
-                    </option>
-                    {Object.entries(invStatusConfig).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label[lang]}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    value={invProjectFilter}
-                    onChange={(e) => setInvProjectFilter(e.target.value)}
-                    className="h-9 px-3 bg-background border border-input rounded-md text-xs outline-none"
-                  >
-                    <option value="">
-                      {lang === "ar" ? "كل المشاريع" : "All Projects"}
-                    </option>
-                    {(() => {
-                      const pm: Record<string, string> = {};
-                      inventoryItems.forEach((i: any) => {
-                        if (i.project?.id && i.project?.name) pm[i.project.id] = i.project.name;
-                      });
-                      return Object.entries(pm).map(([id, name]) => (
-                        <option key={id} value={id}>
-                          {name}
-                        </option>
-                      ));
-                    })()}
-                  </select>
-                </div>
-                <div className="flex items-center gap-2">
-                  {inventoryStats && (
-                    <>
-                      <Badge
-                        variant="available"
-                        className="bg-secondary/15 border border-secondary/40 text-secondary font-bold px-3 py-1"
-                      >
-                        {inventoryStats.available}{" "}
-                        {lang === "ar" ? "متاح" : "Available"}
-                      </Badge>
-                      <Badge
-                        variant="sold"
-                        className="bg-info/15 border border-info/40 text-info font-bold px-3 py-1"
-                      >
-                        {inventoryStats.sold}{" "}
-                        {lang === "ar" ? "مباع" : "Sold"}
-                      </Badge>
-                      <Badge
-                        variant="reserved"
-                        className="bg-muted border border-border text-muted-foreground font-bold px-3 py-1"
-                      >
-                        {inventoryStats.unreleased}{" "}
-                        {lang === "ar" ? "لم تُطلق" : "Unreleased"}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Table */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      {lang === "ar" ? "رقم العنصر" : "Item #"}
-                    </TableHead>
-                    <TableHead>
-                      {lang === "ar" ? "نوع المنتج" : "Product Type"}
-                    </TableHead>
-                    <TableHead>
-                      {lang === "ar" ? "المشروع" : "Project"}
-                    </TableHead>
-                    <TableHead>
-                      {lang === "ar" ? "المساحة" : "Area"}
-                    </TableHead>
-                    <TableHead>{lang === "ar" ? "السعر" : "Price"}</TableHead>
-                    <TableHead>{lang === "ar" ? "الحالة" : "Status"}</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventoryItems
-                    .filter((item: any) => {
-                      if (invStatusFilter && item.status !== invStatusFilter)
-                        return false;
-                      if (
-                        invProjectFilter &&
-                        item.project?.id !== invProjectFilter
-                      )
-                        return false;
-                      if (invSearch) {
-                        const q = invSearch.toLowerCase();
-                        return (
-                          item.itemNumber?.toLowerCase().includes(q) ||
-                          item.productLabel?.toLowerCase().includes(q) ||
-                          item.productLabelArabic?.toLowerCase().includes(q) ||
-                          item.project?.name?.toLowerCase().includes(q)
-                        );
-                      }
-                      return true;
-                    })
-                    .map((item: any) => {
-                      const ist =
-                        invStatusConfig[item.status] ??
-                        invStatusConfig.UNRELEASED!;
-                      const pt = productTypeLabels[item.productType] ?? {
-                        ar: item.productType,
-                        en: item.productType,
-                      };
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <span className="font-bold text-primary font-latin">
-                              {item.itemNumber}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-xs text-foreground">
-                              {pt[lang]}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              href={`/dashboard/projects/${item.project?.id}`}
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
-                            >
-                              {item.project?.name ?? "\u2014"}
-                              <ExternalLink className="h-3 w-3" />
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-xs text-muted-foreground font-latin">
-                              {item.areaSqm
-                                ? `${item.areaSqm} \u0645\u00B2`
-                                : "\u2014"}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-xs font-bold text-primary">
-                              {item.finalPriceSar || item.basePriceSar ? (
-                                <SARAmount
-                                  value={
-                                    item.finalPriceSar ?? item.basePriceSar
-                                  }
-                                  size={10}
-                                  compact
-                                />
-                              ) : (
-                                "\u2014"
-                              )}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={cn(
-                                "text-[10px] font-bold px-2 py-1 rounded-full",
-                                ist.color
-                              )}
-                            >
-                              {ist[lang]}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Link
-                              href={`/dashboard/projects/${item.project?.id}`}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                style={{ display: "inline-flex" }}
-                                className="text-muted-foreground hover:text-primary"
-                              >
-                                <ArrowRight className="h-3.5 w-3.5" />
-                              </Button>
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-
-              {/* Empty State */}
-              {inventoryItems.length === 0 && !loadingInventory && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <Package className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                  <h3 className="text-lg font-bold text-primary mb-1">
-                    {lang === "ar" ? "لا يوجد مخزون" : "No Inventory Items"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
-                    {lang === "ar"
-                      ? "لم يتم إضافة أي عناصر مخزون بعد. أنشئ مخزونًا من صفحة المشروع في تبويب المخزون."
-                      : "No inventory items have been added yet. Create inventory from the project detail page under the Inventory tab."}
-                  </p>
-                </div>
-              )}
-            </Card>
-          </div>
-        ))}
+      {/* OFF-PLAN INVENTORY TAB REMOVED in v3.0 */}
 
       {/* Change Price Modal */}
       {showPriceModal && (
@@ -1146,7 +692,7 @@ function AdvancedUnitMatrixPage() {
                   {detailUnit.number}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {detailUnit.building?.name}
+                  {detailUnit.buildingName || detailUnit.city || ""}
                 </p>
               </div>
               <button
@@ -1528,43 +1074,23 @@ function AdvancedUnitMatrixPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground">
-                    {lang === "ar" ? "المبنى" : "Building"}
-                  </label>
-                  <select
-                    value={newUnit.buildingId}
-                    onChange={(e) =>
-                      setNewUnit({ ...newUnit, buildingId: e.target.value })
-                    }
-                    className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {buildings.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name} ({b.project.name})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground">
-                    {lang === "ar" ? "نوع الوحدة" : "Unit Type"}
-                  </label>
-                  <select
-                    value={newUnit.type}
-                    onChange={(e) =>
-                      setNewUnit({ ...newUnit, type: e.target.value })
-                    }
-                    className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {Object.entries(unitTypeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label[lang]}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground">
+                  {lang === "ar" ? "نوع الوحدة" : "Unit Type"}
+                </label>
+                <select
+                  value={newUnit.type}
+                  onChange={(e) =>
+                    setNewUnit({ ...newUnit, type: e.target.value })
+                  }
+                  className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {Object.entries(unitTypeLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label[lang]}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

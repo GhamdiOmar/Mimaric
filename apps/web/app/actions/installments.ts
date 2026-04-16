@@ -28,7 +28,7 @@ export async function getInstallments(filters?: {
       lease: {
         include: {
           customer: true,
-          unit: { include: { building: true } },
+          unit: true,
         },
       },
     },

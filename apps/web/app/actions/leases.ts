@@ -38,10 +38,9 @@ export async function createLease(data: {
 
   // Verify unit belongs to org
   const unit = await db.unit.findFirst({
-    where: { id: data.unitId },
-    include: { building: { include: { project: true } } },
+    where: { id: data.unitId, organizationId: session.organizationId },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+  if (!unit) {
     throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
@@ -114,9 +113,8 @@ export async function createLease(data: {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Lease", resourceId: lease.id, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/rentals");
-  revalidatePath("/dashboard/units");
-  revalidatePath("/dashboard/sales/contracts");
+  revalidatePath("/dashboard/contracts");
+  revalidatePath("/dashboard/properties");
   return JSON.parse(JSON.stringify(lease));
 }
 
@@ -134,7 +132,7 @@ export async function getLeases(filters?: { status?: string }) {
   const results = await db.lease.findMany({
     where,
     include: {
-      unit: { include: { building: { include: { project: true } } } },
+      unit: true,
       customer: true,
       installments: { orderBy: { dueDate: "asc" } },
     },
@@ -177,6 +175,6 @@ export async function terminateLease(leaseId: string) {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Lease", resourceId: leaseId, metadata: { newStatus: "TERMINATED" }, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/rentals");
-  revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/contracts");
+  revalidatePath("/dashboard/properties");
 }

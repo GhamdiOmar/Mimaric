@@ -10,7 +10,6 @@ export async function registerFileInDb(data: {
   url: string;
   type: string;
   size?: number;
-  projectId?: string;
   customerId?: string;
   category?: any;
 }) {
@@ -22,7 +21,6 @@ export async function registerFileInDb(data: {
       url: data.url,
       type: data.type,
       size: data.size,
-      projectId: data.projectId,
       customerId: data.customerId,
       category: data.category || "GENERAL",
       organizationId: session.organizationId,

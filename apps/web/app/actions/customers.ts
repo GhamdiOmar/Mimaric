@@ -18,7 +18,7 @@ export async function updateCustomerStatus(customerId: string, status: any) {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { field: "status", newStatus: status }, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/customers");
+  revalidatePath("/dashboard/crm");
   return customer;
 }
 
@@ -76,7 +76,7 @@ export async function createCustomer(data: {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "CREATE", resource: "Customer", resourceId: customer.id, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/customers");
+  revalidatePath("/dashboard/crm");
   return customer;
 }
 
@@ -157,7 +157,7 @@ export async function updateCustomer(
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "UPDATE", resource: "Customer", resourceId: customerId, metadata: { fields: Object.keys(data) }, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/customers");
+  revalidatePath("/dashboard/crm");
   return customer;
 }
 
@@ -212,7 +212,7 @@ export async function deleteCustomer(customerId: string) {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: "DELETE", resource: "Customer", resourceId: customerId, organizationId: session.organizationId });
 
-  revalidatePath("/dashboard/sales/customers");
+  revalidatePath("/dashboard/crm");
 }
 
 export async function getCustomerUnitAssignments(customerId: string) {
@@ -224,15 +224,15 @@ export async function getCustomerUnitAssignments(customerId: string) {
     include: {
       reservations: {
         where: { status: { in: ["PENDING", "CONFIRMED"] } },
-        include: { unit: { include: { building: { select: { name: true } } } } },
+        include: { unit: true },
       },
       contracts: {
         where: { status: "SIGNED" },
-        include: { unit: { include: { building: { select: { name: true } } } } },
+        include: { unit: true },
       },
       leases: {
         where: { status: "ACTIVE" },
-        include: { unit: { include: { building: { select: { name: true } } } } },
+        include: { unit: true },
       },
     },
   });
@@ -240,10 +240,72 @@ export async function getCustomerUnitAssignments(customerId: string) {
   if (!customer) throw new Error("Customer not found or you don't have access. Please verify the customer exists in your organization.");
 
   const units = [
-    ...customer.reservations.map(r => ({ unitId: r.unit.id, unitNumber: r.unit.number, building: r.unit.building.name, type: "reservation" as const, status: r.status })),
-    ...customer.contracts.map(c => ({ unitId: c.unit.id, unitNumber: c.unit.number, building: c.unit.building.name, type: "contract" as const, status: c.status })),
-    ...customer.leases.map(l => ({ unitId: l.unit.id, unitNumber: l.unit.number, building: l.unit.building.name, type: "lease" as const, status: l.status })),
+    ...customer.reservations.map(r => ({ unitId: r.unit.id, unitNumber: r.unit.number, building: r.unit.buildingName ?? r.unit.city ?? "—", type: "reservation" as const, status: r.status })),
+    ...customer.contracts.map(c => ({ unitId: c.unit.id, unitNumber: c.unit.number, building: c.unit.buildingName ?? c.unit.city ?? "—", type: "contract" as const, status: c.status })),
+    ...customer.leases.map(l => ({ unitId: l.unit.id, unitNumber: l.unit.number, building: l.unit.buildingName ?? l.unit.city ?? "—", type: "lease" as const, status: l.status })),
   ];
 
   return JSON.parse(JSON.stringify(units));
+}
+
+export async function addCustomerActivity(
+  customerId: string,
+  data: { type: string; note: string }
+) {
+  const session = await requirePermission("crm:write");
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId: session.organizationId },
+  });
+  if (!customer) throw new Error("Customer not found or you don't have access.");
+
+  const activity = await db.customerActivity.create({
+    data: {
+      customerId,
+      type: data.type as any,
+      note: data.note,
+      createdById: session.userId,
+    },
+    include: {
+      createdBy: { select: { id: true, name: true } },
+    },
+  });
+
+  revalidatePath("/dashboard/crm");
+  return JSON.parse(JSON.stringify(activity));
+}
+
+export async function getCustomerActivities(customerId: string) {
+  const session = await requirePermission("crm:read");
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId: session.organizationId },
+  });
+  if (!customer) throw new Error("Customer not found or you don't have access.");
+
+  const activities = await db.customerActivity.findMany({
+    where: { customerId },
+    include: {
+      createdBy: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return JSON.parse(JSON.stringify(activities));
+}
+
+export async function deleteCustomerActivity(activityId: string) {
+  const session = await requirePermission("crm:write");
+
+  const activity = await db.customerActivity.findFirst({
+    where: { id: activityId },
+    include: { customer: { select: { organizationId: true } } },
+  });
+
+  if (!activity || activity.customer.organizationId !== session.organizationId) {
+    throw new Error("Activity not found or you don't have access.");
+  }
+
+  await db.customerActivity.delete({ where: { id: activityId } });
+  revalidatePath("/dashboard/crm");
 }

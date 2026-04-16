@@ -1,36 +1,124 @@
 "use client";
 
 import * as React from "react";
-import { Building2, TrendingUp, FileText, Wrench, AlertTriangle } from "lucide-react";
+import {
+  Building2,
+  TrendingUp,
+  FileText,
+  Wrench,
+  AlertTriangle,
+  Handshake,
+  CreditCard,
+  Calendar,
+  User,
+  CheckCircle,
+  Clock,
+  Circle,
+} from "lucide-react";
 import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent, Button } from "@repo/ui";
 import { useLanguage } from "../../components/LanguageProvider";
 import { useSession } from "../../components/SimpleSessionProvider";
-import { getDashboardStats, getDashboardLandStats, getDashboardOffPlanStats } from "../actions/dashboard";
-import { getDashboardPlanningStats } from "../actions/planning-reports";
-import RevenueTrendChart from "../../components/charts/RevenueTrendChart";
-import OccupancyDonutChart from "../../components/charts/OccupancyDonutChart";
-import ProjectStatusChart from "../../components/charts/ProjectStatusChart";
-import MaintenanceCostTrendChart from "../../components/charts/MaintenanceCostTrendChart";
-import { ActionItems } from "../../components/dashboard/ActionItems";
-import { QuickActions } from "../../components/dashboard/QuickActions";
-import { MetricsTabs } from "../../components/dashboard/MetricsTabs";
+import {
+  getDashboardV3Stats,
+  getDashboardRecentDeals,
+  getDashboardUpcomingPayments,
+  getDashboardMaintenanceSummary,
+} from "../actions/dashboard";
 
-type DashboardStats = {
-  totalUnits: number;
-  occupancyRate: number;
-  totalRentCollected: number;
-  activeLeases: number;
-  openMaintenanceCount: number;
-  newCustomersThisMonth: number;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type V3Stats = {
+  totalProperties: number;
+  activeDeals: number;
+  signedContracts: number;
+  pendingPayments: number;
+  openMaintenance: number;
+  monthlyRevenue: number;
 };
+
+type Deal = {
+  id: string;
+  status: string;
+  customer: { id: string; name: string };
+  unit: { id: string; number: string };
+  createdAt: string;
+};
+
+type Installment = {
+  id: string;
+  dueDate: string;
+  amount: number;
+  status: string;
+  contract: {
+    customer: { id: string; name: string };
+    unit: { id: string; number: string };
+  };
+};
+
+type MaintenanceSummaryItem = { status: string; count: number };
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function statusBadge(status: string, lang: "ar" | "en") {
+  const map: Record<string, { label: { ar: string; en: string }; cls: string }> = {
+    PENDING:   { label: { ar: "معلق", en: "Pending" },     cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" },
+    CONFIRMED: { label: { ar: "مؤكد", en: "Confirmed" },   cls: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300" },
+    SIGNED:    { label: { ar: "موقع", en: "Signed" },      cls: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300" },
+    CANCELLED: { label: { ar: "ملغى", en: "Cancelled" },   cls: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" },
+  };
+  const entry = map[status] ?? { label: { ar: status, en: status }, cls: "bg-muted text-muted-foreground" };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${entry.cls}`}>
+      {entry.label[lang]}
+    </span>
+  );
+}
+
+function maintenanceStatusIcon(status: string) {
+  if (status === "COMPLETED") return <CheckCircle className="h-4 w-4 text-green-500" />;
+  if (status === "IN_PROGRESS") return <Clock className="h-4 w-4 text-blue-500" />;
+  return <Circle className="h-4 w-4 text-amber-500" />;
+}
+
+function maintenanceStatusLabel(status: string, lang: "ar" | "en"): string {
+  const map: Record<string, { ar: string; en: string }> = {
+    OPEN:        { ar: "مفتوح", en: "Open" },
+    IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress" },
+    COMPLETED:   { ar: "مكتمل", en: "Completed" },
+    CANCELLED:   { ar: "ملغى", en: "Cancelled" },
+  };
+  return map[status]?.[lang] ?? status;
+}
+
+function formatRelativeDate(dateStr: string, lang: "ar" | "en"): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return lang === "ar" ? "اليوم" : "Today";
+  if (days === 1) return lang === "ar" ? "أمس" : "Yesterday";
+  if (days < 30) return lang === "ar" ? `منذ ${days} يوم` : `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return lang === "ar" ? `منذ ${months} شهر` : `${months}mo ago`;
+}
+
+function formatDueDate(dateStr: string, lang: "ar" | "en"): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
   const { lang } = useLanguage();
   const { data: session } = useSession();
-  const [stats, setStats] = React.useState<DashboardStats | null>(null);
-  const [landStats, setLandStats] = React.useState<any>(null);
-  const [offPlanStats, setOffPlanStats] = React.useState<any>(null);
-  const [planningStats, setPlanningStats] = React.useState<any>(null);
+
+  const [stats, setStats] = React.useState<V3Stats | null>(null);
+  const [deals, setDeals] = React.useState<Deal[]>([]);
+  const [payments, setPayments] = React.useState<Installment[]>([]);
+  const [maintenance, setMaintenance] = React.useState<MaintenanceSummaryItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -38,35 +126,40 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await getDashboardStats();
-      setStats(data);
-    } catch (e) {
-      console.error(e);
-      setError(lang === "ar" ? "فشل تحميل بيانات لوحة المعلومات" : "Failed to load dashboard data");
+      const [s, d, p, m] = await Promise.all([
+        getDashboardV3Stats(),
+        getDashboardRecentDeals(),
+        getDashboardUpcomingPayments(),
+        getDashboardMaintenanceSummary(),
+      ]);
+      setStats(s);
+      setDeals(d);
+      setPayments(p);
+      setMaintenance(m);
+    } catch {
+      setError(lang === "ar" ? "فشل تحميل بيانات لوحة المعلومات. يرجى المحاولة مرة أخرى." : "Failed to load dashboard data. Please try again.");
     } finally {
       setLoading(false);
     }
-    getDashboardLandStats().then(setLandStats).catch(console.error);
-    getDashboardOffPlanStats().then(setOffPlanStats).catch(console.error);
-    getDashboardPlanningStats().then(setPlanningStats).catch(() => {});
   }
 
   React.useEffect(() => {
     loadDashboard();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
   const userName = session?.user?.name ?? (lang === "ar" ? "مستخدم" : "User");
 
-  // Greeting based on time of day
   const hour = new Date().getHours();
-  const greeting = lang === "ar"
-    ? hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء الخير"
-    : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const greeting =
+    lang === "ar"
+      ? hour < 12 ? "صباح الخير" : "مساء الخير"
+      : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
     <div className="space-y-8">
-      {/* Greeting — glass card */}
+      {/* Greeting */}
       <div className="glass rounded-xl p-6">
         <h1 className="text-2xl font-bold text-foreground">
           {greeting}، {userName}
@@ -92,127 +185,192 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Primary KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards — Row 1 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <KPICard
-          label={lang === "ar" ? "الإيجارات المحصلة" : "Rent Collected"}
-          value={loading ? "—" : <SARAmount value={stats?.totalRentCollected ?? 0} compact size={20} />}
-          subtitle={lang === "ar" ? "إجمالي الإيرادات المحصلة من عقود الإيجار النشطة" : "Total revenue collected from active lease contracts"}
-          icon={<TrendingUp className="h-[18px] w-[18px]" />}
-          accentColor="secondary"
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "نسبة الإشغال" : "Occupancy Rate"}
-          value={loading ? "—" : `${stats?.occupancyRate ?? 0}%`}
-          subtitle={lang === "ar" ? "نسبة الوحدات المؤجرة من إجمالي الوحدات المتاحة" : "Percentage of leased units vs total available"}
+          label={lang === "ar" ? "إجمالي الوحدات" : "Total Properties"}
+          value={loading ? "—" : formatNumber(stats?.totalProperties ?? 0)}
+          subtitle={lang === "ar" ? "جميع وحدات المنشأة" : "All units in your organization"}
           icon={<Building2 className="h-[18px] w-[18px]" />}
           accentColor="primary"
           loading={loading}
         />
         <KPICard
-          label={lang === "ar" ? "عقود نشطة" : "Active Leases"}
-          value={loading ? "—" : formatNumber(stats?.activeLeases ?? 0)}
-          subtitle={lang === "ar" ? "عقود الإيجار السارية حالياً في المحفظة" : "Currently active lease agreements in portfolio"}
-          icon={<FileText className="h-[18px] w-[18px]" />}
-          accentColor="accent"
+          label={lang === "ar" ? "الصفقات النشطة" : "Active Deals"}
+          value={loading ? "—" : formatNumber(stats?.activeDeals ?? 0)}
+          subtitle={lang === "ar" ? "حجوزات معلقة أو مؤكدة" : "Pending or confirmed reservations"}
+          icon={<Handshake className="h-[18px] w-[18px]" />}
+          accentColor="info"
           loading={loading}
         />
         <KPICard
-          label={lang === "ar" ? "طلبات صيانة مفتوحة" : "Open Maintenance"}
-          value={loading ? "—" : formatNumber(stats?.openMaintenanceCount ?? 0)}
-          subtitle={lang === "ar" ? "طلبات الصيانة التي تنتظر المعالجة أو قيد التنفيذ" : "Maintenance requests pending or in progress"}
-          icon={<Wrench className="h-[18px] w-[18px]" />}
-          accentColor={stats && stats.openMaintenanceCount > 10 ? "warning" : "info"}
+          label={lang === "ar" ? "العقود الموقعة" : "Signed Contracts"}
+          value={loading ? "—" : formatNumber(stats?.signedContracts ?? 0)}
+          subtitle={lang === "ar" ? "عقود مكتملة الإجراءات" : "Fully executed contracts"}
+          icon={<FileText className="h-[18px] w-[18px]" />}
+          accentColor="success"
           loading={loading}
         />
       </div>
 
-      {/* Main content: 2/3 + 1/3 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Charts */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">
-                {lang === "ar" ? "تحليل الإيرادات" : "Revenue Trend"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[300px]">
-              <RevenueTrendChart />
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {lang === "ar" ? "توزيع الإشغال" : "Occupancy Distribution"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                <OccupancyDonutChart />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  {lang === "ar" ? "حالات المشاريع" : "Project Status"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="h-[280px]">
-                <ProjectStatusChart />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        {/* Right: Actions + Quick Links */}
-        <div className="space-y-6">
-          <ActionItems
-            items={[
-              {
-                type: "overdue",
-                label: lang === "ar" ? "مدفوعات متأخرة" : "Overdue Payments",
-                count: 0, // Will be populated from real data
-                href: "/dashboard/finance",
-              },
-              {
-                type: "expiring",
-                label: lang === "ar" ? "عقود تنتهي قريبا" : "Expiring Contracts",
-                count: 0,
-                href: "/dashboard/sales/contracts",
-              },
-              {
-                type: "pending",
-                label: lang === "ar" ? "طلبات صيانة معلقة" : "Pending Maintenance",
-                count: stats?.openMaintenanceCount ?? 0,
-                href: "/dashboard/maintenance",
-              },
-            ]}
-          />
-          <QuickActions />
-        </div>
+      {/* KPI Cards — Row 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <KPICard
+          label={lang === "ar" ? "المدفوعات المعلقة" : "Pending Payments"}
+          value={loading ? "—" : formatNumber(stats?.pendingPayments ?? 0)}
+          subtitle={lang === "ar" ? "أقساط متأخرة غير مسددة" : "Overdue installments unpaid"}
+          icon={<CreditCard className="h-[18px] w-[18px]" />}
+          accentColor={stats && stats.pendingPayments > 0 ? "warning" : "primary"}
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "طلبات الصيانة" : "Open Maintenance"}
+          value={loading ? "—" : formatNumber(stats?.openMaintenance ?? 0)}
+          subtitle={lang === "ar" ? "طلبات لم تُغلق بعد" : "Requests not yet completed"}
+          icon={<Wrench className="h-[18px] w-[18px]" />}
+          accentColor={stats && stats.openMaintenance > 10 ? "warning" : "info"}
+          loading={loading}
+        />
+        <KPICard
+          label={lang === "ar" ? "الإيرادات الشهرية" : "Monthly Revenue"}
+          value={loading ? "—" : <SARAmount value={stats?.monthlyRevenue ?? 0} compact size={20} />}
+          subtitle={lang === "ar" ? "المدفوعات المحصلة هذا الشهر" : "Payments collected this month"}
+          icon={<TrendingUp className="h-[18px] w-[18px]" />}
+          accentColor="secondary"
+          loading={loading}
+        />
       </div>
 
-      {/* Secondary Metrics in tabs */}
-      <MetricsTabs
-        landStats={landStats}
-        offPlanStats={offPlanStats}
-        planningStats={planningStats}
-      />
+      {/* Activity Widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Deals */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Handshake className="h-4 w-4 text-muted-foreground" />
+              {lang === "ar" ? "آخر الصفقات" : "Recent Deals"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded bg-muted" />
+                ))}
+              </div>
+            ) : deals.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {lang === "ar" ? "لا توجد صفقات حتى الآن" : "No deals yet"}
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {deals.map((deal) => (
+                  <div key={deal.id} className="flex items-center justify-between py-3 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center shrink-0">
+                        <User className="h-3.5 w-3.5 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-card-foreground truncate">
+                          {deal.customer.name}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground font-latin">
+                          {lang === "ar" ? "وحدة" : "Unit"} {deal.unit.number}
+                          {" · "}
+                          {formatRelativeDate(deal.createdAt, lang)}
+                        </p>
+                      </div>
+                    </div>
+                    {statusBadge(deal.status, lang)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Maintenance Cost Trend */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">
-            {lang === "ar" ? "تكاليف الصيانة" : "Maintenance Costs"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-[280px]">
-          <MaintenanceCostTrendChart />
-        </CardContent>
-      </Card>
+        {/* Upcoming Payment Deadlines */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              {lang === "ar" ? "مواعيد الأقساط القادمة" : "Upcoming Payment Deadlines"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-12 animate-pulse rounded bg-muted" />
+                ))}
+              </div>
+            ) : payments.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {lang === "ar" ? "لا توجد أقساط قادمة" : "No upcoming payments"}
+              </p>
+            ) : (
+              <div className="divide-y divide-border">
+                {payments.map((inst) => (
+                  <div key={inst.id} className="flex items-center justify-between py-3 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-card-foreground truncate">
+                        {inst.contract.customer.name}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground font-latin">
+                        {lang === "ar" ? "وحدة" : "Unit"} {inst.contract.unit.number}
+                        {" · "}
+                        {formatDueDate(inst.dueDate, lang)}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-card-foreground number-ltr shrink-0">
+                      <SARAmount value={inst.amount} compact size={13} />
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Maintenance Status */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-muted-foreground" />
+              {lang === "ar" ? "حالة الصيانة" : "Maintenance Status"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-10 animate-pulse rounded bg-muted" />
+                ))}
+              </div>
+            ) : maintenance.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">
+                {lang === "ar" ? "لا توجد طلبات صيانة" : "No maintenance requests"}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {maintenance.map((item) => (
+                  <div key={item.status} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {maintenanceStatusIcon(item.status)}
+                      <span className="text-sm text-card-foreground">
+                        {maintenanceStatusLabel(item.status, lang)}
+                      </span>
+                    </div>
+                    <span className="text-sm font-bold text-card-foreground number-ltr">
+                      {formatNumber(item.count)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

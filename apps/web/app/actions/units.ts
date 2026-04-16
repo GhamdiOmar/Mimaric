@@ -9,12 +9,11 @@ import { checkLimit, FEATURE_KEYS } from "../../lib/entitlements";
 export async function updateUnit(unitId: string, data: any) {
   const session = await requirePermission("units:write");
 
-  // Verify unit belongs to user's org through building → project
+  // Verify unit belongs to user's org
   const unit = await db.unit.findFirst({
-    where: { id: unitId },
-    include: { building: { include: { project: true } } },
+    where: { id: unitId, organizationId: session.organizationId },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+  if (!unit) {
     throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
@@ -23,7 +22,7 @@ export async function updateUnit(unitId: string, data: any) {
     data,
   });
 
-  revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/properties");
   return JSON.parse(JSON.stringify(updated));
 }
 
@@ -35,14 +34,12 @@ export async function massUpdateUnits(
   // Verify all units belong to org
   const unitIds = units.map((u) => u.id);
   const existingUnits = await db.unit.findMany({
-    where: { id: { in: unitIds } },
-    include: { building: { include: { project: true } } },
+    where: { id: { in: unitIds }, organizationId: session.organizationId },
   });
 
-  const allBelongToOrg = existingUnits.every(
-    (u) => u.building.project.organizationId === session.organizationId
-  );
-  if (!allBelongToOrg) throw new Error("One or more units do not belong to your organization. Please verify the selected units.");
+  if (existingUnits.length !== unitIds.length) {
+    throw new Error("One or more units do not belong to your organization. Please verify the selected units.");
+  }
 
   const results = await db.$transaction(
     units.map((u) =>
@@ -56,7 +53,7 @@ export async function massUpdateUnits(
     )
   );
 
-  revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/properties");
   return JSON.parse(JSON.stringify(results));
 }
 
@@ -64,18 +61,7 @@ export async function getUnitsWithBuildings() {
   const session = await requirePermission("units:read");
 
   const units = await db.unit.findMany({
-    where: {
-      building: {
-        project: { organizationId: session.organizationId },
-      },
-    },
-    include: {
-      building: {
-        include: {
-          project: true,
-        },
-      },
-    },
+    where: { organizationId: session.organizationId },
     orderBy: { number: "asc" },
   });
   return JSON.parse(JSON.stringify(units));
@@ -84,7 +70,6 @@ export async function getUnitsWithBuildings() {
 export async function createUnit(data: {
   number: string;
   type: any;
-  buildingId: string;
   area?: number;
   price?: number;
   markupPrice?: number;
@@ -93,18 +78,9 @@ export async function createUnit(data: {
 }) {
   const session = await requirePermission("units:write");
 
-  // Verify building belongs to org
-  const building = await db.building.findFirst({
-    where: { id: data.buildingId },
-    include: { project: true },
-  });
-  if (!building || building.project.organizationId !== session.organizationId) {
-    throw new Error("Building not found or you don't have access. Please verify the building exists in your organization.");
-  }
-
   // Entitlement check: units.max
   const unitCount = await db.unit.count({
-    where: { building: { project: { organizationId: session.organizationId } } },
+    where: { organizationId: session.organizationId },
   });
   const entitlement = await checkLimit(session.organizationId, FEATURE_KEYS.UNITS_MAX, unitCount);
   if (!entitlement.granted) {
@@ -114,13 +90,14 @@ export async function createUnit(data: {
   const unit = await db.unit.create({
     data: {
       ...data,
+      organizationId: session.organizationId,
       price: data.price ? Number(data.price) : undefined,
       markupPrice: data.markupPrice ? Number(data.markupPrice) : undefined,
       rentalPrice: data.rentalPrice ? Number(data.rentalPrice) : undefined,
     },
   });
 
-  revalidatePath("/dashboard/units");
+  revalidatePath("/dashboard/properties");
   return JSON.parse(JSON.stringify(unit));
 }
 
@@ -128,37 +105,22 @@ export async function deleteUnit(unitId: string) {
   const session = await requirePermission("units:delete");
 
   const unit = await db.unit.findFirst({
-    where: { id: unitId },
-    include: { building: { include: { project: true } } },
+    where: { id: unitId, organizationId: session.organizationId },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+  if (!unit) {
     throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
   await db.unit.delete({ where: { id: unitId } });
-  revalidatePath("/dashboard/units");
-}
-
-export async function getBuildings() {
-  const session = await requirePermission("units:read");
-
-  const buildings = await db.building.findMany({
-    where: {
-      project: { organizationId: session.organizationId },
-    },
-    include: { project: true },
-    orderBy: { name: "asc" },
-  });
-  return JSON.parse(JSON.stringify(buildings));
+  revalidatePath("/dashboard/properties");
 }
 
 export async function getUnitFinancialSummary(unitId: string) {
   const session = await requirePermission("units:read");
 
   const unit = await db.unit.findFirst({
-    where: { id: unitId },
+    where: { id: unitId, organizationId: session.organizationId },
     include: {
-      building: { include: { project: true } },
       leases: {
         include: { installments: true },
       },
@@ -171,7 +133,7 @@ export async function getUnitFinancialSummary(unitId: string) {
       },
     },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
+  if (!unit) {
     throw new Error("Unit not found or you don't have access. Please verify the unit exists in your organization.");
   }
 
@@ -193,12 +155,9 @@ export async function getActiveContractForUnit(unitId: string) {
   const session = await requirePermission("units:read");
 
   const unit = await db.unit.findFirst({
-    where: { id: unitId },
-    include: { building: { include: { project: true } } },
+    where: { id: unitId, organizationId: session.organizationId },
   });
-  if (!unit || unit.building.project.organizationId !== session.organizationId) {
-    return null;
-  }
+  if (!unit) return null;
 
   const contract = await db.contract.findFirst({
     where: {

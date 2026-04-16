@@ -9,7 +9,6 @@ export async function getRevenueReport(startDate: string, endDate: string) {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  // Previous period for comparison
   const duration = end.getTime() - start.getTime();
   const prevStart = new Date(start.getTime() - duration);
   const prevEnd = new Date(start);
@@ -57,7 +56,6 @@ export async function getRevenueReport(startDate: string, endDate: string) {
   const prevCombined = Number(prevRentAgg._sum.amount ?? 0) + Number(prevSalesAgg._sum.amount ?? 0);
   const changePercent = prevCombined > 0 ? Math.round(((combined - prevCombined) / prevCombined) * 100) : 0;
 
-  // Monthly breakdown
   const months: { month: string; rent: number; sales: number; total: number }[] = [];
   const cursor = new Date(start);
   while (cursor < end) {
@@ -91,7 +89,7 @@ export async function getRevenueReport(startDate: string, endDate: string) {
     cursor.setMonth(cursor.getMonth() + 1);
   }
 
-  // Top 5 units by revenue (rent collected)
+  // Top 5 leases by rent collected
   const topUnits = await db.rentInstallment.groupBy({
     by: ["leaseId"],
     where: {
@@ -107,13 +105,16 @@ export async function getRevenueReport(startDate: string, endDate: string) {
   const leaseIds = topUnits.map((t) => t.leaseId);
   const leases = leaseIds.length > 0 ? await db.lease.findMany({
     where: { id: { in: leaseIds } },
-    select: { id: true, unit: { select: { number: true, building: { select: { name: true } } } } },
+    select: { id: true, unit: { select: { number: true, buildingName: true } } },
   }) : [];
 
   const topUnitsData = topUnits.map((t) => {
     const lease = leases.find((l) => l.id === t.leaseId);
+    const unitLabel = lease
+      ? [lease.unit.buildingName, lease.unit.number].filter(Boolean).join(" - ")
+      : t.leaseId;
     return {
-      unit: lease ? `${lease.unit.building.name} - ${lease.unit.number}` : t.leaseId,
+      unit: unitLabel,
       revenue: Number(t._sum.amount ?? 0),
     };
   });
@@ -128,38 +129,35 @@ export async function getRevenueReport(startDate: string, endDate: string) {
   };
 }
 
-export async function getOccupancyReport(startDate: string, endDate: string) {
+export async function getOccupancyReport(_startDate: string, _endDate: string) {
   const session = await requirePermission("reports:read");
   const orgId = session.organizationId;
 
-  const projects = await db.project.findMany({
+  // v3.0: No project/building model — group by city
+  const units = await db.unit.findMany({
     where: { organizationId: orgId },
-    select: {
-      name: true,
-      buildings: {
-        select: {
-          units: { select: { status: true } },
-        },
-      },
-    },
+    select: { status: true, city: true, buildingName: true },
   });
 
-  const projectData = projects.map((p) => {
-    const units = p.buildings.flatMap((b) => b.units);
-    const total = units.length;
-    const occupied = units.filter((u) => ["RENTED", "SOLD"].includes(u.status)).length;
-    const vacant = total - occupied;
-    return {
-      name: p.name,
-      total,
-      occupied,
-      vacant,
-      rate: total > 0 ? Math.round((occupied / total) * 100) : 0,
-    };
-  });
+  const grouped = new Map<string, { total: number; occupied: number }>();
+  for (const u of units) {
+    const key = u.city || u.buildingName || "غير محدد";
+    const entry = grouped.get(key) ?? { total: 0, occupied: 0 };
+    entry.total++;
+    if (["RENTED", "SOLD"].includes(u.status)) entry.occupied++;
+    grouped.set(key, entry);
+  }
 
-  const totalUnits = projectData.reduce((s, p) => s + p.total, 0);
-  const totalOccupied = projectData.reduce((s, p) => s + p.occupied, 0);
+  const projectData = Array.from(grouped.entries()).map(([name, data]) => ({
+    name,
+    total: data.total,
+    occupied: data.occupied,
+    vacant: data.total - data.occupied,
+    rate: data.total > 0 ? Math.round((data.occupied / data.total) * 100) : 0,
+  }));
+
+  const totalUnits = units.length;
+  const totalOccupied = units.filter((u) => ["RENTED", "SOLD"].includes(u.status)).length;
   const overallRate = totalUnits > 0 ? Math.round((totalOccupied / totalUnits) * 100) : 0;
 
   return { overallRate, totalUnits, totalOccupied, projects: projectData };
@@ -181,7 +179,7 @@ export async function getRentCollectionReport(startDate: string, endDate: string
       lease: {
         include: {
           customer: { select: { name: true } },
-          unit: { select: { number: true, building: { select: { name: true } } } },
+          unit: { select: { number: true, buildingName: true } },
         },
       },
     },
@@ -196,23 +194,23 @@ export async function getRentCollectionReport(startDate: string, endDate: string
   const overdue = installments.filter((i) => i.status === "OVERDUE" || (i.status === "UNPAID" && i.dueDate < now));
   const overdueAmount = overdue.reduce((s, i) => s + Number(i.amount), 0);
 
-  // Aging buckets
-  const aging = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 };
+  let aging0to30 = 0, aging31to60 = 0, aging61to90 = 0, aging90plus = 0;
   overdue.forEach((i) => {
     const days = Math.floor((now.getTime() - i.dueDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (days <= 30) aging["0-30"] += Number(i.amount);
-    else if (days <= 60) aging["31-60"] += Number(i.amount);
-    else if (days <= 90) aging["61-90"] += Number(i.amount);
-    else aging["90+"] += Number(i.amount);
+    if (days <= 30) aging0to30 += Number(i.amount);
+    else if (days <= 60) aging31to60 += Number(i.amount);
+    else if (days <= 90) aging61to90 += Number(i.amount);
+    else aging90plus += Number(i.amount);
   });
+  const aging = { "0-30": aging0to30, "31-60": aging31to60, "61-90": aging61to90, "90+": aging90plus };
 
-  // Per-customer summary
   const customerMap = new Map<string, { name: string; unit: string; due: number; paid: number; status: string }>();
   installments.forEach((i) => {
     const key = i.lease.customer.name;
+    const unitLabel = [i.lease.unit.buildingName, i.lease.unit.number].filter(Boolean).join(" - ");
     const existing = customerMap.get(key) ?? {
       name: key,
-      unit: `${i.lease.unit.building.name} - ${i.lease.unit.number}`,
+      unit: unitLabel,
       due: 0,
       paid: 0,
       status: "متأخر",
@@ -261,7 +259,6 @@ export async function getMaintenanceReport(startDate: string, endDate: string) {
   const inProgress = requests.filter((r) => r.status === "IN_PROGRESS").length;
   const open = requests.filter((r) => r.status === "OPEN").length;
 
-  // Avg resolution time
   const resolvedWithTime = requests.filter((r) => r.resolvedAt);
   const avgResolutionDays = resolvedWithTime.length > 0
     ? Math.round(
@@ -270,14 +267,13 @@ export async function getMaintenanceReport(startDate: string, endDate: string) {
       )
     : 0;
 
-  // Per-priority breakdown
   const priorities: Record<string, { total: number; resolved: number; open: number }> = {};
   requests.forEach((r) => {
     const p = r.priority ?? "MEDIUM";
     if (!priorities[p]) priorities[p] = { total: 0, resolved: 0, open: 0 };
-    priorities[p].total++;
-    if (r.status === "RESOLVED") priorities[p].resolved++;
-    else priorities[p].open++;
+    priorities[p]!.total++;
+    if (r.status === "RESOLVED") priorities[p]!.resolved++;
+    else priorities[p]!.open++;
   });
 
   return {
@@ -290,282 +286,54 @@ export async function getMaintenanceReport(startDate: string, endDate: string) {
   };
 }
 
-export async function getLandPortfolioReport(startDate: string, endDate: string) {
-  const session = await requirePermission("reports:read");
-  const orgId = session.organizationId;
-
-  const LAND_STATUSES = ["LAND_IDENTIFIED", "LAND_UNDER_REVIEW", "LAND_ACQUIRED"];
-
-  const parcels = await db.project.findMany({
-    where: {
-      organizationId: orgId,
-      status: { in: LAND_STATUSES as any },
-    },
-    select: {
-      id: true, name: true, status: true,
-      totalAreaSqm: true, estimatedValueSar: true,
-      acquisitionPrice: true, city: true, district: true,
-      landUse: true, createdAt: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const totalParcels = parcels.length;
-  const totalArea = parcels.reduce((s, p) => s + (p.totalAreaSqm ?? 0), 0);
-  const totalEstimatedValue = parcels.reduce((s, p) => s + Number(p.estimatedValueSar ?? 0), 0);
-  const totalAcquisitionCost = parcels.reduce((s, p) => s + Number(p.acquisitionPrice ?? 0), 0);
-
+export async function getLandPortfolioReport(_startDate: string, _endDate: string) {
+  // v3.0: No land/project models. Return empty shell.
   return {
-    totalParcels,
-    totalArea,
-    totalEstimatedValue,
-    totalAcquisitionCost,
-    unrealizedGainLoss: totalEstimatedValue - totalAcquisitionCost,
-    parcels: parcels.map(p => ({
-      name: p.name,
-      area: p.totalAreaSqm,
-      estimatedValue: Number(p.estimatedValueSar ?? 0),
-      acquisitionCost: Number(p.acquisitionPrice ?? 0),
-      status: p.status,
-      location: [p.city, p.district].filter(Boolean).join(", "),
-      landUse: p.landUse,
-    })),
+    totalParcels: 0,
+    totalArea: 0,
+    totalEstimatedValue: 0,
+    totalAcquisitionCost: 0,
+    unrealizedGainLoss: 0,
+    parcels: [],
   };
 }
 
-export async function getProjectProgressReport(startDate: string, endDate: string) {
-  const session = await requirePermission("reports:read");
-  const orgId = session.organizationId;
-
-  const projects = await db.project.findMany({
-    where: {
-      organizationId: orgId,
-      status: { in: ["PLANNING", "UNDER_CONSTRUCTION", "READY", "HANDED_OVER"] as any },
-    },
-    include: {
-      buildings: {
-        include: {
-          units: {
-            include: {
-              contracts: { where: { status: "SIGNED" }, select: { amount: true, type: true } },
-              leases: { where: { status: "ACTIVE" }, select: { totalAmount: true } },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return JSON.parse(JSON.stringify({
-    projects: projects.map(p => {
-      const units = p.buildings.flatMap(b => b.units);
-      const totalUnits = units.length;
-      const soldUnits = units.filter(u => u.status === "SOLD").length;
-      const rentedUnits = units.filter(u => u.status === "RENTED").length;
-      const saleRevenue = units.reduce((s, u) =>
-        s + u.contracts.filter(c => c.type === "SALE").reduce((cs, c) => cs + Number(c.amount), 0), 0);
-      const rentRevenue = units.reduce((s, u) =>
-        s + u.leases.reduce((ls, l) => ls + Number(l.totalAmount), 0), 0);
-      const remainingUnits = units.filter(u => u.status === "AVAILABLE");
-      const remainingValue = remainingUnits.reduce((s, u) => s + Number(u.price ?? 0), 0);
-
-      return {
-        name: p.name,
-        status: p.status,
-        totalUnits,
-        soldPercent: totalUnits > 0 ? Math.round((soldUnits / totalUnits) * 100) : 0,
-        rentedPercent: totalUnits > 0 ? Math.round((rentedUnits / totalUnits) * 100) : 0,
-        totalRevenue: saleRevenue + rentRevenue,
-        remainingValue,
-      };
-    }),
-  }));
+export async function getProjectProgressReport(_startDate: string, _endDate: string) {
+  // v3.0: No project/building models. Return empty shell.
+  return JSON.parse(JSON.stringify({ projects: [] }));
 }
 
 export async function getDevelopmentPipelineReport() {
-  const session = await requirePermission("reports:read");
-  const orgId = session.organizationId;
-
-  const OFF_PLAN_STAGES = [
-    { status: "LAND_IDENTIFIED", label: "تم التحديد", labelEn: "Land Identified" },
-    { status: "LAND_UNDER_REVIEW", label: "قيد المراجعة", labelEn: "Under Review" },
-    { status: "LAND_ACQUIRED", label: "تم الاستحواذ", labelEn: "Acquired" },
-    { status: "CONCEPT_DESIGN", label: "التصميم المبدئي", labelEn: "Concept Design" },
-    { status: "SUBDIVISION_PLANNING", label: "تخطيط التقسيم", labelEn: "Subdivision Planning" },
-    { status: "AUTHORITY_SUBMISSION", label: "تقديم للجهات", labelEn: "Authority Submission" },
-    { status: "INFRASTRUCTURE_PLANNING", label: "تخطيط البنية التحتية", labelEn: "Infrastructure Planning" },
-    { status: "INVENTORY_STRUCTURING", label: "هيكلة المخزون", labelEn: "Inventory Structuring" },
-    { status: "PRICING_PACKAGING", label: "التسعير والتغليف", labelEn: "Pricing & Packaging" },
-    { status: "LAUNCH_READINESS", label: "جاهزية الإطلاق", labelEn: "Launch Readiness" },
-    { status: "OFF_PLAN_LAUNCHED", label: "تم الإطلاق", labelEn: "Off-Plan Launched" },
-  ];
-
-  const projects = await db.project.findMany({
-    where: {
-      organizationId: orgId,
-      status: { in: OFF_PLAN_STAGES.map((s) => s.status) as any },
-    },
-    select: { id: true, name: true, status: true, createdAt: true },
-  });
-
-  // Enrich with inventory counts per project
-  const inventoryItems = await db.inventoryItem.findMany({
-    where: { organizationId: orgId },
-    select: { projectId: true, status: true, finalPriceSar: true, basePriceSar: true },
-  });
-
-  const invByProject = new Map<string, { total: number; sold: number; reserved: number; pipelineValue: number }>();
-  inventoryItems.forEach((i) => {
-    const entry = invByProject.get(i.projectId) ?? { total: 0, sold: 0, reserved: 0, pipelineValue: 0 };
-    entry.total++;
-    if (i.status === "SOLD_INV") entry.sold++;
-    if (i.status === "RESERVED_INV") entry.reserved++;
-    const price = i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0;
-    entry.pipelineValue += price;
-    invByProject.set(i.projectId, entry);
-  });
-
-  const stages = OFF_PLAN_STAGES.map((stage) => {
-    const stageProjects = projects.filter((p) => p.status === stage.status);
-    return {
-      stage: stage.label,
-      stageEn: stage.labelEn,
-      count: stageProjects.length,
-      projects: stageProjects.map((p) => {
-        const inv = invByProject.get(p.id);
-        return {
-          name: p.name,
-          inventoryTotal: inv?.total ?? 0,
-          inventorySold: inv?.sold ?? 0,
-          inventoryReserved: inv?.reserved ?? 0,
-          pipelineValue: inv?.pipelineValue ?? 0,
-        };
-      }),
-    };
-  });
-
-  const totalInventory = inventoryItems.length;
-  const totalPipelineValue = inventoryItems.reduce(
-    (s, i) => s + (i.finalPriceSar ? Number(i.finalPriceSar) : i.basePriceSar ? Number(i.basePriceSar) : 0), 0
-  );
-
-  return { stages, totalProjects: projects.length, totalInventory, totalPipelineValue };
+  // v3.0: No project/inventoryItem/approvalSubmission models. Return empty shell.
+  return {
+    stages: [],
+    totalProjects: 0,
+    totalInventory: 0,
+    totalPipelineValue: 0,
+  };
 }
 
 export async function getApprovalStatusReport() {
-  const session = await requirePermission("reports:read");
-  const orgId = session.organizationId;
-
-  const submissions = await db.approvalSubmission.findMany({
-    where: { organizationId: orgId },
-    include: { project: { select: { name: true } } },
-  });
-
-  const total = submissions.length;
-  const approved = submissions.filter((s) => s.status === "APPROVED_FINAL").length;
-  const rejected = submissions.filter((s) => s.status === "REJECTED_APPROVAL").length;
-  const pending = submissions.filter((s) => ["SUBMITTED", "UNDER_REVIEW_APPROVAL"].includes(s.status)).length;
-
-  const byType: Record<string, { total: number; approved: number; rejected: number }> = {};
-  submissions.forEach((s) => {
-    const t = s.type;
-    if (!byType[t]) byType[t] = { total: 0, approved: 0, rejected: 0 };
-    byType[t].total++;
-    if (s.status === "APPROVED_FINAL") byType[t].approved++;
-    if (s.status === "REJECTED_APPROVAL") byType[t].rejected++;
-  });
-
-  const details = submissions.map((s) => ({
-    project: s.project.name,
-    type: s.type,
-    authority: s.authority,
-    status: s.status,
-    submittedAt: s.submittedAt?.toISOString().split("T")[0] ?? "—",
-  }));
-
+  // v3.0: No approvalSubmission model. Return empty shell.
   return JSON.parse(JSON.stringify({
-    total,
-    approved,
-    rejected,
-    pending,
-    successRate: total > 0 ? Math.round((approved / total) * 100) : 0,
-    byType: Object.entries(byType).map(([type, data]) => ({ type, ...data })),
-    details,
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    pending: 0,
+    successRate: 0,
+    byType: [],
+    details: [],
   }));
 }
 
-export async function getPricingAnalysisReport(projectId?: string) {
-  const session = await requirePermission("reports:read");
-  const orgId = session.organizationId;
-
-  const where: any = { organizationId: orgId };
-  if (projectId) where.projectId = projectId;
-
-  const items = await db.inventoryItem.findMany({
-    where,
-    select: {
-      productType: true,
-      areaSqm: true,
-      basePriceSar: true,
-      finalPriceSar: true,
-      status: true,
-      project: { select: { name: true } },
-    },
-  });
-
-  const rules = await db.pricingRule.findMany({
-    where: { organizationId: orgId, isActive: true, ...(projectId ? { projectId } : {}) },
-    select: { name: true, nameArabic: true, type: true, factor: true, fixedAmountSar: true },
-  });
-
-  const byType: Record<string, { count: number; totalValue: number; avgPrice: number; items: any[] }> = {};
-  items.forEach((i) => {
-    const t = i.productType;
-    if (!byType[t]) byType[t] = { count: 0, totalValue: 0, avgPrice: 0, items: [] };
-    byType[t].count++;
-    const price = Number(i.finalPriceSar ?? i.basePriceSar ?? 0);
-    byType[t].totalValue += price;
-    byType[t].items.push({
-      project: i.project.name,
-      area: i.areaSqm,
-      price,
-      pricePerSqm: i.areaSqm ? Math.round(price / Number(i.areaSqm)) : 0,
-      status: i.status,
-    });
-  });
-  Object.values(byType).forEach((v) => {
-    v.avgPrice = v.count > 0 ? Math.round(v.totalValue / v.count) : 0;
-  });
-
-  // Per-status value breakdown
-  const statusBreakdown: Record<string, { count: number; totalValue: number }> = {};
-  items.forEach((i) => {
-    const st = i.status;
-    if (!statusBreakdown[st]) statusBreakdown[st] = { count: 0, totalValue: 0 };
-    statusBreakdown[st].count++;
-    statusBreakdown[st].totalValue += Number(i.finalPriceSar ?? i.basePriceSar ?? 0);
-  });
-
+export async function getPricingAnalysisReport(_projectId?: string) {
+  // v3.0: No inventoryItem/pricingRule models. Return empty shell.
   return JSON.parse(JSON.stringify({
-    totalItems: items.length,
-    totalValue: items.reduce((s, i) => s + Number(i.finalPriceSar ?? i.basePriceSar ?? 0), 0),
-    byProductType: Object.entries(byType).map(([type, data]) => ({
-      type,
-      count: data.count,
-      totalValue: data.totalValue,
-      avgPrice: data.avgPrice,
-    })),
-    byStatus: Object.entries(statusBreakdown).map(([status, data]) => ({
-      status,
-      count: data.count,
-      totalValue: data.totalValue,
-    })),
-    activeRules: rules.map((r) => ({
-      name: r.nameArabic || r.name,
-      type: r.type,
-      factor: Number(r.factor ?? 0),
-      fixedAmount: Number(r.fixedAmountSar ?? 0),
-    })),
+    totalItems: 0,
+    totalValue: 0,
+    byProductType: [],
+    byStatus: [],
+    activeRules: [],
   }));
 }
 
@@ -581,9 +349,7 @@ export async function getMaintenanceCostReport(startDate: string, endDate: strin
       createdAt: { gte: start, lte: end },
     },
     include: {
-      unit: {
-        include: { building: { select: { id: true, name: true, buildingAreaSqm: true } } },
-      },
+      unit: { select: { id: true, buildingName: true } },
     },
   });
 
@@ -592,28 +358,24 @@ export async function getMaintenanceCostReport(startDate: string, endDate: strin
   const totalLaborHours = requests.reduce((s, r) => s + (r.laborHours ?? 0), 0);
 
   const byCategory: Record<string, { estimated: number; actual: number; count: number }> = {};
-  requests.forEach(r => {
+  requests.forEach((r) => {
     const cat = r.category;
     if (!byCategory[cat]) byCategory[cat] = { estimated: 0, actual: 0, count: 0 };
-    byCategory[cat].estimated += Number(r.estimatedCost ?? 0);
-    byCategory[cat].actual += Number(r.actualCost ?? 0);
-    byCategory[cat].count++;
+    byCategory[cat]!.estimated += Number(r.estimatedCost ?? 0);
+    byCategory[cat]!.actual += Number(r.actualCost ?? 0);
+    byCategory[cat]!.count++;
   });
 
-  const byBuilding: Record<string, { name: string; estimated: number; actual: number; count: number; areaSqm: number }> = {};
-  requests.forEach(r => {
-    if (!r.unit?.building) return;
-    const bId = r.unit.building.id;
-    if (!byBuilding[bId]) byBuilding[bId] = { name: r.unit.building.name, estimated: 0, actual: 0, count: 0, areaSqm: r.unit.building.buildingAreaSqm ?? 0 };
-    byBuilding[bId].estimated += Number(r.estimatedCost ?? 0);
-    byBuilding[bId].actual += Number(r.actualCost ?? 0);
-    byBuilding[bId].count++;
+  // Group by building name instead of building model
+  const byBuilding: Record<string, { name: string; estimated: number; actual: number; count: number }> = {};
+  requests.forEach((r) => {
+    if (!r.unit) return;
+    const bName = r.unit.buildingName ?? "غير محدد";
+    if (!byBuilding[bName]) byBuilding[bName] = { name: bName, estimated: 0, actual: 0, count: 0 };
+    byBuilding[bName]!.estimated += Number(r.estimatedCost ?? 0);
+    byBuilding[bName]!.actual += Number(r.actualCost ?? 0);
+    byBuilding[bName]!.count++;
   });
-
-  const buildingData = Object.values(byBuilding).map(b => ({
-    ...b,
-    costPerSqm: b.areaSqm > 0 ? Math.round(b.actual / b.areaSqm) : 0,
-  }));
 
   return JSON.parse(JSON.stringify({
     totalEstimated,
@@ -622,6 +384,6 @@ export async function getMaintenanceCostReport(startDate: string, endDate: strin
     totalLaborHours,
     totalRequests: requests.length,
     byCategory: Object.entries(byCategory).map(([cat, data]) => ({ category: cat, ...data })),
-    byBuilding: buildingData,
+    byBuilding: Object.values(byBuilding),
   }));
 }

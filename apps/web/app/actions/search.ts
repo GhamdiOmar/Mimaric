@@ -8,19 +8,11 @@ export async function globalSearch(query: string) {
   const orgId = session.organizationId;
 
   if (!query || query.length < 2) {
-    return { customers: [], projects: [], units: [], contracts: [] };
+    return { customers: [], units: [], contracts: [] };
   }
 
-  const [customers, projects, units, contracts] = await Promise.all([
+  const [customers, units, contracts] = await Promise.all([
     db.customer.findMany({
-      where: {
-        organizationId: orgId,
-        name: { contains: query, mode: "insensitive" },
-      },
-      select: { id: true, name: true },
-      take: 5,
-    }),
-    db.project.findMany({
       where: {
         organizationId: orgId,
         name: { contains: query, mode: "insensitive" },
@@ -30,10 +22,10 @@ export async function globalSearch(query: string) {
     }),
     db.unit.findMany({
       where: {
-        building: { project: { organizationId: orgId } },
+        organizationId: orgId,
         number: { contains: query, mode: "insensitive" },
       },
-      select: { id: true, number: true, building: { select: { name: true } } },
+      select: { id: true, number: true, buildingName: true },
       take: 5,
     }),
     db.contract.findMany({
@@ -48,8 +40,10 @@ export async function globalSearch(query: string) {
 
   return {
     customers,
-    projects,
-    units: units.map((u) => ({ id: u.id, name: `${u.building.name} - ${u.number}` })),
+    units: units.map((u) => ({
+      id: u.id,
+      name: [u.buildingName, u.number].filter(Boolean).join(" - "),
+    })),
     contracts: contracts.map((c) => ({ id: c.id, name: `${c.type} - ${c.customer.name}` })),
   };
 }

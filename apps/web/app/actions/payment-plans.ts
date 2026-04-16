@@ -17,7 +17,7 @@ export async function createPaymentPlan(
   const session = await requirePermission("contracts:write");
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId, unit: { building: { project: { organizationId: session.organizationId } } } },
+    where: { id: contractId, unit: { organizationId: session.organizationId } },
   });
   if (!contract) throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
 

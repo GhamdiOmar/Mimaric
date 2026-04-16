@@ -23,7 +23,6 @@ import {
   togglePreventivePlan,
   deletePreventivePlan,
   generateWorkOrdersFromPlans,
-  getBuildingsForPlans,
 } from "../../../actions/preventive-maintenance";
 import { getAssignableUsers, getUnitsForMaintenance } from "../../../actions/maintenance";
 
@@ -65,8 +64,6 @@ export default function PreventiveMaintenancePage() {
   const [generating, setGenerating] = React.useState(false);
   const [users, setUsers] = React.useState<any[]>([]);
   const [units, setUnits] = React.useState<any[]>([]);
-  const [buildings, setBuildings] = React.useState<any[]>([]);
-
   // Modal
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -81,7 +78,6 @@ export default function PreventiveMaintenancePage() {
     startDate: "",
     endDate: "",
     unitId: "",
-    buildingId: "",
     assignToId: "",
     estimatedCost: "",
     estimatedHours: "",
@@ -106,14 +102,12 @@ export default function PreventiveMaintenancePage() {
 
   async function loadRefs() {
     try {
-      const [u, un, b] = await Promise.all([
+      const [u, un] = await Promise.all([
         getAssignableUsers(),
         getUnitsForMaintenance(),
-        getBuildingsForPlans(),
       ]);
       setUsers(u);
       setUnits(un);
-      setBuildings(b);
     } catch (e) {
       console.error(e);
     }
@@ -131,7 +125,6 @@ export default function PreventiveMaintenancePage() {
       startDate: new Date().toISOString().slice(0, 10),
       endDate: "",
       unitId: "",
-      buildingId: "",
       assignToId: "",
       estimatedCost: "",
       estimatedHours: "",
@@ -151,7 +144,6 @@ export default function PreventiveMaintenancePage() {
       startDate: plan.startDate ? new Date(plan.startDate).toISOString().slice(0, 10) : "",
       endDate: plan.endDate ? new Date(plan.endDate).toISOString().slice(0, 10) : "",
       unitId: plan.unitId ?? "",
-      buildingId: plan.buildingId ?? "",
       assignToId: plan.assignToId ?? "",
       estimatedCost: plan.estimatedCost?.toString() ?? "",
       estimatedHours: plan.estimatedHours?.toString() ?? "",
@@ -173,7 +165,6 @@ export default function PreventiveMaintenancePage() {
         startDate: form.startDate,
         endDate: form.endDate || undefined,
         unitId: form.unitId || undefined,
-        buildingId: form.buildingId || undefined,
         assignToId: form.assignToId || undefined,
         estimatedCost: form.estimatedCost ? parseFloat(form.estimatedCost) : undefined,
         estimatedHours: form.estimatedHours ? parseFloat(form.estimatedHours) : undefined,
@@ -431,25 +422,14 @@ export default function PreventiveMaintenancePage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</label>
-                  <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
-                    <option value="">{lang === "ar" ? "— الكل —" : "— All —"}</option>
-                    {units.map((u: any) => (
-                      <option key={u.id} value={u.id}>{u.number} — {u.building?.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "المبنى" : "Building"}</label>
-                  <select value={form.buildingId} onChange={(e) => setForm({ ...form, buildingId: e.target.value })} className={inputClass}>
-                    <option value="">{lang === "ar" ? "— الكل —" : "— All —"}</option>
-                    {buildings.map((b: any) => (
-                      <option key={b.id} value={b.id}>{b.name} ({b.project?.name})</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</label>
+                <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
+                  <option value="">{lang === "ar" ? "— الكل —" : "— All —"}</option>
+                  {units.map((u: any) => (
+                    <option key={u.id} value={u.id}>{u.number}{u.buildingName ? ` — ${u.buildingName}` : ""}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1.5">

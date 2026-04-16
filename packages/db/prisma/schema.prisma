@@ -36,7 +36,7 @@ model Organization {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   users               User[]
-  projects            Project[]
+  units               Unit[]              @relation("UnitOrganization")
   customers           Customer[]
   documents           Document[]
   maintenanceRequests MaintenanceRequest[]
@@ -52,20 +52,13 @@ model Organization {
   paymentMethods        PaymentMethod[]
   invoices              Invoice[]
   couponRedemptions     CouponRedemption[]
-
-  // ── Planning OS relations ──
-  planningWorkspaces    PlanningWorkspace[]
-
-  // ── GIS Phase 2-3 relations ──
-  phaseReadinessRules   PhaseReadinessRule[]
-  constructionPackages  ConstructionPackage[]
-  handoverRecords       HandoverRecord[]
-  operationalAssets     OperationalAsset[]
 }
 
 enum OrgType {
+  BROKERAGE
+  PROPERTY_MANAGEMENT
   DEVELOPER
-  COMMERCIAL
+  MIXED
 }
 
 enum EntityType {
@@ -128,10 +121,7 @@ model User {
   receivedInvitation    Invitation?          @relation("ReceivedInvitation")
   joinRequests          JoinRequest[]        @relation("UserJoinRequests")
   reviewedJoinRequests  JoinRequest[]        @relation("JoinReviewers")
-  // ── Wafi Compliance Relations ──
-  engineeringConsultant EngineeringConsultant?
-  consultantAssignments ConsultantAssignment[] @relation("ConsultantUser")
-  certifiedMilestones   ConstructionMilestone[] @relation("CertifiedBy")
+  customerActivities  CustomerActivity[]   @relation("ActivityCreator")
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
@@ -139,184 +129,13 @@ model User {
 }
 
 enum UserRole {
-  SYSTEM_ADMIN              // Mimaric platform admin — full platform + all org access
-  SYSTEM_SUPPORT            // Mimaric support/engineering — ticket management + platform ops
-  COMPANY_ADMIN             // Customer organization admin — full org control, no platform access
-  PROJECT_MANAGER
-  SALES_MANAGER
-  SALES_AGENT
-  PROPERTY_MANAGER
-  FINANCE_OFFICER
+  SYSTEM_ADMIN
+  SYSTEM_SUPPORT
+  ADMIN
+  MANAGER
+  AGENT
   TECHNICIAN
-  ENGINEERING_CONSULTANT    // Wafi: independent engineering consultant for milestone certification
-  APPROVALS_MANAGER         // RED: dedicated approval workflow manager
-  ESCROW_CONTROLLER         // RED: escrow account oversight and disbursement
-  COLLECTIONS_OFFICER       // RED: receivables aging and collection follow-up
-  HANDOVER_OFFICER          // RED: unit handover coordination and sign-off
-  QA_INSPECTOR              // RED: quality assurance / milestone certification
-  VENDOR_CONTRACTOR         // RED: external vendor with scoped read access
-  BUYER
-  TENANT
   USER
-}
-
-// ─── Project (Balady property/land aligned) ───────────────────────────────────
-
-model Project {
-  id             String        @id @default(cuid())
-  name           String
-  description    String?
-  type           ProjectType
-  status         ProjectStatus @default(PLANNING)
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  // Balady property fields
-  parcelNumber   String?       // Official parcel number
-  plotNumber     String?       // Plot in subdivision
-  blockNumber    String?       // Block in district
-  deedNumber     String?       // Title deed number
-  landUse        LandUse?      // Zoning classification
-  totalAreaSqm   Float?        // Total land area in sqm
-  // Location
-  region         String?       // Saudi region (e.g. Riyadh Region)
-  city           String?       // City name
-  district       String?       // District/neighborhood
-  streetName     String?       // Street name
-  postalCode     String?       // 5-digit postal code
-  latitude       Float?        // GPS latitude
-  longitude      Float?        // GPS longitude
-  // Optional nested data as JSON
-  boundaries     Json?         // {north, south, east, west} descriptions
-  utilities      Json?         // {electricityConnected, waterConnected, sewageConnected, roadAccess}
-  estimatedValueSar Decimal?   // Property valuation in SAR
-  mapCenter         Json?      // { lat, lng, zoom } for saved GIS map position
-  // Land acquisition fields (FR-01, FR-02)
-  landOwner         String?    // Current owner name
-  landOwnerType     String?    // INDIVIDUAL, COMPANY, GOVERNMENT
-  acquisitionPrice  Decimal?   // Purchase price in SAR
-  acquisitionDate   DateTime?  // Date of acquisition
-  landLegalNotes    String?    // Legal notes / encumbrances
-  suitabilityScore Float?       // Weighted feasibility score 0-100
-  // RED: Project governance fields
-  projectCode           String?  @unique  // e.g., PRJ-RYD-2026-001
-  developerEntityId     String?            // FK to Organization (legal entity)
-  internalOwnerId       String?            // FK to User (project owner)
-  financeOwnerId        String?            // FK to User (finance owner)
-  approvalStatus        ProjectApprovalStatus @default(DRAFT_PROJECT)
-  activatedAt           DateTime?
-  plannedLaunchDate     DateTime?
-  plannedCompletionDate DateTime?
-  buildings      Building[]
-  documents      Document[]
-  dueDiligence   DueDiligence[]
-  siteLogs       SiteLog[]
-  phases         Phase[]
-  constraints          ConstraintRecord[]
-  feasibilityAssessments FeasibilityAssessment[]
-  decisionGates        DecisionGate[]
-  conceptPlans         ConceptPlan[]
-  subdivisionPlans     SubdivisionPlan[]
-  approvalSubmissions  ApprovalSubmission[]
-  infrastructureReadiness InfrastructureReadiness[]
-  inventoryItems       InventoryItem[]
-  pricingRules         PricingRule[]
-  priceListVersions    PriceListVersion[]
-  launchWaves          LaunchWave[]
-  // ── Wafi Compliance Relations ──
-  escrowAccount          EscrowAccount?
-  constructionMilestones ConstructionMilestone[]
-  consultantAssignments  ConsultantAssignment[]
-  wafiContracts          WafiContract[]
-  delayPenalties         DelayPenalty[]
-  wafiLicense            WafiLicense?
-  // ── GIS Phase 2-3 relations ──
-  constructionPackages   ConstructionPackage[]
-  handoverRecords        HandoverRecord[]
-  operationalAssets      OperationalAsset[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-
-  @@index([organizationId])
-}
-
-enum ProjectType {
-  RESIDENTIAL
-  COMMERCIAL
-  MIXED_USE
-  VILLA_COMPOUND
-}
-
-enum ProjectStatus {
-  // Raw Land Phase (Stages 1-3)
-  LAND_IDENTIFIED
-  LAND_UNDER_REVIEW
-  LAND_ACQUIRED
-  // Transition (Stage 4)
-  CONCEPT_DESIGN
-  // Planned Land Phase (Stages 5-8)
-  SUBDIVISION_PLANNING
-  AUTHORITY_SUBMISSION
-  INFRASTRUCTURE_PLANNING
-  // Off-Plan Preparation (Stages 9-11)
-  INVENTORY_STRUCTURING
-  PRICING_PACKAGING
-  LAUNCH_READINESS
-  // Off-Plan Launch (Stage 12)
-  OFF_PLAN_LAUNCHED
-  // Existing construction statuses
-  PLANNING
-  UNDER_CONSTRUCTION
-  READY
-  HANDED_OVER
-}
-
-// RED: Project-level approval/governance workflow status
-enum ProjectApprovalStatus {
-  DRAFT_PROJECT
-  PENDING_APPROVAL
-  APPROVED_PROJECT
-  REJECTED_PROJECT
-  ACTIVATED
-}
-
-enum LandUse {
-  RESIDENTIAL_LAND
-  COMMERCIAL_LAND
-  INDUSTRIAL_LAND
-  AGRICULTURAL_LAND
-  ADMINISTRATIVE_LAND
-  PUBLIC_FACILITY
-  MIXED_USE_LAND
-  OTHER_LAND_USE
-}
-
-// ─── Building (Balady building details aligned) ───────────────────────────────
-
-model Building {
-  id                String   @id @default(cuid())
-  name              String
-  projectId         String
-  project           Project  @relation(fields: [projectId], references: [id])
-  phaseId           String?
-  phase             Phase?   @relation(fields: [phaseId], references: [id])
-  // Balady building detail fields
-  numberOfFloors    Int?     // Total floors
-  buildingAreaSqm   Float?   // Built-up area in sqm
-  constructionYear  Int?     // Year of construction
-  buildingType      String?  // residential, commercial, etc.
-  occupancyStatus   String?  // vacant, occupied, under_construction, etc.
-  // RED: Building identification
-  towerName         String?  // Tower/building marketing name
-  blockCode         String?  // Block code within phase
-  electricityConnected Boolean? // Utility: electricity
-  waterConnected    Boolean? // Utility: water
-  units             Unit[]
-  documents         Document[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  @@index([projectId])
-  @@index([phaseId])
 }
 
 // ─── Unit ─────────────────────────────────────────────────────────────────────
@@ -326,17 +145,19 @@ model Unit {
   number     String
   type       UnitType
   status     UnitStatus @default(AVAILABLE)
-  buildingId   String
-  building     Building      @relation(fields: [buildingId], references: [id])
+  organizationId  String
+  organization    Organization  @relation("UnitOrganization", fields: [organizationId], references: [id])
   area         Float?        // sqm
   price        Decimal?      // Base/cost price
   markupPrice  Decimal?      // Selling price (for sale/reservation)
   rentalPrice  Decimal?      // Rental price (for lease contracts)
   floor        Int?          // Floor number
+  buildingName    String?
+  addressLine     String?
+  city            String?
+  district        String?
   bedrooms     Int?          // Number of bedrooms
   bathrooms    Int?          // Number of bathrooms
-  balconyAreaSqm Float?     // RED: balcony/terrace area in sqm
-  parkingCount   Int?        // RED: number of assigned parking spaces
   commercialStrategy CommercialStrategy? // FR-08/21: SELL, LEASE, HOLD, etc.
   reservations        Reservation[]
   documents           Document[]
@@ -347,7 +168,7 @@ model Unit {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  @@index([buildingId])
+  @@index([organizationId])
 }
 
 // ─── Customer (Absher individual data aligned) ────────────────────────────────
@@ -385,6 +206,7 @@ model Customer {
   contracts      Contract[]
   leases         Lease[]
   documents      Document[]
+  activities     CustomerActivity[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -427,8 +249,6 @@ model Reservation {
   unitId          String
   unit            Unit              @relation(fields: [unitId], references: [id])
   userId          String?           // The agent/user who created the reservation
-  inventoryItemId String?           // Off-plan inventory link (Phase 3)
-  inventoryItem   InventoryItem?    @relation("InventoryReservations", fields: [inventoryItemId], references: [id])
   status          ReservationStatus @default(PENDING)
   expiresAt       DateTime
   amount          Decimal?
@@ -436,10 +256,6 @@ model Reservation {
   depositRequired  Boolean  @default(false)
   depositAmount    Decimal?
   depositPaidAt    DateTime?
-  salesChannel     SalesChannel?
-  expiryPolicy     String?
-  extensionCount   Int      @default(0)
-  maxExtensions    Int      @default(1)
   extensions       ReservationExtension[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -447,7 +263,6 @@ model Reservation {
   @@index([customerId])
   @@index([unitId])
   @@index([userId])
-  @@index([inventoryItemId])
 }
 
 // RED: Reservation extension requests
@@ -510,10 +325,8 @@ model Contract {
   maintenanceResponsibility String?         // "LANDLORD" or "TENANT"
   noticePeriodDays          Int?
 
-  // Wafi/Sale fields (type=SALE)
+  // Sale fields (type=SALE)
   deliveryDate              DateTime?
-  wafiLicenseRef            String?
-  escrowAccountRef          String?
 
   // Shared
   termsAndConditions        String?
@@ -526,9 +339,7 @@ model Contract {
   templateId                String?
   templateVersion           Int?
   buyerSignedAt             DateTime?
-  developerSignedAt         DateTime?
   buyerSignatureUrl         String?
-  developerSignatureUrl     String?
   pdfPreviewUrl             String?
   // RED: Relations
   paymentPlan               PaymentPlan?
@@ -698,14 +509,10 @@ model Document {
   type           String       // file extension or mime type
   category       DocCategory  @default(GENERAL)
   size           Int?         // in bytes
-  projectId      String?
-  project        Project?     @relation(fields: [projectId], references: [id])
   customerId     String?
   customer       Customer?    @relation(fields: [customerId], references: [id])
   unitId         String?
   unit           Unit?        @relation(fields: [unitId], references: [id])
-  buildingId     String?
-  building       Building?    @relation(fields: [buildingId], references: [id])
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
   userId         String?
@@ -714,24 +521,17 @@ model Document {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  @@index([projectId])
   @@index([customerId])
   @@index([unitId])
-  @@index([buildingId])
   @@index([organizationId])
 }
 
 enum DocCategory {
   GENERAL
-  BLUEPRINT
   LEGAL
   CONTRACT
   MARKETING
   FINANCE
-  GIS
-  CAD
-  PLANNING
-  PERMIT
 }
 
 // ─── Maintenance Request ──────────────────────────────────────────────────────
@@ -794,7 +594,6 @@ model PreventiveMaintenancePlan {
   // Scope
   unitId             String?
   unit               Unit?               @relation(fields: [unitId], references: [id])
-  buildingId         String?
 
   // Recurrence
   recurrenceType     RecurrenceType
@@ -932,72 +731,6 @@ model Notification {
 
   @@index([userId, read])
   @@index([organizationId])
-}
-
-// ─── Due Diligence (FR-03) ──────────────────────────────────────────────────
-
-model DueDiligence {
-  id             String    @id @default(cuid())
-  projectId      String
-  project        Project   @relation(fields: [projectId], references: [id])
-  category       String    // LEGAL, ZONING, VALUATION, ENVIRONMENTAL, UTILITY
-  items          Json      // Array of { label: string, checked: boolean, notes?: string }
-  completedAt    DateTime?
-  organizationId String
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  @@index([projectId])
-}
-
-// ─── Site Log (FR-17) ───────────────────────────────────────────────────────
-
-model SiteLog {
-  id             String    @id @default(cuid())
-  projectId      String
-  project        Project   @relation(fields: [projectId], references: [id])
-  date           DateTime
-  type           String    // DAILY_LOG, INSPECTION, SNAG, SAFETY, WEATHER
-  description    String
-  severity       String?   // LOW, MEDIUM, HIGH, CRITICAL
-  photos         Json?     // Array of URLs
-  resolvedAt     DateTime?
-  reportedBy     String?
-  organizationId String
-  createdAt      DateTime  @default(now())
-
-  @@index([projectId, date])
-}
-
-// ─── Phase (FR-07) ──────────────────────────────────────────────────────────
-
-model Phase {
-  id             String      @id @default(cuid())
-  projectId      String
-  project        Project     @relation(fields: [projectId], references: [id])
-  name           String
-  description    String?
-  status         PhaseStatus @default(PLANNING)
-  startDate      DateTime?
-  endDate        DateTime?
-  budgetSar      Decimal?
-  // RED: Phase governance fields
-  phaseCode            String?
-  salesEnabled         Boolean  @default(false)
-  approvalDependencyId String?   // FK to ApprovalSubmission blocking this phase
-  buildings        Building[]
-  readinessRules   PhaseReadinessRule[]
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-
-  @@index([projectId])
-}
-
-enum PhaseStatus {
-  PLANNING
-  IN_PROGRESS
-  COMPLETED
-  ON_HOLD
 }
 
 // ─── Permission Request (Help Dashboard) ────────────────────────────────────
@@ -1153,116 +886,7 @@ enum JoinRequestStatus {
   CANCELLED_JOIN
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// OFF-PLAN DEVELOPMENT LIFECYCLE (BRD Stages 1-12)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ─── Phase 1: Constraint Record (Stage 2 — Spatial Screening) ────────────────
-
-model ConstraintRecord {
-  id             String             @id @default(cuid())
-  projectId      String
-  project        Project            @relation(fields: [projectId], references: [id])
-  type           ConstraintType
-  label          String
-  labelArabic    String?
-  severity       ConstraintSeverity @default(MEDIUM)
-  description    String?
-  source         String?            // e.g. "Balady Zoning Map", "Municipality Visit"
-  mitigationPlan String?
-  status         ConstraintStatus   @default(IDENTIFIED)
-  metadata       Json?              // Flexible data per constraint type
-  organizationId String
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-
-  @@index([projectId])
-}
-
-enum ConstraintType {
-  ZONING
-  TOPOGRAPHY
-  FLOOD_ZONE
-  UTILITY_ACCESS
-  ENVIRONMENTAL
-  ROAD_ACCESS
-  SETBACK
-  HEIGHT_LIMIT
-  HERITAGE
-  OTHER_CONSTRAINT
-}
-
-enum ConstraintSeverity {
-  LOW
-  MEDIUM
-  HIGH
-  BLOCKER
-}
-
-enum ConstraintStatus {
-  IDENTIFIED
-  UNDER_REVIEW
-  MITIGATED
-  ACCEPTED
-  REJECTED
-}
-
-// ─── Phase 1: Feasibility Assessment (Stage 3 — Enhanced) ────────────────────
-
-model FeasibilityAssessment {
-  id             String          @id @default(cuid())
-  projectId      String
-  project        Project         @relation(fields: [projectId], references: [id])
-  type           FeasibilityType
-  score          Float?          // 0-100 suitability score
-  recommendation String?         // GO, NO_GO, CONDITIONAL
-  assessedBy     String?         // User ID
-  assessedAt     DateTime?
-  findings       Json?           // Structured findings
-  attachmentIds  String[]        // Document IDs
-  notes          String?
-  organizationId String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  @@index([projectId])
-}
-
-enum FeasibilityType {
-  LEGAL
-  COMMERCIAL
-  TECHNICAL
-  ENVIRONMENTAL_FEASIBILITY
-  FINANCIAL
-}
-
-// ─── Phase 1: Decision Gate (Stage Gates — Formal Approvals) ─────────────────
-
-model DecisionGate {
-  id             String       @id @default(cuid())
-  projectId      String
-  project        Project      @relation(fields: [projectId], references: [id])
-  fromStage      String       // e.g. "LAND_UNDER_REVIEW"
-  toStage        String       // e.g. "LAND_ACQUIRED"
-  decision       GateDecision @default(PENDING)
-  decidedBy      String?      // User ID
-  decidedAt      DateTime?
-  conditions     Json?        // Array of conditions that must be met
-  notes          String?
-  organizationId String
-  createdAt      DateTime     @default(now())
-
-  @@index([projectId])
-}
-
-enum GateDecision {
-  PENDING
-  APPROVED
-  REJECTED
-  DEFERRED
-}
-
-// ─── Phase 1: Document Version ───────────────────────────────────────────────
+// ─── Document Version ────────────────────────────────────────────────────────
 
 model DocumentVersion {
   id            String   @id @default(cuid())
@@ -1276,549 +900,6 @@ model DocumentVersion {
   createdAt     DateTime @default(now())
 
   @@index([documentId])
-}
-
-// ─── Phase 2: Concept Plan (Stage 4 — Development Concept) ──────────────────
-
-model ConceptPlan {
-  id                 String            @id @default(cuid())
-  projectId          String
-  project            Project           @relation(fields: [projectId], references: [id])
-  name               String
-  nameArabic         String?
-  version            Int               @default(1)
-  isSelected         Boolean           @default(false)
-  description        String?
-  totalPlots         Int?
-  totalGfaSqm        Float?
-  farRatio           Float?            // Floor Area Ratio
-  densityUnitsPerHa  Float?
-  openSpacePct       Float?
-  roadNetworkSummary Json?             // {primaryRoads, secondaryRoads, totalRoadArea}
-  amenities          Json?             // [{type, area, count}]
-  attachmentDocIds   String[]
-  status             ConceptPlanStatus @default(DRAFT)
-  createdBy          String?
-  organizationId     String
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-
-  @@index([projectId])
-}
-
-enum ConceptPlanStatus {
-  DRAFT
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-}
-
-// ─── Phase 2: Subdivision Plan (Stage 5 — Detailed Planning) ─────────────────
-
-model SubdivisionPlan {
-  id                 String                @id @default(cuid())
-  projectId          String
-  project            Project               @relation(fields: [projectId], references: [id])
-  version            Int                   @default(1)
-  name               String
-  nameArabic         String?
-  status             SubdivisionPlanStatus @default(DRAFT)
-  totalAreaSqm       Float?
-  developableAreaSqm Float?
-  numberOfPhases     Int?
-  plotCount          Int?
-  blockCount         Int?
-  boundaryGeoJson    Json?                 // GeoJSON polygon (plain JSON for now; FUTURE: PostGIS)
-  metadata           Json?
-  approvedBy         String?
-  approvedAt         DateTime?
-  plots              Plot[]
-  blocks             Block[]
-  roads              Road[]
-  utilityCorridors   UtilityCorridor[]
-  planningScenario   PlanningScenario?     // Reverse relation to PlanningScenario
-  organizationId     String
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-
-  @@index([projectId])
-}
-
-enum SubdivisionPlanStatus {
-  DRAFT
-  UNDER_REVIEW
-  APPROVED
-  SUPERSEDED
-}
-
-// ─── Phase 2: Plot (Subdivided Parcels) ──────────────────────────────────────
-
-model Plot {
-  id                String    @id @default(cuid())
-  subdivisionPlanId String
-  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
-  plotNumber        String
-  blockId           String?
-  block             Block?    @relation(fields: [blockId], references: [id])
-  areaSqm           Float?
-  landUse           LandUse?
-  phase             Int?      // Phase number within subdivision
-  dimensions        Json?     // {frontage, depth} in meters
-  boundaryGeoJson   Json?     // Polygon coordinates
-  status            PlotStatus @default(PLANNED)
-  productType       String?   // VILLA, TOWNHOUSE, APARTMENT_BLOCK, COMMERCIAL_LOT
-  premiumType       String?   // CORNER, PARK_FACING, MAIN_ROAD, etc.
-  inventoryItemId   String?   @unique
-  inventoryItem     InventoryItem? @relation(fields: [inventoryItemId], references: [id])
-  organizationId    String
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  @@index([subdivisionPlanId])
-  @@index([blockId])
-}
-
-enum PlotStatus {
-  PLANNED
-  APPROVED
-  AVAILABLE_FOR_SALE
-  RESERVED
-  SOLD
-  HELD
-}
-
-// ─── Phase 2: Block (Group of Plots) ─────────────────────────────────────────
-
-model Block {
-  id                String          @id @default(cuid())
-  subdivisionPlanId String
-  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
-  blockNumber       String
-  areaSqm           Float?
-  landUse           LandUse?
-  numberOfPlots     Int?
-  boundaryGeoJson   Json?
-  plots             Plot[]
-  organizationId    String
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  @@index([subdivisionPlanId])
-}
-
-// ─── Phase 2: Road (Subdivision Roads) ───────────────────────────────────────
-
-model Road {
-  id                String          @id @default(cuid())
-  subdivisionPlanId String
-  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
-  name              String?
-  type              RoadType
-  widthMeters       Float?
-  lengthMeters      Float?
-  areaSqm           Float?
-  lineGeoJson       Json?           // LineString geometry
-  organizationId    String
-  createdAt         DateTime        @default(now())
-
-  @@index([subdivisionPlanId])
-}
-
-enum RoadType {
-  PRIMARY
-  SECONDARY
-  LOCAL
-  SERVICE
-  CUL_DE_SAC
-}
-
-// ─── Phase 2: Utility Corridor ───────────────────────────────────────────────
-
-model UtilityCorridor {
-  id                String          @id @default(cuid())
-  subdivisionPlanId String
-  subdivisionPlan   SubdivisionPlan @relation(fields: [subdivisionPlanId], references: [id])
-  name              String?
-  utilityType       UtilityType
-  widthMeters       Float?
-  lengthMeters      Float?
-  lineGeoJson       Json?
-  organizationId    String
-  createdAt         DateTime        @default(now())
-
-  @@index([subdivisionPlanId])
-}
-
-enum UtilityType {
-  ELECTRICITY
-  WATER
-  SEWAGE
-  TELECOM
-  GAS
-  STORMWATER
-  MULTI
-}
-
-// ─── Phase 2: Approval Submission (Stage 7 — Authority Tracking) ─────────────
-
-model ApprovalSubmission {
-  id                 String         @id @default(cuid())
-  projectId          String
-  project            Project        @relation(fields: [projectId], references: [id])
-  authority          String         // e.g. "Balady", "MOMRA", "SEC"
-  authorityArabic    String?
-  type               ApprovalType
-  referenceNumber    String?        // External tracking number
-  submittedAt        DateTime?
-  status             ApprovalStatus @default(DRAFT_APPROVAL)
-  documentIds        String[]       // Document IDs included in submission
-  responseDate       DateTime?
-  responseNotes      String?
-  conditions         ApprovalCondition[]
-  comments           ApprovalComment[]
-  parentSubmissionId String?        // Links to previous submission if resubmission
-  revisionNumber     Int            @default(1)
-  // RED: SLA and blocking
-  expectedResponseDate DateTime?   // SLA deadline
-  isBlocking           Boolean  @default(false)
-  blockingModule       String?    // "SALES" | "LAUNCH" | "INFRASTRUCTURE"
-  followUps            ApprovalFollowUp[]
-  organizationId     String
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-
-  @@index([projectId])
-}
-
-// RED: Follow-up tasks linked to approval submissions
-model ApprovalFollowUp {
-  id             String   @id @default(cuid())
-  submissionId   String
-  submission     ApprovalSubmission @relation(fields: [submissionId], references: [id])
-  task           String
-  taskArabic     String?
-  assignedTo     String?
-  dueDate        DateTime?
-  status         FollowUpStatus @default(OPEN)
-  completedAt    DateTime?
-  organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([submissionId])
-}
-
-enum FollowUpStatus {
-  OPEN
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum ApprovalType {
-  SUBDIVISION_APPROVAL
-  BUILDING_PERMIT
-  INFRASTRUCTURE_PERMIT
-  ENVIRONMENTAL_CLEARANCE
-  UTILITY_CONNECTION
-  SALES_LICENSE
-  OTHER_APPROVAL
-}
-
-enum ApprovalStatus {
-  DRAFT_APPROVAL
-  SUBMITTED
-  UNDER_REVIEW_APPROVAL
-  APPROVED_WITH_CONDITIONS
-  APPROVED_FINAL
-  REJECTED_APPROVAL
-  RESUBMISSION_REQUIRED
-}
-
-// ─── Phase 2: Approval Comment ───────────────────────────────────────────────
-
-model ApprovalComment {
-  id           String                  @id @default(cuid())
-  submissionId String
-  submission   ApprovalSubmission      @relation(fields: [submissionId], references: [id])
-  author       String?                 // Authority reviewer name
-  comment      String
-  type         CommentType             @default(COMMENT)
-  status       CommentResolutionStatus @default(OPEN)
-  resolvedBy   String?
-  resolvedAt   DateTime?
-  resolution   String?
-  createdAt    DateTime                @default(now())
-
-  @@index([submissionId])
-}
-
-enum CommentType {
-  COMMENT
-  CONDITION
-  OBJECTION
-  CLARIFICATION
-}
-
-enum CommentResolutionStatus {
-  OPEN
-  IN_PROGRESS_COMMENT
-  RESOLVED
-  WAIVED
-}
-
-// ─── Phase 2: Approval Condition ─────────────────────────────────────────────
-
-model ApprovalCondition {
-  id             String             @id @default(cuid())
-  submissionId   String
-  submission     ApprovalSubmission @relation(fields: [submissionId], references: [id])
-  condition      String
-  conditionArabic String?
-  isMet          Boolean            @default(false)
-  metAt          DateTime?
-  evidence       String?            // Document ID or URL
-  createdAt      DateTime           @default(now())
-
-  @@index([submissionId])
-}
-
-// ─── Phase 3: Infrastructure Readiness (Stage 8) ─────────────────────────────
-
-model InfrastructureReadiness {
-  id               String      @id @default(cuid())
-  projectId        String
-  project          Project     @relation(fields: [projectId], references: [id])
-  category         InfraCategory
-  status           InfraStatus @default(NOT_STARTED)
-  readinessScore   Float?      // 0-100
-  estimatedCostSar Decimal?
-  actualCostSar    Decimal?
-  targetDate       DateTime?
-  completedDate    DateTime?
-  contractor       String?
-  notes            String?
-  wave             Int?        // Wave/phase number for staged rollout
-  checklistItems   Json?       // [{item, checked, notes}]
-  organizationId   String
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-
-  @@index([projectId])
-}
-
-enum InfraCategory {
-  ELECTRICITY_INFRA
-  WATER_INFRA
-  SEWAGE_INFRA
-  TELECOM_INFRA
-  ROADS_INFRA
-  STORMWATER_INFRA
-  LANDSCAPING_INFRA
-  FENCING_INFRA
-  SIGNAGE_INFRA
-  STREET_LIGHTING
-}
-
-enum InfraStatus {
-  NOT_STARTED
-  DESIGN_PHASE
-  TENDERING
-  IN_PROGRESS_INFRA
-  TESTING
-  COMPLETED_INFRA
-  DELAYED
-}
-
-// ─── Phase 3: Inventory Item (Stage 9 — Productization) ─────────────────────
-
-model InventoryItem {
-  id                 String          @id @default(cuid())
-  projectId          String
-  project            Project         @relation(fields: [projectId], references: [id])
-  plot               Plot?
-  itemNumber         String          // Inventory reference number
-  productType        ProductType
-  productLabel       String?         // e.g. "Villa Type A - 300sqm"
-  productLabelArabic String?
-  areaSqm            Float?
-  basePriceSar       Decimal?
-  finalPriceSar      Decimal?
-  pricePerSqm        Decimal?
-  pricingDetails     Json?           // Breakdown of pricing rules applied
-  releasePhase       Int?            // Release wave number
-  releaseDate        DateTime?
-  status             InventoryStatus @default(UNRELEASED)
-  channel            SalesChannel?
-  // RED: Release & pricing controls
-  releaseStatus      ReleaseStatus @default(NOT_RELEASED)
-  minimumSellPrice   Decimal?
-  holdReason         String?
-  holdUntil          DateTime?
-  reservations       Reservation[]   @relation("InventoryReservations")
-  priceChangeRequests PriceChangeRequest[]
-  organizationId     String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-
-  @@index([projectId])
-  @@index([status])
-}
-
-enum ReleaseStatus {
-  NOT_RELEASED
-  RELEASED
-  HOLD
-}
-
-enum ProductType {
-  VILLA_PLOT
-  TOWNHOUSE_PLOT
-  DUPLEX_PLOT
-  APARTMENT_PLOT
-  COMMERCIAL_LOT
-  MIXED_USE_LOT
-  RAW_LAND_PLOT
-}
-
-enum InventoryStatus {
-  UNRELEASED
-  AVAILABLE_INV
-  RESERVED_INV
-  SOLD_INV
-  HELD_INV
-  WITHDRAWN
-}
-
-enum SalesChannel {
-  DIRECT
-  BROKER
-  ONLINE
-  AUCTION
-  VIP
-}
-
-// ─── Phase 3: Pricing Rule (Stage 10 — Pricing Engine) ──────────────────────
-
-model PricingRule {
-  id             String          @id @default(cuid())
-  projectId      String
-  project        Project         @relation(fields: [projectId], references: [id])
-  name           String
-  nameArabic     String?
-  type           PricingRuleType
-  factor         Float?          // Multiplier (e.g. 1.15 for 15% premium)
-  fixedAmountSar Decimal?        // Fixed amount adjustment
-  appliesTo      Json?           // {plotNumbers: [], blocks: [], productTypes: [], phases: []}
-  condition      Json?           // {minArea, maxArea, landUse, facingDirection}
-  priority       Int             @default(0)
-  isActive       Boolean         @default(true)
-  organizationId String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-
-  @@index([projectId])
-}
-
-enum PricingRuleType {
-  BASE_PRICE_PER_SQM
-  CORNER_PREMIUM
-  PARK_FACING_PREMIUM
-  MAIN_ROAD_PREMIUM
-  PHASE_PREMIUM
-  BLOCK_ADJUSTMENT
-  PRODUCT_TYPE_PREMIUM
-  CUSTOM_PRICING
-}
-
-// ─── RED: Price List Versioning & Change Requests ────────────────────────────
-
-model PriceListVersion {
-  id             String   @id @default(cuid())
-  projectId      String
-  project        Project  @relation(fields: [projectId], references: [id])
-  versionNumber  Int
-  name           String?
-  effectiveDate  DateTime
-  status         PriceListStatus @default(DRAFT_PRICE_LIST)
-  snapshot       Json     // Full price table at time of version
-  approvedBy     String?
-  approvedAt     DateTime?
-  organizationId String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@index([projectId])
-}
-
-enum PriceListStatus {
-  DRAFT_PRICE_LIST
-  PENDING_PRICE_APPROVAL
-  APPROVED_PRICE_LIST
-  SUPERSEDED
-}
-
-model PriceChangeRequest {
-  id               String   @id @default(cuid())
-  inventoryItemId  String?
-  inventoryItem    InventoryItem? @relation(fields: [inventoryItemId], references: [id])
-  projectId        String
-  requestedBy      String   // userId
-  currentPrice     Decimal
-  proposedPrice    Decimal
-  variancePct      Float    // Auto-calculated: (proposed - current) / current * 100
-  reason           String
-  reasonArabic     String?
-  justification    String?
-  status           PriceChangeStatus @default(PENDING_PRICE_CHANGE)
-  reviewedBy       String?
-  reviewedAt       DateTime?
-  reviewNotes      String?
-  escalated        Boolean  @default(false)
-  escalatedTo      String?
-  organizationId   String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([projectId])
-  @@index([inventoryItemId])
-}
-
-enum PriceChangeStatus {
-  PENDING_PRICE_CHANGE
-  APPROVED_PRICE_CHANGE
-  REJECTED_PRICE_CHANGE
-  ESCALATED_PRICE_CHANGE
-}
-
-// ─── Phase 3: Launch Wave (Stage 10-12 — Release Control) ───────────────────
-
-model LaunchWave {
-  id             String     @id @default(cuid())
-  projectId      String
-  project        Project    @relation(fields: [projectId], references: [id])
-  waveNumber     Int
-  name           String?
-  nameArabic     String?
-  status         WaveStatus @default(PLANNED)
-  plannedDate    DateTime?
-  launchedAt     DateTime?
-  inventoryCount Int?
-  totalValueSar  Decimal?
-  channelConfig  Json?      // {direct: 40, broker: 30, online: 30}
-  notes          String?
-  organizationId String
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-
-  @@index([projectId])
-}
-
-enum WaveStatus {
-  PLANNED
-  READY_WAVE
-  LAUNCHED
-  CLOSED_WAVE
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2178,776 +1259,27 @@ model CouponRedemption {
   @@index([organizationId])
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// WAFI COMPLIANCE MODULE — وافي
-// Off-plan real estate regulations: escrow, milestones, engineering consultants,
-// Wafi contracts, delay penalties, Wafi licensing, and Etmam platform syncing.
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Customer Activity Timeline (CRM) ─────────────────────────────────────────
 
-// ─── Module 1: Escrow & Bank Integration ────────────────────────────────────
+model CustomerActivity {
+  id           String       @id @default(cuid())
+  customerId   String
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  type         ActivityType
+  note         String
+  createdById  String
+  createdBy    User         @relation("ActivityCreator", fields: [createdById], references: [id])
+  createdAt    DateTime     @default(now())
 
-model EscrowAccount {
-  id                String          @id @default(cuid())
-  projectId         String          @unique
-  project           Project         @relation(fields: [projectId], references: [id])
-  bankName          String
-  bankCode          String?
-  accountNumber     String
-  ibanNumber        String
-  status            EscrowStatus    @default(PENDING_SETUP)
-  totalDeposited    Decimal         @default(0)
-  totalWithdrawn    Decimal         @default(0)
-  currentBalance    Decimal         @default(0)
-  retentionAmount   Decimal         @default(0) // 5% post-completion hold
-  retentionReleaseDate DateTime?    // 1 year after completion cert
-  adminExpenseCap   Decimal?        // 20% of sold unit value
-  adminExpenseUsed  Decimal         @default(0)
-  metadata          Json?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  transactions      EscrowTransaction[]
-
-  @@index([projectId])
-}
-
-enum EscrowStatus {
-  PENDING_SETUP
-  ACTIVE
-  FROZEN
-  CLOSED
-}
-
-model EscrowTransaction {
-  id              String              @id @default(cuid())
-  escrowAccountId String
-  escrowAccount   EscrowAccount       @relation(fields: [escrowAccountId], references: [id])
-  type            EscrowTxnType
-  amount          Decimal
-  currency        String              @default("SAR")
-  description     String?
-  descriptionAr   String?
-  milestoneId     String?             // Links to ConstructionMilestone
-  engineerCertId  String?             // Engineering cert that authorized
-  referenceNumber String?             // Bank reference
-  status          EscrowTxnStatus     @default(PENDING)
-  processedAt     DateTime?
-  metadata        Json?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-
-  @@index([escrowAccountId])
-  @@index([milestoneId])
-  @@index([status])
-}
-
-enum EscrowTxnType {
-  BUYER_DEPOSIT
-  CONTRACTOR_PAYMENT
-  ADMIN_EXPENSE
-  RETENTION_HOLD
-  RETENTION_RELEASE
-  REFUND
-  BANK_FEE
-}
-
-enum EscrowTxnStatus {
-  PENDING
-  AWAITING_APPROVAL
-  APPROVED
-  PROCESSED
-  REJECTED
-  CANCELLED
-}
-
-// ─── Module 2: Engineering Consultant Portal ────────────────────────────────
-
-model EngineeringConsultant {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id])
-  licenseNumber   String    // SCEC license number
-  licenseExpiry   DateTime
-  firmName        String?
-  firmNameArabic  String?
-  firmCrNumber    String?   // Consulting firm CR number
-  specialization  String?   // Structural, MEP, etc.
-  metadata        Json?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  assignments     ConsultantAssignment[]
-
-  @@index([licenseNumber])
-}
-
-model ConsultantAssignment {
-  id            String           @id @default(cuid())
-  consultantId  String
-  consultant    EngineeringConsultant @relation(fields: [consultantId], references: [id])
-  userId        String
-  user          User             @relation("ConsultantUser", fields: [userId], references: [id])
-  projectId     String
-  project       Project          @relation(fields: [projectId], references: [id])
-  status        AssignmentStatus @default(ACTIVE)
-  assignedAt    DateTime         @default(now())
-  completedAt   DateTime?
-  revokedAt     DateTime?
-  revokedReason String?
-
-  @@unique([consultantId, projectId])
-  @@index([projectId])
-  @@index([userId])
-}
-
-enum AssignmentStatus {
-  ACTIVE
-  COMPLETED
-  REVOKED
-}
-
-// ─── Module 3: Dynamic Milestone Billing ────────────────────────────────────
-
-model ConstructionMilestone {
-  id                String            @id @default(cuid())
-  projectId         String
-  project           Project           @relation(fields: [projectId], references: [id])
-  milestoneNumber   Int               // Sequential: 1, 2, 3...
-  name              String
-  nameArabic        String?
-  description       String?
-  descriptionArabic String?
-  targetPercentage  Float             // e.g. 25 for 25%
-  actualPercentage  Float?            // Certified actual
-  targetDate        DateTime?
-  actualDate        DateTime?
-  status            MilestoneStatus   @default(UPCOMING)
-  certifiedById     String?           // → User (Engineering Consultant)
-  certifiedBy       User?             @relation("CertifiedBy", fields: [certifiedById], references: [id])
-  certifiedAt       DateTime?
-  evidenceDocIds    String[]          // Document IDs for photos/reports
-  paymentPercentage Float?            // % of total price due at milestone
-  metadata          Json?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  billingItems      MilestoneBillingItem[]
-
-  @@unique([projectId, milestoneNumber])
-  @@index([projectId])
-  @@index([status])
-}
-
-enum MilestoneStatus {
-  UPCOMING
-  IN_PROGRESS
-  PENDING_INSPECTION
-  CERTIFIED
-  OVERDUE
-  SKIPPED
-}
-
-model MilestoneBillingItem {
-  id            String                @id @default(cuid())
-  milestoneId   String
-  milestone     ConstructionMilestone @relation(fields: [milestoneId], references: [id])
-  contractId    String                // Off-plan buyer contract
-  customerId    String                // Buyer
-  amountDue     Decimal
-  currency      String                @default("SAR")
-  dueDate       DateTime?             // Set when milestone certified
-  paidAt        DateTime?
-  status        BillingItemStatus     @default(NOT_YET_DUE)
-  referenceNumber String?             // Payment reference
-  metadata      Json?
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-
-  @@index([milestoneId])
-  @@index([contractId])
   @@index([customerId])
-  @@index([status])
+  @@index([createdById])
 }
 
-enum BillingItemStatus {
-  NOT_YET_DUE
-  DUE
-  PAID
-  OVERDUE
-  CANCELLED
-}
-
-model WafiContract {
-  id                        String    @id @default(cuid())
-  contractId                String    @unique  // → existing Contract model
-  projectId                 String
-  project                   Project   @relation(fields: [projectId], references: [id])
-  escrowAccountRef          String?   // IBAN referenced in contract
-  handoverDate              DateTime  // Contractual delivery date
-  delayCompensationType     String    @default("PERCENTAGE") // PERCENTAGE or FAIR_MARKET_RENT
-  delayCompensationRate     Float     @default(2.0)          // Default 2% (land)
-  paymentSchedule           Json?     // [{milestoneNumber, percentage, amount}]
-  alternativeDeveloperClause Boolean  @default(true) // REGA right to appoint alt developer
-  metadata                  Json?
-  createdAt                 DateTime  @default(now())
-  updatedAt                 DateTime  @updatedAt
-
-  @@index([projectId])
-  @@index([contractId])
-}
-
-model DelayPenalty {
-  id              String    @id @default(cuid())
-  projectId       String
-  project         Project   @relation(fields: [projectId], references: [id])
-  contractId      String?   // Optional: specific contract
-  penaltyType     String    // PERCENTAGE or FAIR_MARKET_RENT
-  rate            Float     // 2% for land, fair market rent for units
-  calculatedAmount Decimal?  // Auto-calculated penalty amount
-  currency        String    @default("SAR")
-  periodStart     DateTime
-  periodEnd       DateTime?
-  status          String    @default("ACTIVE") // ACTIVE, PAID, WAIVED, DISPUTED
-  notes           String?
-  notesArabic     String?
-  metadata        Json?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  @@index([projectId])
-  @@index([contractId])
-  @@index([status])
-}
-
-// ─── Module 4: Etmam Platform Syncing ───────────────────────────────────────
-
-model WafiLicense {
-  id              String            @id @default(cuid())
-  projectId       String            @unique
-  project         Project           @relation(fields: [projectId], references: [id])
-  licenseNumber   String?           // REGA license number
-  regaReference   String?           // REGA reference ID
-  developerScore  Int?              // Out of 100 (35 min to qualify)
-  registrationFee Decimal?          // SAR 50,000
-  status          WafiLicenseStatus @default(NOT_APPLIED)
-  appliedAt       DateTime?
-  approvedAt      DateTime?
-  metadata        Json?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  etmamRegistration EtmamRegistration?
-
-  @@index([projectId])
-  @@index([licenseNumber])
-}
-
-enum WafiLicenseStatus {
-  NOT_APPLIED
-  SUBMITTED
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-  EXPIRED
-}
-
-model EtmamRegistration {
-  id                String          @id @default(cuid())
-  wafiLicenseId     String          @unique
-  wafiLicense       WafiLicense     @relation(fields: [wafiLicenseId], references: [id])
-  etmamProjectId    String?         // Etmam platform project ID
-  etmamDeveloperId  String?         // Etmam platform developer ID
-  registrationStatus EtmamRegStatus @default(NOT_REGISTERED)
-  lastSyncAt        DateTime?
-  nextSyncDue       DateTime?       // Quarterly schedule
-  metadata          Json?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  syncLogs          EtmamSyncLog[]
-
-  @@index([wafiLicenseId])
-}
-
-enum EtmamRegStatus {
-  NOT_REGISTERED
-  PENDING
-  REGISTERED
-  SUSPENDED
-}
-
-model EtmamSyncLog {
-  id                  String              @id @default(cuid())
-  etmamRegistrationId String
-  etmamRegistration   EtmamRegistration   @relation(fields: [etmamRegistrationId], references: [id])
-  syncType            EtmamSyncType
-  direction           String              @default("PUSH") // PUSH or PULL
-  status              SyncLogStatus       @default(PENDING)
-  requestPayload      Json?               // What was sent
-  responsePayload     Json?               // What was received
-  errorMessage        String?
-  startedAt           DateTime            @default(now())
-  completedAt         DateTime?
-  createdAt           DateTime            @default(now())
-
-  @@index([etmamRegistrationId])
-  @@index([syncType])
-  @@index([status])
-}
-
-enum EtmamSyncType {
-  QUARTERLY_ESCROW_STATEMENT
-  CONSTRUCTION_PROGRESS
-  FINANCIAL_POSITION
-  UNIT_SALES_UPDATE
-  DEVELOPER_SCORE
-  LICENSE_STATUS
-  MANUAL_REPORT
-}
-
-enum SyncLogStatus {
-  PENDING
-  IN_PROGRESS
-  SUCCESS
-  FAILED
-  CANCELLED
-}
-
-// ─── Planning OS Module ─────────────────────────────────────────────────────
-
-model PlanningWorkspace {
-  id                String              @id @default(cuid())
-  name              String
-  nameArabic        String?
-  status            PlanningWorkspaceStatus @default(DRAFT)
-  description       String?
-
-  // Links to existing records (one or both)
-  landRecordId      String?             // Project ID where status is LAND_*
-  projectId         String?             // Full project record (post-acquisition)
-
-  // Site metadata carried from land/project
-  siteMetadata      Json?               // {totalAreaSqm, region, city, district, latitude, longitude, boundaries}
-
-  // Ownership
-  createdBy         String?             // User ID who created
-  organizationId    String
-  organization      Organization        @relation(fields: [organizationId], references: [id])
-
-  // Children
-  scenarios         PlanningScenario[]
-  spatialLayers     SpatialLayer[]
-  comments          PlanningComment[]
-
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([organizationId])
-  @@index([landRecordId])
-  @@index([projectId])
-  @@index([status])
-}
-
-enum PlanningWorkspaceStatus {
-  DRAFT
-  ACTIVE
-  UNDER_REVIEW
-  APPROVED
-  ARCHIVED
-}
-
-model PlanningScenario {
-  id                String              @id @default(cuid())
-  name              String
-  nameArabic        String?
-  version           Int                 @default(1)
-  status            PlanningScenarioStatus @default(DRAFT)
-  isBaseline        Boolean             @default(false) // Only one per workspace
-
-  // Parent workspace
-  workspaceId       String
-  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  // Linked subdivision plan (geometry)
-  subdivisionPlanId String?             @unique
-  subdivisionPlan   SubdivisionPlan?    @relation(fields: [subdivisionPlanId], references: [id])
-
-  // Feasibility assumptions
-  feasibilitySet    FeasibilityAssumptionSet?
-
-  // Compliance results
-  complianceResults ComplianceResult[]
-
-  // Cached metrics (auto-calculated from geometry + assumptions)
-  metrics           Json?               // {totalArea, sellableArea, nonSellableArea, sellablePct, plotCount, roadArea, openSpaceArea, estimatedRevenue, estimatedCost, estimatedProfit, far, density}
-
-  // Approval tracking
-  approvedBy        String?
-  approvedAt        DateTime?
-  rejectedBy        String?
-  rejectedAt        DateTime?
-  reviewNotes       String?
-
-  organizationId    String
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([workspaceId])
-  @@index([organizationId])
-  @@index([status])
-}
-
-enum PlanningScenarioStatus {
-  DRAFT
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-}
-
-model SpatialLayer {
-  id                String              @id @default(cuid())
-  name              String
-  nameArabic        String?
-  type              SpatialLayerType    @default(IMPORTED)
-  visible           Boolean             @default(true)
-  locked            Boolean             @default(false)
-  opacity           Float               @default(1.0)
-  style             Json?               // {color, fillColor, fillOpacity, weight, dashArray}
-  sourceFile        String?             // Original filename for imports
-  geoJson           Json?               // Full FeatureCollection GeoJSON
-  featureCount      Int                 @default(0)
-
-  workspaceId       String
-  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  organizationId    String
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([workspaceId])
-  @@index([organizationId])
-}
-
-enum SpatialLayerType {
-  BOUNDARY
-  PARCELS
-  ROADS
-  ZONES
-  UTILITIES
-  IMPORTED
-  REFERENCE
-  TOPOGRAPHY
-}
-
-model RuleTemplate {
-  id                String              @id @default(cuid())
-  name              String
-  nameArabic        String?
-  description       String?
-  category          RuleCategory
-  operator          RuleOperator
-  value             Float               // Threshold value
-  valueTo           Float?              // For BETWEEN operator
-  unit              String              // SQM, METERS, RATIO, PERCENT, UNITS_PER_HA
-  landUseScope      String[]            // Empty array = all land uses
-  regionScope       String?             // null = all regions
-  isDefault         Boolean             @default(false) // System template vs org-specific
-  isActive          Boolean             @default(true)
-
-  organizationId    String?             // null = system default template
-  complianceResults ComplianceResult[]
-
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([organizationId])
-  @@index([category])
-}
-
-enum RuleCategory {
-  MIN_AREA
-  MAX_AREA
-  MIN_FRONTAGE
-  MAX_FRONTAGE
-  MIN_DEPTH
-  MAX_DEPTH
-  MIN_ROAD_WIDTH
-  MAX_FAR
-  MIN_SETBACK
-  MAX_COVERAGE
-  MAX_DENSITY
-  MIN_OPEN_SPACE
-}
-
-enum RuleOperator {
-  MIN
-  MAX
-  EQUALS
-  BETWEEN
-}
-
-model ComplianceResult {
-  id                String              @id @default(cuid())
-  status            ComplianceStatus
-  actualValue       Float
-  expectedValue     String              // Human-readable threshold (e.g., "≥ 200 sqm")
-  featureId         String?             // Reference to specific plot/road ID
-  featureType       String?             // PLOT, ROAD, BLOCK, ZONE
-  featureLabel      String?             // e.g., "Plot A-01"
-
-  scenarioId        String
-  scenario          PlanningScenario    @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
-
-  ruleId            String
-  rule              RuleTemplate        @relation(fields: [ruleId], references: [id])
-
-  organizationId    String
-  createdAt         DateTime            @default(now())
-
-  @@index([scenarioId])
-  @@index([ruleId])
-  @@index([organizationId])
-}
-
-enum ComplianceStatus {
-  PASS
-  FAIL
-  WARNING
-}
-
-model FeasibilityAssumptionSet {
-  id                  String            @id @default(cuid())
-  name                String?
-  nameArabic          String?
-
-  // Core assumptions
-  landPriceSarPerSqm  Float?
-  constructionCostPerSqm Float?
-  infrastructureCostTotal Float?
-  contingencyPct      Float?            @default(10)
-  profitMarginPct     Float?            @default(15)
-
-  // Per-land-use pricing assumptions (JSON map)
-  pricingAssumptions  Json?             // {RESIDENTIAL: {pricePerSqm: 3000, density: 25}, COMMERCIAL: {...}}
-  costAssumptions     Json?             // {softCosts: 500000, hardCosts: 0, marketingPct: 3}
-
-  // Auto-calculated results cached
-  calculatedMetrics   Json?             // {totalRevenue, totalCost, grossProfit, netProfit, roi, breakeven}
-
-  // Parent scenario
-  scenarioId          String            @unique
-  scenario            PlanningScenario  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
-
-  organizationId      String
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-
-  @@index([organizationId])
-}
-
-model PlanningComment {
-  id                String              @id @default(cuid())
-  content           String
-  authorId          String              // User ID
-  authorName        String?
-  authorRole        String?
-
-  // Context
-  workspaceId       String
-  workspace         PlanningWorkspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  scenarioId        String?             // If comment is scenario-specific
-  featureId         String?             // If comment is on a specific map feature
-
-  // Threading
-  parentId          String?
-  mentions          String[]            // User IDs mentioned
-
-  organizationId    String
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-
-  @@index([workspaceId])
-  @@index([scenarioId])
-  @@index([organizationId])
-}
-
-// ─── RED: Collections & Receivables ─────────────────────────────────────────
-
-model CollectionCase {
-  id                 String           @id @default(cuid())
-  contractId         String
-  customerId         String
-  assignedTo         String?          // userId of collection officer
-  status             CollectionStatus @default(CURRENT)
-  totalOutstanding   Decimal
-  oldestDueDate      DateTime?
-  lastContactDate    DateTime?
-  lastContactNote    String?
-  promiseToPayDate   DateTime?
-  promiseToPayAmount Decimal?
-  escalationLevel    Int              @default(0)
-  notes              String?
-  activities         CollectionActivity[]
-  organizationId     String
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-
-  @@index([organizationId])
-  @@index([contractId])
-  @@index([assignedTo])
-  @@index([status])
-}
-
-model CollectionActivity {
-  id               String   @id @default(cuid())
-  collectionCaseId String
-  collectionCase   CollectionCase @relation(fields: [collectionCaseId], references: [id])
-  type             CollectionActivityType
-  notes            String?
-  nextAction       String?
-  nextActionDate   DateTime?
-  userId           String
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  @@index([collectionCaseId])
-}
-
-enum CollectionStatus {
-  CURRENT
-  FOLLOW_UP
-  PROMISE_TO_PAY
-  ESCALATED
-  LEGAL
-  SETTLED
-}
-
-enum CollectionActivityType {
+enum ActivityType {
   CALL
   EMAIL
-  SMS
-  VISIT
+  MEETING
+  SITE_VISIT
   NOTE
-  PROMISE
-  ESCALATION
-}
-
-// ─── GIS Phase 2-3: Phase Readiness, Construction, Handover & FM ─────────────
-
-model PhaseReadinessRule {
-  id             String       @id @default(cuid())
-  phaseId        String
-  phase          Phase        @relation(fields: [phaseId], references: [id], onDelete: Cascade)
-  ruleType       String       // ACCESS_ROAD, WATER, SEWER, POWER, TELECOM, PERMITS, SERVICES, LANDSCAPING
-  ruleLabel      String
-  ruleLabelAr    String
-  isMet          Boolean      @default(false)
-  evidence       String?      // Reference to approval/document
-  notes          String?
-  checkedBy      String?
-  checkedAt      DateTime?
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  @@index([phaseId])
-  @@index([organizationId])
-}
-
-model ConstructionPackage {
-  id              String       @id @default(cuid())
-  projectId       String
-  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  phaseId         String?
-  name            String
-  nameArabic      String?
-  packageType     String       // ROADS, UTILITIES, BUILDINGS, LANDSCAPING, MIXED
-  contractorName  String?
-  contractorId    String?
-  plannedStart    DateTime?
-  plannedFinish   DateTime?
-  actualStart     DateTime?
-  actualFinish    DateTime?
-  progressPercent Decimal      @default(0)
-  status          String       @default("NOT_STARTED") // NOT_STARTED, MOBILIZED, IN_PROGRESS, SUBSTANTIALLY_COMPLETE, COMPLETED
-  boundaryGeoJson Json?
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  @@index([projectId])
-  @@index([organizationId])
-}
-
-model HandoverRecord {
-  id                  String       @id @default(cuid())
-  projectId           String
-  project             Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assetType           String       // BUILDING, ROAD, UTILITY, PARK, FACILITY
-  assetId             String       // Polymorphic reference to the asset
-  assetName           String
-  assetNameArabic     String?
-  inspectionStatus    String       @default("PENDING") // PENDING, IN_PROGRESS, PASSED, FAILED
-  inspectionDate      DateTime?
-  inspectorId         String?
-  criticalDefectCount Int          @default(0)
-  minorDefectCount    Int          @default(0)
-  handoverStatus      String       @default("PENDING") // PENDING, READY, HANDED_OVER, REJECTED
-  handoverDate        DateTime?
-  receiverEntity      String?
-  handoverPackageUrl  String?
-  notes               String?
-  geometry            Json?
-  organizationId      String
-  organization        Organization @relation(fields: [organizationId], references: [id])
-  defects             HandoverDefect[]
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-
-  @@index([projectId])
-  @@index([organizationId])
-}
-
-model HandoverDefect {
-  id                  String         @id @default(cuid())
-  handoverRecordId    String
-  handoverRecord      HandoverRecord @relation(fields: [handoverRecordId], references: [id], onDelete: Cascade)
-  title               String
-  titleArabic         String?
-  description         String?
-  severity            String         // CRITICAL, MAJOR, MINOR, COSMETIC
-  status              String         @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, VERIFIED, WONT_FIX
-  locationDescription String?
-  locationGeoJson     Json?
-  photoUrls           String[]
-  assignedTo          String?
-  resolvedAt          DateTime?
-  verifiedAt          DateTime?
-  organizationId      String
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-
-  @@index([handoverRecordId])
-}
-
-model OperationalAsset {
-  id                String       @id @default(cuid())
-  projectId         String
-  project           Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assetCode         String       // Auto-generated: PRJ-ROAD-001
-  assetClass        String       // ROAD, STREETLIGHT, TREE, VALVE, PUMP, SUBSTATION, PLAYGROUND, BENCH, SIGN, BUILDING_ASSET
-  assetName         String
-  assetNameArabic   String?
-  installationDate  DateTime?
-  warrantyEndDate   DateTime?
-  maintenanceZone   String?
-  operationalOwner  String?
-  operationalStatus String       @default("ACTIVE") // ACTIVE, INACTIVE, UNDER_REPAIR, DECOMMISSIONED
-  specifications    Json?
-  geometry          Json?
-  sourceHandoverId  String?
-  organizationId    String
-  organization      Organization @relation(fields: [organizationId], references: [id])
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-
-  @@index([projectId])
-  @@index([organizationId])
+  WHATSAPP
 }

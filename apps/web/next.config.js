@@ -1,6 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+
+  async redirects() {
+    return [
+      { source: "/dashboard/units", destination: "/dashboard/properties", permanent: true },
+      { source: "/dashboard/units/:path*", destination: "/dashboard/properties/:path*", permanent: true },
+      { source: "/dashboard/sales", destination: "/dashboard/deals", permanent: true },
+      { source: "/dashboard/sales/:path*", destination: "/dashboard/deals", permanent: true },
+      { source: "/dashboard/rentals", destination: "/dashboard/contracts", permanent: true },
+      { source: "/dashboard/rentals/:path*", destination: "/dashboard/contracts", permanent: true },
+      { source: "/dashboard/finance", destination: "/dashboard/payments", permanent: true },
+      { source: "/dashboard/finance/:path*", destination: "/dashboard/payments", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
