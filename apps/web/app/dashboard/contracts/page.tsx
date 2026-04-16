@@ -33,6 +33,7 @@ import { usePermissions } from "../../../hooks/usePermissions";
 import { getContracts, createContract } from "../../actions/contracts";
 import { getCustomers } from "../../actions/customers";
 import { getUnitsWithBuildings } from "../../actions/units";
+import { getReservationById } from "../../actions/reservations";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -129,11 +130,25 @@ export default function ContractsPage() {
     loadContracts();
   }, []);
 
-  // Auto-open sale modal if dealId in URL
+  // Auto-open sale modal and pre-fill from reservation if dealId in URL
   React.useEffect(() => {
-    if (prefillDealId) {
-      openSaleModal();
-    }
+    if (!prefillDealId) return;
+    openSaleModal();
+    getReservationById(prefillDealId)
+      .then((reservation) => {
+        if (!reservation) return;
+        setSaleForm((f) => ({
+          ...f,
+          customerId: reservation.customer.id,
+          customerName: reservation.customer.name,
+          customerSearch: reservation.customer.name,
+          unitId: reservation.unit.id,
+          unitNumber: reservation.unit.number,
+          unitSearch: reservation.unit.number,
+          amount: String(reservation.amount),
+        }));
+      })
+      .catch(() => {});
   }, [prefillDealId]);
 
   const saleContracts = allContracts.filter((c) => c.type === "SALE");

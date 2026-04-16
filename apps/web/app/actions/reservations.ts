@@ -247,6 +247,19 @@ export async function approveReservationExtension(extensionId: string) {
   return { success: true };
 }
 
+export async function getReservationById(reservationId: string) {
+  const session = await requirePermission("reservations:read");
+  const reservation = await db.reservation.findFirst({
+    where: { id: reservationId, customer: { organizationId: session.organizationId } },
+    include: {
+      customer: { select: { id: true, name: true } },
+      unit: { select: { id: true, number: true } },
+    },
+  });
+  if (!reservation) return null;
+  return JSON.parse(JSON.stringify(reservation));
+}
+
 // ─── RED: Auto-Expire Batch (for cron job) ──────────────────────────────────
 
 export async function autoExpireReservations() {

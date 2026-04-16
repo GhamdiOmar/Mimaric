@@ -41,6 +41,7 @@ import { getCustomers } from "../../actions/customers";
 import { getUnitsWithBuildings } from "../../actions/units";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const SAR = (amount: number) =>
   new Intl.NumberFormat("en-SA", { style: "currency", currency: "SAR" }).format(amount);
@@ -80,6 +81,11 @@ const STATUS_LABELS: Record<string, { ar: string; en: string }> = {
 export default function DealsPage() {
   const { lang, dir } = useLanguage();
   const { can } = usePermissions();
+  const searchParams = useSearchParams();
+  const prefillCustomerId = searchParams.get("customerId");
+  const prefillCustomerName = searchParams.get("customerName");
+  const prefillUnitId = searchParams.get("unitId");
+  const prefillAmount = searchParams.get("amount");
 
   const [deals, setDeals] = React.useState<Reservation[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -162,9 +168,42 @@ export default function DealsPage() {
       .then((data) => setCustomers(data as Customer[]))
       .catch(() => {});
     getUnitsWithBuildings()
-      .then((data) => setUnits(data as Unit[]))
+      .then((data) => {
+        const unitsList = data as Unit[];
+        setUnits(unitsList);
+        // Apply ?unitId prefill once units are loaded
+        if (prefillUnitId) {
+          const matchingUnit = unitsList.find((u) => u.id === prefillUnitId);
+          setForm((f) => ({
+            ...f,
+            unitId: prefillUnitId,
+            unitNumber: matchingUnit?.number ?? prefillUnitId,
+          }));
+          setUnitSearch(matchingUnit?.number ?? prefillUnitId);
+        }
+      })
       .catch(() => {});
+    // Apply URL param prefills
+    if (prefillCustomerId) {
+      setForm((f) => ({
+        ...f,
+        customerId: prefillCustomerId,
+        customerName: prefillCustomerName ?? "",
+      }));
+      setCustomerSearch(prefillCustomerName ?? "");
+    }
+    if (prefillAmount) {
+      setForm((f) => ({ ...f, amount: prefillAmount }));
+    }
   }
+
+  // Auto-open create modal when URL has prefill params
+  React.useEffect(() => {
+    if (prefillCustomerId || prefillUnitId) {
+      openCreate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillCustomerId, prefillUnitId]);
 
   async function handleCreate() {
     if (!form.customerId || !form.unitId || !form.amount || !form.expiresAt) {
