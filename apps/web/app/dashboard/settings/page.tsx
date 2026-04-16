@@ -19,10 +19,11 @@ import {
   Save,
   RefreshCw,
   Loader2,
+  Trash2,
 } from "lucide-react";
 import { Button, Input, PageHeader, FormSection } from "@repo/ui";
 import Link from "next/link";
-import { getOrganization, updateOrganization } from "../../actions/organization";
+import { getOrganization, updateOrganization, clearAppCache } from "../../actions/organization";
 import { usePermissions } from "../../../hooks/usePermissions";
 import { getUserPreferences, updateLandingPage } from "../../actions/preferences";
 
@@ -37,6 +38,7 @@ export default function OrgSettingsPage() {
   const [saving, setSaving] = React.useState(false);
   const [landingPage, setLandingPage] = React.useState("/dashboard");
   const [savingLanding, setSavingLanding] = React.useState(false);
+  const [clearingCache, setClearingCache] = React.useState(false);
 
   // Form state
   const [form, setForm] = React.useState({
@@ -855,6 +857,41 @@ export default function OrgSettingsPage() {
                 {lang === "ar" ? "جاري الحفظ..." : "Saving..."}
               </p>
             )}
+          </div>
+
+          {/* Cache Clear */}
+          <div className="rounded-lg border border-border bg-card p-6 shadow-sm space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "الذاكرة المؤقتة" : "Cache"}
+            </h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {lang === "ar"
+                ? "امسح الذاكرة المؤقتة لإعادة تحميل البيانات من الخادم."
+                : "Clear server cache to force fresh data across all pages."}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2"
+              style={{ display: "inline-flex" }}
+              disabled={clearingCache}
+              onClick={async () => {
+                setClearingCache(true);
+                try {
+                  await clearAppCache();
+                  window.location.reload();
+                } finally {
+                  setClearingCache(false);
+                }
+              }}
+            >
+              {clearingCache ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              {lang === "ar" ? "مسح الذاكرة المؤقتة" : "Clear Cache"}
+            </Button>
           </div>
 
           {/* Quick Info Card */}

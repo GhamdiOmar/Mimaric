@@ -61,3 +61,8 @@ export async function updateOrganization(data: {
   revalidatePath("/dashboard/settings");
   return JSON.parse(JSON.stringify(org));
 }
+
+export async function clearAppCache() {
+  await getSessionOrThrow();
+  revalidatePath("/dashboard", "layout");
+}
