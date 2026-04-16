@@ -206,7 +206,7 @@ export async function getCustomers(filters?: {
 
   logAuditEvent({ userId: session.userId, userEmail: session.email, userRole: session.role, action: hasPiiAccess ? "READ_PII" : "READ", resource: "Customer", metadata: { filters, count: results.length }, organizationId: session.organizationId });
 
-  return masked;
+  return JSON.parse(JSON.stringify(masked));
 }
 
 export async function deleteCustomer(customerId: string) {

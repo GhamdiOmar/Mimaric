@@ -1,5 +1,23 @@
 # Changelog — Mimaric PropTech
 
+## [3.0.1] — 2026-04-16
+
+### CRM SOP Compliance — 7 Gap Fixes + Serialization Fix
+
+**CRM Pipeline Enhancements:**
+- Added CONTACTED and NEGOTIATION stages to the 5-stage pipeline (NEW → CONTACTED → QUALIFIED → VIEWING → NEGOTIATION)
+- LOST lead flow: dragging a card to LOST now triggers a required reason selection modal (BUDGET, NO_RESPONSE, COMPETITOR, NO_MATCH, OTHER) before status update
+- LOST toggle: separate view for LOST leads via toggle button — keeps active pipeline clean
+- Agent assignment: Add Lead form now includes an Agent dropdown populated from team members (ADMIN/MANAGER/AGENT roles)
+- Budget & property interest: Add Lead form captures SAR budget and property type preference
+- Client preferences section in customer drawer: shows budget, property type, assigned agent, and LOST reason (in red) when applicable
+- "Convert to Deal" button in customer drawer: navigates to `/dashboard/deals?customerId=...` for seamless pipeline handoff
+
+**Bug Fix:**
+- Fixed Prisma `Decimal` serialization error: `getCustomers()` now wraps results in `JSON.parse(JSON.stringify())` to prevent "Only plain objects can be passed to Client Components" error when `budget` field is present
+
+---
+
 ## [3.0.0] — 2026-04-16
 
 ### Mimaric v3.0 — Universal Real Estate Operating Core
