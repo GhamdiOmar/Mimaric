@@ -9,6 +9,7 @@ import {
   Receipt,
   ChevronRight,
   Settings,
+  SearchCheck,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -47,6 +48,15 @@ const sections = [
     desc: {
       ar: "عرض جميع الفواتير والمعاملات المالية",
       en: "View all invoices and payment transactions",
+    },
+  },
+  {
+    href: "/dashboard/admin/seo",
+    icon: SearchCheck,
+    label: { ar: "إعدادات SEO", en: "SEO Settings" },
+    desc: {
+      ar: "إدارة ميتاداتا SEO والعلامة التجارية والتحليلات وrobots.txt",
+      en: "Manage SEO metadata, brand assets, analytics tags, and robots.txt",
     },
   },
 ];

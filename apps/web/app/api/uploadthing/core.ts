@@ -26,7 +26,21 @@ async function authMiddleware() {
   };
 }
 
+async function seoAuthMiddleware() {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+  const role = (session.user as any).role ?? "USER";
+  if (!hasPermission(role, "billing:admin")) throw new Error("Insufficient permissions");
+  return { userId: session.user.id };
+}
+
 export const ourFileRouter = {
+  seoAssetUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    .middleware(seoAuthMiddleware)
+    .onUploadComplete(async ({ file }) => {
+      return { url: file.url, name: file.name };
+    }),
+
   contractUploader: f({ pdf: { maxFileSize: "16MB" } })
     .middleware(authMiddleware)
     .onUploadComplete(async ({ metadata, file }) => {

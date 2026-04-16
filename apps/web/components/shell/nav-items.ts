@@ -23,6 +23,7 @@ export const navItems: NavItem[] = [
   // System
   { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "Receipt", href: "/dashboard/billing", section: "system", permission: "billing:read" },
   { label: { ar: "إدارة المنصة", en: "Admin" }, icon: "ShieldCheck", href: "/dashboard/admin", section: "system", permission: "billing:admin" },
+  { label: { ar: "إعدادات SEO", en: "SEO Settings" }, icon: "SearchCheck", href: "/dashboard/admin/seo", section: "system", permission: "billing:admin" },
   { label: { ar: "الإعدادات", en: "Settings" }, icon: "Settings", href: "/dashboard/settings", section: "system", permission: "organization:read" },
 ];
 
@@ -42,6 +43,7 @@ export const breadcrumbLabels: Record<string, { ar: string; en: string }> = {
   "plans": { ar: "الباقات", en: "Plans" },
   "invoices": { ar: "الفواتير", en: "Invoices" },
   "admin": { ar: "إدارة المنصة", en: "Admin" },
+  "seo": { ar: "إعدادات SEO", en: "SEO Settings" },
   "coupons": { ar: "الكوبونات", en: "Coupons" },
   "subscriptions": { ar: "الاشتراكات", en: "Subscriptions" },
   "help": { ar: "المساعدة", en: "Help" },

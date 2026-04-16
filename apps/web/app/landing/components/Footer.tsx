@@ -7,9 +7,11 @@ import { t as translations } from "../translations";
 export default function Footer({
   lang,
   onToggleLang,
+  toggleLangHref,
 }: {
   lang: "ar" | "en";
-  onToggleLang: () => void;
+  onToggleLang?: () => void;
+  toggleLangHref?: string;
 }) {
   const t = translations[lang];
 
@@ -64,14 +66,24 @@ export default function Footer({
             </p>
 
             {/* Language toggle */}
-            <button
-              onClick={onToggleLang}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-              style={{ display: "inline-flex" }}
-            >
-              <Globe className="h-3.5 w-3.5" />
-              {lang === "ar" ? "English" : "العربية"}
-            </button>
+            {toggleLangHref ? (
+              <Link
+                href={toggleLangHref}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                {lang === "ar" ? "English" : "العربية"}
+              </Link>
+            ) : (
+              <button
+                onClick={onToggleLang}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                style={{ display: "inline-flex" }}
+              >
+                <Globe className="h-3.5 w-3.5" />
+                {lang === "ar" ? "English" : "العربية"}
+              </button>
+            )}
 
             {/* Made in Saudi badge */}
             <p className="mt-3 text-xs text-muted-foreground/60">

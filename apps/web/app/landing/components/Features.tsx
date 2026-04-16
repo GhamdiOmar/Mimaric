@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   Building2,
   Store,
@@ -153,11 +154,13 @@ export default function Features({ lang }: { lang: "ar" | "en" }) {
           {/* Screenshot side */}
           <div className={lang === "ar" ? "lg:order-1" : "lg:order-2"}>
             <div className="overflow-hidden rounded-2xl border border-border bg-muted shadow-sm dark:bg-card">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={`/assets/screenshots/${activeTab.id}.png`}
                 alt={activeTab.title}
+                width={1200}
+                height={800}
                 className="h-auto w-full"
+                priority={activeTab.id === "projects"}
               />
             </div>
           </div>

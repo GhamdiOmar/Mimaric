@@ -1318,3 +1318,56 @@ enum InterestStatus {
   CONVERTED   // Converted to a Deal (reservation created)
   DROPPED     // Customer no longer interested
 }
+
+// ─── System SEO & Brand Configuration (singleton: id = "system") ─────────────
+
+model SystemConfig {
+  id String @id @default("system")
+
+  // SEO Metadata
+  siteTitle          String?
+  siteTitleTemplate  String?
+  siteDescriptionAr  String?
+  siteDescriptionEn  String?
+  canonicalUrl       String?
+
+  // Open Graph
+  ogTitle       String?
+  ogDescription String?
+  ogType        String? @default("website")
+  ogLocale      String? @default("ar_SA")
+
+  // Twitter / X
+  twitterCard   String? @default("summary_large_image")
+  twitterHandle String?
+
+  // Brand Assets (CDN URLs via UploadThing)
+  faviconUrl        String?
+  appleTouchIconUrl String?
+  ogImageUrl        String?
+  logoUrl           String?
+  logoLightUrl      String?
+  logoDarkUrl       String?
+
+  // Tag Management (GTM recommended — manages all pixels)
+  gtmContainerId   String?
+  ga4MeasurementId String?
+  gadsConversionId String?
+
+  // Webmaster Verification
+  gscVerificationCode  String?
+  bingVerificationCode String?
+
+  // robots.txt rules (JSON: MetadataRoute.Robots["rules"])
+  robotsTxtRules String? @db.Text
+
+  // Organization Schema.org
+  schemaOrgName      String?
+  schemaOrgLogoUrl   String?
+  schemaOrgTwitter   String?
+  schemaOrgLinkedIn  String?
+  schemaOrgInstagram String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

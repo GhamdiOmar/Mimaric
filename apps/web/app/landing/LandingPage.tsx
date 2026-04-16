@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import LogoBar from "./components/LogoBar";
@@ -12,18 +9,24 @@ import Pricing from "./components/Pricing";
 import FAQ from "./components/FAQ";
 import FinalCTA from "./components/FinalCTA";
 import Footer from "./components/Footer";
+import SchemaMarkup from "./components/SchemaMarkup";
 
-export default function LandingPage() {
-  const [lang, setLang] = useState<"ar" | "en">("ar");
-
-  const toggleLang = () => setLang((prev) => (prev === "ar" ? "en" : "ar"));
-
+export default function LandingPage({
+  lang,
+  onToggleLang,
+  toggleLangHref,
+}: {
+  lang: "ar" | "en";
+  onToggleLang?: () => void;
+  toggleLangHref?: string;
+}) {
   return (
     <div
       dir={lang === "ar" ? "rtl" : "ltr"}
       lang={lang}
       className="min-h-screen overflow-x-hidden"
     >
+      <SchemaMarkup lang={lang} />
       <Header lang={lang} />
       <Hero lang={lang} />
       <LogoBar lang={lang} />
@@ -34,7 +37,7 @@ export default function LandingPage() {
       <Pricing lang={lang} />
       <FAQ lang={lang} />
       <FinalCTA lang={lang} />
-      <Footer lang={lang} onToggleLang={toggleLang} />
+      <Footer lang={lang} onToggleLang={onToggleLang} toggleLangHref={toggleLangHref} />
     </div>
   );
 }
