@@ -165,6 +165,7 @@ model Unit {
   leases              Lease[]
   maintenanceRequests MaintenanceRequest[]
   preventivePlans     PreventiveMaintenancePlan[]
+  customerInterests   CustomerPropertyInterest[]
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
@@ -209,7 +210,8 @@ model Customer {
   contracts      Contract[]
   leases         Lease[]
   documents      Document[]
-  activities     CustomerActivity[]
+  activities        CustomerActivity[]
+  propertyInterests CustomerPropertyInterest[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -1287,4 +1289,32 @@ enum ActivityType {
   SITE_VISIT
   NOTE
   WHATSAPP
+}
+
+// ─── Customer Property Interest (CRM → Properties linking) ────────────────────
+
+model CustomerPropertyInterest {
+  id         String         @id @default(cuid())
+  customerId String
+  customer   Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  unitId     String
+  unit       Unit           @relation(fields: [unitId], references: [id])
+  intent     PropertyIntent
+  status     InterestStatus @default(ACTIVE)
+  createdAt  DateTime       @default(now())
+
+  @@unique([customerId, unitId])
+  @@index([customerId])
+  @@index([unitId])
+}
+
+enum PropertyIntent {
+  BUY
+  RENT
+}
+
+enum InterestStatus {
+  ACTIVE      // Customer is currently interested
+  CONVERTED   // Converted to a Deal (reservation created)
+  DROPPED     // Customer no longer interested
 }

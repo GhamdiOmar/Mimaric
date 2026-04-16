@@ -125,12 +125,26 @@ export async function updateReservationStatus(
     data: { status },
   });
 
-  // If cancelled/expired, free the unit
+  // If cancelled/expired, free the unit and revert customer status
   if (status === "CANCELLED" || status === "EXPIRED") {
     await db.unit.update({
       where: { id: reservation.unitId },
       data: { status: "AVAILABLE" },
     });
+    // Revert customer to QUALIFIED if no other active reservations
+    const otherActive = await db.reservation.count({
+      where: {
+        customerId: reservation.customerId,
+        id: { not: reservationId },
+        status: { in: ["PENDING", "CONFIRMED"] },
+      },
+    });
+    if (otherActive === 0) {
+      await db.customer.update({
+        where: { id: reservation.customerId },
+        data: { status: "QUALIFIED" },
+      });
+    }
   }
 
   // If confirmed, mark unit as SOLD
@@ -243,20 +257,21 @@ export async function autoExpireReservations() {
       status: "PENDING",
       expiresAt: { lt: now },
     },
-    select: { id: true, unitId: true },
+    select: { id: true, unitId: true, customerId: true },
   });
 
   for (const res of expired) {
-    await db.$transaction([
-      db.reservation.update({
-        where: { id: res.id },
-        data: { status: "EXPIRED" },
-      }),
-      db.unit.update({
-        where: { id: res.unitId },
-        data: { status: "AVAILABLE" },
-      }),
-    ]);
+    await db.$transaction(async (tx) => {
+      await tx.reservation.update({ where: { id: res.id }, data: { status: "EXPIRED" } });
+      await tx.unit.update({ where: { id: res.unitId }, data: { status: "AVAILABLE" } });
+      // Revert customer if no other active reservations
+      const otherActive = await tx.reservation.count({
+        where: { customerId: res.customerId, id: { not: res.id }, status: { in: ["PENDING", "CONFIRMED"] } },
+      });
+      if (otherActive === 0) {
+        await tx.customer.update({ where: { id: res.customerId }, data: { status: "QUALIFIED" } });
+      }
+    });
   }
 
   return { expired: expired.length };

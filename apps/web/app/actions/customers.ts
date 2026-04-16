@@ -11,6 +11,22 @@ import { hashForSearch } from "../../lib/encryption";
 export async function updateCustomerStatus(customerId: string, status: any, lostReason?: string) {
   const session = await requirePermission("customers:write");
 
+  // When marking LOST: cascade cancel all active reservations + drop all active interests
+  if (status === "LOST") {
+    const activeReservations = await db.reservation.findMany({
+      where: { customerId, status: { in: ["PENDING", "CONFIRMED"] } },
+      select: { id: true, unitId: true },
+    });
+    for (const res of activeReservations) {
+      await db.reservation.update({ where: { id: res.id }, data: { status: "CANCELLED" } });
+      await db.unit.update({ where: { id: res.unitId }, data: { status: "AVAILABLE" } });
+    }
+    await db.customerPropertyInterest.updateMany({
+      where: { customerId, status: "ACTIVE" },
+      data: { status: "DROPPED" },
+    });
+  }
+
   const customer = await db.customer.update({
     where: { id: customerId, organizationId: session.organizationId },
     data: { status, ...(lostReason !== undefined ? { lostReason } : {}) },
@@ -129,6 +145,9 @@ export async function updateCustomer(
     address?: any;
     documentInfo?: any;
     source?: string;
+    agentId?: string;
+    budget?: number;
+    propertyTypeInterest?: string;
   }
 ) {
   const session = await requirePermission("customers:write");
