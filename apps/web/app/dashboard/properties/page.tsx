@@ -43,6 +43,7 @@ import {
   createUnit,
   deleteUnit,
 } from "../../actions/units";
+import { getCustomerInterestsForUnit } from "../../actions/customer-interests";
 import { KsaCitySelect } from "../../../components/ksa-city-select";
 import { usePermissions } from "../../../hooks/usePermissions";
 
@@ -107,10 +108,14 @@ function PropertyDrawer({
   unit,
   onClose,
   lang,
+  interests,
+  loadingInterests,
 }: {
   unit: any;
   onClose: () => void;
   lang: "ar" | "en";
+  interests: any[];
+  loadingInterests: boolean;
 }) {
   const statusCfg = getStatusCfg(unit.status);
   const typeLbl = unitTypeLabels[unit.type] ?? { ar: unit.type, en: unit.type };
@@ -273,6 +278,74 @@ function PropertyDrawer({
               </div>
             </div>
           )}
+
+          {/* Interested Customers */}
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar"
+                ? "العملاء المهتمون"
+                : "Interested Customers"}
+            </h3>
+            {loadingInterests ? (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/20 border border-border/50">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {lang === "ar" ? "جارٍ التحميل..." : "Loading..."}
+                </span>
+              </div>
+            ) : interests.length === 0 ? (
+              <p className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/20 border border-border/50">
+                {lang === "ar"
+                  ? "لا يوجد عملاء مهتمون حالياً"
+                  : "No interested customers yet"}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {interests.map((interest: any) => (
+                  <div
+                    key={interest.id}
+                    className="p-3 rounded-lg bg-muted/20 border border-border/50 space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-foreground">
+                        {interest.customer?.name || "—"}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[10px] px-2 py-0.5 font-semibold border",
+                          interest.intent === "BUY"
+                            ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                            : "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800"
+                        )}
+                      >
+                        {interest.intent === "BUY"
+                          ? lang === "ar" ? "شراء" : "Buy"
+                          : lang === "ar" ? "إيجار" : "Rent"}
+                      </Badge>
+                    </div>
+                    {interest.customer?.phone && (
+                      <p className="text-xs text-muted-foreground font-mono">
+                        {interest.customer.phone}
+                      </p>
+                    )}
+                    {interest.customer?.agent?.name && (
+                      <p className="text-[11px] text-muted-foreground">
+                        {lang === "ar" ? "المسؤول: " : "Agent: "}
+                        {interest.customer.agent.name}
+                      </p>
+                    )}
+                    <a
+                      href="/dashboard/crm"
+                      className="inline-flex items-center text-[11px] text-primary hover:underline font-medium mt-0.5"
+                    >
+                      {lang === "ar" ? "عرض في CRM" : "View in CRM"}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="p-4 border-t border-border">
@@ -309,6 +382,8 @@ export default function PropertiesPage() {
   const [deleteTarget, setDeleteTarget] = React.useState<any>(null);
   const [deleting, setDeleting] = React.useState(false);
   const [drawerUnit, setDrawerUnit] = React.useState<any>(null);
+  const [drawerInterests, setDrawerInterests] = React.useState<any[]>([]);
+  const [loadingDrawerInterests, setLoadingDrawerInterests] = React.useState(false);
 
   // New property form
   const [newUnit, setNewUnit] = React.useState({
@@ -349,6 +424,15 @@ export default function PropertiesPage() {
     }
     loadData();
   }, []);
+
+  React.useEffect(() => {
+    if (!drawerUnit) { setDrawerInterests([]); return; }
+    setLoadingDrawerInterests(true);
+    getCustomerInterestsForUnit(drawerUnit.id)
+      .then(setDrawerInterests)
+      .catch(() => {})
+      .finally(() => setLoadingDrawerInterests(false));
+  }, [drawerUnit?.id]);
 
   // ─── Filtered ─────────────────────────────────────────────────────────────
 
@@ -836,6 +920,8 @@ export default function PropertiesPage() {
           unit={drawerUnit}
           onClose={() => setDrawerUnit(null)}
           lang={lang}
+          interests={drawerInterests}
+          loadingInterests={loadingDrawerInterests}
         />
       )}
 
