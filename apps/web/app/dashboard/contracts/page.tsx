@@ -415,7 +415,7 @@ export default function ContractsPage() {
                   <TableCell>
                     <div className="text-sm">
                       <p className="font-medium">{lang === "ar" ? "وحدة" : "Unit"} {c.unit.number}</p>
-                      <p className="text-gray-500 text-xs">{c.unit.buildingName ?? c.unit.city ?? "—"}</p>
+                      <p className="text-gray-500 text-xs">{(c.unit as any).buildingName ?? (c.unit as any).city ?? "—"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{SAR(Number(c.amount))}</TableCell>
@@ -469,7 +469,7 @@ export default function ContractsPage() {
                   <TableCell>
                     <div className="text-sm">
                       <p className="font-medium">{lang === "ar" ? "وحدة" : "Unit"} {c.unit.number}</p>
-                      <p className="text-gray-500 text-xs">{c.unit.buildingName ?? c.unit.city ?? "—"}</p>
+                      <p className="text-gray-500 text-xs">{(c.unit as any).buildingName ?? (c.unit as any).city ?? "—"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{SAR(Number(c.amount))}</TableCell>

@@ -1,5 +1,31 @@
 # Changelog — Mimaric PropTech
 
+## [3.2.0] — 2026-04-16
+
+### Unified Property Linking in Add Customer Modal
+
+**UX fixes to "Add Customer" modal:**
+
+- **Title fix:** Modal heading changed from "إضافة عميل / عقار جديد" to "إضافة عميل جديد" / "Add New Customer" — no more misleading property reference
+- **Button fix:** Header button changed from "إضافة عميل / عقار" to "إضافة عميل" / "Add Customer"
+- **Removed:** Vague "نوع العقار المطلوب" (Property Type) text dropdown (APARTMENT/VILLA/etc.) — replaced with real unit linking
+
+**New: Inline Property Linking with Budget Comparison**
+
+- Replaced the vague property type dropdown with a live unit search — same UX as the drawer's "ربط عقار" section
+- Search by unit number, city, type, or building name; shows up to 8 matching AVAILABLE/RESERVED units
+- After selecting a unit: BUY / RENT intent buttons appear
+- Selected unit shown as a pill with intent badge and a clear (×) button
+- **Budget comparison badges** appear on each unit row when a budget is entered:
+  - Red "فوق الميزانية / Over Budget" — unit price > 105% of budget
+  - Green "ضمن الميزانية / On Budget" — unit price within ±10% of budget
+  - Blue "أقل من الميزانية / Under Budget" — unit price < 90% of budget
+- BUY intent uses `markupPrice`; RENT intent uses `rentalPrice` for comparison
+- Linking is fully optional — omitting it creates the customer with no interest record
+- On successful create with a unit selected: `addCustomerInterest()` is called automatically → interest appears immediately in the customer drawer's "Interested Properties" section
+
+---
+
 ## [3.1.0] — 2026-04-16
 
 ### Mimaric v3.1 — Full Prospect-to-Close Cycle

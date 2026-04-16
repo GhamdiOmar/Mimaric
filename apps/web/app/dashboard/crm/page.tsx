@@ -1458,6 +1458,12 @@ export default function CRMPage() {
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [newCustomer, setNewCustomer] = React.useState(EMPTY_NEW_CUSTOMER);
 
+  // Add modal — property linking
+  const [pageAvailableUnits, setPageAvailableUnits] = React.useState<any[]>([]);
+  const [newCustUnitSearch, setNewCustUnitSearch] = React.useState("");
+  const [newCustSelectedUnit, setNewCustSelectedUnit] = React.useState<any | null>(null);
+  const [newCustIntent, setNewCustIntent] = React.useState<"BUY" | "RENT" | null>(null);
+
   // Delete dialog
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<any>(null);
@@ -1513,9 +1519,10 @@ export default function CRMPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [data, members] = await Promise.all([getCustomers(), getTeamMembers()]);
+      const [data, members, units] = await Promise.all([getCustomers(), getTeamMembers(), getAvailableUnitsForInterest()]);
       setCustomers(data);
       setTeamMembers(members.filter((m: any) => ["ADMIN", "MANAGER", "AGENT"].includes(m.role)));
+      setPageAvailableUnits(units);
     } catch {
       setError(
         lang === "ar"
@@ -1543,6 +1550,42 @@ export default function CRMPage() {
       return matchSearch && matchStatus && (statusFilter ? true : matchLost);
     });
   }, [customers, search, statusFilter, showLost]);
+
+  // ─── Add modal: unit search + budget comparison ─────────────────────────────
+
+  const newCustFilteredUnits = React.useMemo(() => {
+    if (!newCustUnitSearch.trim()) return [];
+    const q = newCustUnitSearch.toLowerCase().trim();
+    return pageAvailableUnits.filter((u) =>
+      u.number?.toLowerCase().includes(q) ||
+      u.city?.toLowerCase().includes(q) ||
+      u.type?.toLowerCase().includes(q) ||
+      u.buildingName?.toLowerCase().includes(q)
+    ).slice(0, 8);
+  }, [newCustUnitSearch, pageAvailableUnits]);
+
+  function getBudgetTag(unitPrice: number | null | undefined, budget: string, intent: "BUY" | "RENT" | null) {
+    const b = Number(budget);
+    if (!unitPrice || !b || b <= 0) return null;
+    const ratio = unitPrice / b;
+    if (ratio > 1.05) return {
+      label: lang === "ar" ? "فوق الميزانية" : "Over Budget",
+      color: "text-destructive bg-destructive/10 dark:bg-destructive/20",
+    };
+    if (ratio >= 0.9) return {
+      label: lang === "ar" ? "ضمن الميزانية" : "On Budget",
+      color: "text-green-700 bg-green-50 dark:text-green-400 dark:bg-green-950/30",
+    };
+    return {
+      label: lang === "ar" ? "أقل من الميزانية" : "Under Budget",
+      color: "text-blue-700 bg-blue-50 dark:text-blue-400 dark:bg-blue-950/30",
+    };
+  }
+
+  function getUnitPrice(unit: any, intent: "BUY" | "RENT" | null) {
+    if (intent === "RENT") return unit.rentalPrice ?? null;
+    return unit.markupPrice ?? unit.price ?? null;
+  }
 
   // ─── KPIs ───────────────────────────────────────────────────────────────────
 
@@ -1652,12 +1695,20 @@ export default function CRMPage() {
         nationality: newCustomer.nationality || undefined,
         maritalStatus: newCustomer.maritalStatus || undefined,
         budget: newCustomer.budget ? Number(newCustomer.budget) : undefined,
-        propertyTypeInterest: newCustomer.propertyTypeInterest || undefined,
         agentId: newCustomer.agentId || undefined,
       });
+
+      // Link property interest if a unit + intent was selected
+      if (newCustSelectedUnit && newCustIntent) {
+        await addCustomerInterest(created.id, newCustSelectedUnit.id, newCustIntent);
+      }
+
       setCustomers((prev) => [created, ...prev]);
       setShowAddModal(false);
       setNewCustomer(EMPTY_NEW_CUSTOMER);
+      setNewCustSelectedUnit(null);
+      setNewCustIntent(null);
+      setNewCustUnitSearch("");
     } catch (err: any) {
       // Only surface friendly messages — never raw Prisma/technical errors
       const msg = err?.message ?? "";
@@ -1802,7 +1853,7 @@ export default function CRMPage() {
                 onClick={() => setShowAddModal(true)}
               >
                 <UserPlus className="h-3.5 w-3.5" />
-                {lang === "ar" ? "إضافة عميل / عقار" : "Add Lead / Client"}
+                {lang === "ar" ? "إضافة عميل" : "Add Customer"}
               </Button>
             )}
           </>
@@ -2164,7 +2215,7 @@ export default function CRMPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h2 className="text-lg font-bold text-foreground">
-                {lang === "ar" ? "إضافة عميل / عقار جديد" : "Add Lead / Client"}
+                {lang === "ar" ? "إضافة عميل جديد" : "Add New Customer"}
               </h2>
               <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="h-5 w-5" />
@@ -2262,20 +2313,149 @@ export default function CRMPage() {
                     min="0"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground">
-                    {lang === "ar" ? "نوع العقار المطلوب" : "Property Interest"}
+                {/* ── Link Property (Optional) ── */}
+                <div className="col-span-2 space-y-2 pt-1">
+                  <label className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                    <Link2 className="h-3.5 w-3.5" />
+                    {lang === "ar" ? "ربط عقار (اختياري)" : "Link Property (Optional)"}
                   </label>
-                  <select
-                    value={newCustomer.propertyTypeInterest}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, propertyTypeInterest: e.target.value })}
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <option value="">{lang === "ar" ? "اختر النوع" : "Select type"}</option>
-                    {PROPERTY_TYPES.map((pt) => (
-                      <option key={pt.key} value={pt.key}>{pt.label[lang]}</option>
-                    ))}
-                  </select>
+
+                  {/* Selected unit pill */}
+                  {newCustSelectedUnit ? (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-sm font-medium text-foreground truncate">
+                          {newCustSelectedUnit.number}
+                        </span>
+                        <span className="text-xs text-muted-foreground">·</span>
+                        <span className="text-xs text-muted-foreground">{newCustSelectedUnit.type}</span>
+                        {newCustSelectedUnit.city && (
+                          <>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground">{newCustSelectedUnit.city}</span>
+                          </>
+                        )}
+                        {newCustIntent && (
+                          <span className={cn(
+                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                            newCustIntent === "BUY"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400"
+                              : "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-400"
+                          )}>
+                            {newCustIntent === "BUY" ? (lang === "ar" ? "شراء" : "BUY") : (lang === "ar" ? "إيجار" : "RENT")}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setNewCustSelectedUnit(null); setNewCustIntent(null); setNewCustUnitSearch(""); }}
+                        className="text-muted-foreground hover:text-foreground shrink-0"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Search input */}
+                      <div className="relative">
+                        <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <Input
+                          value={newCustUnitSearch}
+                          onChange={(e) => setNewCustUnitSearch(e.target.value)}
+                          placeholder={lang === "ar" ? "ابحث برقم الوحدة أو المدينة..." : "Search by unit number or city..."}
+                          className="ps-9 text-sm"
+                        />
+                      </div>
+
+                      {/* Results list */}
+                      {newCustUnitSearch.trim() ? (
+                        newCustFilteredUnits.length > 0 ? (
+                          <div className="border border-border rounded-lg overflow-hidden divide-y divide-border max-h-48 overflow-y-auto">
+                            {newCustFilteredUnits.map((unit) => {
+                              const price = getUnitPrice(unit, newCustIntent);
+                              const tag = getBudgetTag(price, newCustomer.budget, newCustIntent);
+                              return (
+                                <button
+                                  key={unit.id}
+                                  type="button"
+                                  onClick={() => { setNewCustSelectedUnit(unit); setNewCustUnitSearch(""); }}
+                                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 text-start hover:bg-muted/50 transition-colors"
+                                >
+                                  <div className="flex items-center gap-1.5 min-w-0 text-sm">
+                                    <span className="font-medium text-foreground truncate">{unit.number}</span>
+                                    <span className="text-muted-foreground">·</span>
+                                    <span className="text-muted-foreground text-xs">{unit.type}</span>
+                                    {unit.city && (
+                                      <>
+                                        <span className="text-muted-foreground">·</span>
+                                        <span className="text-muted-foreground text-xs truncate">{unit.city}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {price && (
+                                      <span className="text-xs font-mono text-muted-foreground" dir="ltr">
+                                        {Number(price).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} {lang === "ar" ? "ر.س" : "SAR"}
+                                      </span>
+                                    )}
+                                    {tag && (
+                                      <span className={cn("text-[10px] font-semibold px-1.5 py-0.5 rounded-full", tag.color)}>
+                                        {tag.label}
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground text-center py-3">
+                            {lang === "ar" ? "لا توجد وحدات مطابقة للبحث" : "No units match your search"}
+                          </p>
+                        )
+                      ) : (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 px-1">
+                          <Search className="h-3.5 w-3.5 shrink-0" />
+                          {lang === "ar" ? "ابدأ البحث للعثور على وحدات متاحة" : "Search to find available units"}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Intent selection — shown after unit is selected */}
+                  {newCustSelectedUnit && (
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium text-muted-foreground">
+                        {lang === "ar" ? "نوع الاهتمام" : "Interest Type"}
+                      </label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setNewCustIntent("BUY")}
+                          className={cn(
+                            "flex-1 py-2 text-sm font-medium rounded-lg border transition-colors",
+                            newCustIntent === "BUY"
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "border-border text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          {lang === "ar" ? "شراء" : "Buy"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setNewCustIntent("RENT")}
+                          className={cn(
+                            "flex-1 py-2 text-sm font-medium rounded-lg border transition-colors",
+                            newCustIntent === "RENT"
+                              ? "bg-violet-600 text-white border-violet-600"
+                              : "border-border text-muted-foreground hover:bg-muted/50"
+                          )}
+                        >
+                          {lang === "ar" ? "إيجار" : "Rent"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Agent Assignment */}
@@ -2395,7 +2575,7 @@ export default function CRMPage() {
               <Button
                 variant="secondary"
                 style={{ display: "inline-flex" }}
-                onClick={() => { setShowAddModal(false); setError(null); }}
+                onClick={() => { setShowAddModal(false); setError(null); setNewCustSelectedUnit(null); setNewCustIntent(null); setNewCustUnitSearch(""); }}
                 disabled={saving}
               >
                 {lang === "ar" ? "إلغاء" : "Cancel"}
