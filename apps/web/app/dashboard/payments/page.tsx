@@ -32,6 +32,7 @@ import {
   FAB,
   EmptyState,
   SARAmount,
+  SARAmountInput,
   Skeleton,
   Alert,
   AlertDescription,
@@ -677,12 +678,9 @@ export default function PaymentsPage() {
               <label className="text-sm font-medium text-gray-700">
                 {lang === "ar" ? "المبلغ المدفوع (ريال)" : "Payment Amount (SAR)"} *
               </label>
-              <Input
-                type="number"
-                min={0}
-                max={paymentTarget.amount}
-                value={payForm.amount}
-                onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))}
+              <SARAmountInput
+                value={payForm.amount === "" ? null : Number(payForm.amount)}
+                onChange={(n) => setPayForm((f) => ({ ...f, amount: n == null ? "" : String(n) }))}
                 placeholder="0.00"
               />
             </div>

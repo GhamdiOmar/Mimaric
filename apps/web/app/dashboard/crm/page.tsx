@@ -50,6 +50,8 @@ import {
   BottomSheet,
   FAB,
   DirectionalIcon,
+  NationalIdInput,
+  SaudiPhoneInput,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -1033,11 +1035,10 @@ function CustomerDrawer({
               <label className="text-xs font-bold text-muted-foreground">
                 {lang === "ar" ? "رقم الجوال" : "Phone"}
               </label>
-              <Input
+              <SaudiPhoneInput
                 value={editForm.phone}
-                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                onChange={(e164) => setEditForm({ ...editForm, phone: e164 })}
                 placeholder="+966 5x xxx xxxx"
-                dir="ltr"
               />
             </div>
             <div className="col-span-2 space-y-1">
@@ -2669,11 +2670,10 @@ export default function CRMPage() {
                   <label className="text-xs font-bold text-muted-foreground">
                     {lang === "ar" ? "رقم الجوال *" : "Phone *"}
                   </label>
-                  <Input
+                  <SaudiPhoneInput
                     value={newCustomer.phone}
-                    onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
+                    onChange={(e164) => setNewCustomer({ ...newCustomer, phone: e164 })}
                     placeholder="+966 5x xxx xxxx"
-                    dir="ltr"
                   />
                 </div>
                 <div className="space-y-1">
@@ -2909,11 +2909,10 @@ export default function CRMPage() {
                     <label className="text-xs font-bold text-muted-foreground">
                       {lang === "ar" ? "رقم الهوية" : "National ID"}
                     </label>
-                    <Input
+                    <NationalIdInput
                       value={newCustomer.nationalId}
-                      onChange={(e) => setNewCustomer({ ...newCustomer, nationalId: e.target.value })}
+                      onChange={(raw) => setNewCustomer({ ...newCustomer, nationalId: raw })}
                       placeholder="10x xxx xxxx"
-                      dir="ltr"
                     />
                   </div>
                   <div className="space-y-1">
