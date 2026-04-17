@@ -464,21 +464,31 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ─── Desktop (md+) — unchanged original ──────────────────── */}
+      {/* ─── Desktop (md+) ───────────────────────────────────────── */}
       <div className="hidden md:block space-y-8">
-      {/* Greeting */}
-      <div className="glass rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {greeting}، {userName}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
+      {/* Greeting + toolbar */}
+      <div className="glass rounded-xl p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {greeting}، {userName}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangePicker locale={lang} />
+          <LastUpdatedAgo
+            timestamp={lastLoaded}
+            locale={lang}
+            onRefresh={loadDashboard}
+          />
+        </div>
       </div>
 
       {/* Error State */}
@@ -492,60 +502,111 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* KPI Cards — Row 1 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* KPIs — hero + 3 standards + 2 utility per § 6.9.1 North Star rule */}
+      <div className="space-y-4">
         <KPICard
-          label={lang === "ar" ? "إجمالي الوحدات" : "Total Properties"}
-          value={loading ? "—" : formatNumber(stats?.totalProperties ?? 0)}
-          subtitle={lang === "ar" ? "جميع وحدات المنشأة" : "All units in your organization"}
-          icon={<Building2 className="h-[18px] w-[18px]" />}
-          accentColor="primary"
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "الصفقات النشطة" : "Active Deals"}
-          value={loading ? "—" : formatNumber(stats?.activeDeals ?? 0)}
-          subtitle={lang === "ar" ? "حجوزات معلقة أو مؤكدة" : "Pending or confirmed reservations"}
-          icon={<Handshake className="h-[18px] w-[18px]" />}
-          accentColor="info"
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "العقود الموقعة" : "Signed Contracts"}
-          value={loading ? "—" : formatNumber(stats?.signedContracts ?? 0)}
-          subtitle={lang === "ar" ? "عقود مكتملة الإجراءات" : "Fully executed contracts"}
-          icon={<FileText className="h-[18px] w-[18px]" />}
-          accentColor="success"
-          loading={loading}
-        />
-      </div>
-
-      {/* KPI Cards — Row 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <KPICard
-          label={lang === "ar" ? "المدفوعات المعلقة" : "Pending Payments"}
-          value={loading ? "—" : formatNumber(stats?.pendingPayments ?? 0)}
-          subtitle={lang === "ar" ? "أقساط متأخرة غير مسددة" : "Overdue installments unpaid"}
-          icon={<CreditCard className="h-[18px] w-[18px]" />}
-          accentColor={stats && stats.pendingPayments > 0 ? "warning" : "primary"}
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "طلبات الصيانة" : "Open Maintenance"}
-          value={loading ? "—" : formatNumber(stats?.openMaintenance ?? 0)}
-          subtitle={lang === "ar" ? "طلبات لم تُغلق بعد" : "Requests not yet completed"}
-          icon={<Wrench className="h-[18px] w-[18px]" />}
-          accentColor={stats && stats.openMaintenance > 10 ? "warning" : "info"}
-          loading={loading}
-        />
-        <KPICard
+          tier="hero"
           label={lang === "ar" ? "الإيرادات الشهرية" : "Monthly Revenue"}
-          value={loading ? "—" : <SARAmount value={stats?.monthlyRevenue ?? 0} compact size={20} />}
-          subtitle={lang === "ar" ? "المدفوعات المحصلة هذا الشهر" : "Payments collected this month"}
+          value={
+            loading ? (
+              "—"
+            ) : (
+              <SARAmount value={stats?.monthlyRevenue ?? 0} compact size={20} />
+            )
+          }
+          subtitle={
+            lang === "ar"
+              ? "المدفوعات المحصلة هذا الشهر"
+              : "Payments collected this month"
+          }
+          secondaryInsight={
+            !loading && stats
+              ? lang === "ar"
+                ? `${formatNumber(stats.signedContracts)} عقد موقّع · ${formatNumber(stats.totalProperties)} وحدة بالمحفظة`
+                : `${formatNumber(stats.signedContracts)} signed contracts · ${formatNumber(stats.totalProperties)} units in portfolio`
+              : undefined
+          }
           icon={<TrendingUp className="h-[18px] w-[18px]" />}
-          accentColor="secondary"
+          accent="secondary"
+          comparisonPeriod={lang === "ar" ? "هذا الشهر" : "this month"}
+          trend={trends.collections.slice(-12)}
+          href="/dashboard/finance"
+          lastUpdated={lastLoaded}
+          locale={lang}
           loading={loading}
         />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <KPICard
+            label={lang === "ar" ? "الصفقات النشطة" : "Active Deals"}
+            value={loading ? "—" : formatNumber(stats?.activeDeals ?? 0)}
+            subtitle={
+              lang === "ar"
+                ? "حجوزات معلقة أو مؤكدة"
+                : "Pending or confirmed reservations"
+            }
+            icon={<Handshake className="h-[18px] w-[18px]" />}
+            accent="info"
+            trend={trends.pipeline.slice(-12)}
+            href="/dashboard/deals"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "العقود الموقعة" : "Signed Contracts"}
+            value={loading ? "—" : formatNumber(stats?.signedContracts ?? 0)}
+            subtitle={
+              lang === "ar" ? "عقود مكتملة الإجراءات" : "Fully executed contracts"
+            }
+            icon={<FileText className="h-[18px] w-[18px]" />}
+            accent="success"
+            href="/dashboard/contracts"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "المدفوعات المعلقة" : "Pending Payments"}
+            value={loading ? "—" : formatNumber(stats?.pendingPayments ?? 0)}
+            subtitle={
+              lang === "ar"
+                ? "أقساط متأخرة غير مسددة"
+                : "Overdue installments unpaid"
+            }
+            icon={<CreditCard className="h-[18px] w-[18px]" />}
+            accent={
+              stats && stats.pendingPayments > 0 ? "warning" : "primary"
+            }
+            href="/dashboard/finance"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <KPICard
+            tier="utility"
+            label={lang === "ar" ? "إجمالي الوحدات" : "Total Properties"}
+            value={loading ? "—" : formatNumber(stats?.totalProperties ?? 0)}
+            icon={<Building2 className="h-[18px] w-[18px]" />}
+            accent="primary"
+            href="/dashboard/units"
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            tier="utility"
+            label={lang === "ar" ? "طلبات الصيانة" : "Open Maintenance"}
+            value={loading ? "—" : formatNumber(stats?.openMaintenance ?? 0)}
+            icon={<Wrench className="h-[18px] w-[18px]" />}
+            accent={
+              stats && stats.openMaintenance > 10 ? "warning" : "info"
+            }
+            href="/dashboard/maintenance"
+            locale={lang}
+            loading={loading}
+          />
+        </div>
       </div>
 
       {/* Activity Widgets */}

@@ -159,62 +159,85 @@ export default function MaintenanceOverviewPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* KPIs — hero + 3 standards per § 6.9.1 North Star rule */}
+      <div className="space-y-4">
         <KPICard
+          tier="hero"
           label={lang === "ar" ? "طلبات مفتوحة" : "Open Tickets"}
           value={loading ? "—" : fmt(stats?.openTickets ?? 0)}
           icon={<Wrench className="h-[18px] w-[18px]" />}
-          accent={stats && stats.openTickets > 10 ? "warning" : "primary"}
-          comparisonPeriod={lang === "ar" ? "تنتظر التعيين" : "awaiting assignment"}
+          accent={
+            stats && stats.slaBreachCount > 0
+              ? "destructive"
+              : stats && stats.openTickets > 10
+                ? "warning"
+                : "primary"
+          }
+          comparisonPeriod={
+            lang === "ar" ? "تنتظر التعيين" : "awaiting assignment"
+          }
+          secondaryInsight={
+            !loading && stats
+              ? stats.slaBreachCount > 0
+                ? lang === "ar"
+                  ? `${fmt(stats.slaBreachCount)} طلب تجاوز مستوى الخدمة`
+                  : `${fmt(stats.slaBreachCount)} tickets breaching SLA`
+                : lang === "ar"
+                  ? "كل الطلبات ضمن مستوى الخدمة"
+                  : "All tickets within SLA"
+              : undefined
+          }
           trend={ticketsTrend}
           href="/dashboard/maintenance/tickets"
           lastUpdated={lastLoaded}
           locale={lang}
           loading={loading}
         />
-        <KPICard
-          label={lang === "ar" ? "قيد التنفيذ" : "In Progress"}
-          value={loading ? "—" : fmt(stats?.inProgressTickets ?? 0)}
-          icon={<Clock className="h-[18px] w-[18px]" />}
-          accent="info"
-          comparisonPeriod={lang === "ar" ? "مُعيّنة لفريق" : "assigned"}
-          href="/dashboard/maintenance/tickets"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "طلبات متأخرة" : "SLA Breached"}
-          value={loading ? "—" : fmt(stats?.slaBreachCount ?? 0)}
-          icon={<AlertOctagon className="h-[18px] w-[18px]" />}
-          accent={
-            stats && stats.slaBreachCount > 0 ? "destructive" : "primary"
-          }
-          comparisonPeriod={lang === "ar" ? "طلب متأخر" : "tickets overdue"}
-          href="/dashboard/maintenance/tickets"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "متوسط زمن الحل" : "Avg Resolution"}
-          value={
-            loading
-              ? "—"
-              : stats?.avgResolutionHours == null
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <KPICard
+            label={lang === "ar" ? "قيد التنفيذ" : "In Progress"}
+            value={loading ? "—" : fmt(stats?.inProgressTickets ?? 0)}
+            icon={<Clock className="h-[18px] w-[18px]" />}
+            accent="info"
+            comparisonPeriod={lang === "ar" ? "مُعيّنة لفريق" : "assigned"}
+            href="/dashboard/maintenance/tickets"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "طلبات متأخرة" : "SLA Breached"}
+            value={loading ? "—" : fmt(stats?.slaBreachCount ?? 0)}
+            icon={<AlertOctagon className="h-[18px] w-[18px]" />}
+            accent={
+              stats && stats.slaBreachCount > 0 ? "destructive" : "primary"
+            }
+            comparisonPeriod={lang === "ar" ? "طلب متأخر" : "tickets overdue"}
+            href="/dashboard/maintenance/tickets"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "متوسط زمن الحل" : "Avg Resolution"}
+            value={
+              loading
                 ? "—"
-                : lang === "ar"
-                  ? `${fmt(stats.avgResolutionHours)} س`
-                  : `${fmt(stats.avgResolutionHours)} h`
-          }
-          icon={<Timer className="h-[18px] w-[18px]" />}
-          accent="success"
-          comparisonPeriod={lang === "ar" ? "آخر 30 يوم" : "last 30 days"}
-          href="/dashboard/maintenance/tickets"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
+                : stats?.avgResolutionHours == null
+                  ? "—"
+                  : lang === "ar"
+                    ? `${fmt(stats.avgResolutionHours)} س`
+                    : `${fmt(stats.avgResolutionHours)} h`
+            }
+            icon={<Timer className="h-[18px] w-[18px]" />}
+            accent="success"
+            comparisonPeriod={lang === "ar" ? "آخر 30 يوم" : "last 30 days"}
+            href="/dashboard/maintenance/tickets"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

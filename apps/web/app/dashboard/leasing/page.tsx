@@ -142,55 +142,65 @@ export default function LeasingDashboardPage() {
         </div>
       )}
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+      {/* KPIs — hero + 3 standards per § 6.9.1 North Star rule */}
+      <div className="space-y-4">
         <KPICard
-          label={lang === "ar" ? "عقود الشهر" : "Leases Signed MTD"}
+          tier="hero"
+          label={lang === "ar" ? "عقود موقعة هذا الشهر" : "Leases Signed MTD"}
           value={loading ? "—" : fmt(stats?.leasesSignedMTD ?? 0)}
           icon={<FileSignature className="h-[18px] w-[18px]" />}
           accent="primary"
           comparisonPeriod={lang === "ar" ? "هذا الشهر" : "this month"}
-          trend={pipelineTrend.slice(-8)}
-          href="/dashboard/contracts"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "طلبات معلقة" : "Pending Applications"}
-          value={loading ? "—" : fmt(stats?.pendingApplications ?? 0)}
-          icon={<ClipboardList className="h-[18px] w-[18px]" />}
-          accent={
-            stats && stats.pendingApplications > 0 ? "warning" : "primary"
+          secondaryInsight={
+            !loading && stats
+              ? lang === "ar"
+                ? `${fmt(stats.activeLeases)} عقد نشط حالياً`
+                : `${fmt(stats.activeLeases)} active leases in portfolio`
+              : undefined
           }
-          comparisonPeriod={lang === "ar" ? "تحتاج مراجعة" : "awaiting review"}
-          href="/dashboard/reservations"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
-        <KPICard
-          label={lang === "ar" ? "عقود نشطة" : "Active Leases"}
-          value={loading ? "—" : fmt(stats?.activeLeases ?? 0)}
-          icon={<Users className="h-[18px] w-[18px]" />}
-          accent="success"
-          comparisonPeriod={lang === "ar" ? "حالياً" : "currently"}
+          trend={pipelineTrend.slice(-12)}
           href="/dashboard/contracts"
           lastUpdated={lastLoaded}
           locale={lang}
           loading={loading}
         />
-        <KPICard
-          label={lang === "ar" ? "تنتهي قريباً" : "Expiring Soon"}
-          value={loading ? "—" : fmt(stats?.expiringSoon ?? 0)}
-          icon={<CalendarClock className="h-[18px] w-[18px]" />}
-          accent={stats && stats.expiringSoon > 0 ? "warning" : "primary"}
-          comparisonPeriod={lang === "ar" ? "خلال 30 يوم" : "in next 30 days"}
-          href="/dashboard/contracts"
-          lastUpdated={lastLoaded}
-          locale={lang}
-          loading={loading}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <KPICard
+            label={lang === "ar" ? "طلبات معلقة" : "Pending Applications"}
+            value={loading ? "—" : fmt(stats?.pendingApplications ?? 0)}
+            icon={<ClipboardList className="h-[18px] w-[18px]" />}
+            accent={
+              stats && stats.pendingApplications > 0 ? "warning" : "primary"
+            }
+            comparisonPeriod={lang === "ar" ? "تحتاج مراجعة" : "awaiting review"}
+            href="/dashboard/reservations"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "عقود نشطة" : "Active Leases"}
+            value={loading ? "—" : fmt(stats?.activeLeases ?? 0)}
+            icon={<Users className="h-[18px] w-[18px]" />}
+            accent="success"
+            comparisonPeriod={lang === "ar" ? "حالياً" : "currently"}
+            href="/dashboard/contracts"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+          <KPICard
+            label={lang === "ar" ? "تنتهي قريباً" : "Expiring Soon"}
+            value={loading ? "—" : fmt(stats?.expiringSoon ?? 0)}
+            icon={<CalendarClock className="h-[18px] w-[18px]" />}
+            accent={stats && stats.expiringSoon > 0 ? "warning" : "primary"}
+            comparisonPeriod={lang === "ar" ? "خلال 30 يوم" : "in next 30 days"}
+            href="/dashboard/contracts"
+            lastUpdated={lastLoaded}
+            locale={lang}
+            loading={loading}
+          />
+        </div>
       </div>
 
       {/* Pipeline funnel + stage breakdown */}

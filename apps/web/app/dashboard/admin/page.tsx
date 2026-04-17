@@ -13,6 +13,7 @@ import {
   DirectionalIcon,
   DateRangePicker,
   LastUpdatedAgo,
+  KPICard,
   Card,
   CardHeader,
   CardTitle,
@@ -217,6 +218,28 @@ export default function SystemAdminPage() {
         </div>
       </div>
 
+      {/* North Star — Active Orgs hero card (§ 6.9.1) */}
+      <KPICard
+        tier="hero"
+        label={lang === "ar" ? "المنظمات العميلة" : "Active Client Orgs"}
+        value={loading || !stats ? "—" : fmt(stats.orgCount)}
+        icon={<Building2 className="h-[18px] w-[18px]" />}
+        accent="primary"
+        comparisonPeriod={lang === "ar" ? "حالياً" : "currently active"}
+        secondaryInsight={
+          !loading && stats
+            ? lang === "ar"
+              ? `${fmt(stats.activeSubscriptions)} اشتراك نشط · ${fmt(stats.trialingSubscriptions)} في الفترة التجريبية`
+              : `${fmt(stats.activeSubscriptions)} active subscriptions · ${fmt(stats.trialingSubscriptions)} trialing`
+            : undefined
+        }
+        trend={mrrTrend}
+        href="/dashboard/admin/subscriptions"
+        lastUpdated={lastLoaded}
+        locale={lang}
+        loading={loading}
+      />
+
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 12 }).map((_, i) => (
@@ -231,10 +254,10 @@ export default function SystemAdminPage() {
               {lang === "ar" ? "حجم المنصة" : "Platform Scale"}
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label={{ ar: "المنظمات العميلة", en: "Client Orgs" }} value={fmt(stats.orgCount)} icon={Building2} color="bg-primary/10 text-primary" />
               <StatCard label={{ ar: "إجمالي المستخدمين", en: "Total Users" }} value={fmt(stats.userCount)} icon={Users} color="bg-blue-500/10 text-blue-500" />
               <StatCard label={{ ar: "إجمالي الوحدات", en: "Total Properties" }} value={fmt(stats.propertyCount)} icon={Home} color="bg-indigo-500/10 text-indigo-500" />
               <StatCard label={{ ar: "إجمالي العقود", en: "Total Contracts" }} value={fmt(stats.contractCount)} icon={FileText} color="bg-violet-500/10 text-violet-500" />
+              <StatCard label={{ ar: "تذاكر مفتوحة", en: "Open Tickets" }} value={fmt(stats.openTickets + stats.inProgressTickets)} icon={Ticket} color="bg-orange-500/10 text-orange-500" />
             </div>
           </section>
 
@@ -256,11 +279,10 @@ export default function SystemAdminPage() {
             <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
               {lang === "ar" ? "صحة الفوترة" : "Billing Health"}
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <StatCard label={{ ar: "فواتير مدفوعة", en: "Paid Invoices" }} value={fmt(stats.paidInvoices)} icon={BadgeDollarSign} color="bg-green-500/10 text-green-500" />
               <StatCard label={{ ar: "فواتير غير مدفوعة", en: "Unpaid Invoices" }} value={fmt(stats.unpaidInvoices)} icon={TrendingUp} color="bg-amber-500/10 text-amber-500" />
               <StatCard label={{ ar: "فواتير متأخرة", en: "Overdue Invoices" }} value={fmt(stats.overdueInvoices)} icon={AlertCircle} color="bg-red-500/10 text-red-500" />
-              <StatCard label={{ ar: "تذاكر مفتوحة", en: "Open Tickets" }} value={fmt(stats.openTickets + stats.inProgressTickets)} icon={Ticket} color="bg-orange-500/10 text-orange-500" />
             </div>
           </section>
 
