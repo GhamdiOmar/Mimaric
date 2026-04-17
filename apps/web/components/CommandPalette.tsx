@@ -27,6 +27,7 @@ import {
   TrendingUp,
   SearchCheck,
   TicketCheck,
+  CalendarCheck,
   UserPlus,
   FilePlus,
   PlusCircle,
@@ -52,6 +53,7 @@ const navIconMap: Record<string, React.ComponentType<{ className?: string }>> = 
   ShieldCheck,
   SearchCheck,
   TicketCheck,
+  CalendarCheck,
   Settings,
 };
 

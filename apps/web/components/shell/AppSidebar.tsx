@@ -37,6 +37,7 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
   const isPlatformUser = isSystemRole(userRole);
 
   const filteredItems = navItems.filter((item) => {
+    if (item.hiddenFromNav) return false;
     if (item.permission && !hasPermission(userRole, item.permission)) return false;
     if (item.audience === "tenant" && isPlatformUser) return false;
     if (item.audience === "platform" && !isPlatformUser) return false;

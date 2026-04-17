@@ -8,6 +8,8 @@ export interface NavItem {
   permission?: Permission;
   /** "tenant" = hide from platform staff; "platform" = hide from tenant users; omit = show to all */
   audience?: "tenant" | "platform";
+  /** true = exclude from primary nav surfaces (sidebar + mobile More). Still surfaced in Cmd-K and breadcrumbs. */
+  hiddenFromNav?: boolean;
 }
 
 export const navItems: NavItem[] = [
@@ -22,8 +24,11 @@ export const navItems: NavItem[] = [
 
   // Operations — tenant only
   { label: { ar: "المدفوعات", en: "Payments" }, icon: "CreditCard", href: "/dashboard/payments", section: "operations", permission: "payments:read", audience: "tenant" },
-  { label: { ar: "لوحة الصيانة", en: "Maintenance" }, icon: "Gauge", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read", audience: "tenant" },
-  { label: { ar: "تذاكر الصيانة", en: "Tickets" }, icon: "Wrench", href: "/dashboard/maintenance/tickets", section: "operations", permission: "maintenance:read", audience: "tenant" },
+  { label: { ar: "الصيانة", en: "Maintenance" }, icon: "Wrench", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read", audience: "tenant" },
+  // Sub-sections of Maintenance — exposed via the sub-tab bar inside /dashboard/maintenance
+  // and Cmd-K search, but not as separate sidebar entries (IA: one top-level per workflow).
+  { label: { ar: "تذاكر الصيانة", en: "Maintenance · Tickets" }, icon: "ClipboardList", href: "/dashboard/maintenance/tickets", section: "operations", permission: "maintenance:read", audience: "tenant", hiddenFromNav: true },
+  { label: { ar: "الصيانة الوقائية", en: "Maintenance · Preventive" }, icon: "CalendarCheck", href: "/dashboard/maintenance/preventive", section: "operations", permission: "maintenance:read", audience: "tenant", hiddenFromNav: true },
 
   // System
   { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "Receipt", href: "/dashboard/billing", section: "system", permission: "billing:read", audience: "tenant" },
