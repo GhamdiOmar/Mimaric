@@ -8,6 +8,7 @@ import { AppSidebar } from "../../components/shell/AppSidebar";
 import { AppTopbar } from "../../components/shell/AppTopbar";
 import { MobileTopbar } from "../../components/shell/MobileTopbar";
 import { MobileBottomTabs } from "../../components/shell/MobileBottomTabs";
+import { CommandPalette } from "../../components/CommandPalette";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,6 +33,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background" dir={lang === "ar" ? "rtl" : "ltr"}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[2000] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+      >
+        {lang === "ar" ? "تخطّي إلى المحتوى" : "Skip to content"}
+      </a>
+      <CommandPalette />
       <AppSidebar
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
@@ -46,7 +54,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         <div className="md:hidden">
           <MobileTopbar onMenuClick={() => setMobileOpen(true)} />
         </div>
-        <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto overflow-x-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:pb-8">
+        <div
+          id="main-content"
+          className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto overflow-x-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:pb-8"
+        >
           <div className="max-w-[1440px] mx-auto w-full">
             {children}
           </div>

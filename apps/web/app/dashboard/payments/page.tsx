@@ -556,6 +556,7 @@ export default function PaymentsPage() {
               <button
                 onClick={() => setSearch("")}
                 className="absolute top-1/2 -translate-y-1/2 end-3 text-gray-400 hover:text-gray-600"
+                aria-label={lang === "ar" ? "مسح البحث" : "Clear search"}
               >
                 <X className="w-4 h-4" />
               </button>

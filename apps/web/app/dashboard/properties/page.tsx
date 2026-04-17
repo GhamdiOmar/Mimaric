@@ -927,6 +927,7 @@ export default function PropertiesPage() {
           <button
             onClick={() => setError(null)}
             className="text-red-400 hover:text-red-600"
+            aria-label={lang === "ar" ? "إغلاق" : "Dismiss"}
           >
             <X className="h-4 w-4" />
           </button>
@@ -1227,6 +1228,7 @@ export default function PropertiesPage() {
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-muted-foreground hover:text-foreground"
+                aria-label={lang === "ar" ? "إغلاق" : "Close"}
               >
                 <X className="h-5 w-5" />
               </button>

@@ -664,7 +664,7 @@ function AdvancedUnitMatrixPage() {
       {error && (
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600" aria-label={lang === "ar" ? "إغلاق" : "Close"}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -895,10 +895,10 @@ function AdvancedUnitMatrixPage() {
                   <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
                     <StatusBadge entityType="unit" status={unit.status} label={unitStatusLabels[unit.status]?.[lang] ?? unit.status} />
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="h-7 w-7 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => { e.stopPropagation(); }}>
+                      <button className="h-7 w-7 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => { e.stopPropagation(); }} aria-label={lang === "ar" ? "تعديل" : "Edit"}>
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
-                      <button className="h-7 w-7 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => { e.stopPropagation(); openUnitDetail(unit); }}>
+                      <button className="h-7 w-7 rounded-lg border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors" onClick={(e) => { e.stopPropagation(); openUnitDetail(unit); }} aria-label={lang === "ar" ? "عرض" : "View"}>
                         <Eye className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -1026,6 +1026,7 @@ function AdvancedUnitMatrixPage() {
               <button
                 onClick={() => setDetailUnit(null)}
                 className="text-muted-foreground hover:text-primary"
+                aria-label={lang === "ar" ? "إغلاق" : "Close"}
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1361,6 +1362,7 @@ function AdvancedUnitMatrixPage() {
                                 variant="ghost"
                                 size="sm"
                                 style={{ display: "inline-flex" }}
+                                aria-label={lang === "ar" ? "عرض" : "View"}
                               >
                                 <Eye className="h-3 w-3" />
                               </Button>

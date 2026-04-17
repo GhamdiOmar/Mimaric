@@ -531,6 +531,7 @@ function CustomerDrawer({
             <button
               onClick={onClose}
               className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+              aria-label={lang === "ar" ? "إغلاق" : "Close"}
             >
               <X className="h-4 w-4" />
             </button>
@@ -2307,7 +2308,7 @@ export default function CRMPage() {
       {error && (
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600">
+          <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600" aria-label={lang === "ar" ? "إغلاق" : "Dismiss"}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -2637,7 +2638,7 @@ export default function CRMPage() {
               <h2 className="text-lg font-bold text-foreground">
                 {lang === "ar" ? "إضافة عميل جديد" : "Add New Customer"}
               </h2>
-              <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground">
+              <button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground" aria-label={lang === "ar" ? "إغلاق" : "Close"}>
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -2769,6 +2770,7 @@ export default function CRMPage() {
                         type="button"
                         onClick={() => { setNewCustSelectedUnit(null); setNewCustIntent(null); setNewCustUnitSearch(""); }}
                         className="text-muted-foreground hover:text-foreground shrink-0"
+                        aria-label={lang === "ar" ? "إزالة" : "Remove"}
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>

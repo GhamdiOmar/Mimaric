@@ -527,10 +527,10 @@ export default function PreventiveMaintenancePage() {
                     <Button variant="ghost" size="sm" onClick={() => handleToggle(plan.id)}>
                       {plan.isActive ? <Pause className="h-3.5 w-3.5 text-amber-500" /> : <Play className="h-3.5 w-3.5 text-secondary" />}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(plan)} aria-label={lang === "ar" ? "تعديل" : "Edit"}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => setDeleteTargetId(plan.id)}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => setDeleteTargetId(plan.id)} aria-label={lang === "ar" ? "حذف" : "Delete"}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>

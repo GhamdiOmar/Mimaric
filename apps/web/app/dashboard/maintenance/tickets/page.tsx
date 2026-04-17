@@ -799,11 +799,11 @@ export default function MaintenancePage() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Link href={`/dashboard/maintenance/${r.id}`}>
-                          <Button variant="ghost" size="sm" style={{ display: "inline-flex" }}>
+                          <Button variant="ghost" size="sm" style={{ display: "inline-flex" }} aria-label={lang === "ar" ? "عرض" : "View"}>
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
-                        <Button variant="ghost" size="sm" onClick={() => openEdit(r)} style={{ display: "inline-flex" }}>
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(r)} style={{ display: "inline-flex" }} aria-label={lang === "ar" ? "تعديل" : "Edit"}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
                         <Button
@@ -812,6 +812,7 @@ export default function MaintenancePage() {
                           className="text-red-500 hover:text-red-600"
                           onClick={() => handleDelete(r.id)}
                           style={{ display: "inline-flex" }}
+                          aria-label={lang === "ar" ? "حذف" : "Delete"}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

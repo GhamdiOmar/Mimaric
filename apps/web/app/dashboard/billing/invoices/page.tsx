@@ -245,6 +245,7 @@ export default function InvoicesPage() {
               disabled={page <= 1}
               onClick={() => setPage(page - 1)}
               className="h-10"
+              aria-label={lang === "ar" ? "السابق" : "Previous"}
             >
               <DirectionalIcon icon={ChevronLeft} className="w-4 h-4" />
             </Button>
@@ -258,6 +259,7 @@ export default function InvoicesPage() {
               disabled={page >= data.totalPages}
               onClick={() => setPage(page + 1)}
               className="h-10"
+              aria-label={lang === "ar" ? "التالي" : "Next"}
             >
               <DirectionalIcon icon={ChevronRight} className="w-4 h-4" />
             </Button>
@@ -504,6 +506,7 @@ export default function InvoicesPage() {
                             title={t.view}
                             onClick={() => handleViewInvoice(inv.id)}
                             disabled={loadingInvoice}
+                            aria-label={t.view}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -512,6 +515,7 @@ export default function InvoicesPage() {
                             title={t.download}
                             onClick={() => handleDownloadInvoice(inv.id)}
                             disabled={downloadingId === inv.id}
+                            aria-label={t.download}
                           >
                             {downloadingId === inv.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                           </button>
@@ -535,7 +539,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page <= 1}
                     onClick={() => setPage(page - 1)}
-
+                    aria-label={lang === "ar" ? "السابق" : "Previous"}
                   >
                     <DirectionalIcon icon={ChevronLeft} className="w-4 h-4" />
                   </Button>
@@ -545,7 +549,7 @@ export default function InvoicesPage() {
                     size="sm"
                     disabled={page >= data.totalPages}
                     onClick={() => setPage(page + 1)}
-
+                    aria-label={lang === "ar" ? "التالي" : "Next"}
                   >
                     <DirectionalIcon icon={ChevronRight} className="w-4 h-4" />
                   </Button>
@@ -564,7 +568,7 @@ export default function InvoicesPage() {
               <h2 className="text-lg font-bold text-foreground">
                 {lang === "ar" ? "تفاصيل الفاتورة" : "Invoice Details"} — {viewInvoice.invoiceNumber}
               </h2>
-              <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={lang === "ar" ? "إغلاق" : "Close"}>
                 <X className="w-5 h-5" />
               </button>
             </div>

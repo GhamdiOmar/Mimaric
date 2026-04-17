@@ -816,7 +816,7 @@ export default function SeoSettingsPage() {
                     {rule.allow.map((p, pi) => (
                       <div key={pi} className="flex gap-2">
                         <Input value={p} onChange={(e) => updatePath(ri, "allow", pi, e.target.value)} dir="ltr" className="flex-1" />
-                        <button onClick={() => removePath(ri, "allow", pi)} className="text-destructive hover:text-destructive/80">
+                        <button onClick={() => removePath(ri, "allow", pi)} className="text-destructive hover:text-destructive/80" aria-label={lang === "ar" ? "حذف" : "Delete"}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
@@ -833,7 +833,7 @@ export default function SeoSettingsPage() {
                     {rule.disallow.map((p, pi) => (
                       <div key={pi} className="flex gap-2">
                         <Input value={p} onChange={(e) => updatePath(ri, "disallow", pi, e.target.value)} dir="ltr" className="flex-1" />
-                        <button onClick={() => removePath(ri, "disallow", pi)} className="text-destructive hover:text-destructive/80">
+                        <button onClick={() => removePath(ri, "disallow", pi)} className="text-destructive hover:text-destructive/80" aria-label={lang === "ar" ? "حذف" : "Delete"}>
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>

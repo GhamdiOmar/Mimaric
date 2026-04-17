@@ -394,7 +394,7 @@ export default function DocumentVaultPage() {
                 />
              </div>
              <div className="flex items-center gap-2">
-                <Button variant="secondary" size="sm" className="h-8 w-8 p-0">
+                <Button variant="secondary" size="sm" className="h-8 w-8 p-0" aria-label={lang === "ar" ? "تحديد" : "Select"}>
                    <SquareDashedMousePointer className="h-[18px] w-[18px]" />
                 </Button>
                 <div className="h-4 w-px bg-border mx-1" />
@@ -439,7 +439,7 @@ export default function DocumentVaultPage() {
                       )}>
                          {['pdf'].includes(doc.type?.toLowerCase()) ? <FilePdf className="h-7 w-7" /> : ['jpg', 'png', 'jpeg'].includes(doc.type?.toLowerCase()) ? <FileImage className="h-7 w-7" /> : <FileText className="h-7 w-7" />}
                       </div>
-                      <button className="text-muted-foreground hover:text-primary transition-colors">
+                      <button className="text-muted-foreground hover:text-primary transition-colors" aria-label={lang === "ar" ? "المزيد" : "More"}>
                          <MoreVertical className="h-5 w-5" />
                       </button>
                    </div>

@@ -552,6 +552,7 @@ export default function CouponManagementPage() {
           <button
             onClick={() => setToast(null)}
             className="ms-2 hover:opacity-70"
+            aria-label={lang === "ar" ? "إغلاق" : "Dismiss"}
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -807,6 +808,7 @@ export default function CouponManagementPage() {
               <button
                 onClick={() => setShowModal(false)}
                 className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+                aria-label={lang === "ar" ? "إغلاق" : "Close"}
               >
                 <X className="h-5 w-5" />
               </button>

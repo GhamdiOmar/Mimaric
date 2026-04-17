@@ -420,6 +420,7 @@ export default function PlansPage() {
               onClick={handleRemoveCoupon}
               className="p-1 rounded-md hover:bg-green-100 dark:hover:bg-green-800/40 text-green-600 dark:text-green-400"
               title={t.removeCoupon}
+              aria-label={t.removeCoupon}
             >
               <X className="w-4 h-4" />
             </button>

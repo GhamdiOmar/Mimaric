@@ -618,6 +618,7 @@ export default function DealsPage() {
             <button
               onClick={() => setSearch("")}
               className="absolute top-1/2 -translate-y-1/2 end-3 text-gray-400 hover:text-gray-600"
+              aria-label={lang === "ar" ? "مسح البحث" : "Clear search"}
             >
               <X className="w-4 h-4" />
             </button>
@@ -676,6 +677,7 @@ export default function DealsPage() {
                         onClick={() => setDetailDeal(deal)}
                         className="text-gray-400 hover:text-gray-700 transition-colors"
                         title={lang === "ar" ? "عرض التفاصيل" : "View Details"}
+                        aria-label={lang === "ar" ? "عرض التفاصيل" : "View Details"}
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -684,6 +686,7 @@ export default function DealsPage() {
                           onClick={() => handleConfirmDeal(deal.id)}
                           className="text-gray-400 hover:text-green-600 transition-colors"
                           title={lang === "ar" ? "تأكيد الصفقة" : "Confirm Deal"}
+                          aria-label={lang === "ar" ? "تأكيد الصفقة" : "Confirm Deal"}
                         >
                           <CheckCircle className="w-4 h-4" />
                         </button>
@@ -703,6 +706,7 @@ export default function DealsPage() {
                             onClick={() => setCancelDeal(deal)}
                             className="text-gray-400 hover:text-red-600 transition-colors"
                             title={lang === "ar" ? "إلغاء الصفقة" : "Cancel Deal"}
+                            aria-label={lang === "ar" ? "إلغاء الصفقة" : "Cancel Deal"}
                           >
                             <Ban className="w-4 h-4" />
                           </button>

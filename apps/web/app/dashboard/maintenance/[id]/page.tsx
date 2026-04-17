@@ -736,7 +736,7 @@ export default function MaintenanceDetailPage() {
                 <CircleUser className="h-3.5 w-3.5" />
                 {lang === "ar" ? "المُعيَّن" : "Assigned To"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)} style={{ display: "inline-flex" }}>
+              <Button variant="ghost" size="sm" onClick={() => setShowAssign(!showAssign)} style={{ display: "inline-flex" }} aria-label={lang === "ar" ? "تعديل" : "Edit"}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -776,7 +776,7 @@ export default function MaintenanceDetailPage() {
                 <CircleDollarSign className="h-3.5 w-3.5" />
                 {lang === "ar" ? "التكاليف" : "Costs"}
               </h4>
-              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)} style={{ display: "inline-flex" }}>
+              <Button variant="ghost" size="sm" onClick={() => setEditingCost(!editingCost)} style={{ display: "inline-flex" }} aria-label={lang === "ar" ? "تعديل" : "Edit"}>
                 <Pencil className="h-3.5 w-3.5" />
               </Button>
             </div>
