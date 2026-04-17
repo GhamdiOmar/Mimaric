@@ -9,11 +9,15 @@ import {
   User,
   ShieldCheck,
   ChevronLeft,
+  MoreHorizontal,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
-import { Button } from "@repo/ui";
+import { Button, AppBar, BottomSheet, Textarea } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "../../../../../components/SimpleSessionProvider";
 import { hasPermission } from "../../../../../lib/permissions";
 import {
@@ -48,6 +52,7 @@ const PRIORITY_LABELS: Record<string, { ar: string; en: string }> = {
 
 export default function TicketDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const ticketId = params.id as string;
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role ?? "USER";
@@ -61,6 +66,7 @@ export default function TicketDetailPage() {
   const [replyText, setReplyText] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [updatingStatus, setUpdatingStatus] = React.useState(false);
+  const [mobileActionsOpen, setMobileActionsOpen] = React.useState(false);
 
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
@@ -166,7 +172,7 @@ export default function TicketDetailPage() {
   if (error || !ticket) {
     return (
       <div className="p-6" dir={lang === "ar" ? "rtl" : "ltr"}>
-        <div className="bg-red-50 text-red-700 p-4 rounded-xl text-center">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-xl text-center text-sm">
           {error || (lang === "ar" ? "التذكرة غير موجودة" : "Ticket not found")}
         </div>
         <div className="mt-4 text-center">
@@ -179,8 +185,231 @@ export default function TicketDetailPage() {
   }
 
   const isClosed = ticket.status === "CLOSED" || ticket.status === "RESOLVED";
+  const ticketRef = ticket.ticketNumber ?? ticket.ref ?? (ticketId ? ticketId.slice(0, 8) : "");
+
+  async function handleSendMobileMessage(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    await handleSendMessage();
+  }
 
   return (
+    <>
+    {/* ─── Mobile (< md) ──────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        centered
+        title={
+          <span className="font-mono text-sm font-semibold text-foreground tabular-nums">
+            {ticketRef}
+          </span>
+        }
+        subtitle={ticket.subject}
+        onBack={() => router.push("/dashboard/help")}
+        lang={lang}
+        trailing={
+          isAdmin ? (
+            <button
+              type="button"
+              onClick={() => setMobileActionsOpen(true)}
+              aria-label={lang === "ar" ? "المزيد" : "More"}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+            >
+              <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+            </button>
+          ) : undefined
+        }
+      />
+
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 pb-[calc(140px+theme(height.mobile-bottomnav)+env(safe-area-inset-bottom))]">
+        {/* Metadata card */}
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {statusBadge(ticket.status)}
+            {priorityBadge(ticket.priority)}
+            <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {lang === "ar"
+                ? CATEGORY_LABELS[ticket.category]?.ar ?? ticket.category
+                : CATEGORY_LABELS[ticket.category]?.en ?? ticket.category}
+            </span>
+          </div>
+          <h1 className="text-base font-bold leading-snug text-foreground">
+            {ticket.subject}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <User className="h-3 w-3" aria-hidden="true" />
+              {ticket.user?.name ?? ticket.user?.email}
+            </span>
+            <span className="flex items-center gap-1 tabular-nums">
+              <Clock className="h-3 w-3" aria-hidden="true" />
+              {formatDate(ticket.createdAt)}
+            </span>
+            {ticket.assignee && (
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+                {ticket.assignee.name ?? ticket.assignee.email}
+              </span>
+            )}
+          </div>
+          <div className="rounded-xl bg-muted/40 p-3 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+            {ticket.description}
+          </div>
+        </div>
+
+        {/* Messages */}
+        <div className="space-y-3">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {lang === "ar" ? "المحادثة" : "Conversation"}
+            {ticket.messages?.length > 0 && (
+              <span className="ms-2 tabular-nums">({ticket.messages.length})</span>
+            )}
+          </h2>
+
+          {(!ticket.messages || ticket.messages.length === 0) && (
+            <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              {lang === "ar"
+                ? "لا توجد رسائل بعد. كن أول من يرد."
+                : "No messages yet. Be the first to reply."}
+            </div>
+          )}
+
+          {ticket.messages?.map((msg: any) => {
+            const isOwn = msg.userId === userId;
+            const isStaff = msg.isStaffReply;
+            return (
+              <div
+                key={msg.id}
+                className={cn(
+                  "flex flex-col max-w-[85%]",
+                  isOwn ? "ms-auto items-end" : "items-start"
+                )}
+              >
+                <div
+                  className={cn(
+                    "rounded-2xl px-4 py-3 text-sm leading-relaxed",
+                    isStaff
+                      ? "bg-info/10 border border-info/20 text-foreground"
+                      : isOwn
+                        ? "bg-primary/10 border border-primary/20 text-foreground"
+                        : "bg-card border border-border text-foreground"
+                  )}
+                >
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-semibold text-foreground">
+                      {msg.user?.name ?? msg.user?.email}
+                    </span>
+                    {isStaff && (
+                      <span className="inline-flex items-center rounded-full bg-info/15 text-info px-1.5 py-0.5 text-[10px] font-semibold">
+                        {lang === "ar" ? "فريق الدعم" : "Staff"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="whitespace-pre-wrap">{msg.message}</div>
+                  <div className="mt-1.5 text-[10px] text-muted-foreground tabular-nums">
+                    {formatDate(msg.createdAt)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Sticky composer */}
+      {!isClosed ? (
+        <form
+          onSubmit={handleSendMobileMessage}
+          className="fixed inset-x-0 bottom-[calc(theme(height.mobile-bottomnav)+env(safe-area-inset-bottom))] z-30 bg-card/95 backdrop-blur-md border-t border-border p-3"
+        >
+          <div className="flex items-end gap-2">
+            <Textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder={lang === "ar" ? "اكتب ردك هنا..." : "Type your reply..."}
+              rows={1}
+              className="flex-1 min-h-11 max-h-28 resize-none text-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              disabled={sending}
+            />
+            <Button
+              type="submit"
+              aria-label={lang === "ar" ? "إرسال" : "Send"}
+              disabled={!replyText.trim() || sending}
+              className="h-11 w-11 p-0 shrink-0"
+              style={{ display: "inline-flex" }}
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Send className="h-4 w-4 rtl:scale-x-[-1]" aria-hidden="true" />
+              )}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <div className="fixed inset-x-0 bottom-[calc(theme(height.mobile-bottomnav)+env(safe-area-inset-bottom))] z-30 bg-card/95 backdrop-blur-md border-t border-border p-4 text-center text-sm text-muted-foreground">
+          {lang === "ar"
+            ? "هذه التذكرة مغلقة. لا يمكن إضافة ردود جديدة."
+            : "This ticket is closed. No new replies can be added."}
+        </div>
+      )}
+
+      {/* Admin actions sheet */}
+      {isAdmin && (
+        <BottomSheet
+          open={mobileActionsOpen}
+          onOpenChange={setMobileActionsOpen}
+          title={lang === "ar" ? "إجراءات التذكرة" : "Ticket Actions"}
+        >
+          <div className="space-y-2 pb-2">
+            {STATUS_OPTIONS.map((opt) => {
+              const isActive = ticket.status === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={async () => {
+                    if (isActive) {
+                      setMobileActionsOpen(false);
+                      return;
+                    }
+                    await handleStatusChange(opt.value);
+                    setMobileActionsOpen(false);
+                  }}
+                  disabled={updatingStatus}
+                  className={cn(
+                    "w-full min-h-11 flex items-center justify-between rounded-xl border px-4 py-3 text-start text-sm transition-colors",
+                    isActive
+                      ? "bg-primary/10 border-primary/20 text-primary font-semibold"
+                      : "bg-card border-border text-foreground hover:bg-muted/30"
+                  )}
+                >
+                  <span>{lang === "ar" ? opt.label.ar : opt.label.en}</span>
+                  {isActive && <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+                </button>
+              );
+            })}
+            {updatingStatus && (
+              <div className="text-center text-xs text-muted-foreground pt-2">
+                {lang === "ar" ? "جارٍ التحديث..." : "Updating..."}
+              </div>
+            )}
+          </div>
+        </BottomSheet>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="p-4 md:p-6 space-y-4" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Top Bar */}
       <div className="flex items-center justify-between">
@@ -386,5 +615,7 @@ export default function TicketDetailPage() {
         )}
       </div>
     </div>
+    </div>
+    </>
   );
 }

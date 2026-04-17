@@ -2,6 +2,7 @@
 
 import { useLanguage } from "../../../../components/LanguageProvider";
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
   XCircle,
@@ -12,14 +13,16 @@ import {
   ArrowRight,
   Tag,
   X,
+  Loader2,
 } from "lucide-react";
-import { Button } from "@repo/ui";
+import { Button, AppBar, SARAmount, Skeleton } from "@repo/ui";
 import Link from "next/link";
 import { getPlans, subscribeToPlan, getCurrentSubscription } from "../../../actions/billing";
 import { validateCoupon } from "../../../actions/coupons";
 
 export default function PlansPage() {
   const { lang } = useLanguage();
+  const router = useRouter();
   const [plans, setPlans] = React.useState<any[]>([]);
   const [currentSub, setCurrentSub] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
@@ -103,15 +106,262 @@ export default function PlansPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
+      <>
+        <div
+          className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+          dir={lang === "ar" ? "rtl" : "ltr"}
+        >
+          <AppBar title={t.title} lang={lang} onBack={() => router.push("/dashboard/billing")} />
+          <div className="flex-1 px-4 pt-4 space-y-4">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-60 w-full rounded-xl" />
+            ))}
+          </div>
+        </div>
+        <div className="hidden md:flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </>
     );
   }
 
   const planIcons = [Sparkle, Crown, Building2];
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={t.title}
+        lang={lang}
+        onBack={() => router.push("/dashboard/billing")}
+      />
+
+      <div className="flex-1 px-4 pt-4 pb-8 space-y-4">
+        {/* Billing cycle toggle */}
+        <div className="flex items-center gap-1 p-1 rounded-full bg-muted">
+          <button
+            onClick={() => setBillingCycle("MONTHLY")}
+            className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              billingCycle === "MONTHLY"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground"
+            }`}
+          >
+            {t.monthly}
+          </button>
+          <button
+            onClick={() => setBillingCycle("ANNUAL")}
+            className={`flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${
+              billingCycle === "ANNUAL"
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground"
+            }`}
+          >
+            {t.annual}
+            <span className="text-[10px] bg-success/10 text-success px-1.5 py-0.5 rounded-full">
+              {t.save20}
+            </span>
+          </button>
+        </div>
+
+        {/* Coupon input */}
+        {appliedCoupon ? (
+          <div className="flex items-center gap-3 p-3 rounded-lg border border-success/40 bg-success/10">
+            <Tag className="w-5 h-5 text-success flex-shrink-0" aria-hidden="true" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-success">{appliedCoupon.code}</p>
+              <p className="text-xs text-success/80">
+                {appliedCoupon.type === "PERCENTAGE"
+                  ? `${appliedCoupon.value}% ${t.discount}`
+                  : `${appliedCoupon.value} ${t.sar} ${t.discount}`}
+              </p>
+            </div>
+            <button
+              onClick={handleRemoveCoupon}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-success hover:bg-success/10"
+              aria-label={t.removeCoupon}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Tag className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="text"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  setCouponError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleValidateCoupon();
+                }}
+                placeholder={t.couponPlaceholder}
+                className="w-full h-11 ps-9 pe-3 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={handleValidateCoupon}
+              disabled={!couponCode.trim() || couponLoading}
+              style={{ display: "inline-flex" }}
+              className="h-11"
+            >
+              {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.applyCoupon}
+            </Button>
+          </div>
+        )}
+        {couponError && (
+          <p className="text-xs text-destructive -mt-2">{couponError}</p>
+        )}
+
+        {/* Plan tiers stacked */}
+        {plans.map((plan: any, index: number) => {
+          const Icon = planIcons[index] ?? Crown;
+          const isCurrentPlan = currentSub?.planId === plan.id;
+          const price = billingCycle === "ANNUAL" ? Number(plan.priceAnnual) : Number(plan.priceMonthly);
+          const monthlyEquiv = billingCycle === "ANNUAL" ? Math.round(price / 12) : price;
+          const { discountAmount, discountedPrice } = calculateDiscount(price);
+          const discountedMonthly = billingCycle === "ANNUAL"
+            ? Math.round(discountedPrice / 12)
+            : discountedPrice;
+          const entitlements = plan.entitlements ?? [];
+
+          return (
+            <div
+              key={plan.id}
+              className={`bg-card border rounded-xl p-5 space-y-3 ${
+                isCurrentPlan
+                  ? "border-primary border-2 ring-2 ring-primary/20"
+                  : "border-border"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
+                <h3 className="text-lg font-bold text-foreground">
+                  {lang === "ar" ? plan.nameAr : plan.nameEn}
+                </h3>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {lang === "ar" ? plan.descriptionAr : plan.descriptionEn}
+              </p>
+
+              <div className="pt-1">
+                {price === 0 ? (
+                  <p className="text-2xl font-bold text-foreground">{t.free}</p>
+                ) : appliedCoupon && discountAmount > 0 ? (
+                  <>
+                    <SARAmount
+                      value={monthlyEquiv}
+                      size={12}
+                      className="text-xs text-muted-foreground line-through tabular-nums"
+                    />
+                    <div className="flex items-baseline gap-1 mt-0.5">
+                      <SARAmount
+                        value={discountedMonthly}
+                        size={18}
+                        className="text-2xl font-bold text-success tabular-nums"
+                      />
+                      <span className="text-sm text-muted-foreground">/{t.month}</span>
+                    </div>
+                    <p className="text-xs text-success mt-1">
+                      {t.youSave}{" "}
+                      <SARAmount
+                        value={discountAmount}
+                        size={11}
+                        className="tabular-nums font-medium"
+                      />
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-baseline gap-1">
+                    <SARAmount
+                      value={monthlyEquiv}
+                      size={18}
+                      className="text-2xl font-bold text-foreground tabular-nums"
+                    />
+                    <span className="text-sm text-muted-foreground">/{t.month}</span>
+                  </div>
+                )}
+                {billingCycle === "ANNUAL" && price > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t.billedAnnually}:{" "}
+                    <SARAmount
+                      value={appliedCoupon ? discountedPrice : price}
+                      size={11}
+                      className="tabular-nums"
+                    />
+                    /{t.year}
+                  </p>
+                )}
+              </div>
+
+              {/* Features */}
+              {entitlements.length > 0 && (
+                <ul className="space-y-2 pt-2 border-t border-border">
+                  {entitlements.map((ent: any) => {
+                    const granted =
+                      ent.type === "BOOLEAN"
+                        ? ent.value === "true"
+                        : ent.type === "LIMIT"
+                          ? ent.value !== "0"
+                          : true;
+                    return (
+                      <li key={ent.featureKey} className="flex items-center gap-2 text-xs">
+                        {granted ? (
+                          <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" aria-hidden="true" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" aria-hidden="true" />
+                        )}
+                        <span className={granted ? "text-foreground" : "text-muted-foreground/60"}>
+                          {formatEntitlement(ent, lang)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {/* CTA */}
+              {isCurrentPlan ? (
+                <Button
+                  variant="secondary"
+                  className="w-full h-11"
+                  disabled
+                  style={{ display: "inline-flex" }}
+                >
+                  <CheckCircle2 className="w-4 h-4 me-2" />
+                  {t.currentPlan}
+                </Button>
+              ) : (
+                <Button
+                  className="w-full h-11"
+                  variant="primary"
+                  disabled={!!subscribing}
+                  onClick={() => handleSubscribe(plan.id)}
+                  style={{ display: "inline-flex" }}
+                >
+                  {subscribing === plan.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  ) : null}
+                  {price === 0 ? t.getStarted : t.startTrial}
+                </Button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Back + Header */}
       <div>
@@ -337,6 +587,8 @@ export default function PlansPage() {
         })}
       </div>
     </div>
+    </div>
+    </>
   );
 }
 

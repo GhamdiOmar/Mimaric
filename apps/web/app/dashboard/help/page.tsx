@@ -9,6 +9,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Search,
   Send,
   CheckCircle2,
@@ -17,8 +18,24 @@ import {
   MessageSquare,
   Download,
   Loader2,
+  LifeBuoy,
+  Plus,
 } from "lucide-react";
-import { Button, PageHeader } from "@repo/ui";
+import {
+  Button,
+  PageHeader,
+  AppBar,
+  FAB,
+  DataCard,
+  MobileKPICard,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+  Input as UIInput,
+  Textarea,
+  BottomSheet,
+} from "@repo/ui";
 import { exportToExcel } from "../../../lib/export";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
@@ -266,7 +283,324 @@ export default function HelpPage() {
     return c ? c.label[lang] : cat;
   };
 
+  // ─── Mobile search/filter state ─────────────────────────────────────────
+  const [mobileSearch, setMobileSearch] = React.useState("");
+  const [mobileNewTicketOpen, setMobileNewTicketOpen] = React.useState(false);
+
+  const mobileFaqsByCategory = React.useMemo(() => {
+    const q = mobileSearch.trim().toLowerCase();
+    return FAQ_CATEGORIES.map((cat) => {
+      const items = FAQ_ITEMS.filter((item) => {
+        if (item.category !== cat.key) return false;
+        if (!q) return true;
+        return (
+          item.question.ar.includes(q) ||
+          item.question.en.toLowerCase().includes(q) ||
+          item.answer.ar.includes(q) ||
+          item.answer.en.toLowerCase().includes(q)
+        );
+      });
+      return { cat, items };
+    }).filter((g) => g.items.length > 0);
+  }, [mobileSearch]);
+
+  // Load tickets on mobile when panel is opened or for agents viewing stats
+  React.useEffect(() => {
+    if (isOrgAdmin) {
+      getMySupportTickets().then(setMyTickets).catch(() => {});
+    }
+  }, [isOrgAdmin]);
+
+  const mobileTicketStats = React.useMemo(() => {
+    const open = myTickets.filter((t: any) => t.status === "OPEN" || t.status === "IN_PROGRESS").length;
+    const resolved = myTickets.filter((t: any) => t.status === "RESOLVED" || t.status === "CLOSED").length;
+    return { open, resolved, total: myTickets.length };
+  }, [myTickets]);
+
   return (
+    <>
+    {/* ─── Mobile (< md) ──────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "المساعدة" : "Help"}
+        subtitle={lang === "ar" ? "الأسئلة والدعم" : "FAQs & Support"}
+        lang={lang}
+      />
+
+      <div className="flex-1 overflow-y-auto pb-[calc(theme(height.mobile-bottomnav)+env(safe-area-inset-bottom)+6rem)]">
+        {/* Agent ticket stats */}
+        {isOrgAdmin && (
+          <div className="px-4 pt-4 grid grid-cols-2 gap-3">
+            <MobileKPICard
+              label={lang === "ar" ? "تذاكر مفتوحة" : "Open Tickets"}
+              value={<span className="tabular-nums">{mobileTicketStats.open}</span>}
+              icon={Ticket}
+              tone="amber"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "تم الحل" : "Resolved"}
+              value={<span className="tabular-nums">{mobileTicketStats.resolved}</span>}
+              icon={CheckCircle2}
+              tone="green"
+            />
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="px-4 pt-4">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+              aria-hidden="true"
+            />
+            <UIInput
+              value={mobileSearch}
+              onChange={(e) => setMobileSearch(e.target.value)}
+              placeholder={lang === "ar" ? "ابحث في الأسئلة..." : "Search FAQs..."}
+              className="h-10 ps-9"
+            />
+          </div>
+        </div>
+
+        {/* Contact support CTA */}
+        <div className="px-4 pt-4">
+          <button
+            type="button"
+            onClick={() => setMobileNewTicketOpen(true)}
+            className="w-full min-h-11 bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center gap-3 text-start transition-colors hover:bg-primary/15 active:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <LifeBuoy className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-foreground">
+                {lang === "ar" ? "تواصل مع الدعم الفني" : "Contact Support"}
+              </div>
+              <div className="mt-0.5 text-xs text-muted-foreground">
+                {lang === "ar"
+                  ? "افتح تذكرة جديدة وسيرد عليك فريقنا قريباً"
+                  : "Open a new ticket and our team will reply shortly"}
+              </div>
+            </div>
+            <ChevronRight
+              className="h-5 w-5 shrink-0 text-primary rtl:scale-x-[-1]"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+
+        {/* FAQ categories */}
+        <div className="px-4 pt-5 pb-4">
+          <h2 className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {lang === "ar" ? "الأسئلة الشائعة" : "FAQs"}
+          </h2>
+          {mobileFaqsByCategory.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+              {lang === "ar" ? "لا توجد نتائج مطابقة." : "No matching FAQs."}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card">
+              <Accordion type="single" collapsible className="w-full">
+                {mobileFaqsByCategory.map((group) => (
+                  <AccordionItem
+                    key={group.cat.key}
+                    value={group.cat.key}
+                    className="border-border last:border-b-0 px-4"
+                  >
+                    <AccordionTrigger className="min-h-11 text-sm font-semibold text-foreground hover:no-underline">
+                      <span className="flex items-center gap-2">
+                        {group.cat.label[lang]}
+                        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-bold text-muted-foreground tabular-nums">
+                          {group.items.length}
+                        </span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-0">
+                      <div className="divide-y divide-border">
+                        {group.items.map((item) => (
+                          <details
+                            key={item.id}
+                            className="group py-2"
+                          >
+                            <summary className="min-h-11 flex items-center justify-between gap-2 cursor-pointer list-none text-sm text-foreground">
+                              <span className="flex-1 leading-snug">
+                                {item.question[lang]}
+                              </span>
+                              <ChevronDown
+                                className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                                aria-hidden="true"
+                              />
+                            </summary>
+                            <div className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                              {item.answer[lang]}
+                            </div>
+                          </details>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </div>
+          )}
+        </div>
+
+        {/* Permission request quick link */}
+        <div className="px-4 pb-6">
+          <div className="rounded-2xl border border-border bg-card">
+            <div className="px-4">
+              <DataCard
+                title={lang === "ar" ? "طلب ترقية صلاحيات" : "Request Permission Upgrade"}
+                subtitle={
+                  lang === "ar"
+                    ? `دورك الحالي: ${userRole}`
+                    : `Current role: ${userRole}`
+                }
+                icon={ShieldCheck}
+                iconTone="amber"
+                trailing={
+                  <ChevronRight
+                    className="h-4 w-4 text-muted-foreground rtl:scale-x-[-1]"
+                    aria-hidden="true"
+                  />
+                }
+                onClick={() => setActiveTab("permissions")}
+                divider={false}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <FAB
+        icon={Plus}
+        label={lang === "ar" ? "تذكرة جديدة" : "New ticket"}
+        onClick={() => setMobileNewTicketOpen(true)}
+      />
+
+      {/* New ticket bottom sheet */}
+      <BottomSheet
+        open={mobileNewTicketOpen}
+        onOpenChange={setMobileNewTicketOpen}
+        title={lang === "ar" ? "تذكرة جديدة" : "New Ticket"}
+        description={lang === "ar" ? "صف المشكلة وسيتواصل فريق الدعم معك." : "Describe the issue and our support team will reply."}
+        footer={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="flex-1 min-h-11"
+              style={{ display: "inline-flex" }}
+              onClick={() => setMobileNewTicketOpen(false)}
+              disabled={ticketLoading}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              className="flex-1 min-h-11 gap-1"
+              style={{ display: "inline-flex" }}
+              onClick={async () => {
+                await handleSubmitTicket();
+                if (!ticketErrors.subject && !ticketErrors.description) {
+                  setMobileNewTicketOpen(false);
+                }
+              }}
+              disabled={ticketLoading}
+            >
+              {ticketLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Send className="h-4 w-4 rtl:scale-x-[-1]" aria-hidden="true" />
+              )}
+              {ticketLoading
+                ? lang === "ar" ? "جاري الإرسال..." : "Submitting..."
+                : lang === "ar" ? "إرسال" : "Submit"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "الموضوع" : "Subject"}
+              <span className="text-destructive ms-1">*</span>
+            </label>
+            <UIInput
+              value={ticketForm.subject}
+              onChange={(e) => {
+                setTicketForm({ ...ticketForm, subject: e.target.value });
+                if (ticketErrors.subject) setTicketErrors((prev) => ({ ...prev, subject: false }));
+              }}
+              placeholder={lang === "ar" ? "مثال: مشكلة في تسجيل الدخول" : "e.g. Login issue"}
+              className={ticketErrors.subject ? "border-destructive" : undefined}
+            />
+            {ticketErrors.subject && (
+              <p className="mt-1 text-xs text-destructive">
+                {lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "الفئة" : "Category"}
+              </label>
+              <select
+                value={ticketForm.category}
+                onChange={(e) => setTicketForm({ ...ticketForm, category: e.target.value })}
+                className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label[lang]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "الأولوية" : "Priority"}
+              </label>
+              <select
+                value={ticketForm.priority}
+                onChange={(e) => setTicketForm({ ...ticketForm, priority: e.target.value })}
+                className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {PRIORITY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label[lang]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "الوصف" : "Description"}
+              <span className="text-destructive ms-1">*</span>
+            </label>
+            <Textarea
+              value={ticketForm.description}
+              onChange={(e) => {
+                setTicketForm({ ...ticketForm, description: e.target.value });
+                if (ticketErrors.description) setTicketErrors((prev) => ({ ...prev, description: false }));
+              }}
+              placeholder={lang === "ar" ? "وصف المشكلة أو الطلب..." : "Describe the issue or request..."}
+              rows={4}
+              className={ticketErrors.description ? "border-destructive" : undefined}
+            />
+            {ticketErrors.description && (
+              <p className="mt-1 text-xs text-destructive">
+                {lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}
+              </p>
+            )}
+          </div>
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
       <PageHeader
@@ -709,5 +1043,7 @@ export default function HelpPage() {
       )}
 
     </div>
+    </div>
+    </>
   );
 }

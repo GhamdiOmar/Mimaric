@@ -21,7 +21,18 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
-import { Button, Input, PageHeader, FormSection } from "@repo/ui";
+import {
+  Button,
+  Input,
+  PageHeader,
+  FormSection,
+  AppBar,
+  FAB,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@repo/ui";
 import Link from "next/link";
 import { getOrganization, updateOrganization, clearAppCache } from "../../actions/organization";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -190,7 +201,457 @@ export default function OrgSettingsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <>
+      {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+      <div
+        className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        <AppBar
+          title={lang === "ar" ? "إعدادات المؤسسة" : "Organization settings"}
+          subtitle={
+            lang === "ar"
+              ? "الملف التعريفي والبيانات التجارية"
+              : "Profile & commercial data"
+          }
+          lang={lang}
+        />
+
+        <div className="flex-1 px-4 py-4 pb-28 space-y-4">
+          {/* Header identity card */}
+          <div className="rounded-lg border border-border bg-card p-4 flex items-center gap-3">
+            <div className="h-14 w-14 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Building2 className="h-7 w-7" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-base font-bold text-foreground truncate">
+                {form.name || "\u2014"}
+              </p>
+              <p className="text-[11px] text-muted-foreground font-latin truncate">
+                {form.tradeNameEnglish || "Mimaric"}
+                {org?.type ? ` · ${org.type as string}` : ""}
+              </p>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="py-10 text-center text-sm text-muted-foreground animate-pulse">
+              {lang === "ar" ? "جاري التحميل..." : "Loading..."}
+            </div>
+          ) : (
+            <Accordion type="multiple" className="rounded-lg border border-border bg-card divide-y divide-border">
+              {/* Core Identity */}
+              <AccordionItem value="core" className="border-0 px-4">
+                <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Building2 className="h-4 w-4" />
+                    </span>
+                    {lang === "ar" ? "البيانات الأساسية" : "Core Identity"}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "اسم المنظمة" : "Organization Name"} *
+                      </label>
+                      <Input
+                        value={form.name}
+                        onChange={(e) => set("name", e.target.value)}
+                        className={`h-11 ${fieldErrors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                      />
+                      {fieldErrors.name && (
+                        <p className="text-xs text-destructive">
+                          {lang === "ar" ? "هذا الحقل مطلوب" : "This field is required"}
+                        </p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الاسم بالعربي" : "Official Arabic Name"}
+                      </label>
+                      <Input className="h-11" value={form.nameArabic} onChange={(e) => set("nameArabic", e.target.value)} dir="rtl" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الاسم بالإنجليزي" : "Official English Name"}
+                      </label>
+                      <Input className="h-11" value={form.nameEnglish} onChange={(e) => set("nameEnglish", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "رقم السجل التجاري" : "Commercial Registration"}
+                      </label>
+                      <Input className="h-11 font-latin" placeholder="1010XXXXXX" value={form.crNumber} onChange={(e) => set("crNumber", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الرقم الضريبي" : "VAT Number"}
+                      </label>
+                      <Input className="h-11 font-latin" placeholder="3000XXXXXX00003" value={form.vatNumber} onChange={(e) => set("vatNumber", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الرقم الموحد" : "Unified Number"}
+                      </label>
+                      <Input className="h-11 font-latin" placeholder="70XXXXXXXX" value={form.unifiedNumber} onChange={(e) => set("unifiedNumber", e.target.value)} dir="ltr" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* MOC */}
+              <AccordionItem value="moc" className="border-0 px-4">
+                <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Briefcase className="h-4 w-4" />
+                    </span>
+                    {lang === "ar" ? "بيانات وزارة التجارة" : "Ministry of Commerce"}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "نوع المنشأة" : "Entity Type"}
+                      </label>
+                      <select value={form.entityType} onChange={(e) => set("entityType", e.target.value)} className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm">
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="ESTABLISHMENT">{lang === "ar" ? "مؤسسة" : "Establishment"}</option>
+                        <option value="COMPANY">{lang === "ar" ? "شركة" : "Company"}</option>
+                        <option value="BRANCH">{lang === "ar" ? "فرع" : "Branch"}</option>
+                        <option value="PROFESSIONAL_ENTITY">{lang === "ar" ? "كيان مهني" : "Professional Entity"}</option>
+                        <option value="FOREIGN_COMPANY_BRANCH">{lang === "ar" ? "فرع شركة أجنبية" : "Foreign Company Branch"}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الشكل القانوني" : "Legal Form"}
+                      </label>
+                      <select value={form.legalForm} onChange={(e) => set("legalForm", e.target.value)} className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm">
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="SOLE_PROPRIETORSHIP">{lang === "ar" ? "مؤسسة فردية" : "Sole Proprietorship"}</option>
+                        <option value="LIMITED_LIABILITY_COMPANY">{lang === "ar" ? "شركة ذات مسؤولية محدودة" : "LLC"}</option>
+                        <option value="JOINT_STOCK_COMPANY">{lang === "ar" ? "شركة مساهمة" : "Joint Stock Company"}</option>
+                        <option value="SIMPLIFIED_JOINT_STOCK_COMPANY">{lang === "ar" ? "شركة مساهمة مبسطة" : "Simplified JSC"}</option>
+                        <option value="GENERAL_PARTNERSHIP">{lang === "ar" ? "شركة تضامنية" : "General Partnership"}</option>
+                        <option value="LIMITED_PARTNERSHIP">{lang === "ar" ? "شركة توصية" : "Limited Partnership"}</option>
+                        <option value="PROFESSIONAL_COMPANY">{lang === "ar" ? "شركة مهنية" : "Professional Company"}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "حالة التسجيل" : "Registration Status"}
+                      </label>
+                      <select value={form.registrationStatus} onChange={(e) => set("registrationStatus", e.target.value)} className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm">
+                        <option value="">{lang === "ar" ? "اختر..." : "Select..."}</option>
+                        <option value="ACTIVE_REG">{lang === "ar" ? "نشط" : "Active"}</option>
+                        <option value="EXPIRED_REG">{lang === "ar" ? "منتهي" : "Expired"}</option>
+                        <option value="SUSPENDED_REG">{lang === "ar" ? "موقوف" : "Suspended"}</option>
+                        <option value="CANCELLED_REG">{lang === "ar" ? "ملغي" : "Cancelled"}</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "رأس المال (ر.س)" : "Capital (SAR)"}
+                      </label>
+                      <Input className="h-11 tabular-nums" type="number" value={form.capitalAmountSar} onChange={(e) => set("capitalAmountSar", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {lang === "ar" ? "تاريخ التسجيل" : "Reg. Date"}
+                        </label>
+                        <Input className="h-11" type="date" value={form.registrationDate} onChange={(e) => set("registrationDate", e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {lang === "ar" ? "تاريخ الانتهاء" : "Expiry"}
+                        </label>
+                        <Input className="h-11" type="date" value={form.expiryDate} onChange={(e) => set("expiryDate", e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "رمز النشاط" : "Activity Code"}
+                      </label>
+                      <Input className="h-11" value={form.mainActivityCode} onChange={(e) => set("mainActivityCode", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "اسم النشاط" : "Activity Name"}
+                      </label>
+                      <Input className="h-11" value={form.mainActivityNameAr} onChange={(e) => set("mainActivityNameAr", e.target.value)} />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Contact */}
+              <AccordionItem value="contact" className="border-0 px-4">
+                <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Phone className="h-4 w-4" />
+                    </span>
+                    {lang === "ar" ? "بيانات التواصل" : "Contact Information"}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "رقم الجوال" : "Mobile"}
+                      </label>
+                      <Input className="h-11" type="tel" placeholder="05XXXXXXXX" value={form.contactMobile} onChange={(e) => set("contactMobile", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الهاتف الثابت" : "Phone"}
+                      </label>
+                      <Input className="h-11" type="tel" placeholder="011XXXXXXX" value={form.contactPhone} onChange={(e) => set("contactPhone", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "البريد الإلكتروني" : "Email"}
+                      </label>
+                      <Input className="h-11" type="email" placeholder="info@company.sa" value={form.contactEmail} onChange={(e) => set("contactEmail", e.target.value)} dir="ltr" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الموقع الإلكتروني" : "Website"}
+                      </label>
+                      <Input className="h-11" type="url" placeholder="https://company.sa" value={form.contactWebsite} onChange={(e) => set("contactWebsite", e.target.value)} dir="ltr" />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Address */}
+              <AccordionItem value="address" className="border-0 px-4">
+                <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <MapPin className="h-4 w-4" />
+                    </span>
+                    {lang === "ar" ? "العنوان الوطني" : "National Address"}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "المنطقة" : "Region"}
+                      </label>
+                      <Input className="h-11" value={form.addrRegion} onChange={(e) => set("addrRegion", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "المدينة" : "City"}
+                      </label>
+                      <Input className="h-11" value={form.addrCity} onChange={(e) => set("addrCity", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الحي" : "District"}
+                      </label>
+                      <Input className="h-11" value={form.addrDistrict} onChange={(e) => set("addrDistrict", e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "اسم الشارع" : "Street"}
+                      </label>
+                      <Input className="h-11" value={form.addrStreet} onChange={(e) => set("addrStreet", e.target.value)} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {lang === "ar" ? "المبنى" : "Building"}
+                        </label>
+                        <Input className="h-11" value={form.addrBuilding} onChange={(e) => set("addrBuilding", e.target.value)} dir="ltr" maxLength={4} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {lang === "ar" ? "الرمز البريدي" : "Postal"}
+                        </label>
+                        <Input className="h-11" value={form.addrPostal} onChange={(e) => set("addrPostal", e.target.value)} dir="ltr" maxLength={5} />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الرقم الإضافي" : "Additional No."}
+                      </label>
+                      <Input className="h-11" value={form.addrAdditional} onChange={(e) => set("addrAdditional", e.target.value)} dir="ltr" maxLength={4} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "العنوان المختصر" : "Short Address"}
+                      </label>
+                      <Input className="h-11" value={form.addrShort} onChange={(e) => set("addrShort", e.target.value)} dir="ltr" maxLength={8} />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Preferences */}
+              <AccordionItem value="preferences" className="border-0 px-4">
+                <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <Home className="h-4 w-4" />
+                    </span>
+                    {lang === "ar" ? "التفضيلات" : "Preferences"}
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {lang === "ar" ? "الصفحة الرئيسية" : "Landing Page"}
+                      </label>
+                      <select
+                        value={landingPage}
+                        onChange={async (e) => {
+                          const value = e.target.value;
+                          setLandingPage(value);
+                          setSavingLanding(true);
+                          try {
+                            await updateLandingPage(value);
+                          } catch {
+                            /* ignore */
+                          } finally {
+                            setSavingLanding(false);
+                          }
+                        }}
+                        className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm"
+                      >
+                        <option value="/dashboard">{lang === "ar" ? "نظرة عامة" : "Overview"}</option>
+                        <option value="/dashboard/projects">{lang === "ar" ? "المشاريع" : "Projects"}</option>
+                        <option value="/dashboard/units">{lang === "ar" ? "الوحدات" : "Units"}</option>
+                        <option value="/dashboard/sales/customers">{lang === "ar" ? "العملاء" : "Customers"}</option>
+                        <option value="/dashboard/sales/contracts">{lang === "ar" ? "المبيعات" : "Sales"}</option>
+                        <option value="/dashboard/leases">{lang === "ar" ? "الإيجارات" : "Leases"}</option>
+                        <option value="/dashboard/finance">{lang === "ar" ? "المالية" : "Finance"}</option>
+                        <option value="/dashboard/maintenance">{lang === "ar" ? "الصيانة" : "Maintenance"}</option>
+                        <option value="/dashboard/reports">{lang === "ar" ? "التقارير" : "Reports"}</option>
+                        <option value="/dashboard/settings">{lang === "ar" ? "الإعدادات" : "Settings"}</option>
+                      </select>
+                      {savingLanding && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {lang === "ar" ? "جاري الحفظ..." : "Saving..."}
+                        </p>
+                      )}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 min-h-[44px]"
+                      style={{ display: "inline-flex" }}
+                      disabled={clearingCache}
+                      onClick={async () => {
+                        setClearingCache(true);
+                        try {
+                          await clearAppCache();
+                          window.location.reload();
+                        } finally {
+                          setClearingCache(false);
+                        }
+                      }}
+                    >
+                      {clearingCache ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      {lang === "ar" ? "مسح الذاكرة المؤقتة" : "Clear Cache"}
+                    </Button>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+
+          {/* Related settings */}
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            <Link
+              href="/dashboard/settings/team"
+              className="flex items-center gap-3 px-4 py-3 min-h-[44px] border-b border-border hover:bg-muted/30 transition-colors"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Users className="h-5 w-5" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  {lang === "ar" ? "فريق العمل" : "Team"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {lang === "ar" ? "إدارة الأعضاء والأدوار" : "Manage members & roles"}
+                </p>
+              </div>
+              <span className="text-muted-foreground rtl:scale-x-[-1]">›</span>
+            </Link>
+            {can("audit:read") && (
+              <Link
+                href="/dashboard/settings/audit"
+                className="flex items-center gap-3 px-4 py-3 min-h-[44px] border-b border-border hover:bg-muted/30 transition-colors"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-info/10 text-info">
+                  <ClipboardList className="h-5 w-5" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {lang === "ar" ? "سجل المراجعة" : "Audit Trail"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {lang === "ar" ? "تتبع الوصول والتعديلات" : "Track access & changes"}
+                  </p>
+                </div>
+                <span className="text-muted-foreground rtl:scale-x-[-1]">›</span>
+              </Link>
+            )}
+            <Link
+              href="/dashboard/settings/security"
+              className="flex items-center gap-3 px-4 py-3 min-h-[44px] hover:bg-muted/30 transition-colors"
+            >
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
+                <Lock className="h-5 w-5" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">
+                  {lang === "ar" ? "الأمان" : "Security"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {lang === "ar" ? "تغيير كلمة المرور" : "Change password"}
+                </p>
+              </div>
+              <span className="text-muted-foreground rtl:scale-x-[-1]">›</span>
+            </Link>
+          </div>
+
+          <Link
+            href="/dashboard/onboarding?mode=edit"
+            className="flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors py-3"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            {lang === "ar" ? "إعادة تشغيل معالج الإعداد" : "Re-run Setup Wizard"}
+          </Link>
+        </div>
+
+        <FAB
+          icon={saving ? Loader2 : Save}
+          label={
+            saving
+              ? (lang === "ar" ? "جاري الحفظ..." : "Saving...")
+              : (lang === "ar" ? "حفظ التغييرات" : "Save Changes")
+          }
+          onClick={saving ? undefined : handleSave}
+        />
+      </div>
+
+      {/* ─── Desktop (≥ md) ────────────────────────────────────────────── */}
+      <div className="hidden md:block space-y-8 animate-in fade-in duration-500">
       <PageHeader
         title={lang === "ar" ? "إعدادات المنظمة" : "Organization Settings"}
         description={
@@ -948,6 +1409,7 @@ export default function OrgSettingsPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
