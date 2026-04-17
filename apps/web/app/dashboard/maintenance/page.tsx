@@ -766,7 +766,7 @@ export default function MaintenancePage() {
                       >
                         {r.title}
                         {r.isPreventive && (
-                          <span className="text-[9px] text-emerald-600 mr-1">[{lang === "ar" ? "وقائي" : "Preventive"}]</span>
+                          <span className="text-[9px] text-emerald-600 me-1">[{lang === "ar" ? "وقائي" : "Preventive"}]</span>
                         )}
                       </Link>
                     </TableCell>
@@ -790,7 +790,7 @@ export default function MaintenancePage() {
                       {r.dueDate ? (
                         <span className={`text-xs ${isOverdue ? "text-red-600 font-semibold" : "text-muted-foreground"}`}>
                           {new Date(r.dueDate).toLocaleDateString("en-SA")}
-                          {isOverdue && <AlertTriangle className="inline h-3 w-3 mr-1" />}
+                          {isOverdue && <AlertTriangle className="inline h-3 w-3 me-1" />}
                         </span>
                       ) : (
                         <span className="text-xs text-muted-foreground">{"\u2014"}</span>

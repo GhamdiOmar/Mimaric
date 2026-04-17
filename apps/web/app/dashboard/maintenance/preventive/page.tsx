@@ -39,6 +39,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  DirectionalIcon,
 } from "@repo/ui";
 import { toast } from "sonner";
 import {
@@ -468,7 +469,7 @@ export default function PreventiveMaintenancePage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
-            <ArrowLeft className="h-[18px] w-[18px]" />
+            <DirectionalIcon icon={ArrowLeft} className="h-[18px] w-[18px]" />
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-primary">
@@ -579,7 +580,7 @@ export default function PreventiveMaintenancePage() {
                   <div className="mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground">
                     {plan.unit && <span>{plan.unit.number} — {plan.unit.building?.name}</span>}
                     {plan.building && !plan.unit && <span>{plan.building.name}</span>}
-                    {plan.assignTo && <span className="mr-2">• {plan.assignTo.name}</span>}
+                    {plan.assignTo && <span className="me-2">• {plan.assignTo.name}</span>}
                   </div>
                 )}
               </div>

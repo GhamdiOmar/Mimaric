@@ -7,7 +7,6 @@ import {
   Receipt,
   Download,
   ArrowLeft,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -30,6 +29,7 @@ import {
   Skeleton,
   EmptyState,
   BottomSheet,
+  DirectionalIcon,
 } from "@repo/ui";
 import Link from "next/link";
 import { getInvoices, getInvoiceById } from "../../../actions/billing";
@@ -246,7 +246,7 @@ export default function InvoicesPage() {
               onClick={() => setPage(page - 1)}
               className="h-10"
             >
-              <ChevronLeft className="w-4 h-4 rtl:scale-x-[-1]" />
+              <DirectionalIcon icon={ChevronLeft} className="w-4 h-4" />
             </Button>
             <span className="text-xs text-muted-foreground tabular-nums">
               {page} / {data.totalPages}
@@ -259,7 +259,7 @@ export default function InvoicesPage() {
               onClick={() => setPage(page + 1)}
               className="h-10"
             >
-              <ChevronRight className="w-4 h-4 rtl:scale-x-[-1]" />
+              <DirectionalIcon icon={ChevronRight} className="w-4 h-4" />
             </Button>
           </div>
         )}
@@ -443,7 +443,7 @@ export default function InvoicesPage() {
       {/* Header */}
       <div>
         <Link href="/dashboard/billing" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4">
-          {lang === "ar" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+          <DirectionalIcon icon={ArrowLeft} className="w-4 h-4" />
           {t.backToBilling}
         </Link>
         <div className="flex items-center gap-2">
@@ -537,7 +537,7 @@ export default function InvoicesPage() {
                     onClick={() => setPage(page - 1)}
 
                   >
-                    {lang === "ar" ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                    <DirectionalIcon icon={ChevronLeft} className="w-4 h-4" />
                   </Button>
                   <span className="text-sm">{page} / {data.totalPages}</span>
                   <Button
@@ -547,7 +547,7 @@ export default function InvoicesPage() {
                     onClick={() => setPage(page + 1)}
 
                   >
-                    {lang === "ar" ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                    <DirectionalIcon icon={ChevronRight} className="w-4 h-4" />
                   </Button>
                 </div>
               </div>

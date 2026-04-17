@@ -34,6 +34,7 @@ import {
   BottomSheet,
   EmptyState,
   Skeleton,
+  DirectionalIcon,
 } from "@repo/ui";
 import {
   getMaintenanceRequest,
@@ -630,7 +631,7 @@ export default function MaintenanceDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")} style={{ display: "inline-flex" }}>
-          <ArrowLeft className="h-[18px] w-[18px]" />
+          <DirectionalIcon icon={ArrowLeft} className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">

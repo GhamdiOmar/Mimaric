@@ -370,7 +370,7 @@ export default function DocumentVaultPage() {
            </div>
            
            <div className="bg-primary-deep p-6 rounded-md text-white shadow-lg overflow-hidden relative">
-              <FilePdf className="h-12 w-12 absolute -bottom-4 -right-4 opacity-10 rotate-12" />
+              <FilePdf className="h-12 w-12 absolute -bottom-4 -end-4 opacity-10 rotate-12" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-secondary font-latin">Storage Usage</p>
               <div className="mt-4 space-y-2">
                  <div className="h-1.5 w-full bg-card/10 rounded-full overflow-hidden">
@@ -386,11 +386,11 @@ export default function DocumentVaultPage() {
            {/* Filters */}
            <div className="bg-card rounded-md border border-border p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-sm">
              <div className="relative w-full md:w-80 group">
-                <Search className="h-[18px] w-[18px] absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-secondary transition-colors" />
-                <input 
-                  type="text" 
+                <Search className="h-[18px] w-[18px] absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-secondary transition-colors" />
+                <input
+                  type="text"
                   placeholder={lang === "ar" ? "بحث في الوثائق..." : "Search documents..."}
-                  className="w-full bg-muted/30 border-transparent rounded py-2 pr-10 pl-4 text-sm outline-none focus:bg-card focus:border-border transition-all"
+                  className="w-full bg-muted/30 border-transparent rounded py-2 pe-10 ps-4 text-sm outline-none focus:bg-card focus:border-border transition-all"
                 />
              </div>
              <div className="flex items-center gap-2">

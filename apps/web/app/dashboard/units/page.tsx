@@ -712,7 +712,7 @@ function AdvancedUnitMatrixPage() {
           {/* Bulk Action Bar (Floating) */}
           {selectedUnits.length > 0 && (
             <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-primary-deep text-white px-6 py-4 rounded-xl shadow-2xl border border-white/10 flex items-center gap-8 animate-in slide-in-from-bottom-10">
-              <div className="flex items-center gap-3 border-r border-white/20 pr-6 mr-2">
+              <div className="flex items-center gap-3 border-e border-white/20 pe-6 me-2">
                 <span className="h-6 w-6 bg-secondary text-white rounded-full flex items-center justify-center text-xs font-bold leading-none">
                   {selectedUnits.length}
                 </span>
@@ -764,7 +764,7 @@ function AdvancedUnitMatrixPage() {
 
               <button
                 onClick={() => setSelectedUnits([])}
-                className="text-xs text-white/50 hover:text-white underline underline-offset-4 ml-4"
+                className="text-xs text-white/50 hover:text-white underline underline-offset-4 ms-4"
               >
                 {lang === "ar" ? "إلغاء التحديد" : "Clear Selection"}
               </button>

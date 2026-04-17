@@ -7,7 +7,7 @@ import {
   ListChecks, Tag, SearchCheck, Settings, ChevronRight, ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { AppBar, EmptyState } from "@repo/ui";
+import { AppBar, EmptyState, DirectionalIcon } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { useSession } from "../../../components/SimpleSessionProvider";
 import { isSystemRole } from "../../../lib/permissions";
@@ -225,7 +225,7 @@ export default function SystemAdminPage() {
                   <p className="font-semibold text-sm text-foreground">{item.label[lang]}</p>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.desc[lang]}</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0 rtl:rotate-180" />
+                <DirectionalIcon icon={ChevronRight} className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
               </div>
             </Link>
           ))}

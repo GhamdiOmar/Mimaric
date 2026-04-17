@@ -39,6 +39,7 @@ import {
   BottomSheet,
   Alert,
   AlertDescription,
+  DirectionalIcon,
   cn,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
@@ -693,7 +694,7 @@ export default function DealsPage() {
                           className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"
                         >
                           {lang === "ar" ? "تحويل لعقد" : "Convert to Contract"}
-                          <ArrowRight className="w-3 h-3" />
+                          <DirectionalIcon icon={ArrowRight} className="w-3 h-3" />
                         </Link>
                       )}
                       {can("deals:write") &&

@@ -49,6 +49,7 @@ import {
   ActivityTimeline,
   BottomSheet,
   FAB,
+  DirectionalIcon,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -480,8 +481,7 @@ function CustomerDrawer({
       {/* Drawer */}
       <div
         className={cn(
-          "fixed top-0 bottom-0 z-[100] w-full max-w-md bg-card border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300",
-          lang === "ar" ? "left-0 border-e" : "right-0 border-s"
+          "fixed top-0 bottom-0 z-[100] w-full max-w-md bg-card border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 end-0 border-s"
         )}
         dir={lang === "ar" ? "rtl" : "ltr"}
       >
@@ -621,7 +621,7 @@ function CustomerDrawer({
                 className="gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
                 onClick={handleConvertToDeal}
               >
-                <ArrowRight className="h-3.5 w-3.5" />
+                <DirectionalIcon icon={ArrowRight} className="h-3.5 w-3.5" />
                 {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
               </Button>
             </div>
@@ -861,7 +861,7 @@ function CustomerDrawer({
                             className="flex items-center gap-1 text-[10px] font-semibold text-white bg-primary rounded px-2 py-1 hover:bg-primary/90 transition-colors"
                             style={{ display: "inline-flex" }}
                           >
-                            <ArrowRight className="h-3 w-3" />
+                            <DirectionalIcon icon={ArrowRight} className="h-3 w-3" />
                             {lang === "ar" ? "تحويل لصفقة" : "Convert to Deal"}
                           </button>
                           <button
@@ -943,7 +943,7 @@ function CustomerDrawer({
                         className="flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline underline-offset-2 shrink-0"
                       >
                         {lang === "ar" ? "عرض" : "View"}
-                        <ChevronRight className="h-3 w-3" />
+                        <DirectionalIcon icon={ChevronRight} className="h-3 w-3" />
                       </a>
                     </div>
                   );
@@ -1473,7 +1473,7 @@ function KanbanCard({
           className="ms-auto flex items-center gap-1 text-[10px] font-semibold text-primary hover:underline underline-offset-2 transition-colors"
         >
           {lang === "ar" ? "عرض الملف" : "View Profile"}
-          <ChevronRight className="h-3 w-3" />
+          <DirectionalIcon icon={ChevronRight} className="h-3 w-3" />
         </button>
       </div>
     </div>
@@ -2900,6 +2900,7 @@ export default function CRMPage() {
               {/* Optional Absher fields */}
               <details className="group">
                 <summary className="cursor-pointer text-xs font-bold text-muted-foreground hover:text-foreground transition-colors list-none flex items-center gap-2 py-1">
+                  {/* Disclosure caret (rotates to open), not a nav arrow — do not wrap in DirectionalIcon */}
                   <ChevronRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
                   {lang === "ar" ? "بيانات إضافية (أبشر)" : "Additional Details (Absher)"}
                 </summary>

@@ -659,13 +659,13 @@ export default function HelpPage() {
         <div className="space-y-6">
           {/* Search */}
           <div className="relative">
-            <Search className="h-[18px] w-[18px] absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search className="h-[18px] w-[18px] absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={faqSearch}
               onChange={(e) => setFaqSearch(e.target.value)}
               placeholder={lang === "ar" ? "ابحث في الأسئلة الشائعة..." : "Search FAQs..."}
-              className="w-full bg-card border border-border rounded-md py-2.5 pr-10 pl-4 text-sm focus:border-primary/30 focus:ring-0 outline-none"
+              className="w-full bg-card border border-border rounded-md py-2.5 pe-10 ps-4 text-sm focus:border-primary/30 focus:ring-0 outline-none"
             />
           </div>
 
