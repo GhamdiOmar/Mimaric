@@ -153,23 +153,27 @@ export function CommandPalette() {
           {lang === "ar" ? "لا توجد نتائج." : "No results found."}
         </CommandEmpty>
 
-        <CommandGroup
-          heading={lang === "ar" ? "إجراءات سريعة" : "Quick actions"}
-        >
-          {quickActions
-            .filter((a) => !a.permission || can(a.permission as never))
-            .map((a) => {
-              const Icon = a.icon;
-              return (
-                <CommandItem key={a.id} onSelect={() => go(a.href)}>
-                  <Icon className="h-4 w-4" />
-                  <span>{a.label[lang]}</span>
-                </CommandItem>
-              );
-            })}
-        </CommandGroup>
+        {!isPlatform && (
+          <>
+            <CommandGroup
+              heading={lang === "ar" ? "إجراءات سريعة" : "Quick actions"}
+            >
+              {quickActions
+                .filter((a) => !a.permission || can(a.permission as never))
+                .map((a) => {
+                  const Icon = a.icon;
+                  return (
+                    <CommandItem key={a.id} onSelect={() => go(a.href)}>
+                      <Icon className="h-4 w-4" />
+                      <span>{a.label[lang]}</span>
+                    </CommandItem>
+                  );
+                })}
+            </CommandGroup>
 
-        <CommandSeparator />
+            <CommandSeparator />
+          </>
+        )}
 
         {sections.map((section) => {
           const items = navItems.filter((item) => {
