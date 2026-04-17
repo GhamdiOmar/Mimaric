@@ -94,7 +94,7 @@ const quickActions: QuickAction[] = [
   },
   {
     id: "new-ticket",
-    label: { ar: "تذكرة صيانة", en: "New ticket" },
+    label: { ar: "طلب صيانة جديد", en: "New ticket" },
     href: "/dashboard/maintenance/tickets?new=1",
     icon: Wrench,
     permission: "maintenance:write",

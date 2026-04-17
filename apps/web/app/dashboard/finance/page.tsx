@@ -82,7 +82,7 @@ export default function FinanceDashboardPage() {
       (stats?.aging ?? []).map((b) => ({
         bucket:
           lang === "ar"
-            ? b.bucket.replace("-", "–") + " يوم"
+            ? b.bucket.replace("-", "–") + " يومًا"
             : b.bucket + " d",
         amount: b.amount,
       })),
@@ -123,7 +123,7 @@ export default function FinanceDashboardPage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar"
-              ? "التحصيل والأعمار الحسابية"
+              ? "التحصيل وأعمار المستحقات"
               : "Collections and AR aging"}
           </p>
         </div>
@@ -178,8 +178,8 @@ export default function FinanceDashboardPage() {
           accent="success"
           comparisonPeriod={
             lang === "ar"
-              ? `من ${fmt(stats?.expectedMTD ?? 0)}`
-              : `of ${fmt(stats?.expectedMTD ?? 0)}`
+              ? `من ${fmt(stats?.expectedMTD ?? 0)} ر.س`
+              : `of ${fmt(stats?.expectedMTD ?? 0)} SAR`
           }
           trend={revenueTrend.slice(-12)}
           href="/dashboard/finance"

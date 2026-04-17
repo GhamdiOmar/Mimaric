@@ -108,7 +108,7 @@ export default function LeasingDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {lang === "ar" ? "لوحة التأجير" : "Leasing"}
+            {lang === "ar" ? "التأجير" : "Leasing"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar"
@@ -258,7 +258,7 @@ export default function LeasingDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-semibold">
-              {lang === "ar" ? "قيمة خط الأنابيب" : "Pipeline Value"}
+              {lang === "ar" ? "قيمة المسار" : "Pipeline Value"}
             </CardTitle>
           </CardHeader>
           <CardContent>

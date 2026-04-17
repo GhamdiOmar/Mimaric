@@ -120,11 +120,11 @@ export default function MaintenanceOverviewPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            {lang === "ar" ? "لوحة الصيانة" : "Maintenance Overview"}
+            {lang === "ar" ? "الصيانة" : "Maintenance Overview"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {lang === "ar"
-              ? "طلبات، زمن الحل، والتزامات اتفاقية الخدمة"
+              ? "الطلبات، وقت المعالجة، ومستوى الخدمة"
               : "Tickets, resolution time, and SLA health"}
           </p>
         </div>
@@ -184,7 +184,7 @@ export default function MaintenanceOverviewPage() {
           loading={loading}
         />
         <KPICard
-          label={lang === "ar" ? "تخطّت الموعد" : "SLA Breached"}
+          label={lang === "ar" ? "طلبات متأخرة" : "SLA Breached"}
           value={loading ? "—" : fmt(stats?.slaBreachCount ?? 0)}
           icon={<AlertOctagon className="h-[18px] w-[18px]" />}
           accent={
