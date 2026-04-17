@@ -27,6 +27,17 @@ export interface KPIDelta {
   unit?: "%" | "";
 }
 
+/**
+ * KPI tier per CLAUDE.md § 6.8 / § 6.9.1 — controls visual weight.
+ * - `hero`: page's North Star metric. 1.3× standard scale, stronger accent
+ *   bar (6px), optional secondary insight line, denser sparkline.
+ *   **Use exactly ONE per dashboard.**
+ * - `standard`: default 8-field anatomy.
+ * - `utility`: compact metadata tile. No sparkline, no accent bar,
+ *   smaller value type. For secondary rows and filter panels.
+ */
+export type KPITier = "hero" | "standard" | "utility";
+
 export interface KPICardProps {
   /** Noun-phrase label, e.g. "Monthly Revenue". */
   label: string;
@@ -42,6 +53,17 @@ export interface KPICardProps {
   accent?: KPIAccent;
   /** @deprecated use `accent`. Retained for legacy callers. */
   accentColor?: KPIAccent;
+  /**
+   * Visual tier — drives size, accent weight, and sparkline density.
+   * Defaults to `"standard"`. Use `"hero"` for exactly one North Star metric
+   * per dashboard; `"utility"` for compact secondary metrics.
+   */
+  tier?: KPITier;
+  /**
+   * Hero-only: one-line insight under the value (e.g. "+12 leases vs. same
+   * week last year"). Ignored on standard/utility tiers.
+   */
+  secondaryInsight?: string;
   /** Delta vs comparison period. Accepts the new object shape or the legacy {value,label,direction}. */
   delta?: KPIDelta;
   /** Legacy alias — `trend={{value, label, direction}}`. Mapped to `delta` + `subtitle`. */
@@ -59,6 +81,7 @@ export interface KPICardProps {
   /** Locale for the "ago" phrase and delta tooltip. */
   locale?: "ar" | "en";
   loading?: boolean;
+  /** @deprecated use `tier="utility"`. Retained for legacy callers. */
   compact?: boolean;
   className?: string;
 }
@@ -134,6 +157,8 @@ export function KPICard({
   icon,
   accent,
   accentColor,
+  tier,
+  secondaryInsight,
   delta,
   trend,
   comparisonPeriod,
@@ -146,6 +171,9 @@ export function KPICard({
   className,
 }: KPICardProps) {
   const resolvedAccent: KPIAccent = accent ?? accentColor ?? "primary";
+  const resolvedTier: KPITier = tier ?? (compact ? "utility" : "standard");
+  const isHero = resolvedTier === "hero";
+  const isUtility = resolvedTier === "utility";
 
   // Normalise legacy trend shape.
   let sparkline: number[] | undefined;
@@ -164,19 +192,28 @@ export function KPICard({
   const finalSubtitle = subtitle ?? legacyLabel;
   const isLucide = typeof icon === "function";
   const IconNode = isLucide ? (icon as LucideIcon) : null;
+
+  const padding = isHero ? "p-7" : isUtility ? "p-3" : "p-6";
+  const borderSide = isUtility
+    ? ""
+    : isHero
+      ? "border-s-[6px]"
+      : "border-s-4";
+
   if (loading) {
     return (
       <div
         className={cn(
-          "rounded-lg border border-border bg-card shadow-card border-s-4",
-          compact ? "p-4" : "p-6",
+          "rounded-lg border border-border bg-card shadow-card",
+          borderSide,
+          padding,
           className,
         )}
       >
         <div className="space-y-3">
-          <div className="h-3 w-24 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-32 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-full animate-pulse rounded bg-muted" />
+          <div className={cn("animate-pulse rounded bg-muted", isUtility ? "h-2.5 w-16" : "h-3 w-24")} />
+          <div className={cn("animate-pulse rounded bg-muted", isHero ? "h-12 w-48" : isUtility ? "h-5 w-20" : "h-8 w-32")} />
+          {!isUtility && <div className="h-8 w-full animate-pulse rounded bg-muted" />}
         </div>
       </div>
     );
@@ -208,36 +245,56 @@ export function KPICard({
     );
 
   const interactive = Boolean(href || onClick);
+  const valueClass = isHero
+    ? "text-[clamp(36px,4vw,48px)] leading-[1.1]"
+    : isUtility
+      ? "text-xl"
+      : "text-3xl";
+  const labelClass = isHero
+    ? "text-sm"
+    : isUtility
+      ? "text-[11px]"
+      : "text-xs";
   const body = (
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <span
-            className={cn(
-              "block font-medium text-muted-foreground",
-              compact ? "text-[11px]" : "text-xs",
-            )}
+            className={cn("block font-medium text-muted-foreground", labelClass)}
           >
             {label}
           </span>
           <div
             className={cn(
               "mt-1.5 flex items-baseline gap-1.5 font-bold text-card-foreground tabular-nums",
-              compact ? "text-xl" : "text-3xl",
+              valueClass,
             )}
           >
             <span dir="ltr" className="inline-block">{value}</span>
             {unit && (
-              <span className="text-sm font-normal text-muted-foreground">
+              <span
+                className={cn(
+                  "font-normal text-muted-foreground",
+                  isHero ? "text-base" : "text-sm",
+                )}
+              >
                 {unit}
               </span>
             )}
           </div>
+          {isHero && secondaryInsight && (
+            <p className="mt-1.5 text-sm text-muted-foreground leading-snug">
+              {secondaryInsight}
+            </p>
+          )}
           {finalDelta && (
-            <div className="mt-2 flex items-center gap-2">
+            <div className={cn("flex items-center gap-2", isHero ? "mt-3" : "mt-2")}>
               <span
                 className={cn(
-                  "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums",
+                  "inline-flex items-center gap-0.5 rounded-full font-semibold tabular-nums",
+                  isHero
+                    ? "px-2 py-0.5 text-xs"
+                    : "px-1.5 py-0.5 text-[11px]",
                   deltaTone(direction, isGoodIfUp),
                 )}
               >
@@ -248,29 +305,34 @@ export function KPICard({
                 </span>
               </span>
               {comparisonPeriod && (
-                <span className="text-[11px] text-muted-foreground">
+                <span
+                  className={cn(
+                    "text-muted-foreground",
+                    isHero ? "text-xs" : "text-[11px]",
+                  )}
+                >
                   {comparisonPeriod}
                 </span>
               )}
             </div>
           )}
-          {finalSubtitle && (
+          {finalSubtitle && !isUtility && (
             <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
               {finalSubtitle}
             </p>
           )}
         </div>
-        {icon && (
+        {icon && !isUtility && (
           <span
             className={cn(
               "flex shrink-0 items-center justify-center rounded-full",
-              compact ? "h-9 w-9" : "h-10 w-10",
+              isHero ? "h-12 w-12" : "h-10 w-10",
               ICON_BG[resolvedAccent],
             )}
             aria-hidden="true"
           >
             {IconNode ? (
-              <IconNode className={compact ? "h-4 w-4" : "h-5 w-5"} />
+              <IconNode className={isHero ? "h-6 w-6" : "h-5 w-5"} />
             ) : (
               (icon as React.ReactNode)
             )}
@@ -278,35 +340,37 @@ export function KPICard({
         )}
       </div>
 
-      {sparkline && sparkline.length >= 2 && (
+      {sparkline && sparkline.length >= 2 && !isUtility && (
         <svg
-          viewBox="0 0 100 32"
+          viewBox={isHero ? "0 0 100 48" : "0 0 100 32"}
           preserveAspectRatio="none"
-          className="mt-3 h-8 w-full"
+          className={cn("w-full", isHero ? "mt-4 h-12" : "mt-3 h-8")}
           aria-hidden="true"
         >
           <path
-            d={sparkPath(sparkline, 100, 32)}
+            d={sparkPath(sparkline, 100, isHero ? 48 : 32)}
             fill="none"
             stroke={STROKE[resolvedAccent]}
-            strokeWidth={1.75}
+            strokeWidth={isHero ? 2 : 1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
       )}
 
-      {ago && (
+      {ago && !isUtility && (
         <div className="mt-2 text-[11px] text-muted-foreground">{ago}</div>
       )}
     </>
   );
 
   const classes = cn(
-    "block rounded-lg border border-border bg-card shadow-card border-s-4 transition-shadow duration-200",
-    BORDER[resolvedAccent],
+    "block rounded-lg border border-border bg-card transition-shadow duration-200",
+    isHero ? "shadow-md" : "shadow-card",
+    borderSide,
+    !isUtility && BORDER[resolvedAccent],
     interactive && "hover:shadow-elevation-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-    compact ? "p-4" : "p-6",
+    padding,
     className,
   );
 

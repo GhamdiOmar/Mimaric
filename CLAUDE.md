@@ -436,15 +436,30 @@ CSS class available in globals.css: `.icon-directional { transform: scaleX(-1); 
 />
 ```
 
-#### 6.8.2 Layout Rules
+#### 6.8.2 Tiering — `tier: "hero" | "standard" | "utility"`
+
+Every dashboard has one North Star metric (§ 6.9.1). The `tier` prop tells the card how to visually rank itself:
+
+| Tier | When | Visual |
+|---|---|---|
+| `hero` | **Exactly one per dashboard.** The North Star metric. | Value `clamp(36px → 48px)`. Left accent bar 6px. Taller sparkline (48px). Optional `secondaryInsight` one-liner under the value (e.g. "+12 leases vs. same week last year"). `shadow-md` instead of `shadow-card`. |
+| `standard` | Default. Primary KPIs beside the hero. | Value 30px. Left accent bar 4px. Sparkline 32px. Eight-field anatomy unchanged. |
+| `utility` | Secondary / metadata / filter-panel metrics. | Value 20px. No accent bar. No sparkline. No icon. Used in rows below the hero + primary row. |
+
+**Hard rule:** exactly one `tier="hero"` per dashboard — that's the North Star. More than one hero defeats the tiering.
+
+The legacy `compact` prop maps to `tier="utility"` for back-compat and is deprecated.
+
+#### 6.8.3 Layout Rules
 
 - **Max 4 KPI cards per row** on desktop (`xl+`). 2 per row on tablet (`md`). 1 stacked on mobile.
+- **Hero row:** hero card spans 2 columns on desktop, full-width on mobile. Place it leading-left (LTR) / leading-right (RTL).
 - **Max 8 KPIs above the fold.** Force prioritization.
 - **Never repeat the same KPI** twice on the same page.
 - Grid gap `16px` or `24px` — CSS grid, not margins.
-- Left accent bar (4px, variant color) for category cue.
+- Left accent bar (4px standard / 6px hero / none on utility) for category cue.
 
-#### 6.8.3 States
+#### 6.8.4 States
 
 - Loading: skeleton with same dimensions, `animate-pulse`.
 - Empty (no data): render `— — —` not `0` to distinguish from a true zero.
@@ -452,15 +467,16 @@ CSS class available in globals.css: `.icon-directional { transform: scaleX(-1); 
 - Hover: tooltip with exact value + timestamp.
 - Click: drill to full report; filter state persisted in URL.
 
-#### 6.8.4 Typography Inside Cards
+#### 6.8.5 Typography Inside Cards
 
-| Element | Size | Weight |
-|---|---|---|
-| Label | 12–13px | 500, text-muted |
-| Value | 28–36px | 600–700, text-foreground |
-| Unit | 16px | 400, text-muted |
-| Delta | 13–14px | 500, semantic color |
-| Comparison period | 12px | 400, text-muted |
+| Element | Standard | Hero | Utility | Weight |
+|---|---|---|---|---|
+| Label | 12px | 14px | 11px | 500, text-muted |
+| Value | 30px | clamp(36,48) | 20px | 700, text-foreground |
+| Unit | 14px | 16px | 14px | 400, text-muted |
+| Delta | 11px | 12px | 11px | 600, semantic color |
+| Comparison period | 11px | 12px | hidden | 400, text-muted |
+| Secondary insight (hero only) | — | 14px | — | 400, text-muted |
 
 ### 6.9 Dashboards & Metrics
 
@@ -634,7 +650,7 @@ Every data-backed view MUST handle all six:
 | State | Rule |
 |---|---|
 | **Initial load** | Skeleton matching real layout dimensions, `animate-pulse`. Never a bare spinner. |
-| **Empty first-time** | Illustration + headline + 1-sentence description + primary CTA (+ optional secondary link). |
+| **Empty first-time** | **5-element formula** (see § 6.12.1). |
 | **Empty after filter** | "No results for '[X]'" + "Clear filters" button. |
 | **Partial load** | Show what you have, spinner for what's pending. |
 | **Error** | Icon + "What happened" + "Retry" button + "Contact support" link. |
@@ -643,6 +659,41 @@ Every data-backed view MUST handle all six:
 **Skeleton > Spinner** for anything > 1s. Spinners only for button loading states.
 
 **Error boundaries:** every route segment (`app/dashboard/**/error.tsx`) — catch thrown errors, show friendly state, log to observability.
+
+#### 6.12.1 Empty-first-time — 5-element formula
+
+An empty surface the user sees for the very first time is a teaching moment: it should tell the user what this screen *does for them*, give them the primary action to populate it, and an escape hatch to learn more. Use the `<EmptyState>` primitive with all five slots:
+
+1. **Contextual title** — subject-specific. `"No contracts yet"`, not `"No data"`. Bilingual.
+2. **One-line value statement** (`description` prop) — what this surface helps the user accomplish, in one sentence. `"Track every lease and sale from draft to signed."` / `"تتبّع كل عقد إيجار أو بيع من المسودة حتى التوقيع."`
+3. **Primary CTA** (`action`) — the create/import verb as a `<Button>`. `"Create contract"` / `"إنشاء عقد"`.
+4. **Optional secondary action** (`secondaryAction`) — a lateral path when applicable: `"Import from Ejar"`, `"Upload CSV"`, `"View templates"`.
+5. **Optional help-article link** (`helpHref` + `helpLabel`) — deep-link to an anchor on `/dashboard/help`, e.g. `"Learn about contracts"`.
+
+Example:
+
+```tsx
+<EmptyState
+  icon={<FileText className="h-12 w-12" />}
+  title={t("No contracts yet", "لا توجد عقود بعد")}
+  description={t(
+    "Track every lease and sale from draft to signed.",
+    "تتبّع كل عقد إيجار أو بيع من المسودة حتى التوقيع.",
+  )}
+  action={<Button onClick={openCreate}>{t("Create contract", "إنشاء عقد")}</Button>}
+  secondaryAction={<Button variant="ghost" onClick={openImport}>{t("Import from Ejar", "استيراد من إيجار")}</Button>}
+  helpHref="/dashboard/help#contracts"
+  helpLabel={t("Learn about contracts", "تعرّف على العقود")}
+/>
+```
+
+Guardrails:
+- Title ≤ 8 words in EN, ≤ 6 words in AR. No trailing punctuation.
+- Value statement ≤ 1 sentence, ≤ 14 words. Lead with the user benefit, not the system state.
+- Primary CTA label is always a verb. Never `"OK"` / `"Got it"`.
+- Omit slots 4 and 5 when you have nothing useful to put there — don't pad with noise.
+
+Filter-empty states skip the formula and instead pair `"No results for '[query]'"` with a `"Clear filters"` button. Error-state stays on the § 6.11.4 friendly-error contract.
 
 ### 6.13 Dark & Light Mode
 

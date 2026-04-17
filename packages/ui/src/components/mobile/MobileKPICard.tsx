@@ -7,9 +7,9 @@ import type { LucideIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { arSA, enUS } from "date-fns/locale";
 import { cn } from "../../lib/utils";
-import type { KPIAccent, KPIDelta } from "../KPICard";
+import type { KPIAccent, KPIDelta, KPITier } from "../KPICard";
 
-export type { KPIAccent, KPIDelta } from "../KPICard";
+export type { KPIAccent, KPIDelta, KPITier } from "../KPICard";
 
 export type MobileKPITone =
   | "default"
@@ -35,6 +35,14 @@ export interface MobileKPICardProps {
   accent?: KPIAccent;
   /** Legacy colour token. Mapped to `accent` internally. */
   tone?: MobileKPITone;
+  /**
+   * Visual tier. Defaults to `"standard"`. `"hero"` renders the card full-width
+   * with a larger value + taller sparkline; `"utility"` is compact (no spark,
+   * small value).
+   */
+  tier?: KPITier;
+  /** Hero-only: one-line insight under the value. */
+  secondaryInsight?: string;
   /** Shared KPIDelta (numeric value + direction) OR legacy {label, direction}. */
   delta?: KPIDelta | MobileKPIDelta;
   /** Shared name for the sparkline series. `sparkline` is kept as an alias. */
@@ -136,6 +144,8 @@ function MobileKPICard({
   icon: Icon,
   accent,
   tone = "primary",
+  tier,
+  secondaryInsight,
   delta,
   trend,
   sparkline,
@@ -148,6 +158,9 @@ function MobileKPICard({
   className,
 }: MobileKPICardProps) {
   const resolvedAccent: KPIAccent = accent ?? TONE_TO_ACCENT[tone];
+  const resolvedTier: KPITier = tier ?? "standard";
+  const isHero = resolvedTier === "hero";
+  const isUtility = resolvedTier === "utility";
   const interactive = Boolean(href || onClick);
   const series = trend ?? sparkline;
 
@@ -155,14 +168,15 @@ function MobileKPICard({
     return (
       <div
         className={cn(
-          "flex flex-col rounded-2xl border border-border bg-card p-4",
+          "flex flex-col rounded-2xl border border-border bg-card",
+          isUtility ? "p-3" : isHero ? "p-5" : "p-4",
           className,
         )}
       >
         <div className="space-y-2">
-          <div className="h-3 w-20 animate-pulse rounded bg-muted" />
-          <div className="h-7 w-28 animate-pulse rounded bg-muted" />
-          <div className="h-8 w-full animate-pulse rounded bg-muted" />
+          <div className={cn("animate-pulse rounded bg-muted", isUtility ? "h-2.5 w-16" : "h-3 w-20")} />
+          <div className={cn("animate-pulse rounded bg-muted", isHero ? "h-10 w-40" : isUtility ? "h-5 w-20" : "h-7 w-28")} />
+          {!isUtility && <div className={cn("animate-pulse rounded bg-muted", isHero ? "h-10 w-full" : "h-8 w-full")} />}
         </div>
       </div>
     );
@@ -240,57 +254,74 @@ function MobileKPICard({
         ) : null}
       </div>
 
-      <div className="mt-2 flex items-baseline gap-1.5 text-2xl font-bold tracking-tight text-foreground tabular-nums">
+      <div
+        className={cn(
+          "mt-2 flex items-baseline gap-1.5 font-bold tracking-tight text-foreground tabular-nums",
+          isHero ? "text-[clamp(28px,6vw,36px)]" : isUtility ? "text-lg" : "text-2xl",
+        )}
+      >
         <span dir="ltr" className="inline-block">
           {value}
         </span>
         {unit ? (
-          <span className="text-xs font-normal text-muted-foreground">
+          <span
+            className={cn(
+              "font-normal text-muted-foreground",
+              isHero ? "text-sm" : "text-xs",
+            )}
+          >
             {unit}
           </span>
         ) : null}
       </div>
 
-      {comparisonPeriod ? (
+      {isHero && secondaryInsight ? (
+        <p className="mt-1 text-xs text-muted-foreground leading-snug">
+          {secondaryInsight}
+        </p>
+      ) : null}
+
+      {comparisonPeriod && !isUtility ? (
         <div className="mt-1 text-[11px] text-muted-foreground">
           {comparisonPeriod}
         </div>
       ) : null}
 
-      {subtitle ? (
+      {subtitle && !isUtility ? (
         <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
           {subtitle}
         </p>
       ) : null}
 
-      {series && series.length >= 2 ? (
+      {series && series.length >= 2 && !isUtility ? (
         <svg
-          viewBox="0 0 100 32"
+          viewBox={isHero ? "0 0 100 40" : "0 0 100 32"}
           preserveAspectRatio="none"
-          className="mt-2 h-8 w-full"
+          className={cn("w-full", isHero ? "mt-2 h-10" : "mt-2 h-8")}
           aria-hidden="true"
         >
           <path
-            d={buildSparklinePath(series, 100, 32)}
+            d={buildSparklinePath(series, 100, isHero ? 40 : 32)}
             fill="none"
             stroke={STROKE[resolvedAccent]}
-            strokeWidth={1.75}
+            strokeWidth={isHero ? 2 : 1.75}
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
-      ) : (
+      ) : !isUtility ? (
         <div className="mt-2 h-8" aria-hidden="true" />
-      )}
+      ) : null}
 
-      {ago ? (
+      {ago && !isUtility ? (
         <div className="mt-1 text-[10px] text-muted-foreground">{ago}</div>
       ) : null}
     </>
   );
 
   const baseClasses = cn(
-    "flex flex-col rounded-2xl border border-border bg-card p-4",
+    "flex flex-col rounded-2xl border border-border bg-card",
+    isUtility ? "p-3" : isHero ? "p-5" : "p-4",
     interactive
       ? "transition-all active:scale-[0.98] hover:border-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
       : undefined,
