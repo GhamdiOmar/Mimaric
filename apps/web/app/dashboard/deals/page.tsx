@@ -11,6 +11,9 @@ import {
   Ban,
   Eye,
   CheckCircle,
+  Filter,
+  Handshake,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Button,
@@ -26,6 +29,17 @@ import {
   PageIntro,
   KPICard,
   ResponsiveDialog,
+  AppBar,
+  MobileKPICard,
+  DataCard,
+  FAB,
+  EmptyState,
+  SARAmount,
+  Skeleton,
+  BottomSheet,
+  Alert,
+  AlertDescription,
+  cn,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -86,8 +100,10 @@ export default function DealsPage() {
 
   const [deals, setDeals] = React.useState<Reservation[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
+  const [showMobileFilters, setShowMobileFilters] = React.useState(false);
 
   // Create modal
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -115,9 +131,14 @@ export default function DealsPage() {
 
   function loadDeals() {
     setLoading(true);
+    setLoadError(null);
     getReservations()
       .then((data) => setDeals(data as Reservation[]))
-      .catch(() => toast.error(lang === "ar" ? "تعذّر تحميل الصفقات" : "Failed to load deals"))
+      .catch(() => {
+        const msg = lang === "ar" ? "تعذّر تحميل الصفقات" : "Failed to load deals";
+        setLoadError(msg);
+        toast.error(msg);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -259,7 +280,267 @@ export default function DealsPage() {
     { key: "CANCELLED", ar: "ملغي", en: "Cancelled" },
   ];
 
+  // Mobile-only helpers
+  const pendingCount = deals.filter((d) => d.status === "PENDING").length;
+  const confirmedCount = deals.filter((d) => d.status === "CONFIRMED").length;
+  const expiredValue = deals
+    .filter((d) => d.status === "EXPIRED")
+    .reduce((sum, d) => sum + Number(d.amount), 0);
+  const decidedDeals = deals.filter(
+    (d) => d.status === "CONFIRMED" || d.status === "EXPIRED" || d.status === "CANCELLED",
+  ).length;
+  const winRate =
+    decidedDeals > 0 ? Math.round((confirmedCount / decidedDeals) * 100) : 0;
+
+  function expiryCountdown(iso: string): { label: string; tone: "success" | "warning" | "destructive" | "muted" } {
+    const diffMs = new Date(iso).getTime() - Date.now();
+    const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+    if (days < 0) {
+      return {
+        label: lang === "ar" ? `منتهي منذ ${Math.abs(days)} يوم` : `${Math.abs(days)}d ago`,
+        tone: "destructive",
+      };
+    }
+    if (days === 0) {
+      return {
+        label: lang === "ar" ? "ينتهي اليوم" : "Today",
+        tone: "warning",
+      };
+    }
+    if (days <= 3) {
+      return {
+        label: lang === "ar" ? `${days} أيام` : `${days}d`,
+        tone: "warning",
+      };
+    }
+    return {
+      label: lang === "ar" ? `${days} يوم` : `${days}d`,
+      tone: "success",
+    };
+  }
+
+  function statusBadgeVariant(
+    status: Reservation["status"],
+  ): "pending" | "success" | "overdue" | "default" {
+    switch (status) {
+      case "PENDING":
+        return "pending";
+      case "CONFIRMED":
+        return "success";
+      case "EXPIRED":
+        return "overdue";
+      case "CANCELLED":
+      default:
+        return "default";
+    }
+  }
+
+  const mobileStatusTabs = statusTabs;
+  const canWriteDeals = can("deals:write");
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "الحجوزات" : "Reservations"}
+        lang={lang}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(true)}
+            aria-label={lang === "ar" ? "تصفية" : "Filter"}
+            className={cn(
+              "inline-flex h-10 w-10 items-center justify-center rounded-full",
+              "text-foreground hover:bg-muted/60 active:bg-muted transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]",
+            )}
+          >
+            <Filter className="h-5 w-5" aria-hidden="true" />
+          </button>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={
+              lang === "ar"
+                ? "ابحث باسم العميل أو رقم الوحدة..."
+                : "Search by client or unit..."
+            }
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <MobileKPICard
+          label={lang === "ar" ? "قيد الانتظار" : "Pending"}
+          value={<span className="tabular-nums">{pendingCount}</span>}
+          tone="amber"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "مؤكدة" : "Confirmed"}
+          value={<span className="tabular-nums">{confirmedCount}</span>}
+          tone="green"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "قيمة المنتهية" : "Expired Value"}
+          value={
+            <SARAmount value={expiredValue} size={18} compact className="tabular-nums" />
+          }
+          tone="red"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "نسبة الفوز" : "Win Rate"}
+          value={<span className="tabular-nums">{winRate}%</span>}
+          tone="primary"
+        />
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-4">
+        {loadError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <EmptyState
+            icon={<Handshake className="h-10 w-10 text-primary" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد حجوزات" : "No reservations"}
+            description={
+              lang === "ar"
+                ? "لم يتم العثور على حجوزات مطابقة للتصفية الحالية."
+                : "No reservations match the current filter."
+            }
+          />
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card px-4">
+            {filtered.map((deal, idx) => {
+              const countdown = expiryCountdown(deal.expiresAt);
+              const badgeVariant = statusBadgeVariant(deal.status);
+              const statusLabel =
+                lang === "ar"
+                  ? STATUS_LABELS[deal.status]?.ar ?? deal.status
+                  : STATUS_LABELS[deal.status]?.en ?? deal.status;
+              const countdownTextClass =
+                countdown.tone === "destructive"
+                  ? "text-destructive"
+                  : countdown.tone === "warning"
+                    ? "text-warning"
+                    : countdown.tone === "success"
+                      ? "text-success"
+                      : "text-muted-foreground";
+
+              return (
+                <DataCard
+                  key={deal.id}
+                  icon={Handshake}
+                  iconTone="purple"
+                  divider={idx !== filtered.length - 1}
+                  title={deal.customer.name}
+                  subtitle={[
+                    `${lang === "ar" ? "وحدة" : "Unit"} ${deal.unit.number}`,
+                    <SARAmount
+                      key="amount"
+                      value={Number(deal.amount)}
+                      size={12}
+                      compact
+                      className="tabular-nums"
+                    />,
+                  ]}
+                  trailing={
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={badgeVariant} size="sm">
+                        {statusLabel}
+                      </Badge>
+                      <span className={cn("text-[11px] tabular-nums", countdownTextClass)}>
+                        {countdown.label}
+                      </span>
+                    </div>
+                  }
+                  onClick={() => setDetailDeal(deal)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {canWriteDeals && (
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "إنشاء حجز" : "Create reservation"}
+          onClick={openCreate}
+        />
+      )}
+
+      <BottomSheet
+        open={showMobileFilters}
+        onOpenChange={setShowMobileFilters}
+        title={lang === "ar" ? "تصفية الحالة" : "Filter by status"}
+        footer={
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setStatusFilter("ALL")}
+            >
+              {lang === "ar" ? "مسح" : "Reset"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowMobileFilters(false)}
+            >
+              {lang === "ar" ? "تطبيق" : "Apply"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-wrap gap-2 py-2">
+          {mobileStatusTabs.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setStatusFilter(tab.key)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                statusFilter === tab.key
+                  ? "border-transparent bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                  : "border-border bg-card text-muted-foreground",
+              )}
+            >
+              {lang === "ar" ? tab.ar : tab.en}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div dir={dir} className="p-6 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <PageIntro
@@ -678,5 +959,7 @@ export default function DealsPage() {
         </p>
       </ResponsiveDialog>
     </div>
+    </div>
+    </>
   );
 }

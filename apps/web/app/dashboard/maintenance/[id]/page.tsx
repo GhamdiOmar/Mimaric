@@ -15,8 +15,26 @@ import {
   Calendar,
   CircleDollarSign,
   X,
+  Mail,
+  RefreshCw,
+  UserPlus,
+  CalendarClock,
+  PlayCircle,
+  PauseCircle,
+  ClipboardList,
+  FileText,
 } from "lucide-react";
-import { Button, Badge, SARAmount } from "@repo/ui";
+import {
+  Button,
+  Badge,
+  SARAmount,
+  AppBar,
+  QuickActionRail,
+  ActivityTimeline,
+  BottomSheet,
+  EmptyState,
+  Skeleton,
+} from "@repo/ui";
 import {
   getMaintenanceRequest,
   updateMaintenanceRequest,
@@ -79,6 +97,8 @@ export default function MaintenanceDetailPage() {
   const [notes, setNotes] = React.useState("");
   const [showAssign, setShowAssign] = React.useState(false);
   const [costErrors, setCostErrors] = React.useState<Record<string, string>>({});
+  const [mobileStatusSheet, setMobileStatusSheet] = React.useState(false);
+  const [mobileAssignSheet, setMobileAssignSheet] = React.useState(false);
 
   React.useEffect(() => {
     load();
@@ -178,7 +198,434 @@ export default function MaintenanceDetailPage() {
   const isOverdue = request.dueDate && new Date(request.dueDate) < new Date() && !["RESOLVED", "CLOSED"].includes(request.status);
   const inputClass = "w-full h-9 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
+  // ─── Mobile timeline events ────────────────────────────────────────────────
+  type TLTone =
+    | "default"
+    | "primary"
+    | "success"
+    | "info"
+    | "warning"
+    | "destructive";
+  const timelineEvents: Array<{
+    key: string;
+    label: React.ReactNode;
+    at: React.ReactNode;
+    detail?: React.ReactNode;
+    icon?: any;
+    tone?: TLTone;
+  }> = [];
+  const fmtDT = (d: any) =>
+    d ? new Date(d).toLocaleString(lang === "ar" ? "ar-SA" : "en-US") : "";
+  if (request.createdAt) {
+    timelineEvents.push({
+      key: "created",
+      icon: ClipboardList,
+      tone: "info",
+      label: lang === "ar" ? "تم إنشاء الطلب" : "Ticket created",
+      at: fmtDT(request.createdAt),
+      detail: request.title,
+    });
+  }
+  if (request.assignedTo) {
+    timelineEvents.push({
+      key: "assigned",
+      icon: UserPlus,
+      tone: "primary",
+      label: lang === "ar" ? "تم التعيين" : "Assigned",
+      at: fmtDT(request.updatedAt ?? request.createdAt),
+      detail: request.assignedTo.name,
+    });
+  }
+  if (request.scheduledDate) {
+    timelineEvents.push({
+      key: "scheduled",
+      icon: CalendarClock,
+      tone: "info",
+      label: lang === "ar" ? "مجدول" : "Scheduled",
+      at: fmtDT(request.scheduledDate),
+    });
+  }
+  if (request.status === "IN_PROGRESS") {
+    timelineEvents.push({
+      key: "in-progress",
+      icon: PlayCircle,
+      tone: "warning",
+      label: lang === "ar" ? "قيد التنفيذ" : "In progress",
+      at: fmtDT(request.updatedAt ?? request.createdAt),
+    });
+  }
+  if (request.status === "ON_HOLD") {
+    timelineEvents.push({
+      key: "on-hold",
+      icon: PauseCircle,
+      tone: "warning",
+      label: lang === "ar" ? "معلّق" : "On hold",
+      at: fmtDT(request.updatedAt ?? request.createdAt),
+    });
+  }
+  if (request.completedAt) {
+    timelineEvents.push({
+      key: "completed",
+      icon: CheckCircle2,
+      tone: "success",
+      label: lang === "ar" ? "تم الإنجاز" : "Completed",
+      at: fmtDT(request.completedAt),
+    });
+  }
+  if (request.status === "CLOSED") {
+    timelineEvents.push({
+      key: "closed",
+      icon: CheckCircle2,
+      tone: "default",
+      label: lang === "ar" ? "مغلق" : "Closed",
+      at: fmtDT(request.updatedAt ?? request.completedAt ?? request.createdAt),
+    });
+  }
+
+  const assigneeEmail = request.assignedTo?.email;
+
+  const quickActions: any[] = [
+    {
+      key: "status",
+      label: lang === "ar" ? "الحالة" : "Status",
+      icon: RefreshCw,
+      tone: "primary" as const,
+      onClick: () => setMobileStatusSheet(true),
+    },
+    {
+      key: "assign",
+      label: lang === "ar" ? "تعيين" : "Assign",
+      icon: UserPlus,
+      tone: "info" as const,
+      onClick: () => setMobileAssignSheet(true),
+    },
+  ];
+  if (assigneeEmail) {
+    quickActions.push({
+      key: "email",
+      label: lang === "ar" ? "بريد" : "Email",
+      icon: Mail,
+      tone: "default" as const,
+      href: `mailto:${assigneeEmail}`,
+    });
+  }
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={
+          <div className="flex flex-col items-center">
+            <span className="truncate text-sm font-semibold text-foreground font-mono">
+              {`#${String(request.id).slice(-6).toUpperCase()}`}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              {lang === "ar" ? "طلب صيانة" : "Ticket"}
+            </span>
+          </div>
+        }
+        lang={lang}
+        centered
+        onBack={() => router.push("/dashboard/maintenance")}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setEditingCost(true)}
+            aria-label={lang === "ar" ? "تعديل" : "Edit"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <Pencil className="h-5 w-5" aria-hidden="true" />
+          </button>
+        }
+      />
+
+      <div className="flex-1 px-4 pb-28 pt-3 space-y-5">
+        {/* Title + tags */}
+        <div className="space-y-2">
+          <h1 className="text-lg font-semibold text-foreground leading-tight">
+            {request.title}
+          </h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={status.variant as any} className="text-[10px]">
+              {status[lang]}
+            </Badge>
+            <span className={`text-[11px] font-semibold ${priority.color}`}>
+              {priority[lang]}
+            </span>
+            {request.isPreventive && (
+              <Badge variant="available" className="text-[10px]">
+                {lang === "ar" ? "وقائي" : "Preventive"}
+              </Badge>
+            )}
+            {isOverdue && (
+              <Badge variant="overdue" className="text-[10px] gap-1">
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {lang === "ar" ? "متأخر" : "Overdue"}
+              </Badge>
+            )}
+          </div>
+        </div>
+
+        {/* Timeline — top section */}
+        <section className="space-y-2">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {lang === "ar" ? "سجل الحالة" : "Status timeline"}
+          </h2>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <ActivityTimeline
+              events={timelineEvents}
+              emptyState={
+                lang === "ar" ? "لا يوجد نشاط بعد." : "No activity yet."
+              }
+            />
+          </div>
+        </section>
+
+        {/* Details card */}
+        <section className="space-y-2">
+          <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            {lang === "ar" ? "التفاصيل" : "Details"}
+          </h2>
+          <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+            <MobileRow
+              label={lang === "ar" ? "التصنيف" : "Category"}
+              value={cat[lang]}
+            />
+            <MobileRow
+              label={lang === "ar" ? "الأولوية" : "Priority"}
+              value={
+                <span className={priority.color}>{priority[lang]}</span>
+              }
+            />
+            <MobileRow
+              label={lang === "ar" ? "الوحدة" : "Unit"}
+              value={
+                request.unit
+                  ? `${request.unit.number} — ${request.unit.building?.name ?? ""}`
+                  : "—"
+              }
+            />
+            <MobileRow
+              label={lang === "ar" ? "المسؤول" : "Assignee"}
+              value={request.assignedTo?.name ?? "—"}
+            />
+            <MobileRow
+              label={lang === "ar" ? "تاريخ الإنشاء" : "Created"}
+              value={
+                <span className="tabular-nums">
+                  {new Date(request.createdAt).toLocaleDateString(
+                    lang === "ar" ? "ar-SA" : "en-US",
+                  )}
+                </span>
+              }
+            />
+            {request.dueDate && (
+              <MobileRow
+                label={lang === "ar" ? "الاستحقاق" : "Due"}
+                value={
+                  <span
+                    className={`tabular-nums ${isOverdue ? "text-destructive font-bold" : ""}`}
+                  >
+                    {new Date(request.dueDate).toLocaleDateString(
+                      lang === "ar" ? "ar-SA" : "en-US",
+                    )}
+                  </span>
+                }
+              />
+            )}
+            {request.description && (
+              <div className="pt-3 border-t border-border">
+                <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">
+                  {lang === "ar" ? "الوصف" : "Description"}
+                </p>
+                <p className="text-sm text-foreground whitespace-pre-wrap">
+                  {request.description}
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Costs */}
+        {(request.estimatedCost || request.actualCost || request.laborHours) && (
+          <section className="space-y-2">
+            <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "التكاليف" : "Costs"}
+            </h2>
+            <div className="bg-card rounded-xl border border-border p-4 space-y-3">
+              {request.estimatedCost && (
+                <MobileRow
+                  label={lang === "ar" ? "التكلفة التقديرية" : "Estimated"}
+                  value={
+                    <SARAmount
+                      value={Number(request.estimatedCost)}
+                      size={12}
+                    />
+                  }
+                />
+              )}
+              {request.actualCost && (
+                <MobileRow
+                  label={lang === "ar" ? "التكلفة الفعلية" : "Actual"}
+                  value={
+                    <SARAmount
+                      value={Number(request.actualCost)}
+                      size={12}
+                    />
+                  }
+                />
+              )}
+              {request.laborHours && (
+                <MobileRow
+                  label={lang === "ar" ? "ساعات العمل" : "Labor hours"}
+                  value={
+                    <span className="tabular-nums">
+                      {request.laborHours}{" "}
+                      {lang === "ar" ? "ساعة" : "hrs"}
+                    </span>
+                  }
+                />
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Notes */}
+        {request.notes && (
+          <section className="space-y-2">
+            <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "ملاحظات" : "Notes"}
+            </h2>
+            <div className="bg-card rounded-xl border border-border p-4">
+              <p className="text-sm text-foreground whitespace-pre-wrap">
+                {request.notes}
+              </p>
+            </div>
+          </section>
+        )}
+      </div>
+
+      {/* Sticky QuickActionRail — bottom */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur-md px-4 pt-3 pb-safe-bottom md:hidden">
+        <QuickActionRail actions={quickActions} />
+      </div>
+
+      {/* Update Status sheet */}
+      <BottomSheet
+        open={mobileStatusSheet}
+        onOpenChange={setMobileStatusSheet}
+        title={lang === "ar" ? "تحديث الحالة" : "Update status"}
+      >
+        {validTransitions.length === 0 ? (
+          <EmptyState
+            compact
+            icon={<CheckCircle2 className="h-10 w-10" />}
+            title={
+              lang === "ar"
+                ? "لا توجد تحولات متاحة"
+                : "No transitions available"
+            }
+          />
+        ) : (
+          <div className="space-y-2">
+            {validTransitions.map((nextStatus: string) => {
+              const nextLabel = statusLabels[nextStatus] ?? {
+                ar: nextStatus,
+                en: nextStatus,
+                variant: "draft",
+              };
+              return (
+                <button
+                  key={nextStatus}
+                  type="button"
+                  disabled={saving}
+                  onClick={async () => {
+                    await handleStatusChange(nextStatus);
+                    setMobileStatusSheet(false);
+                  }}
+                  className="flex w-full items-center justify-between rounded-xl border border-border bg-background px-4 py-3 text-start transition-colors hover:border-foreground/20 active:scale-[0.99] disabled:opacity-60"
+                >
+                  <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    {transitioningTo === nextStatus ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4" />
+                    )}
+                    {nextLabel[lang]}
+                  </span>
+                  <Badge
+                    variant={nextLabel.variant as any}
+                    className="text-[10px]"
+                  >
+                    {nextLabel[lang]}
+                  </Badge>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </BottomSheet>
+
+      {/* Assign sheet */}
+      <BottomSheet
+        open={mobileAssignSheet}
+        onOpenChange={setMobileAssignSheet}
+        title={lang === "ar" ? "تعيين المسؤول" : "Assign to"}
+      >
+        <div className="space-y-2">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={async () => {
+              await handleAssign("");
+              setMobileAssignSheet(false);
+            }}
+            className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-start disabled:opacity-60"
+          >
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <X className="h-4 w-4" />
+            </span>
+            <span className="text-sm font-medium text-foreground">
+              {lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}
+            </span>
+          </button>
+          {users.map((u: any) => (
+            <button
+              key={u.id}
+              type="button"
+              disabled={saving}
+              onClick={async () => {
+                await handleAssign(u.id);
+                setMobileAssignSheet(false);
+              }}
+              className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-start disabled:opacity-60"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <CircleUser className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-foreground">
+                  {u.name}
+                </span>
+                <span className="block truncate text-[11px] text-muted-foreground">
+                  {u.role}
+                </span>
+              </span>
+              {request.assignedToId === u.id && (
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -415,6 +862,8 @@ export default function MaintenanceDetailPage() {
         </div>
       )}
     </div>
+    </div>
+    </>
   );
 }
 
@@ -423,6 +872,23 @@ function InfoRow({ label, value }: { label: string; value: any }) {
     <div>
       <p className="text-[10px] text-muted-foreground uppercase font-bold">{label}</p>
       <p className="text-sm text-primary font-medium mt-0.5">{value || "—"}</p>
+    </div>
+  );
+}
+
+function MobileRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium text-foreground text-end">
+        {value ?? "—"}
+      </span>
     </div>
   );
 }

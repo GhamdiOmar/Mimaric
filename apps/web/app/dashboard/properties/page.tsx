@@ -20,6 +20,7 @@ import {
   BedDouble,
   Bath,
   Maximize2,
+  AlertTriangle,
 } from "lucide-react";
 import {
   Button,
@@ -31,6 +32,15 @@ import {
   SARAmount,
   StatusBadge,
   ResponsiveDialog,
+  AppBar,
+  FAB,
+  PropertyCard,
+  MobileKPICard,
+  EmptyState,
+  Skeleton,
+  BottomSheet,
+  Alert,
+  AlertDescription,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -555,6 +565,19 @@ export default function PropertiesPage() {
     URL.revokeObjectURL(url);
   }
 
+  // ─── Mobile state ──────────────────────────────────────────────────────────
+  const [mobileTab, setMobileTab] = React.useState<
+    "all" | "AVAILABLE" | "RENTED" | "SOLD"
+  >("all");
+  const [showMobileFilters, setShowMobileFilters] = React.useState(false);
+
+  const mobileFilteredUnits = React.useMemo(() => {
+    return filteredUnits.filter((u) => {
+      if (mobileTab === "all") return true;
+      return u.status === mobileTab;
+    });
+  }, [filteredUnits, mobileTab]);
+
   // ─── Loading ───────────────────────────────────────────────────────────────
 
   if (loading) {
@@ -566,6 +589,297 @@ export default function PropertiesPage() {
   }
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "العقارات" : "Properties"}
+        lang={lang}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(true)}
+            aria-label={lang === "ar" ? "تصفية" : "Filter"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <Filter className="h-5 w-5" aria-hidden="true" />
+          </button>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={
+              lang === "ar"
+                ? "ابحث برقم الوحدة أو اسم المبنى..."
+                : "Search by unit or building..."
+            }
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <MobileKPICard
+          label={lang === "ar" ? "إجمالي الوحدات" : "Total units"}
+          value={kpis.total}
+          tone="primary"
+          icon={Building2}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "متاحة" : "Available"}
+          value={kpis.available}
+          tone="green"
+          icon={CheckCircle2}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "مباعة / مؤجرة" : "Sold / Rented"}
+          value={kpis.soldRented}
+          tone="blue"
+          icon={KeyRound}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "صيانة" : "Maintenance"}
+          value={kpis.maintenance}
+          tone="amber"
+          icon={Wrench}
+        />
+      </div>
+
+      <div className="px-4 pt-3">
+        <div
+          role="tablist"
+          aria-label={lang === "ar" ? "تبويبات العقارات" : "Property tabs"}
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2 [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {(
+            [
+              { key: "all", label: lang === "ar" ? "الكل" : "All" },
+              {
+                key: "AVAILABLE",
+                label: lang === "ar" ? "متاحة" : "Available",
+              },
+              { key: "RENTED", label: lang === "ar" ? "مؤجرة" : "Rented" },
+              { key: "SOLD", label: lang === "ar" ? "مباعة" : "Sold" },
+            ] as const
+          ).map((t) => {
+            const isActive = mobileTab === t.key;
+            return (
+              <button
+                key={t.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setMobileTab(t.key)}
+                className={cn(
+                  "min-h-[36px] whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors active:scale-95",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]",
+                  isActive
+                    ? "border border-transparent bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                    : "border border-border bg-card text-muted-foreground hover:border-foreground/20",
+                )}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {error && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {mobileFilteredUnits.length === 0 ? (
+          <EmptyState
+            icon={<Building2 className="h-12 w-12" />}
+            title={
+              lang === "ar" ? "لا توجد عقارات" : "No properties found"
+            }
+            description={
+              lang === "ar"
+                ? "حاول تعديل البحث أو الفلتر، أو أضف عقاراً جديداً."
+                : "Try adjusting your search or filter, or add a new property."
+            }
+            action={
+              canWrite ? (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  style={{ display: "inline-flex" }}
+                  className="gap-2"
+                  onClick={() => setShowAddModal(true)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {lang === "ar" ? "إضافة عقار" : "Add property"}
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="space-y-3">
+            {mobileFilteredUnits.map((unit) => {
+              const typeKey = (
+                unit.type ? unit.type.toString().toLowerCase() : "other"
+              ) as
+                | "apartment"
+                | "villa"
+                | "office"
+                | "retail"
+                | "warehouse"
+                | "other";
+              const validTypes: Record<string, true> = {
+                apartment: true,
+                villa: true,
+                office: true,
+                retail: true,
+                warehouse: true,
+              };
+              const mappedType = validTypes[typeKey] ? typeKey : "other";
+              const statusKey = (
+                unit.status ? unit.status.toString().toLowerCase() : ""
+              ) as
+                | "available"
+                | "reserved"
+                | "sold"
+                | "rented"
+                | "maintenance";
+              const validStatus: Record<string, true> = {
+                available: true,
+                reserved: true,
+                sold: true,
+                rented: true,
+                maintenance: true,
+              };
+              const mappedStatus = validStatus[statusKey]
+                ? statusKey
+                : undefined;
+              const building =
+                unit.buildingName || unit.building?.name || "";
+              const city = unit.city || "";
+              const location = [building, city].filter(Boolean).join(" · ");
+              const priceValue = unit.markupPrice ?? unit.price;
+              const isRental = unit.status === "RENTED" || unit.rentalPrice;
+              const displayPrice =
+                isRental && unit.rentalPrice
+                  ? unit.rentalPrice
+                  : priceValue;
+
+              return (
+                <PropertyCard
+                  key={unit.id}
+                  title={`${lang === "ar" ? "وحدة" : "Unit"} ${unit.number}`}
+                  type={mappedType}
+                  lang={lang}
+                  status={mappedStatus}
+                  location={location || undefined}
+                  bedrooms={unit.bedrooms ?? null}
+                  bathrooms={unit.bathrooms ?? null}
+                  areaSqm={unit.area ?? null}
+                  price={
+                    displayPrice ? (
+                      <SARAmount
+                        value={Number(displayPrice)}
+                        size={12}
+                        compact
+                      />
+                    ) : undefined
+                  }
+                  priceSuffix={
+                    isRental && unit.rentalPrice
+                      ? lang === "ar"
+                        ? "/ شهر"
+                        : "/ month"
+                      : undefined
+                  }
+                  onClick={() => setDrawerUnit(unit)}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {canWrite && (
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "إضافة عقار" : "Add property"}
+          onClick={() => setShowAddModal(true)}
+        />
+      )}
+
+      <BottomSheet
+        open={showMobileFilters}
+        onOpenChange={setShowMobileFilters}
+        title={lang === "ar" ? "تصفية" : "Filters"}
+        footer={
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => {
+                setStatusFilter("");
+                setMobileTab("all");
+              }}
+            >
+              {lang === "ar" ? "مسح" : "Reset"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowMobileFilters(false)}
+            >
+              {lang === "ar" ? "تطبيق" : "Apply"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-5">
+          <div>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "الحالة" : "Status"}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {statusFilterOptions.map((opt) => {
+                const isActive = statusFilter === opt.key;
+                return (
+                  <button
+                    key={opt.key || "all"}
+                    type="button"
+                    onClick={() => setStatusFilter(opt.key)}
+                    className={cn(
+                      "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                      isActive
+                        ? "border-transparent bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                        : "border-border bg-card text-muted-foreground",
+                    )}
+                  >
+                    {opt.label[lang]}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div
       className="space-y-8 animate-in fade-in duration-500"
       dir={lang === "ar" ? "rtl" : "ltr"}
@@ -1167,5 +1481,7 @@ export default function PropertiesPage() {
         </div>
       </ResponsiveDialog>
     </div>
+    </div>
+    </>
   );
 }

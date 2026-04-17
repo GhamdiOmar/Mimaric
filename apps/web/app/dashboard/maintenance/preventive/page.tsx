@@ -13,8 +13,34 @@ import {
   Pencil,
   Trash2,
   Zap,
+  Search,
+  AlertTriangle,
 } from "lucide-react";
-import { Button, Badge, SARAmount, ResponsiveDialog } from "@repo/ui";
+import {
+  Button,
+  Badge,
+  SARAmount,
+  ResponsiveDialog,
+  AppBar,
+  FAB,
+  DataCard,
+  MobileKPICard,
+  EmptyState,
+  Skeleton,
+  Input,
+  Switch,
+  Alert,
+  AlertDescription,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui";
+import { toast } from "sonner";
 import {
   getPreventivePlans,
   createPreventivePlan,
@@ -67,6 +93,11 @@ export default function PreventiveMaintenancePage() {
   const [showModal, setShowModal] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
+  // Mobile search + delete confirm
+  const [search, setSearch] = React.useState("");
+  const [deleteTargetId, setDeleteTargetId] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
+  const [runConfirmOpen, setRunConfirmOpen] = React.useState(false);
   const [form, setForm] = React.useState({
     title: "",
     description: "",
@@ -192,35 +223,42 @@ export default function PreventiveMaintenancePage() {
     }
   }
 
-  async function handleDelete(planId: string) {
-    const msg = lang === "ar"
-      ? "هل أنت متأكد من حذف هذه الخطة؟"
-      : "Are you sure you want to delete this plan?";
-    if (!confirm(msg)) return;
+  async function confirmDeletePlan() {
+    if (!deleteTargetId) return;
+    setDeleting(true);
     try {
-      await deletePreventivePlan(planId);
+      await deletePreventivePlan(deleteTargetId);
       await load();
+      toast.success(lang === "ar" ? "تم حذف الخطة" : "Plan deleted");
+      setDeleteTargetId(null);
     } catch (e) {
-      console.error(e);
+      toast.error(
+        lang === "ar"
+          ? "تعذّر حذف الخطة. يرجى المحاولة مجدداً."
+          : "Could not delete plan. Please try again."
+      );
+    } finally {
+      setDeleting(false);
     }
   }
 
   async function handleGenerate() {
-    const msg = lang === "ar"
-      ? "سيتم إنشاء طلبات صيانة لجميع الخطط المستحقة. متابعة؟"
-      : "This will create maintenance requests for all due plans. Continue?";
-    if (!confirm(msg)) return;
+    setRunConfirmOpen(false);
     setGenerating(true);
     try {
       const result = await generateWorkOrdersFromPlans();
-      alert(
+      toast.success(
         lang === "ar"
           ? `تم إنشاء ${result.created} طلب صيانة من ${result.total} خطة مستحقة.`
           : `Created ${result.created} work orders from ${result.total} due plans.`
       );
       await load();
     } catch (e) {
-      console.error(e);
+      toast.error(
+        lang === "ar"
+          ? "تعذّر إنشاء طلبات الصيانة. يرجى المحاولة مجدداً."
+          : "Could not generate work orders. Please try again."
+      );
     } finally {
       setGenerating(false);
     }
@@ -228,7 +266,203 @@ export default function PreventiveMaintenancePage() {
 
   const inputClass = "w-full h-10 px-3 bg-card border border-border rounded-md text-sm outline-none focus:border-secondary transition-all";
 
+  // ─── Mobile filters / KPIs ─────────────────────────────────────────────
+  const filteredPlans = React.useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return plans;
+    return plans.filter((p: any) =>
+      (p.title ?? "").toLowerCase().includes(q) ||
+      (p.description ?? "").toLowerCase().includes(q)
+    );
+  }, [plans, search]);
+
+  const mobileKpis = React.useMemo(() => {
+    const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    return {
+      active: plans.filter((p: any) => p.isActive).length,
+      dueWeek: plans.filter(
+        (p: any) =>
+          p.isActive && p.nextRunDate && new Date(p.nextRunDate).getTime() - now <= oneWeek
+      ).length,
+      total: plans.length,
+      disabled: plans.filter((p: any) => !p.isActive).length,
+    };
+  }, [plans]);
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "الخطط الوقائية" : "Preventive plans"}
+        lang={lang}
+        onBack={() => router.push("/dashboard/maintenance")}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setRunConfirmOpen(true)}
+            disabled={generating}
+            aria-label={lang === "ar" ? "تشغيل الآن" : "Run now"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            {generating ? (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+            ) : (
+              <Zap className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={lang === "ar" ? "بحث باسم الخطة..." : "Search by plan name..."}
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <MobileKPICard
+          label={lang === "ar" ? "الخطط النشطة" : "Active plans"}
+          value={mobileKpis.active}
+          tone="green"
+          icon={Play}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "المستحقة هذا الأسبوع" : "Due this week"}
+          value={mobileKpis.dueWeek}
+          tone="amber"
+          icon={CalendarCheck}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "الإجمالي" : "Total"}
+          value={mobileKpis.total}
+          tone="primary"
+          icon={Zap}
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "متوقفة" : "Disabled"}
+          value={mobileKpis.disabled}
+          tone="default"
+          icon={Pause}
+        />
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {loading ? (
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="rounded-2xl border border-border bg-card p-3">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="mt-2 h-3 w-1/2" />
+                <Skeleton className="mt-3 h-3 w-1/3" />
+              </div>
+            ))}
+          </div>
+        ) : filteredPlans.length === 0 ? (
+          <EmptyState
+            icon={<CalendarCheck className="h-12 w-12" />}
+            title={lang === "ar" ? "لا توجد خطط وقائية" : "No preventive plans"}
+            description={
+              search
+                ? lang === "ar"
+                  ? "جرّب تعديل البحث."
+                  : "Try adjusting your search."
+                : lang === "ar"
+                  ? "أضف أول خطة صيانة وقائية."
+                  : "Add your first preventive plan."
+            }
+          />
+        ) : (
+          <div className="space-y-1">
+            {filteredPlans.map((plan: any) => {
+              const rec = recurrenceLabels[plan.recurrenceType] ?? {
+                ar: plan.recurrenceType,
+                en: plan.recurrenceType,
+              };
+              const cat = categoryLabels[plan.category] ?? {
+                ar: plan.category,
+                en: plan.category,
+              };
+              const nextDateLabel = plan.nextRunDate
+                ? new Date(plan.nextRunDate).toLocaleDateString(
+                    lang === "ar" ? "ar-SA" : "en-US"
+                  )
+                : "—";
+              const isDue =
+                plan.nextRunDate &&
+                new Date(plan.nextRunDate) <= new Date();
+
+              return (
+                <DataCard
+                  key={plan.id}
+                  icon={CalendarCheck}
+                  iconTone={plan.isActive ? "purple" : "default"}
+                  onClick={() => openEdit(plan)}
+                  title={
+                    <span className={plan.isActive ? "" : "opacity-60"}>
+                      {plan.title}
+                    </span>
+                  }
+                  subtitle={[
+                    cat[lang],
+                    `${plan.recurrenceInterval > 1 ? `${lang === "ar" ? "كل" : "Every"} ${plan.recurrenceInterval} ` : ""}${rec[lang]}`,
+                    <span
+                      key="next"
+                      className={
+                        isDue && plan.isActive
+                          ? "text-destructive font-medium"
+                          : undefined
+                      }
+                    >
+                      {lang === "ar" ? "التالي: " : "Next: "}
+                      <span className="tabular-nums">{nextDateLabel}</span>
+                    </span>,
+                  ]}
+                  trailing={
+                    <div
+                      className="flex items-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Switch
+                        checked={plan.isActive}
+                        onCheckedChange={() => handleToggle(plan.id)}
+                        aria-label={
+                          lang === "ar"
+                            ? "تفعيل أو إيقاف الخطة"
+                            : "Toggle plan active"
+                        }
+                      />
+                    </div>
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <FAB
+        icon={Plus}
+        label={lang === "ar" ? "خطة جديدة" : "New plan"}
+        onClick={openCreate}
+      />
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-8 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -246,7 +480,7 @@ export default function PreventiveMaintenancePage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="secondary" size="sm" className="gap-2" onClick={handleGenerate} disabled={generating}>
+          <Button variant="secondary" size="sm" className="gap-2" onClick={() => setRunConfirmOpen(true)} disabled={generating}>
             {generating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-4 w-4" />}
             {lang === "ar" ? "تشغيل الآن" : "Run Now"}
           </Button>
@@ -295,7 +529,7 @@ export default function PreventiveMaintenancePage() {
                     <Button variant="ghost" size="sm" onClick={() => openEdit(plan)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => handleDelete(plan.id)}>
+                    <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => setDeleteTargetId(plan.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -471,5 +705,84 @@ export default function PreventiveMaintenancePage() {
         </form>
       </ResponsiveDialog>
     </div>
+    </div>
+
+    {/* Delete plan confirm — shared by mobile + desktop */}
+    <AlertDialog
+      open={Boolean(deleteTargetId)}
+      onOpenChange={(open) => {
+        if (!open && !deleting) setDeleteTargetId(null);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {lang === "ar" ? "تأكيد حذف الخطة" : "Delete this plan?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {lang === "ar"
+              ? "سيتم حذف هذه الخطة الوقائية نهائياً. لا يمكن التراجع عن هذا الإجراء."
+              : "This preventive plan will be permanently deleted. This action cannot be undone."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>
+            {lang === "ar" ? "إلغاء" : "Cancel"}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              confirmDeletePlan();
+            }}
+            disabled={deleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {deleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : lang === "ar" ? "حذف" : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Run-now confirm — shared by mobile + desktop */}
+    <AlertDialog
+      open={runConfirmOpen}
+      onOpenChange={(open) => {
+        if (!generating) setRunConfirmOpen(open);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {lang === "ar"
+              ? "توليد طلبات الصيانة الآن؟"
+              : "Generate work orders now?"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {lang === "ar"
+              ? "سيتم إنشاء طلبات صيانة لجميع الخطط المستحقة."
+              : "Maintenance requests will be created for every plan that is currently due."}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={generating}>
+            {lang === "ar" ? "إلغاء" : "Cancel"}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              handleGenerate();
+            }}
+            disabled={generating}
+          >
+            {generating ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : lang === "ar" ? "تشغيل" : "Run now"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

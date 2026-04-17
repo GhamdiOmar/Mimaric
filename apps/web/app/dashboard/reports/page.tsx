@@ -14,6 +14,7 @@ import {
   Rocket,
   Stamp,
   Tag,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 import {
@@ -24,7 +25,11 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
+  AppBar,
+  Input,
+  cn,
 } from "@repo/ui";
+import { useLanguage } from "../../../components/LanguageProvider";
 import {
   getRevenueReport,
   getOccupancyReport,
@@ -64,7 +69,9 @@ interface ReportDef {
   name: string;
   nameEn: string;
   desc: string;
+  descEn: string;
   type: string;
+  typeEn: string;
   icon: LucideIcon;
 }
 
@@ -74,7 +81,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير الإيرادات",
     nameEn: "Revenue Report",
     desc: "إجمالي الإيرادات من الإيجارات والمبيعات مع التوزيع الشهري",
+    descEn: "Total rental and sales revenue with monthly breakdown",
     type: "مالي",
+    typeEn: "Financial",
     icon: DollarSign,
   },
   {
@@ -82,7 +91,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير الإشغال",
     nameEn: "Occupancy Report",
     desc: "معدلات الإشغال حسب المشروع والوحدات الشاغرة والمؤجرة",
+    descEn: "Occupancy rates per project with vacant and leased units",
     type: "تشغيلي",
+    typeEn: "Operational",
     icon: Building2,
   },
   {
@@ -90,7 +101,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير التحصيل",
     nameEn: "Rent Collection Report",
     desc: "تفاصيل تحصيل الإيجارات وتقادم المتأخرات حسب العميل",
+    descEn: "Rent collection details and overdue aging per customer",
     type: "مالي",
+    typeEn: "Financial",
     icon: Receipt,
   },
   {
@@ -98,7 +111,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير الصيانة",
     nameEn: "Maintenance Report",
     desc: "ملخص طلبات الصيانة والأولويات ومتوسط وقت الحل",
+    descEn: "Maintenance requests, priorities and avg resolution time",
     type: "تشغيلي",
+    typeEn: "Operational",
     icon: Wrench,
   },
   {
@@ -106,7 +121,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير محفظة الأراضي",
     nameEn: "Land Portfolio Report",
     desc: "تحليل شامل لمحفظة الأراضي والاستثمارات",
+    descEn: "Comprehensive land holdings and investment analysis",
     type: "استثماري",
+    typeEn: "Investment",
     icon: MapPin,
   },
   {
@@ -114,7 +131,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير تقدم المشاريع",
     nameEn: "Project Progress Report",
     desc: "تتبع حالة المشاريع ونسب البيع والتأجير",
+    descEn: "Project status with sale and lease percentages",
     type: "تشغيلي",
+    typeEn: "Operational",
     icon: HardHat,
   },
   {
@@ -122,7 +141,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير تكاليف الصيانة",
     nameEn: "Maintenance Cost Report",
     desc: "تحليل التكاليف الفعلية مقابل التقديرية",
+    descEn: "Actual vs estimated maintenance cost analysis",
     type: "مالي",
+    typeEn: "Financial",
     icon: Wrench,
   },
   {
@@ -130,7 +151,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير مسار التطوير",
     nameEn: "Development Pipeline Report",
     desc: "توزيع المشاريع على مراحل التطوير العقاري على الخارطة",
+    descEn: "Projects distributed across development pipeline stages",
     type: "تطويري",
+    typeEn: "Development",
     icon: Rocket,
   },
   {
@@ -138,7 +161,9 @@ const REPORTS: ReportDef[] = [
     name: "تقرير حالة الموافقات",
     nameEn: "Approval Status Report",
     desc: "تتبع طلبات الموافقة من الجهات الحكومية ونسب القبول",
+    descEn: "Government approval requests tracking and acceptance rates",
     type: "تنظيمي",
+    typeEn: "Regulatory",
     icon: Stamp,
   },
   {
@@ -146,16 +171,32 @@ const REPORTS: ReportDef[] = [
     name: "تقرير تحليل التسعير",
     nameEn: "Pricing Analysis Report",
     desc: "تحليل الأسعار حسب نوع المنتج وقواعد التسعير النشطة",
+    descEn: "Price analysis by product type and active pricing rules",
     type: "مالي",
+    typeEn: "Financial",
     icon: Tag,
   },
 ];
 
 export default function ReportsPage() {
+  const { lang } = useLanguage();
   const defaults = getDefaultDateRange();
   const [startDate, setStartDate] = React.useState(defaults.start);
   const [endDate, setEndDate] = React.useState(defaults.end);
   const [loadingId, setLoadingId] = React.useState<string | null>(null);
+  const [mobileSearch, setMobileSearch] = React.useState("");
+
+  const mobileFiltered = React.useMemo(() => {
+    if (!mobileSearch) return REPORTS;
+    const q = mobileSearch.toLowerCase();
+    return REPORTS.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.nameEn.toLowerCase().includes(q) ||
+        r.desc.toLowerCase().includes(q) ||
+        r.descEn.toLowerCase().includes(q)
+    );
+  }, [mobileSearch]);
 
   const dateRange = `${startDate} → ${endDate}`;
 
@@ -608,6 +649,90 @@ export default function ReportsPage() {
   );
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "التقارير" : "Reports"} lang={lang} />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <svg
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <Input
+            value={mobileSearch}
+            onChange={(e) => setMobileSearch(e.target.value)}
+            placeholder={lang === "ar" ? "ابحث في التقارير..." : "Search reports..."}
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3 space-y-3">
+        {mobileFiltered.map((report) => {
+          const Icon = report.icon;
+          const name = lang === "ar" ? report.name : report.nameEn;
+          const desc = lang === "ar" ? report.desc : report.descEn;
+          const busy =
+            loadingId === `${report.id}-pdf` || loadingId === `${report.id}-excel`;
+          return (
+            <button
+              key={report.id}
+              type="button"
+              onClick={() => handlePDF(report.id)}
+              disabled={loadingId !== null}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-4 text-start",
+                "transition-colors hover:border-foreground/20 active:scale-[0.99] disabled:opacity-60",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+              )}
+            >
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 p-3 text-primary">
+                {busy ? (
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                ) : (
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-foreground">
+                  {name}
+                </div>
+                <div className="line-clamp-2 text-xs text-muted-foreground mt-0.5">
+                  {desc}
+                </div>
+              </div>
+              <ChevronRight
+                className="h-5 w-5 shrink-0 text-muted-foreground rtl:scale-x-[-1]"
+                aria-hidden="true"
+              />
+            </button>
+          );
+        })}
+
+        {mobileFiltered.length === 0 && (
+          <div className="rounded-2xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
+            {lang === "ar" ? "لا توجد تقارير مطابقة." : "No matching reports."}
+          </div>
+        )}
+      </div>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-8 animate-in fade-in duration-500">
       <PageIntro
         title="التقارير والتحليلات"
@@ -672,5 +797,7 @@ export default function ReportsPage() {
         })}
       </div>
     </div>
+    </div>
+    </>
   );
 }

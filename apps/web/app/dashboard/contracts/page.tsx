@@ -8,6 +8,10 @@ import {
   X,
   FileText,
   Calendar,
+  Handshake,
+  AlertTriangle,
+  Home,
+  Key,
 } from "lucide-react";
 import {
   Button,
@@ -23,6 +27,18 @@ import {
   PageIntro,
   KPICard,
   ResponsiveDialog,
+  AppBar,
+  MobileKPICard,
+  MobileTabs,
+  DataCard,
+  FAB,
+  EmptyState,
+  SARAmount,
+  StatusBadge,
+  Skeleton,
+  BottomSheet,
+  Alert,
+  AlertDescription,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -78,7 +94,10 @@ export default function ContractsPage() {
   const [tab, setTab] = React.useState<"SALE" | "LEASE">("SALE");
   const [allContracts, setAllContracts] = React.useState<Contract[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [search, setSearch] = React.useState("");
+  const [mobileTab, setMobileTab] = React.useState<"ALL" | "SALE" | "LEASE">("ALL");
+  const [newContractSheetOpen, setNewContractSheetOpen] = React.useState(false);
 
   // Create modals
   const [saleModalOpen, setSaleModalOpen] = React.useState(false);
@@ -116,9 +135,14 @@ export default function ContractsPage() {
 
   function loadContracts() {
     setLoading(true);
+    setLoadError(null);
     getContracts()
       .then((data) => setAllContracts(data as Contract[]))
-      .catch(() => toast.error(lang === "ar" ? "تعذّر تحميل العقود" : "Failed to load contracts"))
+      .catch(() => {
+        const msg = lang === "ar" ? "تعذّر تحميل العقود" : "Failed to load contracts";
+        setLoadError(msg);
+        toast.error(msg);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -179,6 +203,33 @@ export default function ContractsPage() {
   const totalValue = allContracts
     .filter((c) => c.status === "SIGNED")
     .reduce((sum, c) => sum + Number(c.amount), 0);
+
+  // Expiring soon: signed lease contracts with endDate within the next 30 days
+  const now = Date.now();
+  const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+  const expiringCount = allContracts.filter((c) => {
+    if (c.type !== "LEASE" || c.status !== "SIGNED") return false;
+    const end = c.lease?.endDate ? new Date(c.lease.endDate).getTime() : 0;
+    return end > 0 && end - now > 0 && end - now <= THIRTY_DAYS;
+  }).length;
+
+  // Mobile filtering — tab (ALL/SALE/LEASE) + search
+  const mobileFiltered = React.useMemo(() => {
+    const base =
+      mobileTab === "ALL"
+        ? allContracts
+        : allContracts.filter((c) => c.type === mobileTab);
+    if (!search) return base;
+    const q = search.toLowerCase();
+    return base.filter(
+      (c) =>
+        c.customer.name.toLowerCase().includes(q) ||
+        c.unit.number.toLowerCase().includes(q) ||
+        (c.contractNumber ?? "").toLowerCase().includes(q)
+    );
+  }, [allContracts, mobileTab, search]);
+
+  const canWrite = can("contracts:write");
 
   function loadLookups() {
     getCustomers()
@@ -278,6 +329,206 @@ export default function ContractsPage() {
   }
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "العقود" : "Contracts"} lang={lang} />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={
+              lang === "ar"
+                ? "ابحث برقم العقد أو العميل..."
+                : "Search by contract # or customer..."
+            }
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <MobileKPICard
+          label={lang === "ar" ? "عقود موقّعة" : "Active"}
+          value={<span className="tabular-nums">{activeCount}</span>}
+          tone="green"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "تنتهي قريبًا" : "Expiring soon"}
+          value={<span className="tabular-nums">{expiringCount}</span>}
+          tone="amber"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "إجمالي القيمة" : "Total value"}
+          value={
+            <SARAmount
+              value={totalValue}
+              size={18}
+              compact
+              className="tabular-nums"
+            />
+          }
+          tone="primary"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "إجمالي العقود" : "Total"}
+          value={<span className="tabular-nums">{totalCount}</span>}
+          tone="default"
+        />
+      </div>
+
+      <div className="px-4 pt-3">
+        <MobileTabs
+          ariaLabel={lang === "ar" ? "تبويبات العقود" : "Contract tabs"}
+          active={mobileTab}
+          onChange={(k) => setMobileTab(k as "ALL" | "SALE" | "LEASE")}
+          items={[
+            { key: "ALL", label: lang === "ar" ? "الكل" : "All" },
+            { key: "SALE", label: lang === "ar" ? "بيع" : "Sale" },
+            { key: "LEASE", label: lang === "ar" ? "إيجار" : "Lease" },
+          ]}
+        />
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {loadError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {!loading && mobileFiltered.length === 0 && (
+          <EmptyState
+            icon={<FileText className="h-10 w-10 text-primary" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد عقود" : "No contracts"}
+            description={
+              lang === "ar"
+                ? "لم يتم العثور على عقود مطابقة للتصفية الحالية."
+                : "No contracts match the current filter."
+            }
+          />
+        )}
+
+        {!loading && mobileFiltered.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card px-4">
+            {mobileFiltered.map((c, idx) => (
+              <DataCard
+                key={c.id}
+                icon={c.type === "SALE" ? Home : Key}
+                iconTone="purple"
+                divider={idx !== mobileFiltered.length - 1}
+                title={
+                  <span className="flex items-center gap-2">
+                    <span className="truncate">{c.customer.name}</span>
+                    {c.contractNumber ? (
+                      <span className="font-mono text-xs text-muted-foreground truncate">
+                        #{c.contractNumber}
+                      </span>
+                    ) : null}
+                  </span>
+                }
+                subtitle={[
+                  `${lang === "ar" ? "وحدة" : "Unit"} ${c.unit.number}`,
+                  <SARAmount
+                    key="amount"
+                    value={Number(c.amount)}
+                    size={12}
+                    compact
+                    className="tabular-nums"
+                  />,
+                ]}
+                trailing={
+                  <StatusBadge
+                    entityType="contract"
+                    status={c.status}
+                    label={
+                      lang === "ar"
+                        ? CONTRACT_STATUS_LABELS[c.status]?.ar ?? c.status
+                        : CONTRACT_STATUS_LABELS[c.status]?.en ?? c.status
+                    }
+                  />
+                }
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {canWrite && (
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "عقد جديد" : "New contract"}
+          onClick={() => setNewContractSheetOpen(true)}
+        />
+      )}
+
+      {/* New contract type picker */}
+      <BottomSheet
+        open={newContractSheetOpen}
+        onOpenChange={setNewContractSheetOpen}
+        title={lang === "ar" ? "نوع العقد الجديد" : "Pick contract type"}
+      >
+        <div className="grid grid-cols-2 gap-3 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              setNewContractSheetOpen(false);
+              openSaleModal();
+            }}
+            className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-5 text-center transition-colors hover:border-foreground/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Home className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-semibold text-foreground">
+              {lang === "ar" ? "عقد بيع" : "Sale"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {lang === "ar" ? "نقل ملكية وحدة" : "Transfer unit ownership"}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setNewContractSheetOpen(false);
+              openLeaseModal();
+            }}
+            className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-5 text-center transition-colors hover:border-foreground/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Key className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="text-sm font-semibold text-foreground">
+              {lang === "ar" ? "عقد إيجار" : "Lease"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {lang === "ar" ? "تأجير وحدة لمستأجر" : "Rent unit to a tenant"}
+            </span>
+          </button>
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div dir={dir} className="p-6 space-y-6">
       <PageIntro
         title={lang === "ar" ? "العقود" : "Contracts"}
@@ -777,5 +1028,7 @@ export default function ContractsPage() {
         </form>
       </ResponsiveDialog>
     </div>
+    </div>
+    </>
   );
 }

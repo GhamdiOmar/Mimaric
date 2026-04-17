@@ -1,20 +1,34 @@
 "use client";
 
 import { useLanguage } from "../../../components/LanguageProvider";
+import { usePermissions } from "../../../hooks/usePermissions";
 import * as React from "react";
 import {
   FileText as FilePdf,
   Image as FileImage,
   FileText,
+  FileSpreadsheet,
   CloudUpload,
   Download,
   Trash2,
   MoreVertical,
   SquareDashedMousePointer,
   Search,
-  Loader2
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
-import { Button, Input, Badge } from "@repo/ui";
+import {
+  Button,
+  Input,
+  Badge,
+  AppBar,
+  DataCard,
+  FAB,
+  EmptyState,
+  Skeleton,
+  Alert,
+  AlertDescription,
+} from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import { getDocuments, registerFileInDb } from "../../actions/documents";
 import { UploadButton } from "../../../lib/uploadthing";
@@ -22,11 +36,15 @@ import { exportToExcel } from "../../../lib/export";
 
 export default function DocumentVaultPage() {
   const { lang } = useLanguage();
+  const { can } = usePermissions();
+  const canWrite = can("documents:write");
   const [docs, setDocs] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
   const [exporting, setExporting] = React.useState(false);
   const [activeCategory, setActiveCategory] = React.useState<string>("all");
+  const [mobileSearch, setMobileSearch] = React.useState("");
 
   React.useEffect(() => {
     async function loadDocs() {
@@ -34,13 +52,54 @@ export default function DocumentVaultPage() {
         const data = await getDocuments();
         setDocs(data);
       } catch (err) {
-        console.error("Failed to fetch documents");
+        setLoadError(lang === "ar" ? "تعذّر تحميل الوثائق" : "Failed to load documents");
       } finally {
         setLoading(false);
       }
     }
     loadDocs();
-  }, []);
+  }, [lang]);
+
+  const mobileCategories: { id: string; label: { ar: string; en: string } }[] = [
+    { id: "all", label: { ar: "الكل", en: "All" } },
+    { id: "BLUEPRINT", label: { ar: "مخططات", en: "Blueprints" } },
+    { id: "LEGAL", label: { ar: "قانوني", en: "Legal" } },
+    { id: "STRUCTURAL", label: { ar: "إنشائي", en: "Structural" } },
+    { id: "COMMERCIAL", label: { ar: "تجاري", en: "Commercial" } },
+    { id: "MARKETING", label: { ar: "تسويق", en: "Marketing" } },
+    { id: "GENERAL", label: { ar: "عام", en: "General" } },
+  ];
+
+  const mobileFiltered = React.useMemo(() => {
+    const base =
+      activeCategory === "all"
+        ? docs
+        : docs.filter((d) => d.category === activeCategory);
+    if (!mobileSearch) return base;
+    const q = mobileSearch.toLowerCase();
+    return base.filter((d) => (d.name ?? "").toLowerCase().includes(q));
+  }, [docs, activeCategory, mobileSearch]);
+
+  function pickFileIcon(type: string | null | undefined) {
+    const t = (type ?? "").toLowerCase();
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(t)) return FileImage;
+    if (["xls", "xlsx", "csv"].includes(t)) return FileSpreadsheet;
+    return FileText;
+  }
+
+  function formatSize(bytes: number | null | undefined) {
+    if (!bytes || bytes <= 0) return "—";
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  // Hidden mobile upload trigger — clicks the UploadButton under the hood.
+  const mobileUploadRef = React.useRef<HTMLDivElement | null>(null);
+  function triggerMobileUpload() {
+    const btn = mobileUploadRef.current?.querySelector<HTMLButtonElement>(
+      'button, label[for]'
+    );
+    btn?.click();
+  }
 
   const handleUploadComplete = async (res: any) => {
     setUploadError(null);
@@ -84,6 +143,154 @@ export default function DocumentVaultPage() {
   };
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "المستندات" : "Documents"} lang={lang} />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={mobileSearch}
+            onChange={(e) => setMobileSearch(e.target.value)}
+            placeholder={
+              lang === "ar" ? "ابحث باسم الملف..." : "Search by file name..."
+            }
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      {/* Type filter chip row */}
+      <div
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pt-3 pb-1 [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: "none" }}
+        role="tablist"
+        aria-label={lang === "ar" ? "تصفية الفئة" : "Category filter"}
+      >
+        {mobileCategories.map((cat) => {
+          const isActive = activeCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveCategory(cat.id)}
+              className={cn(
+                "min-h-[36px] whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium transition-colors active:scale-95",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              )}
+            >
+              {cat.label[lang]}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {loadError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {uploadError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>{uploadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {!loading && mobileFiltered.length === 0 && (
+          <EmptyState
+            icon={<CloudUpload className="h-10 w-10 text-primary" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد وثائق" : "No documents"}
+            description={
+              lang === "ar"
+                ? "لم يتم العثور على وثائق. ارفع أول وثيقة للبدء."
+                : "No documents yet. Upload one to get started."
+            }
+          />
+        )}
+
+        {!loading && mobileFiltered.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card px-4">
+            {mobileFiltered.map((doc, idx) => {
+              const Icon = pickFileIcon(doc.type);
+              const uploader =
+                doc.uploadedBy?.name ?? doc.uploadedBy ?? (lang === "ar" ? "غير معروف" : "Unknown");
+              const date = doc.createdAt
+                ? new Date(doc.createdAt).toLocaleDateString(
+                    lang === "ar" ? "ar-SA" : "en-SA"
+                  )
+                : "—";
+              return (
+                <DataCard
+                  key={doc.id}
+                  icon={Icon}
+                  iconTone="purple"
+                  divider={idx !== mobileFiltered.length - 1}
+                  title={<span className="truncate">{doc.name}</span>}
+                  subtitle={[
+                    formatSize(doc.size),
+                    uploader,
+                    date,
+                  ]}
+                  href={doc.url}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {canWrite && (
+        <>
+          {/* Hidden uploader — FAB triggers it */}
+          <div ref={mobileUploadRef} className="sr-only" aria-hidden="true">
+            <UploadButton
+              endpoint="blueprintUploader"
+              onClientUploadComplete={handleUploadComplete}
+              onUploadError={(error: Error) =>
+                setUploadError(
+                  lang === "ar"
+                    ? `خطأ في الرفع: ${error.message}`
+                    : `Upload error: ${error.message}`
+                )
+              }
+            />
+          </div>
+          <FAB
+            icon={CloudUpload}
+            label={lang === "ar" ? "رفع" : "Upload"}
+            onClick={triggerMobileUpload}
+          />
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Header */}
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between px-2">
@@ -255,5 +462,7 @@ export default function DocumentVaultPage() {
         </div>
       </div>
     </div>
+    </div>
+    </>
   );
 }

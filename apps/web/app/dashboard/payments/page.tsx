@@ -8,9 +8,12 @@ import {
   CreditCard,
   TrendingUp,
   AlertCircle,
+  AlertTriangle,
+  Plus,
 } from "lucide-react";
 import {
   Button,
+  Badge,
   Input,
   Card,
   Table,
@@ -22,6 +25,16 @@ import {
   PageIntro,
   KPICard,
   ResponsiveDialog,
+  AppBar,
+  MobileKPICard,
+  MobileTabs,
+  DataCard,
+  FAB,
+  EmptyState,
+  SARAmount,
+  Skeleton,
+  Alert,
+  AlertDescription,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -88,6 +101,7 @@ export default function PaymentsPage() {
 
   const [rentInstallments, setRentInstallments] = React.useState<RentInstallment[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   const [typeFilter, setTypeFilter] = React.useState<"ALL" | "SALE" | "RENT">("ALL");
   const [statusFilter, setStatusFilter] = React.useState("ALL");
@@ -106,9 +120,14 @@ export default function PaymentsPage() {
 
   function loadData() {
     setLoading(true);
+    setLoadError(null);
     getInstallments()
       .then((data) => setRentInstallments(data as RentInstallment[]))
-      .catch(() => toast.error(lang === "ar" ? "تعذّر تحميل المدفوعات" : "Failed to load payments"))
+      .catch(() => {
+        const msg = lang === "ar" ? "تعذّر تحميل المدفوعات" : "Failed to load payments";
+        setLoadError(msg);
+        toast.error(msg);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -208,7 +227,228 @@ export default function PaymentsPage() {
     { key: "PAID", ar: "مدفوع", en: "Paid" },
   ];
 
+  // Mobile-only helpers
+  const overdueCount = allEntries.filter((e) => e.status === "OVERDUE").length;
+  const receivedCount = allEntries.filter(
+    (e) => e.status === "PAID" && e.raw.paidAt && new Date(e.raw.paidAt) >= thisMonthStart,
+  ).length;
+
+  const mobileTabItems = statusTabs.map((t) => ({
+    key: t.key,
+    label: lang === "ar" ? t.ar : t.en,
+  }));
+
+  function handleMobileFab() {
+    const actionable = allEntries.find(
+      (e) => e.status === "OVERDUE" || e.status === "UNPAID" || e.status === "PARTIALLY_PAID",
+    );
+    if (actionable) {
+      openPayModal(actionable);
+    } else {
+      toast.info(
+        lang === "ar"
+          ? "لا توجد دفعات مستحقة حالياً."
+          : "No payments are due right now.",
+      );
+    }
+  }
+
+  function statusBadgeVariant(
+    status: PaymentEntry["status"],
+  ): "success" | "pending" | "overdue" | "warning" | "default" {
+    switch (status) {
+      case "PAID":
+        return "success";
+      case "OVERDUE":
+        return "overdue";
+      case "UNPAID":
+        return "pending";
+      case "PARTIALLY_PAID":
+        return "warning";
+      default:
+        return "default";
+    }
+  }
+
+  function methodLabel(method: string | null): string | null {
+    if (!method) return null;
+    const found = PAYMENT_METHODS.find((m) => m.value === method);
+    if (!found) return method;
+    return lang === "ar" ? found.ar : found.en;
+  }
+
+  const canWritePayments = can("payments:write");
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "المدفوعات" : "Payments"}
+        lang={lang}
+      />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={
+              lang === "ar"
+                ? "بحث بالاسم أو العقار..."
+                : "Search by client or property..."
+            }
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+        <MobileKPICard
+          label={lang === "ar" ? "المُحصَّل هذا الشهر" : "Collected this month"}
+          value={
+            <SARAmount value={collectedThisMonth} size={18} compact className="tabular-nums" />
+          }
+          tone="green"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "متأخرات" : "Outstanding"}
+          value={
+            <SARAmount value={totalOverdue} size={18} compact className="tabular-nums" />
+          }
+          tone="red"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "عدد المتأخرات" : "Overdue count"}
+          value={<span className="tabular-nums">{overdueCount}</span>}
+          tone="amber"
+        />
+        <MobileKPICard
+          label={lang === "ar" ? "المستلمة هذا الشهر" : "Received"}
+          value={<span className="tabular-nums">{receivedCount}</span>}
+          tone="primary"
+        />
+      </div>
+
+      <div className="px-4 pt-3">
+        <MobileTabs
+          ariaLabel={lang === "ar" ? "تبويبات المدفوعات" : "Payments tabs"}
+          active={statusFilter}
+          onChange={setStatusFilter}
+          items={mobileTabItems}
+        />
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {loadError && (
+          <Alert variant="destructive" className="mb-3">
+            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
+
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 rounded-xl" />
+            ))}
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <EmptyState
+            icon={<CreditCard className="h-10 w-10 text-primary" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد مدفوعات" : "No payments"}
+            description={
+              lang === "ar"
+                ? "لا توجد مدفوعات مطابقة للتصفية الحالية."
+                : "No payments match the current filter."
+            }
+          />
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <div className="rounded-2xl border border-border bg-card px-4">
+            {filtered.map((entry, idx) => {
+              const method = methodLabel(entry.raw.paymentMethod);
+              const badgeVariant = statusBadgeVariant(entry.status);
+              const statusLabel =
+                lang === "ar"
+                  ? STATUS_LABELS[entry.status]?.ar ?? entry.status
+                  : STATUS_LABELS[entry.status]?.en ?? entry.status;
+              const dueLabel = new Date(entry.dueDate).toLocaleDateString(
+                lang === "ar" ? "ar-SA" : "en-SA",
+              );
+              const iconTone =
+                entry.status === "PAID"
+                  ? "green"
+                  : entry.status === "OVERDUE"
+                    ? "red"
+                    : entry.status === "PARTIALLY_PAID"
+                      ? "amber"
+                      : "purple";
+
+              const subtitleParts: React.ReactNode[] = [
+                entry.clientName,
+                `${lang === "ar" ? "استحقاق" : "Due"}: ${dueLabel}`,
+              ];
+              if (method) {
+                subtitleParts.push(
+                  <Badge key="method" variant="outline" size="sm">
+                    {method}
+                  </Badge>,
+                );
+              }
+
+              return (
+                <DataCard
+                  key={entry.id}
+                  icon={CreditCard}
+                  iconTone={iconTone}
+                  divider={idx !== filtered.length - 1}
+                  title={
+                    <SARAmount
+                      value={entry.amount}
+                      size={14}
+                      className="font-semibold text-foreground tabular-nums"
+                    />
+                  }
+                  subtitle={subtitleParts}
+                  trailing={
+                    <Badge variant={badgeVariant} size="sm">
+                      {statusLabel}
+                    </Badge>
+                  }
+                  onClick={
+                    canWritePayments && entry.status !== "PAID"
+                      ? () => openPayModal(entry)
+                      : undefined
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {canWritePayments && (
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "تسجيل دفعة" : "Record payment"}
+          onClick={handleMobileFab}
+        />
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div dir={dir} className="p-6 space-y-6">
       <PageIntro
         title={lang === "ar" ? "المدفوعات" : "Payments"}
@@ -506,5 +746,7 @@ export default function PaymentsPage() {
         )}
       </ResponsiveDialog>
     </div>
+    </div>
+    </>
   );
 }
