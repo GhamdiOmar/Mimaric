@@ -127,55 +127,6 @@ export async function getRevenueTimeline() {
   return months;
 }
 
-export async function getOccupancyByProject() {
-  // v3.0: No project model. Return occupancy grouped by city instead.
-  const session = await requirePermission("dashboard:read");
-  const orgId = session.organizationId;
-
-  const units = await db.unit.findMany({
-    where: { organizationId: orgId },
-    select: { status: true, city: true, buildingName: true },
-  });
-
-  const grouped = new Map<string, { total: number; occupied: number }>();
-  for (const u of units) {
-    const key = u.city || u.buildingName || "غير محدد";
-    const entry = grouped.get(key) ?? { total: 0, occupied: 0 };
-    entry.total++;
-    if (["RENTED", "SOLD"].includes(u.status)) entry.occupied++;
-    grouped.set(key, entry);
-  }
-
-  const results = Array.from(grouped.entries()).map(([name, data]) => ({
-    name,
-    total: data.total,
-    occupied: data.occupied,
-    vacant: data.total - data.occupied,
-    rate: data.total > 0 ? Math.round((data.occupied / data.total) * 100) : 0,
-  }));
-
-  results.sort((a, b) => b.total - a.total);
-
-  if (results.length > 6) {
-    const top = results.slice(0, 6);
-    const rest = results.slice(6);
-    const other = rest.reduce(
-      (acc: { name: string; total: number; occupied: number; vacant: number; rate: number }, r) => ({
-        name: "أخرى",
-        total: acc.total + r.total,
-        occupied: acc.occupied + r.occupied,
-        vacant: acc.vacant + r.vacant,
-        rate: 0,
-      }),
-      { name: "أخرى", total: 0, occupied: 0, vacant: 0, rate: 0 }
-    );
-    other.rate = other.total > 0 ? Math.round((other.occupied / other.total) * 100) : 0;
-    return [...top, other];
-  }
-
-  return results;
-}
-
 export async function getProjectStatusDistribution() {
   // v3.0: No project model. Return unit status distribution instead.
   const session = await requirePermission("dashboard:read");
@@ -321,35 +272,6 @@ export async function getDashboardMaintenanceSummary() {
   });
 
   return grouped.map((g) => ({ status: g.status as string, count: g._count as number }));
-}
-
-export async function getMaintenanceCostTrend() {
-  const session = await requirePermission("dashboard:read");
-  const orgId = session.organizationId;
-  const now = new Date();
-  const months: { month: string; estimated: number; actual: number }[] = [];
-
-  for (let i = 5; i >= 0; i--) {
-    const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-    const monthKey = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
-
-    const agg = await db.maintenanceRequest.aggregate({
-      where: {
-        organizationId: orgId,
-        createdAt: { gte: start, lt: end },
-      },
-      _sum: { estimatedCost: true, actualCost: true },
-    });
-
-    months.push({
-      month: monthKey,
-      estimated: Number(agg._sum.estimatedCost ?? 0),
-      actual: Number(agg._sum.actualCost ?? 0),
-    });
-  }
-
-  return months;
 }
 
 // Legacy aliases kept for any pages that still import these
