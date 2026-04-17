@@ -69,7 +69,7 @@ type Reservation = {
   unit: {
     id: string;
     number: string;
-    building: { name: string; project: { name: string } };
+    buildingName: string | null;
   };
 };
 
@@ -656,7 +656,7 @@ export default function DealsPage() {
                   <TableCell>
                     <div className="text-sm">
                       <p className="font-medium">{lang === "ar" ? "وحدة" : "Unit"} {deal.unit.number}</p>
-                      <p className="text-gray-500 text-xs">{deal.unit.building?.project?.name ?? "—"}</p>
+                      <p className="text-gray-500 text-xs">{deal.unit.buildingName ?? "—"}</p>
                     </div>
                   </TableCell>
                   <TableCell>{SAR(deal.amount)}</TableCell>
@@ -916,8 +916,8 @@ export default function DealsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-500 text-xs">{lang === "ar" ? "المشروع" : "Project"}</p>
-                  <p className="font-medium">{detailDeal.unit.building?.project?.name ?? "—"}</p>
+                  <p className="text-gray-500 text-xs">{lang === "ar" ? "المبنى" : "Building"}</p>
+                  <p className="font-medium">{detailDeal.unit.buildingName ?? "—"}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-xs">{lang === "ar" ? "تاريخ الإنشاء" : "Created"}</p>

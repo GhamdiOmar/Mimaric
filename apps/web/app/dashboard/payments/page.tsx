@@ -58,7 +58,7 @@ type RentInstallment = {
   leaseId: string;
   lease: {
     customer: { id: string; name: string };
-    unit: { number: string; building: { name: string } };
+    unit: { number: string; buildingName: string | null };
   };
 };
 
@@ -142,7 +142,7 @@ export default function PaymentsPage() {
       id: inst.id,
       type: "rent" as const,
       clientName: inst.lease.customer.name,
-      propertyLabel: `${lang === "ar" ? "وحدة" : "Unit"} ${inst.lease.unit.number} — ${inst.lease.unit.building.name}`,
+      propertyLabel: `${lang === "ar" ? "وحدة" : "Unit"} ${inst.lease.unit.number}${inst.lease.unit.buildingName ? ` — ${inst.lease.unit.buildingName}` : ""}`,
       amount: Number(inst.amount),
       dueDate: inst.dueDate,
       status: inst.status,

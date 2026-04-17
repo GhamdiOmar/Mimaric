@@ -950,10 +950,12 @@ Mimaric is a B2B SaaS. **Two distinct user universes must never share surfaces, 
 - `/dashboard/admin/tickets` — cross-tenant support tickets
 - `/dashboard/admin/seo` — marketing site SEO
 - `/dashboard/admin/coupons`, `/dashboard/admin/subscriptions` — billing/plans control
-- `/dashboard/billing` — platform-level billing admin
-- `/dashboard/settings` — their own account/profile only
+- `/dashboard/more` — shared "more" menu (audience-filtered)
+- `/dashboard/notifications` — their own notifications (shared audience)
 
-**System users MUST NOT see:** `/dashboard`, `/dashboard/units`, `/dashboard/crm`, `/dashboard/deals`, `/dashboard/contracts`, `/dashboard/payments`, `/dashboard/maintenance`, `/dashboard/leasing`, `/dashboard/finance`, or any tenant-scoped data. They also MUST NOT be offered tenant create-actions in Cmd-K (`New customer`, `New deal`, `New contract`, etc.).
+**System users MUST NOT see:** `/dashboard`, `/dashboard/units`, `/dashboard/crm`, `/dashboard/deals`, `/dashboard/contracts`, `/dashboard/payments`, `/dashboard/maintenance`, `/dashboard/leasing`, `/dashboard/finance`, `/dashboard/reports`, `/dashboard/documents`, `/dashboard/help`, `/dashboard/billing` (tenant subscription page), `/dashboard/settings` (tenant org + team settings), or any tenant-scoped data. They also MUST NOT be offered tenant create-actions in Cmd-K (`New customer`, `New deal`, `New contract`, etc.). Layer 2 middleware (`authorized` in `apps/web/auth.config.ts`) redirects system users to `/dashboard/admin` when they hit any non-allowlisted `/dashboard/**` path.
+
+> **Planned follow-up:** a dedicated platform-billing surface and a system-user account/profile page are not yet built. Until they ship, `/dashboard/billing` and `/dashboard/settings` are tenant-only — the Layer 2 redirect sends system users back to `/dashboard/admin`.
 
 **Tenant users** — see their **own org's** tenant surfaces per role permissions (see § 6.9.2 dashboards + `lib/permissions.ts`). They MUST NOT see any `/dashboard/admin/*` route or platform-level KPIs.
 

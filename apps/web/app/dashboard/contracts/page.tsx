@@ -64,7 +64,7 @@ type Contract = {
   signedAt: string | null;
   createdAt: string;
   customer: { id: string; name: string };
-  unit: { id: string; number: string; building: { name: string } };
+  unit: { id: string; number: string; buildingName: string | null };
   lease?: { id: string; startDate: string; endDate: string; status: string } | null;
 };
 
