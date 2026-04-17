@@ -222,11 +222,11 @@ export function KPICard({
           </span>
           <div
             className={cn(
-              "mt-1.5 flex items-baseline gap-1.5 font-bold text-card-foreground number-ltr",
+              "mt-1.5 flex items-baseline gap-1.5 font-bold text-card-foreground tabular-nums",
               compact ? "text-xl" : "text-3xl",
             )}
           >
-            <span>{value}</span>
+            <span dir="ltr" className="inline-block">{value}</span>
             {unit && (
               <span className="text-sm font-normal text-muted-foreground">
                 {unit}

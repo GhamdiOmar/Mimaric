@@ -94,17 +94,23 @@ function statusBadge(status: string, lang: "ar" | "en") {
 }
 
 function maintenanceStatusIcon(status: string) {
-  if (status === "COMPLETED") return <CheckCircle className="h-4 w-4 text-green-500" />;
-  if (status === "IN_PROGRESS") return <Clock className="h-4 w-4 text-blue-500" />;
+  if (status === "RESOLVED" || status === "CLOSED" || status === "COMPLETED")
+    return <CheckCircle className="h-4 w-4 text-green-500" />;
+  if (status === "IN_PROGRESS" || status === "ASSIGNED")
+    return <Clock className="h-4 w-4 text-blue-500" />;
   return <Circle className="h-4 w-4 text-amber-500" />;
 }
 
 function maintenanceStatusLabel(status: string, lang: "ar" | "en"): string {
   const map: Record<string, { ar: string; en: string }> = {
-    OPEN:        { ar: "مفتوح", en: "Open" },
+    OPEN:        { ar: "مفتوح",       en: "Open" },
+    ASSIGNED:    { ar: "مُعيّن",       en: "Assigned" },
     IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress" },
-    COMPLETED:   { ar: "مكتمل", en: "Completed" },
-    CANCELLED:   { ar: "ملغى", en: "Cancelled" },
+    ON_HOLD:     { ar: "معلّق",        en: "On Hold" },
+    RESOLVED:    { ar: "تم الحل",      en: "Resolved" },
+    CLOSED:      { ar: "مغلق",         en: "Closed" },
+    COMPLETED:   { ar: "مكتمل",        en: "Completed" },
+    CANCELLED:   { ar: "ملغى",         en: "Cancelled" },
   };
   return map[status]?.[lang] ?? status;
 }
