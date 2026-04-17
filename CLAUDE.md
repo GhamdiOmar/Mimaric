@@ -35,6 +35,14 @@
 - Diff behavior between main and changes when relevant.
 - Ask yourself: "Would a staff engineer approve this?"
 - Run tests, check logs, demonstrate correctness.
+- **UI Testing is mandatory for every change that touches a page, component, or server action wired to the UI:**
+  1. Start or reload the preview server
+  2. Navigate to the affected page(s)
+  3. Exercise the golden path AND at least one edge case
+  4. Take a screenshot as proof and include it in the response
+  5. Check browser console for errors — zero errors = done
+- NEVER report a UI task as complete based on TypeScript compilation alone. A clean build ≠ a working UI.
+- NEVER skip this step with "the logic is straightforward" — verify, screenshot, done.
 
 ### 5. Demand Elegance (Balanced)
 - For non-trivial changes: pause and ask "is there a more elegant way?"
@@ -52,6 +60,18 @@
 - **Simplicity First**: Make every change as simple as possible. Minimal code impact.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Only touch what's necessary. No side effects with new bugs.
+
+### 8. Subagent Finding Verification (Never Trust Summaries for Critical Claims)
+- Subagents are useful for discovery and breadth. They are NOT authoritative for absence claims.
+- **The rule:** Any finding that says something security-critical, compliance-critical, or architecturally significant is MISSING must be verified with a direct Read or Grep before being reported.
+- "Subagent said it's missing" is NOT sufficient evidence. Go read the file yourself.
+- This applies to: security gaps, missing permissions, missing audit logging, missing validation, missing tests, missing error handling — any claim that something important does not exist.
+- Verification steps for absence claims:
+  1. Grep the codebase for the pattern you expect to find
+  2. Read the relevant file(s) directly
+  3. Only then report the finding as confirmed
+- If you cannot verify due to context limits, state explicitly: "I was unable to directly verify this — treat as unconfirmed."
+- Reporting an unverified gap as confirmed fact is worse than missing a real gap. False findings waste engineering time and erode trust.
 
 ## UI/UX Design Rules
 
