@@ -342,7 +342,7 @@ export default function DocumentVaultPage() {
         {/* Categories Sidebar */}
         <div className="lg:col-span-1 space-y-4">
            <div className="bg-card rounded-md border border-border p-6 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">{lang === "ar" ? "التصنيفات" : "Categories"}</h3>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-primary mb-4 font-latin">{lang === "ar" ? "التصنيفات" : "Categories"}</h2>
               <div className="space-y-1">
                  {[
                    { id: "all", label: { ar: "جميع الوثائق", en: "All Documents" } },
@@ -371,7 +371,7 @@ export default function DocumentVaultPage() {
            
            <div className="bg-primary-deep p-6 rounded-md text-white shadow-lg overflow-hidden relative">
               <FilePdf className="h-12 w-12 absolute -bottom-4 -end-4 opacity-10 rotate-12" />
-              <p className="text-[10px] font-bold uppercase tracking-widest text-secondary font-latin">Storage Usage</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white font-latin">Storage Usage</p>
               <div className="mt-4 space-y-2">
                  <div className="h-1.5 w-full bg-card/10 rounded-full overflow-hidden">
                     <div className="h-full bg-secondary w-3/4 rounded-full" />
@@ -463,7 +463,7 @@ export default function DocumentVaultPage() {
                    </div>
                    
                    <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-primary truncate">{doc.name}</h4>
+                      <h3 className="text-sm font-bold text-primary truncate">{doc.name}</h3>
                       <p className="text-[10px] text-muted-foreground font-latin">{new Date(doc.createdAt).toLocaleDateString()}</p>
                    </div>
 
