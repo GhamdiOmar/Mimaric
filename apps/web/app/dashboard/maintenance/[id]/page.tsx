@@ -331,7 +331,7 @@ export default function MaintenanceDetailPage() {
         }
         lang={lang}
         centered
-        onBack={() => router.push("/dashboard/maintenance")}
+        onBack={() => router.push("/dashboard/maintenance/tickets")}
         trailing={
           <button
             type="button"
@@ -630,7 +630,7 @@ export default function MaintenanceDetailPage() {
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")} style={{ display: "inline-flex" }}>
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance/tickets")} style={{ display: "inline-flex" }}>
           <DirectionalIcon icon={ArrowLeft} className="h-[18px] w-[18px]" />
         </Button>
         <div className="flex-1">

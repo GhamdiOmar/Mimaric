@@ -26,6 +26,8 @@ import {
   AppBar,
   MobileKPICard,
   DataCard,
+  DateRangePicker,
+  LastUpdatedAgo,
 } from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../../components/LanguageProvider";
@@ -37,6 +39,10 @@ import {
   getDashboardUpcomingPayments,
   getDashboardMaintenanceSummary,
 } from "../actions/dashboard";
+import { getOccupancyTrend } from "../actions/trends/getOccupancyTrend";
+import { getPipelineTrend } from "../actions/trends/getPipelineTrend";
+import { getCollectionsTrend } from "../actions/trends/getCollectionsTrend";
+import { getTicketsTrend } from "../actions/trends/getTicketsTrend";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,15 +136,33 @@ export default function DashboardPage() {
   const router = useRouter();
 
   React.useEffect(() => {
-    if (session && isSystemRole(session.user?.role ?? "")) {
+    if (!session) return;
+    const role = session.user?.role ?? "";
+    if (isSystemRole(role)) {
       router.replace("/dashboard/admin");
+      return;
     }
+    const roleRoute: Record<string, string> = {
+      LEASING: "/dashboard/leasing",
+      AGENT: "/dashboard/leasing",
+      FINANCE: "/dashboard/finance",
+      TECHNICIAN: "/dashboard/maintenance",
+    };
+    const target = roleRoute[role];
+    if (target) router.replace(target);
   }, [session, router]);
 
   const [stats, setStats] = React.useState<V3Stats | null>(null);
   const [deals, setDeals] = React.useState<Deal[]>([]);
   const [payments, setPayments] = React.useState<Installment[]>([]);
   const [maintenance, setMaintenance] = React.useState<MaintenanceSummaryItem[]>([]);
+  const [trends, setTrends] = React.useState<{
+    units: number[];
+    pipeline: number[];
+    collections: number[];
+    tickets: number[];
+  }>({ units: [], pipeline: [], collections: [], tickets: [] });
+  const [lastLoaded, setLastLoaded] = React.useState<Date>(new Date());
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -146,16 +170,22 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const [s, d, p, m] = await Promise.all([
+      const [s, d, p, m, tu, tp, tc, tt] = await Promise.all([
         getDashboardV3Stats(),
         getDashboardRecentDeals(),
         getDashboardUpcomingPayments(),
         getDashboardMaintenanceSummary(),
+        getOccupancyTrend(),
+        getPipelineTrend(),
+        getCollectionsTrend(),
+        getTicketsTrend(),
       ]);
       setStats(s);
       setDeals(d);
       setPayments(p);
       setMaintenance(m);
+      setTrends({ units: tu, pipeline: tp, collections: tc, tickets: tt });
+      setLastLoaded(new Date());
     } catch {
       setError(lang === "ar" ? "فشل تحميل بيانات لوحة المعلومات. يرجى المحاولة مرة أخرى." : "Failed to load dashboard data. Please try again.");
     } finally {
@@ -237,7 +267,7 @@ export default function DashboardPage() {
               value={loading ? "—" : formatNumber(stats?.totalProperties ?? 0)}
               icon={Building2}
               tone="primary"
-              sparkline={[4, 6, 5, 8, 7, 9, 11]}
+              sparkline={trends.units.slice(-12)}
               href="/dashboard/units"
             />
             <MobileKPICard
@@ -245,7 +275,7 @@ export default function DashboardPage() {
               value={loading ? "—" : formatNumber(stats?.activeDeals ?? 0)}
               icon={Handshake}
               tone="blue"
-              sparkline={[3, 5, 4, 6, 5, 7, 8]}
+              sparkline={trends.pipeline.slice(-12)}
               href="/dashboard/reservations"
             />
             <MobileKPICard
@@ -253,12 +283,7 @@ export default function DashboardPage() {
               value={loading ? "—" : formatNumber(stats?.signedContracts ?? 0)}
               icon={FileText}
               tone="green"
-              sparkline={[1, 2, 2, 3, 4, 5, 6]}
-              delta={
-                !loading && stats && stats.signedContracts > 0
-                  ? { label: "+8%", direction: "up" }
-                  : undefined
-              }
+              sparkline={trends.collections.slice(-12)}
               href="/dashboard/contracts"
             />
             <MobileKPICard
@@ -266,12 +291,7 @@ export default function DashboardPage() {
               value={loading ? "—" : formatNumber(stats?.pendingPayments ?? 0)}
               icon={CreditCard}
               tone={stats && stats.pendingPayments > 0 ? "amber" : "default"}
-              sparkline={[8, 7, 9, 6, 5, 4, 3]}
-              delta={
-                !loading && stats && stats.pendingPayments > 0
-                  ? { label: "-3", direction: "down" }
-                  : undefined
-              }
+              sparkline={trends.tickets.slice(-12)}
               href="/dashboard/finance"
             />
           </div>

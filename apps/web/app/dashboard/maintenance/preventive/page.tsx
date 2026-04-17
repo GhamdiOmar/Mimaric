@@ -301,7 +301,7 @@ export default function PreventiveMaintenancePage() {
       <AppBar
         title={lang === "ar" ? "الخطط الوقائية" : "Preventive plans"}
         lang={lang}
-        onBack={() => router.push("/dashboard/maintenance")}
+        onBack={() => router.push("/dashboard/maintenance/tickets")}
         trailing={
           <button
             type="button"
@@ -468,7 +468,7 @@ export default function PreventiveMaintenancePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance")}>
+          <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/maintenance/tickets")}>
             <DirectionalIcon icon={ArrowLeft} className="h-[18px] w-[18px]" />
           </Button>
           <div>

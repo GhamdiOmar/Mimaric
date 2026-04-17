@@ -13,6 +13,8 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   // Core — tenant only
   { label: { ar: "الرئيسية", en: "Dashboard" }, icon: "LayoutGrid", href: "/dashboard", section: "core", permission: "dashboard:read", audience: "tenant" },
+  { label: { ar: "لوحة التأجير", en: "Leasing" }, icon: "ClipboardList", href: "/dashboard/leasing", section: "core", permission: "dashboard:read", audience: "tenant" },
+  { label: { ar: "المالية", en: "Finance" }, icon: "Wallet", href: "/dashboard/finance", section: "core", permission: "dashboard:read", audience: "tenant" },
   { label: { ar: "إدارة العملاء", en: "CRM" }, icon: "Users", href: "/dashboard/crm", section: "core", permission: "crm:read", audience: "tenant" },
   { label: { ar: "العقارات", en: "Properties" }, icon: "Building2", href: "/dashboard/properties", section: "core", permission: "properties:read", audience: "tenant" },
   { label: { ar: "الصفقات", en: "Deals" }, icon: "TrendingUp", href: "/dashboard/deals", section: "core", permission: "deals:read", audience: "tenant" },
@@ -20,7 +22,8 @@ export const navItems: NavItem[] = [
 
   // Operations — tenant only
   { label: { ar: "المدفوعات", en: "Payments" }, icon: "CreditCard", href: "/dashboard/payments", section: "operations", permission: "payments:read", audience: "tenant" },
-  { label: { ar: "الصيانة", en: "Maintenance" }, icon: "Wrench", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read", audience: "tenant" },
+  { label: { ar: "لوحة الصيانة", en: "Maintenance" }, icon: "Gauge", href: "/dashboard/maintenance", section: "operations", permission: "maintenance:read", audience: "tenant" },
+  { label: { ar: "تذاكر الصيانة", en: "Tickets" }, icon: "Wrench", href: "/dashboard/maintenance/tickets", section: "operations", permission: "maintenance:read", audience: "tenant" },
 
   // System
   { label: { ar: "الاشتراك والفوترة", en: "Billing" }, icon: "Receipt", href: "/dashboard/billing", section: "system", permission: "billing:read", audience: "tenant" },
@@ -38,6 +41,8 @@ export const breadcrumbLabels: Record<string, { ar: string; en: string }> = {
   "contracts": { ar: "العقود", en: "Contracts" },
   "payments": { ar: "المدفوعات", en: "Payments" },
   "maintenance": { ar: "الصيانة", en: "Maintenance" },
+  "leasing": { ar: "لوحة التأجير", en: "Leasing" },
+  "finance": { ar: "المالية", en: "Finance" },
   "settings": { ar: "الإعدادات", en: "Settings" },
   "team": { ar: "الفريق", en: "Team" },
   "security": { ar: "الأمان", en: "Security" },
@@ -70,6 +75,8 @@ export const roleLabels: Record<string, { ar: string; en: string }> = {
   ADMIN: { ar: "مدير", en: "Admin" },
   MANAGER: { ar: "مدير عمليات", en: "Manager" },
   AGENT: { ar: "وكيل", en: "Agent" },
+  LEASING: { ar: "مسؤول تأجير", en: "Leasing" },
+  FINANCE: { ar: "محاسب مالي", en: "Finance" },
   TECHNICIAN: { ar: "فني صيانة", en: "Technician" },
   USER: { ar: "مستخدم", en: "User" },
 };

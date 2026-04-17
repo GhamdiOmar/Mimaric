@@ -7,11 +7,33 @@ import {
   ListChecks, Tag, SearchCheck, Settings, ChevronRight, ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { AppBar, EmptyState, DirectionalIcon } from "@repo/ui";
+import {
+  AppBar,
+  EmptyState,
+  DirectionalIcon,
+  DateRangePicker,
+  LastUpdatedAgo,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  ChartContainer,
+  type ChartConfig,
+} from "@repo/ui";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { useSession } from "../../../components/SimpleSessionProvider";
 import { isSystemRole } from "../../../lib/permissions";
 import { adminGetPlatformStats } from "../../actions/admin-stats";
+import { getMrrTrend } from "../../actions/trends/getMrrTrend";
 
 type Stats = Awaited<ReturnType<typeof adminGetPlatformStats>>;
 
@@ -85,16 +107,45 @@ export default function SystemAdminPage() {
   const userRole = session?.user?.role ?? "";
   const authorized = isSystemRole(userRole);
   const [stats, setStats] = React.useState<Stats | null>(null);
+  const [mrrTrend, setMrrTrend] = React.useState<number[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [lastLoaded, setLastLoaded] = React.useState<Date>(new Date());
 
-  React.useEffect(() => {
+  const load = React.useCallback(async () => {
     if (!authorized) return;
-    adminGetPlatformStats()
-      .then(setStats)
-      .finally(() => setLoading(false));
+    setLoading(true);
+    try {
+      const [s, t] = await Promise.all([adminGetPlatformStats(), getMrrTrend()]);
+      setStats(s);
+      setMrrTrend(t);
+      setLastLoaded(new Date());
+    } finally {
+      setLoading(false);
+    }
   }, [authorized]);
 
+  React.useEffect(() => {
+    load();
+  }, [load]);
+
   const fmt = (n: number) => n.toLocaleString("en-US");
+
+  const mrrData = React.useMemo(() => {
+    const now = new Date();
+    return mrrTrend.map((total, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+      return {
+        month: d.toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+          month: "short",
+        }),
+        total,
+      };
+    });
+  }, [mrrTrend, lang]);
+
+  const chartConfig: ChartConfig = {
+    total: { label: lang === "ar" ? "الإيراد الشهري" : "Monthly revenue" },
+  };
 
   return (
     <>
@@ -146,17 +197,23 @@ export default function SystemAdminPage() {
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
 
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
-          <Settings className="h-7 w-7" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
+            <Settings className="h-7 w-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              {lang === "ar" ? "إدارة المنصة" : "Platform Administration"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {lang === "ar" ? "نظرة عامة على الإحصاءات والوصول إلى أدوات الإدارة" : "Platform-wide statistics and management tools"}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {lang === "ar" ? "إدارة المنصة" : "Platform Administration"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {lang === "ar" ? "نظرة عامة على الإحصاءات والوصول إلى أدوات الإدارة" : "Platform-wide statistics and management tools"}
-          </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangePicker locale={lang} />
+          <LastUpdatedAgo timestamp={lastLoaded} locale={lang} onRefresh={load} />
         </div>
       </div>
 
@@ -206,6 +263,56 @@ export default function SystemAdminPage() {
               <StatCard label={{ ar: "تذاكر مفتوحة", en: "Open Tickets" }} value={fmt(stats.openTickets + stats.inProgressTickets)} icon={Ticket} color="bg-orange-500/10 text-orange-500" />
             </div>
           </section>
+
+          {/* MRR trend */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                {lang === "ar" ? "إيرادات المنصة — آخر 12 شهرًا" : "Platform Revenue — last 12 months"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChartContainer config={chartConfig} className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={mrrData}
+                    margin={{ top: 8, right: 16, left: 16, bottom: 8 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis
+                      dataKey="month"
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <YAxis
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      tickFormatter={(v: number) =>
+                        v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)
+                      }
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: 10,
+                        color: "hsl(var(--popover-foreground))",
+                      }}
+                      formatter={(v: number) => [fmt(v), ""]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2.5}
+                      dot={{ fill: "hsl(var(--primary))", r: 3 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
         </>
       )}
 

@@ -5,7 +5,7 @@ import {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
   Settings, PanelLeftClose, PanelLeftOpen, HelpCircle, X, FolderOpen,
-  SearchCheck, TicketCheck,
+  SearchCheck, TicketCheck, ClipboardList, Wallet, Gauge,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
@@ -19,6 +19,7 @@ const iconMap: Record<string, React.ElementType> = {
   LayoutGrid, FolderKanban, Building2, Users, TrendingUp, KeyRound,
   MapPin, Compass, Receipt, Wrench, FileText, CreditCard, ShieldCheck,
   Settings, FolderOpen, SearchCheck, TicketCheck,
+  ClipboardList, Wallet, Gauge,
 };
 
 interface AppSidebarProps {
