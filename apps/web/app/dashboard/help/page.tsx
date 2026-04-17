@@ -819,7 +819,16 @@ export default function HelpPage() {
             </div>
           )}
 
-          {/* Tickets Table */}
+          {/*
+            Tickets Table — kept as raw <table> rather than DataTable primitive.
+            Per-user ticket history is a short-lived list (typically < 20 rows);
+            sort/filter/pagination add cost without UX benefit. Revisit if a user
+            accumulates hundreds of tickets. Same rationale applies to the three
+            review-queue tables below (permissions history, pending permission
+            requests, pending join requests) — the latter two also embed an
+            inline review form in the Action column, which would require
+            lifting state into DataTable cell renderers for no visible gain.
+          */}
           <div className="bg-card rounded-md border border-border overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-muted/30 text-muted-foreground text-[10px] uppercase">
