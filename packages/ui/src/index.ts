@@ -22,6 +22,7 @@ export * from "./components/DataTable";
 export * from "./components/FormSection";
 export * from "./components/FormField"; /* exports FieldWrapper */
 export * from "./components/PageIntro";
+export * from "./components/DirectionalIcon";
 
 /* ─── Shadcn Primitives (no overlap with above) ───────────── */
 export * from "./primitives/accordion";
