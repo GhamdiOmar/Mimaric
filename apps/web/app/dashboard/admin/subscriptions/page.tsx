@@ -1,6 +1,8 @@
 "use client";
 
 import { useLanguage } from "../../../../components/LanguageProvider";
+import { useSession } from "../../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../../lib/permissions";
 import * as React from "react";
 import {
   ArrowLeft,
@@ -14,6 +16,9 @@ import {
   XCircle,
   Pause,
   Receipt,
+  Building2,
+  ShieldAlert,
+  Search,
 } from "lucide-react";
 import {
   Button,
@@ -24,6 +29,13 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  AppBar,
+  DataCard,
+  EmptyState,
+  MobileKPICard,
+  Skeleton,
+  SARAmount,
+  Badge,
 } from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllSubscriptions } from "../../../actions/billing";
@@ -166,9 +178,13 @@ const translations = {
 
 export default function AdminSubscriptionsPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
   const [data, setData] = React.useState<SubscriptionsResult | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
+  const [mobileSearch, setMobileSearch] = React.useState("");
   const pageSize = 20;
 
   React.useEffect(() => {
@@ -237,9 +253,175 @@ export default function AdminSubscriptionsPage() {
   const subscriptions = data?.subscriptions ?? [];
   const totalPages = data?.totalPages ?? 1;
 
+  // ── Mobile helpers ──────────────────────────────────────────────────────
+  const mrr = subscriptions
+    .filter((s) => s.status === "ACTIVE")
+    .reduce((sum, s) => {
+      const price = Number(s.priceAtRenewal ?? 0);
+      if (!price) return sum;
+      const cycle = s.billingCycle;
+      if (cycle === "MONTHLY") return sum + price;
+      if (cycle === "QUARTERLY") return sum + price / 3;
+      if (cycle === "SEMI_ANNUAL") return sum + price / 6;
+      if (cycle === "ANNUAL") return sum + price / 12;
+      return sum + price;
+    }, 0);
+  const churnRate =
+    stats.total > 0
+      ? Math.round((stats.canceled / stats.total) * 1000) / 10
+      : 0;
+
+  const subStatusVariant = (s: string): "success" | "info" | "warning" | "error" | "default" => {
+    if (s === "ACTIVE") return "success";
+    if (s === "TRIALING") return "info";
+    if (s === "PAST_DUE") return "warning";
+    if (s === "CANCELED" || s === "UNPAID") return "error";
+    return "default";
+  };
+
+  const filteredMobile = mobileSearch.trim()
+    ? subscriptions.filter((s) => {
+        const q = mobileSearch.trim().toLowerCase();
+        return (
+          s.organization.name.toLowerCase().includes(q) ||
+          (s.organization.nameArabic ?? "").toLowerCase().includes(q)
+        );
+      })
+    : subscriptions;
+
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "الاشتراكات" : "Subscriptions"} lang={lang} />
+
+      {!authorized ? (
+        <div className="flex-1 px-4 pt-10">
+          <EmptyState
+            icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+            title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+            description={
+              lang === "ar"
+                ? "هذه الصفحة متاحة لفريق المنصة فقط."
+                : "This page is available to platform staff only."
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+            <MobileKPICard
+              label={lang === "ar" ? "نشطة" : "Active"}
+              value={<span className="tabular-nums">{stats.active}</span>}
+              tone="green"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "تجريبية" : "Trialing"}
+              value={<span className="tabular-nums">{stats.trialing}</span>}
+              tone="blue"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "MRR" : "MRR"}
+              value={<SARAmount value={mrr} size={18} compact className="tabular-nums" />}
+              tone="primary"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "معدل الانسحاب" : "Churn rate"}
+              value={<span className="tabular-nums">{churnRate}%</span>}
+              tone="amber"
+            />
+          </div>
+
+          <div className="px-4 pt-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="text"
+                value={mobileSearch}
+                onChange={(e) => setMobileSearch(e.target.value)}
+                placeholder={lang === "ar" ? "بحث باسم المنظمة..." : "Search by organization..."}
+                className="h-11 w-full rounded-md border border-input bg-background ps-9 pe-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 px-4 pb-24 pt-3">
+            {loading ? (
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-xl" />
+                ))}
+              </div>
+            ) : filteredMobile.length === 0 ? (
+              <EmptyState
+                icon={<Receipt className="h-10 w-10 text-primary" aria-hidden="true" />}
+                title={t.noSubscriptions}
+                description={t.noSubscriptionsDesc}
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card px-4">
+                {filteredMobile.map((sub, idx) => {
+                  const orgName = getOrgDisplayName(sub.organization);
+                  const planName = lang === "ar" ? sub.plan.nameAr : sub.plan.nameEn;
+                  const renewal = formatDate(sub.currentPeriodEnd);
+                  const priceNum =
+                    sub.priceAtRenewal != null ? Number(sub.priceAtRenewal) : null;
+                  return (
+                    <DataCard
+                      key={sub.id}
+                      icon={Building2}
+                      iconTone="purple"
+                      title={orgName}
+                      subtitle={
+                        <span className="inline-flex items-center gap-2">
+                          <span className="truncate">{planName}</span>
+                          <Badge variant={subStatusVariant(sub.status)} size="sm">
+                            {t.statuses[sub.status] ?? sub.status}
+                          </Badge>
+                          <span className="text-muted-foreground">{renewal}</span>
+                        </span>
+                      }
+                      trailing={
+                        <SARAmount value={priceNum} size={14} compact className="tabular-nums" />
+                      }
+                      divider={idx !== filteredMobile.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {t.prev}
+                </button>
+                <span className="tabular-nums">{page} / {totalPages}</span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {t.next}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6" dir={lang === "ar" ? "rtl" : "ltr"}>
       {/* Back Link + Language Toggle */}
       <div className="flex items-center justify-between">
@@ -419,5 +601,7 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
     </div>
+    </div>
+    </>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useLanguage } from "../../../../components/LanguageProvider";
+import { useSession } from "../../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../../lib/permissions";
 import * as React from "react";
 import {
   Tag,
@@ -16,6 +18,8 @@ import {
   Ticket,
   Users,
   ListChecks,
+  Search,
+  ShieldAlert,
 } from "lucide-react";
 import {
   Button,
@@ -26,6 +30,12 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  AppBar,
+  DataCard,
+  EmptyState,
+  FAB,
+  Skeleton,
+  Badge,
 } from "@repo/ui";
 import Link from "next/link";
 import {
@@ -184,6 +194,10 @@ const t = {
 
 export default function CouponManagementPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
+  const [mobileSearch, setMobileSearch] = React.useState("");
   const [coupons, setCoupons] = React.useState<Coupon[]>([]);
   const [allPlans, setAllPlans] = React.useState<Plan[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -389,17 +403,133 @@ export default function CouponManagementPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) {
-    return (
+  const BackArrow = lang === "ar" ? ArrowRight : ArrowLeft;
+
+  // ── Mobile helpers ─────────────────────────────────────────────────────────
+  const filteredMobileCoupons = mobileSearch.trim()
+    ? coupons.filter((c) =>
+        c.code.toLowerCase().includes(mobileSearch.trim().toLowerCase()),
+      )
+    : coupons;
+
+  return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "الكوبونات" : "Coupons"} lang={lang} />
+
+      {!authorized ? (
+        <div className="flex-1 px-4 pt-10">
+          <EmptyState
+            icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+            title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+            description={
+              lang === "ar"
+                ? "هذه الصفحة متاحة لفريق المنصة فقط."
+                : "This page is available to platform staff only."
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="px-4 pt-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="text"
+                value={mobileSearch}
+                onChange={(e) => setMobileSearch(e.target.value)}
+                placeholder={lang === "ar" ? "بحث بالكود..." : "Search by code..."}
+                className="h-11 w-full rounded-md border border-input bg-background ps-9 pe-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          <div className="flex-1 px-4 pb-24 pt-3">
+            {loading ? (
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-xl" />
+                ))}
+              </div>
+            ) : filteredMobileCoupons.length === 0 ? (
+              <EmptyState
+                icon={<Ticket className="h-10 w-10 text-primary" aria-hidden="true" />}
+                title={labels.noCoupons}
+                description={labels.noCouponsDesc}
+                action={
+                  <Button
+                    onClick={() => {
+                      resetForm();
+                      setShowModal(true);
+                    }}
+                    style={{ display: "inline-flex" }}
+                  >
+                    <Plus className="h-4 w-4 me-2" />
+                    {labels.createCoupon}
+                  </Button>
+                }
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card px-4">
+                {filteredMobileCoupons.map((coupon, idx) => {
+                  const isExpired =
+                    coupon.validUntil && new Date(coupon.validUntil) < new Date();
+                  const isMaxedOut =
+                    coupon.maxRedemptions !== null &&
+                    coupon.currentUses >= coupon.maxRedemptions;
+                  const inactive = !coupon.isActive || isExpired || isMaxedOut;
+                  return (
+                    <DataCard
+                      key={coupon.id}
+                      icon={Tag}
+                      iconTone="purple"
+                      title={<span className="font-mono tracking-wider">{coupon.code}</span>}
+                      subtitle={[
+                        formatValue(coupon),
+                        formatRedemptions(coupon),
+                        formatDate(coupon.validUntil),
+                      ]}
+                      trailing={
+                        <Badge
+                          variant={inactive ? "default" : "success"}
+                          size="sm"
+                        >
+                          {inactive
+                            ? labels.inactive
+                            : labels.active}
+                        </Badge>
+                      }
+                      divider={idx !== filteredMobileCoupons.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <FAB
+            icon={Plus}
+            label={labels.createCoupon}
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          />
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
+    {loading ? (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
-    );
-  }
-
-  const BackArrow = lang === "ar" ? ArrowRight : ArrowLeft;
-
-  return (
+    ) : (
     <div
       className="space-y-6 animate-in fade-in duration-500"
       dir={lang === "ar" ? "rtl" : "ltr"}
@@ -916,5 +1046,8 @@ export default function CouponManagementPage() {
         </div>
       )}
     </div>
+    )}
+    </div>
+    </>
   );
 }

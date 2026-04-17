@@ -1,6 +1,8 @@
 "use client";
 
 import { useLanguage } from "../../../../components/LanguageProvider";
+import { useSession } from "../../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../../lib/permissions";
 import * as React from "react";
 import {
   ArrowLeft,
@@ -12,6 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  ShieldAlert,
+  CreditCard,
 } from "lucide-react";
 import {
   Button,
@@ -22,6 +26,14 @@ import {
   TableRow,
   TableHead,
   TableCell,
+  AppBar,
+  DataCard,
+  EmptyState,
+  MobileKPICard,
+  MobileTabs,
+  Skeleton,
+  SARAmount,
+  Badge,
 } from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllInvoices } from "../../../actions/billing";
@@ -93,11 +105,15 @@ function formatDate(dateStr: string | null, lang: "ar" | "en"): string {
 
 export default function AdminPaymentsPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
   const [invoices, setInvoices] = React.useState<Invoice[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
   const [total, setTotal] = React.useState(0);
+  const [mobileFilter, setMobileFilter] = React.useState<"ALL" | "PAID" | "ISSUED" | "OVERDUE" | "CANCELED">("ALL");
   const pageSize = 50;
 
   React.useEffect(() => {
@@ -164,7 +180,176 @@ export default function AdminPaymentsPage() {
 
   const BackArrow = lang === "ar" ? ArrowRight : ArrowLeft;
 
+  // ── Mobile helpers ────────────────────────────────────────────────────
+  const mobileTabItems = [
+    { key: "ALL", label: lang === "ar" ? "الكل" : "All" },
+    { key: "PAID", label: lang === "ar" ? "مدفوعة" : "Paid" },
+    { key: "ISSUED", label: lang === "ar" ? "صادرة" : "Issued" },
+    { key: "OVERDUE", label: lang === "ar" ? "متأخرة" : "Overdue" },
+    { key: "CANCELED", label: lang === "ar" ? "ملغاة" : "Canceled" },
+  ];
+
+  const mobileInvoices =
+    mobileFilter === "ALL"
+      ? invoices
+      : invoices.filter((inv) => inv.status === mobileFilter);
+
+  const paidMtd = invoices
+    .filter((inv) => inv.status === "PAID")
+    .reduce((sum, inv) => sum + Number(inv.total), 0);
+  const issuedCount = invoices.filter((inv) => inv.status === "ISSUED").length;
+  const paidInvCount = invoices.filter((inv) => inv.status === "PAID").length;
+  const totalCount = invoices.length || 0;
+  const successRate = totalCount > 0 ? Math.round((paidInvCount / totalCount) * 100) : 0;
+
+  const invoiceBadgeVariant = (s: Invoice["status"]): "success" | "info" | "warning" | "error" | "default" => {
+    if (s === "PAID") return "success";
+    if (s === "ISSUED") return "info";
+    if (s === "OVERDUE") return "error";
+    if (s === "CANCELED") return "error";
+    return "default";
+  };
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "المدفوعات" : "Payments"} lang={lang} />
+
+      {!authorized ? (
+        <div className="flex-1 px-4 pt-10">
+          <EmptyState
+            icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+            title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+            description={
+              lang === "ar"
+                ? "هذه الصفحة متاحة لفريق المنصة فقط."
+                : "This page is available to platform staff only."
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+            <MobileKPICard
+              label={lang === "ar" ? "الإيرادات" : "Revenue"}
+              value={<SARAmount value={paidMtd} size={18} compact className="tabular-nums" />}
+              tone="green"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "قيد الانتظار" : "Pending"}
+              value={<span className="tabular-nums">{issuedCount}</span>}
+              tone="amber"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "متأخرة" : "Overdue"}
+              value={<span className="tabular-nums">{overdueCount}</span>}
+              tone="red"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "معدل النجاح" : "Success rate"}
+              value={<span className="tabular-nums">{successRate}%</span>}
+              tone="primary"
+            />
+          </div>
+
+          <div className="px-4 pt-3">
+            <MobileTabs
+              ariaLabel={lang === "ar" ? "تصفية المدفوعات" : "Filter payments"}
+              active={mobileFilter}
+              onChange={(v) => setMobileFilter(v as typeof mobileFilter)}
+              items={mobileTabItems}
+            />
+          </div>
+
+          <div className="flex-1 px-4 pb-24 pt-3">
+            {loading ? (
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-xl" />
+                ))}
+              </div>
+            ) : mobileInvoices.length === 0 ? (
+              <EmptyState
+                icon={<Receipt className="h-10 w-10 text-primary" aria-hidden="true" />}
+                title={lang === "ar" ? "لا توجد فواتير" : "No invoices"}
+                description={
+                  lang === "ar"
+                    ? "لا توجد فواتير مطابقة للتصفية الحالية."
+                    : "No invoices match the current filter."
+                }
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card px-4">
+                {mobileInvoices.map((inv, idx) => {
+                  const orgName =
+                    lang === "ar"
+                      ? inv.organization?.nameArabic || inv.organization?.name || "—"
+                      : inv.organization?.name || inv.organization?.nameArabic || "—";
+                  const planName =
+                    lang === "ar"
+                      ? inv.subscription?.plan?.nameAr ?? "—"
+                      : inv.subscription?.plan?.nameEn ?? "—";
+                  const issued = formatDate(inv.issuedAt, lang);
+                  const sc = statusConfig[inv.status] ?? {
+                    label: { ar: "مسودة", en: "Draft" },
+                    className: "",
+                  };
+                  return (
+                    <DataCard
+                      key={inv.id}
+                      icon={CreditCard}
+                      iconTone="purple"
+                      title={
+                        <span className="inline-flex items-center gap-2">
+                          <SARAmount value={Number(inv.total)} size={14} className="tabular-nums" />
+                          <span className="font-mono text-[11px] text-muted-foreground">
+                            {inv.invoiceNumber}
+                          </span>
+                        </span>
+                      }
+                      subtitle={[orgName, planName, issued]}
+                      trailing={
+                        <Badge variant={invoiceBadgeVariant(inv.status)} size="sm">
+                          {sc.label[lang]}
+                        </Badge>
+                      }
+                      divider={idx !== mobileInvoices.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {lang === "ar" ? "السابق" : "Previous"}
+                </button>
+                <span className="tabular-nums">{page} / {totalPages}</span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {lang === "ar" ? "التالي" : "Next"}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div
       className="space-y-8 animate-in fade-in duration-500"
       dir={lang === "ar" ? "rtl" : "ltr"}
@@ -352,5 +537,7 @@ export default function AdminPaymentsPage() {
         )}
       </Card>
     </div>
+    </div>
+    </>
   );
 }

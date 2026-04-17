@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "../../../../components/LanguageProvider";
+import { useSession } from "../../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../../lib/permissions";
 import { getSeoConfig, upsertSeoConfig } from "../../../actions/seo-config";
 import { UploadButton } from "../../../../lib/uploadthing";
 import {
@@ -18,9 +20,21 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   ChevronRight,
+  ShieldAlert,
 } from "lucide-react";
 import Image from "next/image";
-import { Button, Card, Input, Badge, Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui";
+import {
+  Button,
+  Card,
+  Input,
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  AppBar,
+  EmptyState,
+} from "@repo/ui";
 import { toast } from "sonner";
 
 type RobotsRule = { userAgent: string; allow: string[]; disallow: string[] };
@@ -90,6 +104,9 @@ function AssetUploader({
 
 export default function SeoSettingsPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   const [loading, setLoading] = useState(true);
@@ -229,7 +246,208 @@ export default function SeoSettingsPage() {
     );
   }
 
+  // ── Mobile save helper (persists all editable fields in one call) ───────
+  const saveAllMobile = async () => {
+    await save("all", {
+      siteTitle,
+      siteTitleTemplate,
+      siteDescriptionAr,
+      siteDescriptionEn,
+      canonicalUrl,
+      ogLocale,
+      twitterHandle,
+      twitterCard,
+      gtmContainerId: gtmContainerId || null,
+      ga4MeasurementId: ga4MeasurementId || null,
+      gadsConversionId: gadsConversionId || null,
+      gscVerificationCode: gscVerificationCode || null,
+      bingVerificationCode: bingVerificationCode || null,
+      schemaOrgName,
+      schemaOrgLogoUrl: schemaOrgLogoUrl || null,
+      schemaOrgTwitter: schemaOrgTwitter || null,
+      schemaOrgLinkedIn: schemaOrgLinkedIn || null,
+      schemaOrgInstagram: schemaOrgInstagram || null,
+      robotsTxtRules: JSON.stringify(robotsRules),
+    });
+  };
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={dir}
+    >
+      <AppBar
+        title={lang === "ar" ? "تحسين محركات البحث" : "SEO"}
+        lang={lang}
+      />
+
+      {!authorized ? (
+        <div className="flex-1 px-4 pt-10">
+          <EmptyState
+            icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+            title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+            description={
+              lang === "ar"
+                ? "هذه الصفحة متاحة لفريق المنصة فقط."
+                : "This page is available to platform staff only."
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 px-4 py-4 space-y-6 pb-28">
+            <section className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "ميتاداتا" : "Metadata"}
+              </h2>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "عنوان الموقع" : "Site title"}
+                </label>
+                <Input value={siteTitle} onChange={(e) => setSiteTitle(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "قالب العنوان" : "Title template"}
+                </label>
+                <Input value={siteTitleTemplate} onChange={(e) => setSiteTitleTemplate(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "الوصف (عربي)" : "Description (AR)"}
+                </label>
+                <textarea
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  rows={3}
+                  dir="rtl"
+                  value={siteDescriptionAr}
+                  onChange={(e) => setSiteDescriptionAr(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "الوصف (إنجليزي)" : "Description (EN)"}
+                </label>
+                <textarea
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  rows={3}
+                  dir="ltr"
+                  value={siteDescriptionEn}
+                  onChange={(e) => setSiteDescriptionEn(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "الرابط الأساسي" : "Canonical URL"}
+                </label>
+                <Input dir="ltr" value={canonicalUrl} onChange={(e) => setCanonicalUrl(e.target.value)} />
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "التحليلات" : "Analytics"}
+              </h2>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">GTM Container ID</label>
+                <Input
+                  dir="ltr"
+                  value={gtmContainerId}
+                  onChange={(e) => setGtmContainerId(e.target.value.toUpperCase())}
+                  placeholder="GTM-XXXXXXX"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">GA4 Measurement ID</label>
+                <Input
+                  dir="ltr"
+                  value={ga4MeasurementId}
+                  onChange={(e) => setGa4MeasurementId(e.target.value.toUpperCase())}
+                  placeholder="G-XXXXXXXXXX"
+                  disabled={!!gtmContainerId}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Google Ads Conversion ID</label>
+                <Input
+                  dir="ltr"
+                  value={gadsConversionId}
+                  onChange={(e) => setGadsConversionId(e.target.value.toUpperCase())}
+                  placeholder="AW-XXXXXXXXX"
+                />
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                {lang === "ar" ? "التحقق" : "Verification"}
+              </h2>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Google Search Console</label>
+                <Input dir="ltr" value={gscVerificationCode} onChange={(e) => setGscVerificationCode(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Bing Webmaster</label>
+                <Input dir="ltr" value={bingVerificationCode} onChange={(e) => setBingVerificationCode(e.target.value)} />
+              </div>
+            </section>
+
+            <section className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Schema.org
+              </h2>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "اسم المنظمة" : "Organization name"}
+                </label>
+                <Input value={schemaOrgName} onChange={(e) => setSchemaOrgName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === "ar" ? "رابط الشعار" : "Logo URL"}
+                </label>
+                <Input dir="ltr" value={schemaOrgLogoUrl} onChange={(e) => setSchemaOrgLogoUrl(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Twitter / X</label>
+                <Input dir="ltr" value={schemaOrgTwitter} onChange={(e) => setSchemaOrgTwitter(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">LinkedIn</label>
+                <Input dir="ltr" value={schemaOrgLinkedIn} onChange={(e) => setSchemaOrgLinkedIn(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Instagram</label>
+                <Input dir="ltr" value={schemaOrgInstagram} onChange={(e) => setSchemaOrgInstagram(e.target.value)} />
+              </div>
+            </section>
+          </div>
+
+          <div className="fixed inset-x-0 bottom-0 bg-card/95 backdrop-blur-md border-t p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] z-mobile-fab">
+            <Button
+              onClick={saveAllMobile}
+              disabled={saving !== null}
+              className="w-full"
+              style={{ display: "inline-flex", justifyContent: "center" }}
+            >
+              <Save className="h-4 w-4 me-2" />
+              {saving !== null
+                ? lang === "ar"
+                  ? "جارٍ الحفظ..."
+                  : "Saving..."
+                : lang === "ar"
+                  ? "حفظ"
+                  : "Save"}
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6 animate-in fade-in duration-500" dir={dir}>
       {/* Header */}
       <div className="flex items-center gap-4 px-2">
@@ -696,5 +914,7 @@ export default function SeoSettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </div>
+    </>
   );
 }

@@ -3,9 +3,12 @@
 import * as React from "react";
 import {
   Ticket, Search, Filter, ChevronDown, MessageSquare,
-  AlertCircle, Clock, CheckCircle, XCircle, Loader2,
+  AlertCircle, Clock, CheckCircle, XCircle, Loader2, ShieldAlert,
 } from "lucide-react";
+import { AppBar, DataCard, EmptyState, MobileKPICard, MobileTabs, Skeleton, Badge } from "@repo/ui";
 import { useLanguage } from "../../../../components/LanguageProvider";
+import { useSession } from "../../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../../lib/permissions";
 import { adminGetAllTickets } from "../../../actions/admin-stats";
 
 type TicketRow = {
@@ -89,6 +92,9 @@ function categoryLabel(category: string, lang: "ar" | "en") {
 
 export default function AdminTicketsPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
   const [data, setData] = React.useState<PageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [search, setSearch] = React.useState("");
@@ -135,8 +141,195 @@ export default function AdminTicketsPage() {
 
   const openCount = tickets.filter((t) => t.status === "OPEN").length;
   const inProgressCount = tickets.filter((t) => t.status === "IN_PROGRESS").length;
+  const resolvedCount = tickets.filter((t) => t.status === "RESOLVED").length;
+
+  // ── Mobile helpers ────────────────────────────────────────────────────
+  const mobileStatusTabs = [
+    { key: "", label: lang === "ar" ? "الكل" : "All" },
+    { key: "OPEN", label: lang === "ar" ? "مفتوح" : "Open" },
+    { key: "IN_PROGRESS", label: lang === "ar" ? "قيد المعالجة" : "In Progress" },
+    { key: "RESOLVED", label: lang === "ar" ? "محلول" : "Resolved" },
+    { key: "CLOSED", label: lang === "ar" ? "مغلق" : "Closed" },
+  ];
+
+  const priorityTone = (p: string): "red" | "amber" | "blue" | "default" => {
+    if (p === "URGENT") return "red";
+    if (p === "HIGH") return "amber";
+    if (p === "MEDIUM") return "blue";
+    return "default";
+  };
+
+  const statusBadgeVariant = (s: string): "info" | "warning" | "success" | "default" | "error" => {
+    if (s === "OPEN") return "info";
+    if (s === "IN_PROGRESS" || s === "WAITING_ON_USER") return "warning";
+    if (s === "RESOLVED") return "success";
+    if (s === "CLOSED") return "default";
+    return "default";
+  };
+
+  const statusLabelAr: Record<string, string> = {
+    OPEN: "مفتوح",
+    IN_PROGRESS: "قيد المعالجة",
+    WAITING_ON_USER: "بانتظار",
+    RESOLVED: "محلول",
+    CLOSED: "مغلق",
+  };
+  const statusLabelEn: Record<string, string> = {
+    OPEN: "Open",
+    IN_PROGRESS: "In Progress",
+    WAITING_ON_USER: "Waiting",
+    RESOLVED: "Resolved",
+    CLOSED: "Closed",
+  };
 
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar title={lang === "ar" ? "التذاكر" : "Tickets"} lang={lang} />
+
+      {!authorized ? (
+        <div className="flex-1 px-4 pt-10">
+          <EmptyState
+            icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+            title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+            description={
+              lang === "ar"
+                ? "هذه الصفحة متاحة لفريق الدعم فقط."
+                : "This page is available to support staff only."
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 px-4 pt-3">
+            <MobileKPICard
+              label={lang === "ar" ? "مفتوحة" : "Open"}
+              value={<span className="tabular-nums">{openCount}</span>}
+              tone="blue"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "قيد المعالجة" : "In Progress"}
+              value={<span className="tabular-nums">{inProgressCount}</span>}
+              tone="amber"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "محلولة" : "Resolved"}
+              value={<span className="tabular-nums">{resolvedCount}</span>}
+              tone="green"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "الإجمالي" : "Total"}
+              value={<span className="tabular-nums">{total}</span>}
+              tone="primary"
+            />
+          </div>
+
+          <div className="px-4 pt-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 start-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder={lang === "ar" ? "بحث..." : "Search..."}
+                className="h-11 w-full rounded-md border border-input bg-background ps-9 pe-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+          </div>
+
+          <div className="px-4 pt-3">
+            <MobileTabs
+              ariaLabel={lang === "ar" ? "تصفية حسب الحالة" : "Filter by status"}
+              active={status}
+              onChange={(v) => { setStatus(v); setPage(1); }}
+              items={mobileStatusTabs}
+            />
+          </div>
+
+          <div className="flex-1 px-4 pb-24 pt-3">
+            {loading ? (
+              <div className="space-y-3">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-20 rounded-xl" />
+                ))}
+              </div>
+            ) : tickets.length === 0 ? (
+              <EmptyState
+                icon={<Ticket className="h-10 w-10 text-primary" aria-hidden="true" />}
+                title={lang === "ar" ? "لا توجد تذاكر" : "No tickets"}
+                description={
+                  lang === "ar"
+                    ? "لا توجد تذاكر مطابقة للتصفية الحالية."
+                    : "No tickets match the current filter."
+                }
+              />
+            ) : (
+              <div className="rounded-2xl border border-border bg-card px-4">
+                {tickets.map((tk, idx) => {
+                  const orgName =
+                    lang === "ar" && tk.organization.nameArabic
+                      ? tk.organization.nameArabic
+                      : tk.organization.name;
+                  const dateLabel = new Date(tk.createdAt).toLocaleDateString(
+                    lang === "ar" ? "ar-SA" : "en-US",
+                    { day: "numeric", month: "short" },
+                  );
+                  const requester = tk.user.name ?? tk.user.email;
+                  return (
+                    <DataCard
+                      key={tk.id}
+                      icon={Ticket}
+                      iconTone={priorityTone(tk.priority)}
+                      href={`/dashboard/help/tickets/${tk.id}`}
+                      title={
+                        <span className="flex items-center gap-2">
+                          <span className="font-mono text-xs text-primary">{tk.ticketNumber}</span>
+                          <span className="truncate">{tk.subject}</span>
+                        </span>
+                      }
+                      subtitle={[orgName, requester, dateLabel]}
+                      trailing={
+                        <Badge variant={statusBadgeVariant(tk.status)} size="sm">
+                          {lang === "ar" ? statusLabelAr[tk.status] ?? tk.status : statusLabelEn[tk.status] ?? tk.status}
+                        </Badge>
+                      }
+                      divider={idx !== tickets.length - 1}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {lang === "ar" ? "السابق" : "Previous"}
+                </button>
+                <span className="tabular-nums">{page} / {totalPages}</span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="min-h-11 rounded-md border border-border px-3 py-1.5 font-medium disabled:opacity-40"
+                >
+                  {lang === "ar" ? "التالي" : "Next"}
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-6 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
 
       {/* Header */}
@@ -315,5 +508,7 @@ export default function AdminTicketsPage() {
         </div>
       )}
     </div>
+    </div>
+    </>
   );
 }

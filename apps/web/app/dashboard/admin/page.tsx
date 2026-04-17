@@ -4,10 +4,13 @@ import * as React from "react";
 import {
   Building2, Users, Home, FileText, CheckCircle, Clock, AlertCircle,
   XCircle, Receipt, BadgeDollarSign, TrendingUp, Ticket,
-  ListChecks, Tag, SearchCheck, Settings, ChevronRight,
+  ListChecks, Tag, SearchCheck, Settings, ChevronRight, ShieldAlert,
 } from "lucide-react";
 import Link from "next/link";
+import { AppBar, EmptyState } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
+import { useSession } from "../../../components/SimpleSessionProvider";
+import { isSystemRole } from "../../../lib/permissions";
 import { adminGetPlatformStats } from "../../actions/admin-stats";
 
 type Stats = Awaited<ReturnType<typeof adminGetPlatformStats>>;
@@ -78,18 +81,68 @@ const quickLinks = [
 
 export default function SystemAdminPage() {
   const { lang } = useLanguage();
+  const { data: session } = useSession();
+  const userRole = session?.user?.role ?? "";
+  const authorized = isSystemRole(userRole);
   const [stats, setStats] = React.useState<Stats | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
+    if (!authorized) return;
     adminGetPlatformStats()
       .then(setStats)
       .finally(() => setLoading(false));
-  }, []);
+  }, [authorized]);
 
   const fmt = (n: number) => n.toLocaleString("en-US");
 
   return (
+    <>
+      {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+      <div
+        className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        <AppBar
+          title={lang === "ar" ? "الإدارة" : "Admin"}
+          lang={lang}
+        />
+        {!authorized ? (
+          <div className="flex-1 px-4 pt-10">
+            <EmptyState
+              icon={<ShieldAlert className="h-10 w-10" aria-hidden="true" />}
+              title={lang === "ar" ? "غير مصرح" : "Unauthorized"}
+              description={
+                lang === "ar"
+                  ? "هذه الصفحة متاحة لفريق منصة ممعاريك فقط."
+                  : "This page is available to the Mimaric platform team only."
+              }
+            />
+          </div>
+        ) : (
+          <div className="flex-1 px-4 pt-4 pb-8">
+            <div className="grid grid-cols-2 gap-3">
+              {quickLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-card p-4 min-h-[120px] text-center transition-colors active:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+                >
+                  <span className="inline-flex items-center justify-center rounded-xl bg-primary/10 p-3 text-primary">
+                    <item.icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-semibold text-foreground">
+                    {item.label[lang]}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div className="space-y-8 animate-in fade-in duration-500" dir={lang === "ar" ? "rtl" : "ltr"}>
 
       {/* Header */}
@@ -179,5 +232,7 @@ export default function SystemAdminPage() {
         </div>
       </section>
     </div>
+    </div>
+    </>
   );
 }
