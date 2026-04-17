@@ -4,7 +4,7 @@ import { mkdirSync, writeFileSync, appendFileSync } from "fs";
 import { join } from "path";
 
 const BASE = "http://localhost:3000";
-const ROOT = ".claude/verification-screenshots";
+const ROOT = "verification-screenshots";
 const LOG = join(ROOT, "verification.log");
 
 const VIEWPORTS = {
@@ -57,13 +57,31 @@ const LANGS = ["en", "ar"]; // ar flips dir=rtl via LanguageProvider
 async function attemptLogin(page, email, password) {
   await page.goto(`${BASE}/auth/login`, { waitUntil: "domcontentloaded" });
   await page.waitForSelector('input[type=password]', { state: "visible", timeout: 25000 });
-  await page.fill('input[type=email], input[name=email]', email);
-  const pwd = page.locator('input[type=password]').first();
-  await pwd.fill(password);
 
-  // Login button is <Button onClick={handleLogin}> (no type=submit). Click it
-  // directly — most reliable across viewports.
+  // Use per-character typing — React sometimes misses fill() events on small
+  // viewports before hydration settles. press("Tab") flushes blur handlers.
+  const emailInput = page.locator('input[type=email], input[name=email]').first();
+  await emailInput.click();
+  await emailInput.fill("");
+  await emailInput.type(email, { delay: 10 });
+  await emailInput.press("Tab");
+
+  const pwd = page.locator('input[type=password]').first();
+  await pwd.click();
+  await pwd.fill("");
+  await pwd.type(password, { delay: 10 });
+
+  // Button disables while email/password empty. Wait until it's enabled.
   const btn = page.getByRole("button", { name: /log in|sign in|تسجيل|دخول/i }).first();
+  await btn.waitFor({ state: "visible", timeout: 10000 });
+  await page.waitForFunction(
+    () => {
+      const btns = Array.from(document.querySelectorAll("button"));
+      const b = btns.find((x) => /log in|sign in|تسجيل|دخول/i.test(x.textContent ?? ""));
+      return b && !b.disabled;
+    },
+    { timeout: 10000 },
+  );
   await btn.click({ timeout: 10000 });
   await page.waitForURL((u) => !String(u).includes("/auth/login"), { timeout: 30000 });
   await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
@@ -132,12 +150,22 @@ async function captureSurface(page, viewport, viewportName, surface, ctx) {
       timeout: 25000,
     });
     await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+    // Settle — re-read URL after a body-visible wait to avoid reading
+    // mid-redirect URL (false LEAKs when middleware redirect races with
+    // the first URL read).
+    await page.waitForSelector("body", { state: "visible", timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(400);
     resolvedUrl = page.url();
     if (surface.expectBlock) {
-      const blocked =
-        response && (response.status() === 403 || response.status() === 401)
-          ? true
-          : !resolvedUrl.includes(surface.url); // redirect away = blocked
+      // Double-check: re-read URL once more in case the redirect is still in
+      // flight. If either read shows redirect-away, treat as blocked.
+      const firstCheck = !resolvedUrl.includes(surface.url);
+      await page.waitForTimeout(600);
+      const secondUrl = page.url();
+      resolvedUrl = secondUrl;
+      const secondCheck = !secondUrl.includes(surface.url);
+      const httpBlocked = response && (response.status() === 403 || response.status() === 401);
+      const blocked = httpBlocked || firstCheck || secondCheck;
       status = blocked ? "blocked-ok" : "LEAK";
     }
   } catch (e) {
