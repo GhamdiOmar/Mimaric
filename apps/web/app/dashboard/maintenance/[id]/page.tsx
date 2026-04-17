@@ -57,7 +57,7 @@ const categoryLabels: Record<string, { ar: string; en: string }> = {
 };
 
 const statusLabels: Record<string, { ar: string; en: string; variant: string }> = {
-  OPEN: { ar: "مفتوح", en: "Open", variant: "draft" },
+  OPEN: { ar: "بانتظار المراجعة", en: "Waiting Review", variant: "draft" },
   ASSIGNED: { ar: "معيّن", en: "Assigned", variant: "reserved" },
   IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress", variant: "reserved" },
   ON_HOLD: { ar: "معلّق", en: "On Hold", variant: "maintenance" },

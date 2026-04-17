@@ -103,7 +103,7 @@ function maintenanceStatusIcon(status: string) {
 
 function maintenanceStatusLabel(status: string, lang: "ar" | "en"): string {
   const map: Record<string, { ar: string; en: string }> = {
-    OPEN:        { ar: "مفتوح",       en: "Open" },
+    OPEN:        { ar: "بانتظار المراجعة", en: "Waiting Review" },
     ASSIGNED:    { ar: "مُعيّن",       en: "Assigned" },
     IN_PROGRESS: { ar: "قيد التنفيذ", en: "In Progress" },
     ON_HOLD:     { ar: "معلّق",        en: "On Hold" },
