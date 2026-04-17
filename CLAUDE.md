@@ -932,4 +932,86 @@ All use bilingual labels, native Arabic/English placeholders, full RTL, and serv
 
 ---
 
+## 8. Access Model — Tenant vs System (Hard Rule)
+
+Mimaric is a B2B SaaS. **Two distinct user universes must never share surfaces, permissions, or data.**
+
+### 8.1 The Two Tiers
+
+| Tier | Roles | Purpose | Binds to an Organization? |
+|---|---|---|---|
+| **System (platform staff)** | `SYSTEM_ADMIN`, `SYSTEM_SUPPORT` | Operate the Mimaric product — manage tenants, billing, support, SEO, platform-wide health | **No.** `organizationId = null`. They are never members of a tenant org. |
+| **Tenant (customer users)** | `ADMIN`, `MANAGER`, `AGENT`, `LEASING`, `FINANCE`, `TECHNICIAN`, `USER` | Run a single real-estate org's day-to-day — properties, CRM, deals, contracts, payments, maintenance | **Yes.** `organizationId` required at seed/signup. |
+
+### 8.2 What Each Tier Can See
+
+**System users (SYSTEM_ADMIN / SYSTEM_SUPPORT)** — see ONLY platform surfaces:
+- `/dashboard/admin` — platform KPIs (orgs, MRR, active users, platform health)
+- `/dashboard/admin/tickets` — cross-tenant support tickets
+- `/dashboard/admin/seo` — marketing site SEO
+- `/dashboard/admin/coupons`, `/dashboard/admin/subscriptions` — billing/plans control
+- `/dashboard/billing` — platform-level billing admin
+- `/dashboard/settings` — their own account/profile only
+
+**System users MUST NOT see:** `/dashboard`, `/dashboard/units`, `/dashboard/crm`, `/dashboard/deals`, `/dashboard/contracts`, `/dashboard/payments`, `/dashboard/maintenance`, `/dashboard/leasing`, `/dashboard/finance`, or any tenant-scoped data. They also MUST NOT be offered tenant create-actions in Cmd-K (`New customer`, `New deal`, `New contract`, etc.).
+
+**Tenant users** — see their **own org's** tenant surfaces per role permissions (see § 6.9.2 dashboards + `lib/permissions.ts`). They MUST NOT see any `/dashboard/admin/*` route or platform-level KPIs.
+
+### 8.3 Enforcement (layered — all three required)
+
+1. **Navigation filter** — `navItems` in `apps/web/components/shell/nav-items.ts` uses `audience: "tenant" | "platform"`. Sidebar / More / Cmd-K all filter on `isSystemRole(userRole)` before rendering. **Quick-action shortcuts must filter by audience too, not just permission.**
+2. **Route guard** — every `/dashboard/admin/**` route enforces `isSystemRole` server-side; every tenant route (`/dashboard/crm`, `/dashboard/units`, …) rejects when `isSystemRole(userRole)` is true. Guard in the route-level `layout.tsx` or at the top of `page.tsx`.
+3. **Server-action guard** — every tenant server action requires a non-null `organizationId` on the session; every platform action requires `isSystemRole`. Permission check alone is insufficient — `SYSTEM_ADMIN` has all permissions by role, so audience check is mandatory.
+
+### 8.4 Permissions ≠ Audience
+
+`SYSTEM_ADMIN` is seeded with `ALL_PERMISSIONS` (including `crm:read`, `properties:read`, etc.). This is intentional — platform staff need full permissions inside admin-scoped support tooling. **Therefore, permission alone NEVER gates tenant vs platform.** Always check `audience` or `isSystemRole` in addition to `hasPermission`.
+
+### 8.5 Common Leak Patterns (watch for these in review)
+
+- Cmd-K "Quick actions" (`New customer`, `New deal`, …) filtered by permission only — leaks to SYSTEM_ADMIN.
+- Dashboard widgets linking to tenant routes without audience check.
+- Breadcrumbs or "recent items" surfacing tenant records in an admin session.
+- `revalidatePath("/dashboard/<renamed>")` after the route is deleted — causes confusing stale-data bugs.
+- Seed file giving `SYSTEM_ADMIN` / `SYSTEM_SUPPORT` an `organizationId` — every system user seeded for tests must have `organizationId: null`.
+
+---
+
+## 9. Test Credentials (Seed Data — Local/Dev Only)
+
+**Default password for all users is `mimaric2026`** (set at `packages/db/prisma/seed.ts`), except where noted. Never commit real user credentials.
+
+### 9.1 System (Platform) Users
+
+| Email | Role | Password | Use |
+|---|---|---|---|
+| `system@mimaric.sa` | `SYSTEM_ADMIN` | `mimaric2026` | Full platform admin — `/dashboard/admin/*`, billing, org management |
+| `support@mimaric.sa` | `SYSTEM_SUPPORT` | `mimaric2026` | Support tier — cross-tenant ticket management |
+| `dev_admin@mimaric.sa` | `SYSTEM_SUPPORT` | `mimaric2026` | Secondary support account |
+
+### 9.2 Tenant Users (org: Mimaric test org)
+
+| Email | Role | Password | Use |
+|---|---|---|---|
+| `admin@mimaric.sa` | `ADMIN` | `mimaric2026` | Org owner — full tenant access |
+| `pm@mimaric.sa` | `MANAGER` | `mimaric2026` | Property manager |
+| `sales_mgr@mimaric.sa` | `MANAGER` | `mimaric2026` | Sales manager |
+| `property_mgr@mimaric.sa` | `MANAGER` | `mimaric2026` | Property manager |
+| `fatima@mimaric.sa` | `MANAGER` | `finance2026` | Finance manager (distinct pw) |
+| `ahmed@mimaric.sa` | `AGENT` | `sales2026` | Sales agent (distinct pw) |
+| `khalid@mimaric.sa` | `TECHNICIAN` | `sales2026` | Maintenance tech (distinct pw) |
+| `buyer@mimaric.sa` | `USER` | `mimaric2026` | End-user / buyer persona |
+| `tenant@mimaric.sa` | `USER` | `mimaric2026` | End-user / tenant persona |
+| `user@mimaric.sa` | `USER` | `mimaric2026` | Generic user |
+
+### 9.3 How to Test Access Separation
+
+When verifying access-control work:
+1. Log in as `system@mimaric.sa` → confirm sidebar/More/Cmd-K show ONLY admin routes (no properties, units, CRM, deals, contracts, payments, maintenance).
+2. Log in as `admin@mimaric.sa` → confirm sidebar/More/Cmd-K show ONLY tenant routes (no `/dashboard/admin/*`).
+3. Attempt direct URL access (e.g., system user to `/dashboard/crm`, tenant user to `/dashboard/admin`) — both must redirect or 403.
+4. Re-seed via `pnpm --filter @repo/db prisma db seed` if credentials drift from this table.
+
+---
+
 *Last consolidated: 2026-04-17. When this file and `packages/ui/src/globals.css` diverge, reconcile — don't duplicate.*
