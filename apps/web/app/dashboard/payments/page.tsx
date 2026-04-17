@@ -73,6 +73,72 @@ type PaymentEntry = {
   raw: RentInstallment;
 };
 
+// ─── Semantic row-tone helper (CLAUDE.md § 6.12 Finance colors) ─────────────
+// Maps a payment entry's status + due-date proximity to a tuple of row classes:
+//   - rowClass: start-edge border + subtle bg tint
+//   - amountClass: emphasis on the amount cell
+//   - dueDateClass: strike-through / muted / tinted for the "due by" cell
+type PaymentTone = {
+  rowClass: string;
+  amountClass: string;
+  dueDateClass: string;
+};
+
+function getPaymentTone(entry: {
+  status: "PAID" | "UNPAID" | "OVERDUE" | "PARTIALLY_PAID";
+  dueDate: string;
+}): PaymentTone {
+  const now = new Date();
+  const due = new Date(entry.dueDate);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const daysUntilDue = Math.floor((due.getTime() - now.getTime()) / msPerDay);
+
+  // Collected / Paid — green start-border, strike-through due-by
+  if (entry.status === "PAID") {
+    return {
+      rowClass: "border-s-4 border-s-secondary",
+      amountClass: "text-foreground",
+      dueDateClass: "line-through text-muted-foreground",
+    };
+  }
+
+  // Overdue — destructive start-border + emphasized amount
+  // (status === OVERDUE, or unpaid/partial with due date in the past)
+  const isPastDue =
+    entry.status === "OVERDUE" ||
+    ((entry.status === "UNPAID" || entry.status === "PARTIALLY_PAID") && daysUntilDue < 0);
+
+  if (isPastDue) {
+    return {
+      rowClass: "border-s-4 border-s-destructive",
+      amountClass: "text-destructive font-semibold",
+      dueDateClass: "text-destructive",
+    };
+  }
+
+  // Aging — warning start-border (unpaid and due within next 30 days,
+  //         or 1-30 days past due already handled above)
+  const isAging =
+    (entry.status === "UNPAID" || entry.status === "PARTIALLY_PAID") &&
+    daysUntilDue >= 0 &&
+    daysUntilDue <= 30;
+
+  if (isAging) {
+    return {
+      rowClass: "border-s-4 border-s-warning",
+      amountClass: "text-warning",
+      dueDateClass: "text-warning",
+    };
+  }
+
+  // Scheduled / Future — neutral, no start-border tint
+  return {
+    rowClass: "",
+    amountClass: "text-foreground",
+    dueDateClass: "text-muted-foreground",
+  };
+}
+
 const STATUS_COLORS: Record<string, string> = {
   PAID: "bg-green-100 text-green-800",
   UNPAID: "bg-amber-100 text-amber-800",
@@ -572,10 +638,43 @@ export default function PaymentsPage() {
             <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-500 gap-2">
-            <CreditCard className="w-8 h-8 text-gray-300" />
-            <p className="text-sm">{lang === "ar" ? "لا توجد مدفوعات" : "No payments found"}</p>
-          </div>
+          allEntries.length === 0 ? (
+            <EmptyState
+              icon={<CreditCard className="h-12 w-12" aria-hidden="true" />}
+              title={lang === "ar" ? "لا توجد مدفوعات بعد" : "No payments yet"}
+              description={
+                lang === "ar"
+                  ? "ستظهر أقساط الإيجار والبيع هنا بمجرد تفعيل أول عقد."
+                  : "Rent and sale installments show up here once contracts are active."
+              }
+              helpHref="/dashboard/help#payments"
+              helpLabel={lang === "ar" ? "تعرّف على المدفوعات" : "Learn about payments"}
+            />
+          ) : (
+            <EmptyState
+              variant="filtered"
+              icon={<CreditCard className="h-12 w-12" aria-hidden="true" />}
+              title={lang === "ar" ? "لا توجد نتائج مطابقة" : "No matching payments"}
+              description={
+                lang === "ar"
+                  ? "جرّب تعديل البحث أو التبويب."
+                  : "Try adjusting your search or tab."
+              }
+              action={
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setSearch("");
+                    setTypeFilter("ALL");
+                    setStatusFilter("ALL");
+                  }}
+                  style={{ display: "inline-flex" }}
+                >
+                  {lang === "ar" ? "مسح الفلاتر" : "Clear filters"}
+                </Button>
+              }
+            />
+          )
         ) : (
           <Table>
             <TableHeader>
@@ -590,8 +689,10 @@ export default function PaymentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((entry) => (
-                <TableRow key={entry.id}>
+              {filtered.map((entry) => {
+                const tone = getPaymentTone(entry);
+                return (
+                <TableRow key={entry.id} className={tone.rowClass}>
                   <TableCell className="font-medium">{entry.clientName}</TableCell>
                   <TableCell className="text-sm text-gray-600">{entry.propertyLabel}</TableCell>
                   <TableCell>
@@ -601,8 +702,8 @@ export default function PaymentsPage() {
                         : lang === "ar" ? "بيع" : "Sale"}
                     </span>
                   </TableCell>
-                  <TableCell className="font-medium">{SAR(entry.amount)}</TableCell>
-                  <TableCell className="text-sm text-gray-600">
+                  <TableCell className={`font-medium ${tone.amountClass}`}>{SAR(entry.amount)}</TableCell>
+                  <TableCell className={`text-sm ${tone.dueDateClass}`}>
                     {new Date(entry.dueDate).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-SA")}
                   </TableCell>
                   <TableCell>
@@ -624,7 +725,8 @@ export default function PaymentsPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

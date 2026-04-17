@@ -422,14 +422,32 @@ export default function DocumentVaultPage() {
                  </div>
                ))}
              </div>
+           ) : docs.filter((doc) => activeCategory === "all" || doc.category === activeCategory).length === 0 ? (
+             <EmptyState
+               icon={<CloudUpload className="h-12 w-12" aria-hidden="true" />}
+               title={lang === "ar" ? "لا توجد وثائق بعد" : "No documents yet"}
+               description={
+                 lang === "ar"
+                   ? "ارفع المخططات والعقود والمستندات في مكان واحد آمن."
+                   : "Upload blueprints, contracts, and records in one safe place."
+               }
+               action={
+                 canWrite ? (
+                   <Button
+                     onClick={triggerMobileUpload}
+                     style={{ display: "inline-flex" }}
+                     className="gap-2"
+                   >
+                     <CloudUpload className="h-[18px] w-[18px]" />
+                     {lang === "ar" ? "رفع وثيقة" : "Upload document"}
+                   </Button>
+                 ) : undefined
+               }
+               helpHref="/dashboard/help#documents"
+               helpLabel={lang === "ar" ? "تعرّف على خزنة الوثائق" : "Learn about the vault"}
+             />
            ) : (
            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {docs.filter((doc) => activeCategory === "all" || doc.category === activeCategory).length === 0 && (
-                <div className="col-span-full py-20 text-center text-muted-foreground">
-                  <CloudUpload className="h-12 w-12 mx-auto opacity-20 mb-4" />
-                  <p>{lang === "ar" ? "لا توجد وثائق حالياً. ابدأ برفع أول وثيقة." : "No documents yet. Start by uploading one."}</p>
-                </div>
-              )}
               {docs.filter((doc) => activeCategory === "all" || doc.category === activeCategory).map((doc) => (
                 <div key={doc.id} className="bg-card rounded-md border border-border p-5 hover:shadow-md transition-all group relative border-b-4 border-b-transparent hover:border-b-secondary">
                    <div className="flex items-start justify-between mb-4">

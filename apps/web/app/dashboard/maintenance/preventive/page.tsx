@@ -498,11 +498,27 @@ export default function PreventiveMaintenancePage() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : plans.length === 0 ? (
-        <div className="bg-card rounded-md shadow-card border border-border p-12 text-center">
-          <CalendarCheck className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-primary">{lang === "ar" ? "لا توجد خطط وقائية" : "No Preventive Plans"}</h3>
-          <p className="text-sm text-muted-foreground mt-1">{lang === "ar" ? "أضف أول خطة صيانة وقائية" : "Add your first preventive plan"}</p>
-        </div>
+        <EmptyState
+          icon={<CalendarCheck className="h-12 w-12" aria-hidden="true" />}
+          title={lang === "ar" ? "لا توجد خطط وقائية بعد" : "No preventive plans yet"}
+          description={
+            lang === "ar"
+              ? "جدولة الصيانة الدورية تمنع الأعطال وتطيل عمر الأصول."
+              : "Scheduled upkeep prevents breakdowns and extends asset life."
+          }
+          action={
+            <Button
+              onClick={openCreate}
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+            >
+              <Plus className="h-[18px] w-[18px]" />
+              {lang === "ar" ? "إنشاء خطة" : "Create plan"}
+            </Button>
+          }
+          helpHref="/dashboard/help#preventive-maintenance"
+          helpLabel={lang === "ar" ? "تعرّف على الصيانة الوقائية" : "Learn about preventive maintenance"}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {plans.map((plan: any) => {

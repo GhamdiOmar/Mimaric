@@ -633,9 +633,27 @@ export default function DealsPage() {
             <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-500 gap-2">
-            <p className="text-sm">{lang === "ar" ? "لا توجد صفقات" : "No deals found"}</p>
-          </div>
+          <EmptyState
+            icon={<Handshake className="h-12 w-12" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد صفقات بعد" : "No deals yet"}
+            description={
+              lang === "ar"
+                ? "أطلق عربون الحجز وتابع الصفقة حتى التحويل إلى عقد."
+                : "Reserve a unit and follow the deal through to contract."
+            }
+            action={
+              <Button
+                onClick={openCreate}
+                style={{ display: "inline-flex" }}
+                className="gap-2"
+              >
+                <Plus className="h-[18px] w-[18px]" />
+                {lang === "ar" ? "إنشاء صفقة" : "Create deal"}
+              </Button>
+            }
+            helpHref="/dashboard/help#deals"
+            helpLabel={lang === "ar" ? "تعرّف على الصفقات" : "Learn about deals"}
+          />
         ) : (
           <Table>
             <TableHeader>

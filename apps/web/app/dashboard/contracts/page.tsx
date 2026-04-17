@@ -636,12 +636,29 @@ export default function ContractsPage() {
             <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-500 gap-2">
-            <FileText className="w-8 h-8 text-gray-300" />
-            <p className="text-sm">
-              {lang === "ar" ? "لا توجد عقود" : "No contracts found"}
-            </p>
-          </div>
+          <EmptyState
+            icon={<Handshake className="h-12 w-12" aria-hidden="true" />}
+            title={lang === "ar" ? "لا توجد عقود بعد" : "No contracts yet"}
+            description={
+              lang === "ar"
+                ? "تتبّع كل عقد إيجار أو بيع من المسودة حتى التوقيع."
+                : "Track every lease and sale from draft to signed."
+            }
+            action={
+              <Button
+                onClick={tab === "SALE" ? openSaleModal : openLeaseModal}
+                style={{ display: "inline-flex" }}
+                className="gap-2"
+              >
+                <Plus className="h-[18px] w-[18px]" />
+                {tab === "SALE"
+                  ? lang === "ar" ? "إنشاء عقد بيع" : "Create sale contract"
+                  : lang === "ar" ? "إنشاء عقد إيجار" : "Create lease contract"}
+              </Button>
+            }
+            helpHref="/dashboard/help#contracts"
+            helpLabel={lang === "ar" ? "تعرّف على العقود" : "Learn about contracts"}
+          />
         ) : tab === "SALE" ? (
           <Table>
             <TableHeader>
