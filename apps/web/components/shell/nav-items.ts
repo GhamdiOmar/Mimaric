@@ -18,7 +18,7 @@ export const navItems: NavItem[] = [
   { label: { ar: "لوحة التأجير", en: "Leasing" }, icon: "ClipboardList", href: "/dashboard/leasing", section: "core", permission: "dashboard:read", audience: "tenant" },
   { label: { ar: "المالية", en: "Finance" }, icon: "Wallet", href: "/dashboard/finance", section: "core", permission: "dashboard:read", audience: "tenant" },
   { label: { ar: "إدارة العملاء", en: "CRM" }, icon: "Users", href: "/dashboard/crm", section: "core", permission: "crm:read", audience: "tenant" },
-  { label: { ar: "العقارات", en: "Properties" }, icon: "Building2", href: "/dashboard/properties", section: "core", permission: "properties:read", audience: "tenant" },
+  { label: { ar: "العقارات", en: "Properties" }, icon: "Building2", href: "/dashboard/units", section: "core", permission: "properties:read", audience: "tenant" },
   { label: { ar: "الصفقات", en: "Deals" }, icon: "TrendingUp", href: "/dashboard/deals", section: "core", permission: "deals:read", audience: "tenant" },
   { label: { ar: "العقود", en: "Contracts" }, icon: "FileText", href: "/dashboard/contracts", section: "core", permission: "contracts:read", audience: "tenant" },
 
