@@ -52,6 +52,8 @@ import {
   DirectionalIcon,
   NationalIdInput,
   SaudiPhoneInput,
+  DataTable,
+  type ColumnDef,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -1685,6 +1687,134 @@ export default function CRMPage() {
     [filteredCustomers],
   );
 
+  // ─── List-view columns (TanStack DataTable) ────────────────────────────────
+
+  const listColumns = React.useMemo<ColumnDef<any, unknown>[]>(
+    () => [
+      {
+        id: "name",
+        accessorKey: "name",
+        header: lang === "ar" ? "الاسم" : "Name",
+        cell: ({ row }) => {
+          const c = row.original;
+          return (
+            <div>
+              <p className="font-semibold text-foreground">{c.name}</p>
+              {c.nameArabic && c.nameArabic !== c.name && (
+                <p className="text-xs text-muted-foreground">{c.nameArabic}</p>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "phone",
+        accessorKey: "phone",
+        header: lang === "ar" ? "الهاتف" : "Phone",
+        cell: ({ row }) => (
+          <span className="font-mono text-sm text-muted-foreground">
+            {showPii ? row.original.phone : maskPhone(row.original.phone)}
+          </span>
+        ),
+      },
+      {
+        id: "budget",
+        accessorKey: "budget",
+        header: lang === "ar" ? "الميزانية" : "Budget",
+        sortingFn: (a, b) => Number(a.original.budget ?? 0) - Number(b.original.budget ?? 0),
+        cell: ({ row }) => {
+          const b = row.original.budget;
+          return (
+            <span className="text-sm text-muted-foreground">
+              {b
+                ? `${Number(b).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} ${lang === "ar" ? "ر.س" : "SAR"}`
+                : "—"}
+            </span>
+          );
+        },
+        meta: { numeric: true },
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: lang === "ar" ? "الحالة" : "Status",
+        cell: ({ row }) => {
+          const statusCfg = getStatusConfig(row.original.status);
+          return (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border",
+                statusCfg.color,
+              )}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dotColor)} />
+              {statusCfg.label[lang]}
+            </span>
+          );
+        },
+      },
+      {
+        id: "source",
+        accessorKey: "source",
+        header: lang === "ar" ? "المصدر" : "Source",
+        cell: ({ row }) => {
+          const s = row.original.source;
+          return (
+            <span className="text-sm text-muted-foreground">
+              {s && SOURCE_LABELS[s]
+                ? (SOURCE_LABELS[s] as { ar: string; en: string })[lang]
+                : "—"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        enableHiding: false,
+        enableColumnFilter: false,
+        cell: ({ row }) => {
+          const c = row.original;
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDrawerCustomer(c);
+                }}
+                aria-label={lang === "ar" ? "عرض الملف" : "View profile"}
+                className="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+                style={{ display: "inline-flex" }}
+              >
+                <Eye className="h-3.5 w-3.5" />
+              </button>
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDelete(c);
+                  }}
+                  aria-label={lang === "ar" ? "حذف" : "Delete"}
+                  className="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
+                  style={{ display: "inline-flex" }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          );
+        },
+        meta: { align: "end" },
+      },
+    ],
+    // openDelete is a stable function declared in this component; setDrawerCustomer is a stable setState.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [lang, showPii, canDelete],
+  );
+
   // ─── Kanban drag ────────────────────────────────────────────────────────────
 
   function handleDragStart(e: React.DragEvent, customerId: string) {
@@ -2526,105 +2656,88 @@ export default function CRMPage() {
 
       {/* ── List View ── */}
       {viewMode === "list" && (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/20">
-                  <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "الاسم" : "Name"}
-                  </th>
-                  <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "الهاتف" : "Phone"}
-                  </th>
-                  <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "الميزانية" : "Budget"}
-                  </th>
-                  <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "الحالة" : "Status"}
-                  </th>
-                  <th className="text-start px-4 py-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    {lang === "ar" ? "المصدر" : "Source"}
-                  </th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredCustomers.map((c) => {
-                  const statusCfg = getStatusConfig(c.status);
-                  return (
-                    <tr key={c.id} className="hover:bg-muted/20 transition-colors group">
-                      <td className="px-4 py-3">
-                        <div>
-                          <p className="font-semibold text-foreground">{c.name}</p>
-                          {c.nameArabic && c.nameArabic !== c.name && (
-                            <p className="text-xs text-muted-foreground">{c.nameArabic}</p>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 font-mono text-sm text-muted-foreground">
-                        {showPii ? c.phone : maskPhone(c.phone)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {c.budget
-                          ? `${Number(c.budget).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} ${lang === "ar" ? "ر.س" : "SAR"}`
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border",
-                            statusCfg.color
-                          )}
-                        >
-                          <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dotColor)} />
-                          {statusCfg.label[lang]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {c.source && SOURCE_LABELS[c.source]
-                          ? (SOURCE_LABELS[c.source] as { ar: string; en: string })[lang]
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => setDrawerCustomer(c)}
-                            className="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
-                          {canDelete && (
-                            <button
-                              onClick={() => openDelete(c)}
-                              className="h-7 w-7 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {filteredCustomers.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-bold text-foreground mb-1">
-                  {lang === "ar" ? "لا توجد نتائج" : "No contacts found"}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {lang === "ar"
-                    ? "حاول تعديل خيارات البحث أو الفلتر، أو أضف عميلاً جديداً."
-                    : "Try adjusting your search or filter, or add a new contact."}
-                </p>
+        <DataTable
+          columns={listColumns}
+          data={filteredCustomers}
+          locale={lang}
+          getRowId={(c) => c.id}
+          pageSize={25}
+          emptyTitle={lang === "ar" ? "لا توجد نتائج" : "No contacts found"}
+          emptyDescription={
+            lang === "ar"
+              ? "حاول تعديل خيارات البحث أو الفلتر، أو أضف عميلاً جديداً."
+              : "Try adjusting your search or filter, or add a new contact."
+          }
+          mobileCard={(c) => {
+            const statusCfg = getStatusConfig(c.status);
+            return (
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-foreground truncate">{c.name}</p>
+                    {c.nameArabic && c.nameArabic !== c.name && (
+                      <p className="text-xs text-muted-foreground truncate">{c.nameArabic}</p>
+                    )}
+                  </div>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border shrink-0",
+                      statusCfg.color,
+                    )}
+                  >
+                    <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dotColor)} />
+                    {statusCfg.label[lang]}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span className="font-mono">
+                    {showPii ? c.phone : maskPhone(c.phone)}
+                  </span>
+                  <span>
+                    {c.budget
+                      ? `${Number(c.budget).toLocaleString(lang === "ar" ? "ar-SA" : "en-SA")} ${lang === "ar" ? "ر.س" : "SAR"}`
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <span className="text-xs text-muted-foreground">
+                    {c.source && SOURCE_LABELS[c.source]
+                      ? (SOURCE_LABELS[c.source] as { ar: string; en: string })[lang]
+                      : "—"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDrawerCustomer(c);
+                      }}
+                      aria-label={lang === "ar" ? "عرض الملف" : "View profile"}
+                      className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground"
+                      style={{ display: "inline-flex" }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDelete(c);
+                        }}
+                        aria-label={lang === "ar" ? "حذف" : "Delete"}
+                        className="h-8 w-8 rounded-md border border-border bg-background flex items-center justify-center text-muted-foreground"
+                        style={{ display: "inline-flex" }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
-        </Card>
+            );
+          }}
+        />
       )}
 
       {/* ── Add Modal ── */}
