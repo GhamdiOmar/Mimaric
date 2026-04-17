@@ -113,10 +113,10 @@ export async function updateReservationStatus(
   const session = await requirePermission("reservations:write");
 
   const reservation = await db.reservation.findFirst({
-    where: { id: reservationId },
+    where: { id: reservationId, customer: { organizationId: session.organizationId } },
     include: { customer: true },
   });
-  if (!reservation || reservation.customer.organizationId !== session.organizationId) {
+  if (!reservation) {
     throw new Error("Reservation not found or you don't have access. Please refresh the page and try again.");
   }
 
@@ -185,10 +185,10 @@ export async function requestReservationExtension(
   const session = await requirePermission("reservations:write");
 
   const reservation = await db.reservation.findFirst({
-    where: { id: reservationId },
+    where: { id: reservationId, customer: { organizationId: session.organizationId } },
     include: { customer: true },
   });
-  if (!reservation || reservation.customer.organizationId !== session.organizationId) {
+  if (!reservation) {
     throw new Error("Reservation not found or you don't have access. Please refresh the page and try again.");
   }
 

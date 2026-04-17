@@ -192,7 +192,7 @@ export async function getContract(contractId: string) {
   const session = await requirePermission("contracts:read");
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId },
+    where: { id: contractId, customer: { organizationId: session.organizationId } },
     include: {
       customer: true,
       unit: true,
@@ -200,7 +200,7 @@ export async function getContract(contractId: string) {
     },
   });
 
-  if (!contract || contract.customer.organizationId !== session.organizationId) {
+  if (!contract) {
     throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
@@ -238,10 +238,10 @@ export async function updateContractStatus(
   const session = await requirePermission(permission);
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId },
+    where: { id: contractId, customer: { organizationId: session.organizationId } },
     include: { customer: true },
   });
-  if (!contract || contract.customer.organizationId !== session.organizationId) {
+  if (!contract) {
     throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
@@ -339,10 +339,10 @@ export async function deleteContract(contractId: string) {
   const session = await requirePermission("contracts:delete");
 
   const contract = await db.contract.findFirst({
-    where: { id: contractId },
+    where: { id: contractId, customer: { organizationId: session.organizationId } },
     include: { customer: true },
   });
-  if (!contract || contract.customer.organizationId !== session.organizationId) {
+  if (!contract) {
     throw new Error("Contract not found or you don't have access. Please verify the contract exists.");
   }
 
