@@ -31,6 +31,7 @@ import {
   Handshake,
   Building2,
   User,
+  ExternalLink,
 } from "lucide-react";
 import {
   Button,
@@ -109,6 +110,20 @@ const PIPELINE_STAGES = [
     dotColor: "bg-green-500",
   },
 ];
+
+// Per-stage hue for Kanban column tinting. Kept as raw HSL so we can mix into
+// the card surface via color-mix() without fighting Tailwind's class-generation.
+const STAGE_HUES: Record<string, string> = {
+  NEW: "hsl(220 15% 60%)", // neutral
+  CONTACTED: "hsl(210 65% 55%)", // blue
+  INTERESTED: "hsl(270 50% 60%)", // purple
+  QUALIFIED: "hsl(270 50% 50%)", // purple-deep
+  VIEWING: "hsl(40 55% 55%)", // gold
+  NEGOTIATION: "hsl(40 60% 50%)", // darker gold
+  RESERVED: "hsl(158 50% 45%)", // green
+  CONVERTED: "hsl(158 55% 35%)", // deep green
+  LOST: "hsl(0 65% 55%)", // red
+};
 
 // Legacy statuses not shown in kanban but valid for filter/display
 const ALL_STATUS_CONFIGS = [
@@ -1407,11 +1422,18 @@ function KanbanCard({
   onDelete: (customer: any) => void;
   canDelete: boolean;
 }) {
+  // Quick-action contact targets. Only render actions whose data exists.
+  const rawPhone = typeof customer.phone === "string" ? customer.phone : "";
+  const phoneDigits = rawPhone.replace(/\D/g, "");
+  const hasPhone = phoneDigits.length > 0 && rawPhone !== "•••••••••••";
+  const email = typeof customer.email === "string" ? customer.email : "";
+  const hasEmail = email.length > 0 && email !== "•••••••••••";
+
   return (
     <div
       draggable
       onDragStart={(e) => onDragStart(e, customer.id)}
-      className="group bg-card border border-border rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-primary/20 hover:shadow-sm transition-all"
+      className="group relative bg-card border border-border rounded-xl p-4 cursor-grab active:cursor-grabbing hover:border-primary/20 hover:shadow-sm transition-all"
     >
       {/* Name + actions */}
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -1478,6 +1500,55 @@ function KanbanCard({
         >
           {lang === "ar" ? "عرض الملف" : "View Profile"}
           <DirectionalIcon icon={ChevronRight} className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Hover quick-actions — revealed on card hover only */}
+      <div
+        className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {hasPhone && (
+          <a
+            href={`tel:${rawPhone}`}
+            aria-label={lang === "ar" ? "اتصال هاتفي" : "Call phone"}
+            title={lang === "ar" ? "اتصال" : "Call"}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Phone className="h-3.5 w-3.5" />
+          </a>
+        )}
+        {hasPhone && (
+          <a
+            href={`https://wa.me/${phoneDigits}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={lang === "ar" ? "فتح واتساب" : "Open WhatsApp"}
+            title={lang === "ar" ? "واتساب" : "WhatsApp"}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+          </a>
+        )}
+        {hasEmail && (
+          <a
+            href={`mailto:${email}`}
+            aria-label={lang === "ar" ? "إرسال بريد إلكتروني" : "Send email"}
+            title={lang === "ar" ? "بريد إلكتروني" : "Email"}
+            className="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Mail className="h-3.5 w-3.5" />
+          </a>
+        )}
+        <button
+          type="button"
+          onClick={() => onViewProfile(customer)}
+          aria-label={lang === "ar" ? "فتح الملف الشخصي" : "Open profile"}
+          title={lang === "ar" ? "فتح الملف" : "Open profile"}
+          className="ms-auto h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          style={{ display: "inline-flex" }}
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -2591,18 +2662,22 @@ export default function CRMPage() {
               (c) => c.status === status.key
             );
             const isDragOver = dragOverStatus === status.key;
+            const stageHue = STAGE_HUES[status.key];
 
             return (
               <div
                 key={status.key}
                 className={cn(
                   "flex flex-col gap-3 min-h-[400px] rounded-xl p-3 transition-colors",
-                  isDragOver
-                    ? "bg-primary/5 ring-2 ring-primary/20"
-                    : status.key === "LOST"
-                      ? "bg-red-50/50 dark:bg-red-900/10"
-                      : "bg-muted/20"
+                  isDragOver && "bg-primary/5 ring-2 ring-primary/20"
                 )}
+                style={
+                  !isDragOver && stageHue
+                    ? {
+                        backgroundColor: `color-mix(in srgb, ${stageHue} 4%, hsl(var(--card)))`,
+                      }
+                    : undefined
+                }
                 onDragOver={(e) => { e.preventDefault(); setDragOverStatus(status.key); }}
                 onDragLeave={() => setDragOverStatus(null)}
                 onDrop={() => handleDrop(status.key)}
@@ -2610,7 +2685,10 @@ export default function CRMPage() {
                 {/* Column header */}
                 <div className="flex items-center justify-between mb-1 px-1">
                   <div className="flex items-center gap-2">
-                    <span className={cn("h-2 w-2 rounded-full", status.dotColor)} />
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={stageHue ? { backgroundColor: stageHue } : undefined}
+                    />
                     <span className="text-xs font-bold text-foreground">
                       {status.label[lang]}
                     </span>
