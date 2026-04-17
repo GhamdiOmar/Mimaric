@@ -174,7 +174,7 @@ export default function InviteAcceptPage() {
           </button>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[440px] flex-1 flex-col justify-center px-6 pb-12 lg:px-12 lg:pt-0">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 sm:px-6 pb-12 lg:px-12 lg:pt-0">
           {/* Loading State */}
           {fetching && (
             <div className="flex flex-col items-center justify-center gap-4 py-20">
@@ -297,7 +297,7 @@ export default function InviteAcceptPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                       tabIndex={-1}
                     >
                       {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}

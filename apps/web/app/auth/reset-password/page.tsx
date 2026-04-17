@@ -82,7 +82,7 @@ function ResetPasswordInner() {
           </button>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-6 pb-12 lg:px-12">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 sm:px-6 pb-12 lg:px-12">
           {success ? (
             <div className="text-center space-y-4">
               <div className="mx-auto h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@repo/ui/globals.css";
 import { IBM_Plex_Sans_Arabic, DM_Sans } from 'next/font/google';
 import { ThemeProvider } from "../components/ThemeProvider";
@@ -18,6 +18,17 @@ const dmSans = DM_Sans({
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-dm-sans',
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+};
 
 // Deduplicates the DB read within a single request (shared by generateMetadata + RootLayout)
 const getConfig = cache(async () => {
@@ -59,6 +70,11 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: config?.faviconUrl ?? "/favicon.ico",
       apple: config?.appleTouchIconUrl ?? "/apple-touch-icon.png",
+    },
+    appleWebApp: {
+      capable: true,
+      title: "Mimaric",
+      statusBarStyle: "default",
     },
     verification: {
       google: config?.gscVerificationCode ?? undefined,

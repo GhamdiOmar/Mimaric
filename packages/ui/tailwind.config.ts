@@ -9,7 +9,31 @@ const config: Config = {
     "../../apps/portal/app/**/*.{ts,tsx}",
   ],
   theme: {
+    screens: {
+      xs: "360px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1536px",
+    },
     extend: {
+      spacing: {
+        "safe-top": "env(safe-area-inset-top)",
+        "safe-bottom": "env(safe-area-inset-bottom)",
+        "safe-left": "env(safe-area-inset-left)",
+        "safe-right": "env(safe-area-inset-right)",
+      },
+      height: {
+        "mobile-appbar": "3rem",
+        "mobile-bottomnav": "4rem",
+      },
+      zIndex: {
+        "mobile-bottomnav": "40",
+        "mobile-appbar": "30",
+        "mobile-sheet": "50",
+        "mobile-fab": "35",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

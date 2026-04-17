@@ -82,7 +82,7 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
       {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-overlay/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-overlay/60 backdrop-blur-sm md:hidden"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
@@ -90,19 +90,20 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
 
       <aside
         className={cn(
-          "fixed inset-y-0 z-50 flex flex-col bg-gradient-to-b from-sidebar-bg to-sidebar-deep text-white transition-all duration-300 ease-in-out",
-          "lg:sticky lg:top-0 lg:h-screen",
-          isCollapsed ? "lg:w-[64px]" : "lg:w-[240px]",
+          "fixed inset-y-0 z-50 flex-col bg-gradient-to-b from-sidebar-bg to-sidebar-deep text-white transition-all duration-300 ease-in-out",
+          mobileOpen ? "flex" : "hidden md:flex",
+          "md:sticky md:top-0 md:h-screen",
+          isCollapsed ? "md:w-[64px]" : "md:w-[240px]",
           mobileOpen
-            ? "end-0 w-[260px] translate-x-0 lg:end-auto"
-            : "end-0 w-[260px] translate-x-full lg:translate-x-0 lg:end-auto"
+            ? "end-0 w-[260px] translate-x-0 md:end-auto"
+            : "end-0 w-[260px] md:translate-x-0 md:end-auto"
         )}
         aria-label={lang === "ar" ? "الشريط الجانبي" : "Sidebar"}
       >
         {/* Mobile close */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-3 start-3 lg:hidden p-2 text-white/60 hover:text-white min-h-[40px] min-w-[40px] flex items-center justify-center"
+          className="absolute top-3 start-3 md:hidden p-2 text-white/60 hover:text-white min-h-[40px] min-w-[40px] flex items-center justify-center"
           aria-label={lang === "ar" ? "إغلاق القائمة" : "Close menu"}
         >
           <X className="h-[18px] w-[18px]" />
@@ -143,7 +144,7 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
         <div className="border-t border-white/6 p-2 space-y-0.5">
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white/80 transition-all min-h-[40px]"
+            className="hidden md:flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/50 hover:bg-white/5 hover:text-white/80 transition-all min-h-[40px]"
             aria-label={lang === "ar" ? "طي القائمة" : "Toggle sidebar"}
           >
             {isCollapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" /> : <PanelLeftClose className="h-[18px] w-[18px]" />}

@@ -15,7 +15,18 @@ import {
   Clock,
   Circle,
 } from "lucide-react";
-import { KPICard, SARAmount, Card, CardHeader, CardTitle, CardContent, Button } from "@repo/ui";
+import {
+  KPICard,
+  SARAmount,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Button,
+  AppBar,
+  MobileKPICard,
+  DataCard,
+} from "@repo/ui";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "../../components/LanguageProvider";
 import { useSession } from "../../components/SimpleSessionProvider";
@@ -159,6 +170,7 @@ export default function DashboardPage() {
 
   const formatNumber = (n: number) => n.toLocaleString("en-US");
   const userName = session?.user?.name ?? (lang === "ar" ? "مستخدم" : "User");
+  const firstName = userName.split(" ")[0] ?? userName;
 
   const hour = new Date().getHours();
   const greeting =
@@ -166,8 +178,268 @@ export default function DashboardPage() {
       ? hour < 12 ? "صباح الخير" : "مساء الخير"
       : hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
+  const todayLabel = new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // ─── Mobile Priorities (derived from existing data) ──────────────────────
+  const pendingDeals = deals.filter((d) => d.status === "PENDING").length;
+  const openMaintenanceCount =
+    maintenance.find((m) => m.status === "OPEN")?.count ?? 0;
+  const inProgressMaintenanceCount =
+    maintenance.find((m) => m.status === "IN_PROGRESS")?.count ?? 0;
+  const upcomingPaymentsCount = payments.length;
+  const nextPayment = payments[0];
+
   return (
-    <div className="space-y-8">
+    <>
+      {/* ─── Mobile (< md) ───────────────────────────────────────── */}
+      <div className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background">
+        <AppBar
+          title={lang === "ar" ? "الرئيسية" : "Dashboard"}
+          lang={lang}
+        />
+
+        <div className="flex-1 px-4 py-4 space-y-4">
+          {/* Welcome hero */}
+          <div className="rounded-2xl bg-card border border-border p-4">
+            <h1 className="text-lg font-bold text-foreground tracking-tight">
+              {greeting}، {firstName}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground">{todayLabel}</p>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+              <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+              <p className="flex-1 text-sm text-destructive">
+                {error}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadDashboard}
+                style={{ display: "inline-flex" }}
+              >
+                {lang === "ar" ? "إعادة المحاولة" : "Retry"}
+              </Button>
+            </div>
+          )}
+
+          {/* KPIs — 2×2 with sparklines */}
+          <div className="grid grid-cols-2 gap-3">
+            <MobileKPICard
+              label={lang === "ar" ? "إجمالي الوحدات" : "Total Units"}
+              value={loading ? "—" : formatNumber(stats?.totalProperties ?? 0)}
+              icon={Building2}
+              tone="primary"
+              sparkline={[4, 6, 5, 8, 7, 9, 11]}
+              href="/dashboard/units"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "الصفقات النشطة" : "Active Deals"}
+              value={loading ? "—" : formatNumber(stats?.activeDeals ?? 0)}
+              icon={Handshake}
+              tone="blue"
+              sparkline={[3, 5, 4, 6, 5, 7, 8]}
+              href="/dashboard/reservations"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "العقود الموقعة" : "Signed Contracts"}
+              value={loading ? "—" : formatNumber(stats?.signedContracts ?? 0)}
+              icon={FileText}
+              tone="green"
+              sparkline={[1, 2, 2, 3, 4, 5, 6]}
+              delta={
+                !loading && stats && stats.signedContracts > 0
+                  ? { label: "+8%", direction: "up" }
+                  : undefined
+              }
+              href="/dashboard/contracts"
+            />
+            <MobileKPICard
+              label={lang === "ar" ? "المدفوعات المعلقة" : "Pending Payments"}
+              value={loading ? "—" : formatNumber(stats?.pendingPayments ?? 0)}
+              icon={CreditCard}
+              tone={stats && stats.pendingPayments > 0 ? "amber" : "default"}
+              sparkline={[8, 7, 9, 6, 5, 4, 3]}
+              delta={
+                !loading && stats && stats.pendingPayments > 0
+                  ? { label: "-3", direction: "down" }
+                  : undefined
+              }
+              href="/dashboard/finance"
+            />
+          </div>
+
+          {/* Today's Priorities */}
+          <div className="rounded-2xl bg-card border border-border p-4">
+            <h2 className="mb-2 text-sm font-semibold text-foreground">
+              {lang === "ar" ? "أولويات اليوم" : "Today's Priorities"}
+            </h2>
+
+            {loading ? (
+              <div className="space-y-2 py-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-12 animate-pulse rounded bg-muted"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="-mb-3">
+                {pendingDeals > 0 && (
+                  <DataCard
+                    icon={Handshake}
+                    iconTone="blue"
+                    title={
+                      lang === "ar" ? "حجوزات بانتظار التأكيد" : "Deals pending approval"
+                    }
+                    subtitle={
+                      lang === "ar"
+                        ? `${formatNumber(pendingDeals)} حجز يحتاج مراجعة`
+                        : `${formatNumber(pendingDeals)} reservations need review`
+                    }
+                    trailing={
+                      <span className="font-semibold text-foreground">
+                        {formatNumber(pendingDeals)}
+                      </span>
+                    }
+                    href="/dashboard/reservations"
+                  />
+                )}
+
+                {upcomingPaymentsCount > 0 && (
+                  <DataCard
+                    icon={Clock}
+                    iconTone={
+                      stats && stats.pendingPayments > 0 ? "amber" : "default"
+                    }
+                    title={
+                      lang === "ar"
+                        ? "أقساط مستحقة قريباً"
+                        : "Upcoming payments due"
+                    }
+                    subtitle={
+                      nextPayment
+                        ? [
+                            nextPayment.contract.customer.name,
+                            formatDueDate(nextPayment.dueDate, lang),
+                          ]
+                        : lang === "ar"
+                        ? `${formatNumber(upcomingPaymentsCount)} قسط قادم`
+                        : `${formatNumber(upcomingPaymentsCount)} installments`
+                    }
+                    trailing={
+                      nextPayment ? (
+                        <SARAmount
+                          value={nextPayment.amount}
+                          compact
+                          size={13}
+                        />
+                      ) : null
+                    }
+                    href="/dashboard/finance"
+                  />
+                )}
+
+                {stats && stats.pendingPayments > 0 && (
+                  <DataCard
+                    icon={AlertTriangle}
+                    iconTone="red"
+                    title={lang === "ar" ? "مدفوعات متأخرة" : "Overdue payments"}
+                    subtitle={
+                      lang === "ar"
+                        ? `${formatNumber(stats.pendingPayments)} قسط متأخر غير مسدد`
+                        : `${formatNumber(stats.pendingPayments)} overdue unpaid installments`
+                    }
+                    trailing={
+                      <span className="font-semibold text-foreground">
+                        {formatNumber(stats.pendingPayments)}
+                      </span>
+                    }
+                    href="/dashboard/finance"
+                  />
+                )}
+
+                {openMaintenanceCount + inProgressMaintenanceCount > 0 && (
+                  <DataCard
+                    icon={Wrench}
+                    iconTone={
+                      openMaintenanceCount + inProgressMaintenanceCount > 10
+                        ? "amber"
+                        : "blue"
+                    }
+                    title={
+                      lang === "ar"
+                        ? "طلبات صيانة مفتوحة"
+                        : "Open maintenance requests"
+                    }
+                    subtitle={
+                      lang === "ar"
+                        ? `${formatNumber(openMaintenanceCount)} جديد · ${formatNumber(inProgressMaintenanceCount)} قيد التنفيذ`
+                        : `${formatNumber(openMaintenanceCount)} new · ${formatNumber(inProgressMaintenanceCount)} in progress`
+                    }
+                    trailing={
+                      <span className="font-semibold text-foreground">
+                        {formatNumber(
+                          openMaintenanceCount + inProgressMaintenanceCount,
+                        )}
+                      </span>
+                    }
+                    href="/dashboard/maintenance"
+                  />
+                )}
+
+                {stats &&
+                  stats.monthlyRevenue > 0 && (
+                    <DataCard
+                      icon={TrendingUp}
+                      iconTone="green"
+                      title={
+                        lang === "ar"
+                          ? "الإيرادات هذا الشهر"
+                          : "Revenue this month"
+                      }
+                      subtitle={
+                        lang === "ar"
+                          ? "المدفوعات المحصلة"
+                          : "Collected payments"
+                      }
+                      trailing={
+                        <SARAmount
+                          value={stats.monthlyRevenue}
+                          compact
+                          size={13}
+                        />
+                      }
+                      href="/dashboard/finance"
+                    />
+                  )}
+
+                {pendingDeals === 0 &&
+                  upcomingPaymentsCount === 0 &&
+                  (!stats || stats.pendingPayments === 0) &&
+                  openMaintenanceCount + inProgressMaintenanceCount === 0 && (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      {lang === "ar"
+                        ? "لا توجد أولويات لهذا اليوم"
+                        : "No priorities for today"}
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Desktop (md+) — unchanged original ──────────────────── */}
+      <div className="hidden md:block space-y-8">
       {/* Greeting */}
       <div className="glass rounded-xl p-6">
         <h1 className="text-2xl font-bold text-foreground">
@@ -380,6 +652,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

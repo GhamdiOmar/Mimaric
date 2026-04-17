@@ -36,6 +36,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, [lang, hydrated]);
 
+  // Sync the <html> element so Tailwind's rtl: variants and CSS logical
+  // properties align with the user's language choice across every page.
+  React.useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    const nextDir = lang === "ar" ? "rtl" : "ltr";
+    if (root.getAttribute("dir") !== nextDir) root.setAttribute("dir", nextDir);
+    if (root.getAttribute("lang") !== lang) root.setAttribute("lang", lang);
+  }, [lang]);
+
   const setLang = React.useCallback((newLang: Lang) => {
     setLangState(newLang);
   }, []);

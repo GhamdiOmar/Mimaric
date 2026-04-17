@@ -143,7 +143,7 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center px-6 pb-12">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 sm:px-6 pb-12">
           <div className="rounded-xl border border-border bg-card p-6 shadow-card">
             <div className="mb-6">
               <h2 className="text-xl font-bold text-foreground">

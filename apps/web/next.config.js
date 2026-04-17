@@ -25,8 +25,8 @@ const nextConfig = {
 
   async redirects() {
     return [
-      { source: "/dashboard/units", destination: "/dashboard/properties", permanent: true },
-      { source: "/dashboard/units/:path*", destination: "/dashboard/properties/:path*", permanent: true },
+      { source: "/dashboard/properties", destination: "/dashboard/units", permanent: true },
+      { source: "/dashboard/properties/:path*", destination: "/dashboard/units/:path*", permanent: true },
       { source: "/dashboard/sales", destination: "/dashboard/deals", permanent: true },
       { source: "/dashboard/sales/:path*", destination: "/dashboard/deals", permanent: true },
       { source: "/dashboard/rentals", destination: "/dashboard/contracts", permanent: true },

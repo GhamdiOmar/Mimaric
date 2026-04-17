@@ -6,6 +6,7 @@ import { SimpleSessionProvider, useSession } from "../../components/SimpleSessio
 import { LanguageProvider, useLanguage } from "../../components/LanguageProvider";
 import { AppSidebar } from "../../components/shell/AppSidebar";
 import { AppTopbar } from "../../components/shell/AppTopbar";
+import { MobileBottomTabs } from "../../components/shell/MobileBottomTabs";
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -38,13 +39,18 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         userRole={userRole}
       />
       <main className="flex flex-1 flex-col transition-all duration-300 min-w-0">
-        <AppTopbar onMenuClick={() => setMobileOpen(true)} />
-        <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="hidden md:block">
+          <AppTopbar onMenuClick={() => setMobileOpen(true)} />
+        </div>
+        <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto overflow-x-hidden pb-[calc(3.5rem+env(safe-area-inset-bottom)+1rem)] md:pb-8">
           <div className="max-w-[1440px] mx-auto w-full">
             {children}
           </div>
         </div>
       </main>
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-40">
+        <MobileBottomTabs userRole={userRole} />
+      </div>
     </div>
   );
 }

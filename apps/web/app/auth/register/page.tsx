@@ -93,7 +93,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col justify-center px-6 pb-12">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 sm:px-6 pb-12">
           <div className="rounded-xl border border-border bg-card p-6 shadow-card">
             <div className="mb-6 text-center">
               <h2 className="text-xl font-bold text-foreground">

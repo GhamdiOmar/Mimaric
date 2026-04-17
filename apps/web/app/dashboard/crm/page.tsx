@@ -16,6 +16,7 @@ import {
   Star,
   Phone,
   Mail,
+  MessageCircle,
   MapPin,
   Calendar,
   Activity,
@@ -26,6 +27,10 @@ import {
   Link2,
   CheckCircle2,
   XCircle,
+  Filter,
+  Handshake,
+  Building2,
+  User,
 } from "lucide-react";
 import {
   Button,
@@ -40,6 +45,15 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  AppBar,
+  MobileTabs,
+  MobileKanban,
+  DataCard,
+  CustomerCard,
+  QuickActionRail,
+  ActivityTimeline,
+  BottomSheet,
+  FAB,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -536,6 +550,46 @@ function CustomerDrawer({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Mobile quick action rail — call / WhatsApp / email */}
+          {(customer.phone || customer.email) && (
+            <div className="md:hidden">
+              <QuickActionRail
+                actions={[
+                  ...(customer.phone
+                    ? [
+                        {
+                          key: "call",
+                          label: lang === "ar" ? "اتصال" : "Call",
+                          icon: Phone,
+                          href: `tel:${customer.phone}`,
+                          tone: "primary" as const,
+                        },
+                        {
+                          key: "wa",
+                          label: lang === "ar" ? "واتساب" : "WhatsApp",
+                          icon: MessageCircle,
+                          href: `https://wa.me/${String(customer.phone).replace(/[^\d]/g, "")}`,
+                          tone: "success" as const,
+                          external: true,
+                        },
+                      ]
+                    : []),
+                  ...(customer.email
+                    ? [
+                        {
+                          key: "mail",
+                          label: lang === "ar" ? "إيميل" : "Email",
+                          icon: Mail,
+                          href: `mailto:${customer.email}`,
+                          tone: "info" as const,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
+            </div>
+          )}
+
           {/* Status + Convert to Deal */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <span
@@ -1484,6 +1538,10 @@ export default function CRMPage() {
   const [draggingId, setDraggingId] = React.useState<string | null>(null);
   const [dragOverStatus, setDragOverStatus] = React.useState<string | null>(null);
 
+  // Mobile-only UI state (reuses desktop state for search/statusFilter/showLost)
+  const [mobileTab, setMobileTab] = React.useState<"pipeline" | "leads" | "customers">("pipeline");
+  const [showMobileFilters, setShowMobileFilters] = React.useState(false);
+
   const canWrite = can("crm:write") || can("customers:write");
   const canDelete = can("crm:delete") || can("customers:delete");
   const canExport = can("crm:export") || can("customers:export");
@@ -1599,6 +1657,23 @@ export default function CRMPage() {
       lost: customers.filter((c) => c.status === "LOST").length,
     }),
     [customers]
+  );
+
+  // ─── Mobile-only derivations ─────────────────────────────────────────────
+  // Declared here (before the `if (loading)` early-return) so hook order is stable.
+  const mobileLeads = React.useMemo(
+    () =>
+      filteredCustomers.filter((c) =>
+        ["NEW", "CONTACTED", "QUALIFIED", "VIEWING", "NEGOTIATION", "INTERESTED"].includes(c.status),
+      ),
+    [filteredCustomers],
+  );
+  const mobileCustomers = React.useMemo(
+    () =>
+      filteredCustomers.filter((c) =>
+        ["CONVERTED", "RESERVED", "ACTIVE_TENANT", "PAST_TENANT"].includes(c.status),
+      ),
+    [filteredCustomers],
   );
 
   // ─── Kanban drag ────────────────────────────────────────────────────────────
@@ -1794,13 +1869,373 @@ export default function CRMPage() {
         {
           key: "LOST",
           label: { ar: "خسارة", en: "Lost" },
-          color: "bg-red-500/10 text-red-600 border-red-200 dark:border-red-800",
-          dotColor: "bg-red-500",
+          color: "bg-destructive/10 text-destructive border-destructive/30",
+          dotColor: "bg-destructive",
         },
       ]
     : PIPELINE_STAGES;
 
+  function toneForStatus(status: string): "default" | "blue" | "green" | "amber" | "red" | "purple" {
+    switch (status) {
+      case "NEW":
+        return "blue";
+      case "CONTACTED":
+      case "INTERESTED":
+        return "purple";
+      case "QUALIFIED":
+      case "VIEWING":
+        return "amber";
+      case "NEGOTIATION":
+      case "CONVERTED":
+      case "ACTIVE_TENANT":
+      case "RESERVED":
+        return "green";
+      case "LOST":
+      case "PAST_TENANT":
+        return "red";
+      default:
+        return "default";
+    }
+  }
+
+  function customerCardStatus(
+    status: string,
+  ): "hot" | "warm" | "cold" | "converted" | "churned" | "neutral" {
+    switch (status) {
+      case "NEW":
+        return "hot";
+      case "CONTACTED":
+      case "QUALIFIED":
+      case "VIEWING":
+      case "NEGOTIATION":
+      case "INTERESTED":
+        return "warm";
+      case "CONVERTED":
+      case "RESERVED":
+      case "ACTIVE_TENANT":
+        return "converted";
+      case "LOST":
+      case "PAST_TENANT":
+        return "churned";
+      default:
+        return "neutral";
+    }
+  }
+
+  function renderMobileCardList(rows: any[], emptyLabel: { ar: string; en: string }) {
+    if (rows.length === 0) {
+      return (
+        <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-8 text-center">
+          <p className="text-sm text-muted-foreground">{emptyLabel[lang]}</p>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {rows.map((c) => {
+          const phoneDisplay = c.phone
+            ? showPii
+              ? c.phone
+              : maskPhone(c.phone)
+            : null;
+          const interest = c.propertyTypeInterest
+            ? PROPERTY_TYPES.find((pt) => pt.key === c.propertyTypeInterest)
+                ?.label[lang] ?? c.propertyTypeInterest
+            : null;
+          const activity =
+            phoneDisplay && interest
+              ? `${phoneDisplay} · ${interest}`
+              : phoneDisplay || interest || null;
+          return (
+            <CustomerCard
+              key={c.id}
+              name={c.name}
+              lastActivity={activity}
+              status={customerCardStatus(c.status)}
+              phone={showPii ? c.phone ?? null : null}
+              onClick={() => setDrawerCustomer(c)}
+              lang={lang}
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  function openAddCustomerModal() {
+    setNewCustomer(EMPTY_NEW_CUSTOMER);
+    setNewCustSelectedUnit(null);
+    setNewCustIntent(null);
+    setNewCustUnitSearch("");
+    setShowAddModal(true);
+  }
+
   return (
+    <>
+    {/* ─── Mobile (< md) ─────────────────────────────────────────────── */}
+    <div
+      className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <AppBar
+        title={lang === "ar" ? "إدارة العملاء" : "CRM"}
+        lang={lang}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(true)}
+            aria-label={lang === "ar" ? "تصفية" : "Filter"}
+            className={cn(
+              "inline-flex h-10 w-10 items-center justify-center rounded-full",
+              "text-foreground hover:bg-muted/60 active:bg-muted transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+            )}
+          >
+            <Filter className="h-5 w-5" aria-hidden="true" />
+          </button>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground start-3"
+            aria-hidden="true"
+          />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={lang === "ar" ? "بحث بالاسم أو الهاتف..." : "Search by name or phone..."}
+            className="h-10 ps-9"
+          />
+        </div>
+      </div>
+
+      <div className="px-4 pt-3">
+        <MobileTabs
+          ariaLabel={lang === "ar" ? "تبويبات العملاء" : "CRM tabs"}
+          active={mobileTab}
+          onChange={(k) => setMobileTab(k as "pipeline" | "leads" | "customers")}
+          items={[
+            { key: "pipeline", label: lang === "ar" ? "خط الأنابيب" : "Pipeline" },
+            {
+              key: "leads",
+              label: `${lang === "ar" ? "العملاء المحتملون" : "Leads"} (${mobileLeads.length})`,
+            },
+            {
+              key: "customers",
+              label: `${lang === "ar" ? "العملاء" : "Customers"} (${mobileCustomers.length})`,
+            },
+          ]}
+        />
+      </div>
+
+      <div className="flex-1 px-4 pb-24 pt-3">
+        {error && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="flex-1">{error}</span>
+          </div>
+        )}
+
+        {mobileTab === "pipeline" ? (
+          <MobileKanban
+            columns={PIPELINE_STAGES.map((stage) => {
+              const stageCustomers = filteredCustomers.filter((c) => c.status === stage.key);
+              return {
+                key: stage.key,
+                title: (
+                  <span className="flex items-center gap-2">
+                    <span className={cn("h-2 w-2 rounded-full", stage.dotColor)} aria-hidden="true" />
+                    <span>{stage.label[lang]}</span>
+                    <span className="text-muted-foreground">({stageCustomers.length})</span>
+                  </span>
+                ),
+                children:
+                  stageCustomers.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-muted-foreground">
+                      {lang === "ar" ? "لا يوجد" : "Empty"}
+                    </p>
+                  ) : (
+                    stageCustomers.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setDrawerCustomer(c)}
+                        className={cn(
+                          "w-full rounded-xl border border-border bg-card p-3 text-start",
+                          "transition-colors hover:border-foreground/20 active:scale-[0.99]",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+                        )}
+                      >
+                        <div className="truncate text-sm font-semibold text-foreground">
+                          {c.name}
+                        </div>
+                        {c.phone ? (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Phone className="h-3 w-3" aria-hidden="true" />
+                            <span className="truncate">
+                              {showPii ? c.phone : maskPhone(c.phone)}
+                            </span>
+                          </div>
+                        ) : null}
+                        {c.budget ? (
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {formatSAR(c.budget, lang)}
+                          </div>
+                        ) : null}
+                      </button>
+                    ))
+                  ),
+              };
+            })}
+          />
+        ) : mobileTab === "leads" ? (
+          renderMobileCardList(mobileLeads, {
+            ar: "لا يوجد عملاء محتملون مطابقون.",
+            en: "No matching leads.",
+          })
+        ) : (
+          renderMobileCardList(mobileCustomers, {
+            ar: "لا يوجد عملاء مطابقون.",
+            en: "No matching customers.",
+          })
+        )}
+      </div>
+
+      {canWrite && (
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "إضافة عميل" : "New Contact"}
+          onClick={openAddCustomerModal}
+        />
+      )}
+
+      {/* Mobile filters sheet */}
+      <BottomSheet
+        open={showMobileFilters}
+        onOpenChange={setShowMobileFilters}
+        title={lang === "ar" ? "تصفية" : "Filters"}
+        footer={
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => {
+                setStatusFilter("");
+                setShowLost(false);
+              }}
+            >
+              {lang === "ar" ? "مسح" : "Reset"}
+            </Button>
+            <Button
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowMobileFilters(false)}
+            >
+              {lang === "ar" ? "تطبيق" : "Apply"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-5">
+          <div>
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {lang === "ar" ? "الحالة" : "Status"}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setStatusFilter("");
+                  setShowLost(false);
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  !statusFilter && !showLost
+                    ? "border-transparent bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                {lang === "ar" ? "الكل" : "All"}
+              </button>
+              {PIPELINE_STAGES.map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(statusFilter === s.key ? "" : s.key);
+                    setShowLost(false);
+                  }}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                    statusFilter === s.key
+                      ? "border-transparent bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                      : "border-border bg-card text-muted-foreground"
+                  )}
+                >
+                  {s.label[lang]}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLost((v) => !v);
+                  setStatusFilter("");
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  showLost
+                    ? "border-transparent bg-destructive text-destructive-foreground"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                {lang === "ar" ? "الخسائر فقط" : "Lost only"}
+              </button>
+            </div>
+          </div>
+
+          {hasPiiAccess && (
+            <div>
+              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {lang === "ar" ? "الخصوصية" : "Privacy"}
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowPii((v) => !v)}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  showPii
+                    ? "border-warning/40 bg-warning/10 text-warning"
+                    : "border-border bg-card text-muted-foreground"
+                )}
+              >
+                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                {showPii
+                  ? lang === "ar"
+                    ? "إخفاء البيانات الحساسة"
+                    : "Hide PII"
+                  : lang === "ar"
+                    ? "عرض البيانات الحساسة"
+                    : "Show PII"}
+              </button>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+            <Handshake className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              {lang === "ar"
+                ? "تسحب البطاقات في خط الأنابيب على النسخة الكاملة."
+                : "Drag-and-drop pipeline available on desktop."}
+            </span>
+            <Building2 className="hidden h-4 w-4 shrink-0" aria-hidden="true" />
+          </div>
+        </div>
+      </BottomSheet>
+    </div>
+
+    {/* ─── Desktop (≥ md) ─ unchanged ───────────────────────────────── */}
+    <div className="hidden md:block">
     <div
       className="space-y-8 animate-in fade-in duration-500"
       dir={lang === "ar" ? "rtl" : "ltr"}
@@ -2181,29 +2616,6 @@ export default function CRMPage() {
             )}
           </div>
         </Card>
-      )}
-
-      {/* ── Profile Drawer ── */}
-      {drawerCustomer && (
-        <CustomerDrawer
-          customer={drawerCustomer}
-          onClose={() => setDrawerCustomer(null)}
-          onCustomerUpdated={(updated) => {
-            setDrawerCustomer(updated);
-            setCustomers((prev) =>
-              prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
-            );
-            loadData();
-          }}
-          onMarkLost={(id, name) => {
-            setLostTarget({ id, name });
-            setLostReason("");
-            setShowLostModal(true);
-          }}
-          lang={lang}
-          teamMembers={teamMembers}
-          assignments={drawerAssignments}
-        />
       )}
 
       {/* ── Add Modal ── */}
@@ -2687,5 +3099,30 @@ export default function CRMPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </div>
+
+    {/* ── Profile Drawer (shared across mobile + desktop) ── */}
+    {drawerCustomer && (
+      <CustomerDrawer
+        customer={drawerCustomer}
+        onClose={() => setDrawerCustomer(null)}
+        onCustomerUpdated={(updated) => {
+          setDrawerCustomer(updated);
+          setCustomers((prev) =>
+            prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
+          );
+          loadData();
+        }}
+        onMarkLost={(id, name) => {
+          setLostTarget({ id, name });
+          setLostReason("");
+          setShowLostModal(true);
+        }}
+        lang={lang}
+        teamMembers={teamMembers}
+        assignments={drawerAssignments}
+      />
+    )}
+    </>
   );
 }

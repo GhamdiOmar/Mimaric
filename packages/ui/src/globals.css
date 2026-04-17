@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Content scanning — Tailwind v4 auto-detect doesn't traverse the monorepo */
+@source "./";
+@source "../../../apps/web";
+@source "../../../apps/portal";
+
 /* Tailwind v4 class-based dark mode */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -195,6 +200,25 @@
 
 /* ─── Theme Tokens (Tailwind v4) ──────────────────────────────────── */
 @theme {
+  /* Mobile breakpoint — xs for 360px phones */
+  --breakpoint-xs: 360px;
+
+  /* Safe-area insets (iOS notch / Android navigation pill) */
+  --spacing-safe-top: env(safe-area-inset-top);
+  --spacing-safe-bottom: env(safe-area-inset-bottom);
+  --spacing-safe-left: env(safe-area-inset-left);
+  --spacing-safe-right: env(safe-area-inset-right);
+
+  /* Mobile shell heights (match v3 config) */
+  --height-mobile-appbar: 3rem;
+  --height-mobile-bottomnav: 4rem;
+
+  /* Mobile z-index scale */
+  --z-index-mobile-appbar: 30;
+  --z-index-mobile-fab: 35;
+  --z-index-mobile-bottomnav: 40;
+  --z-index-mobile-sheet: 50;
+
   /* Brand Colors */
   --color-primary: hsl(var(--primary));
   --color-primary-deep: hsl(var(--primary-deep));

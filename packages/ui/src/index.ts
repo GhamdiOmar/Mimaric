@@ -62,6 +62,30 @@ export * from "./primitives/toggle";
 export * from "./primitives/toggle-group";
 export * from "./primitives/tooltip";
 
+/* ─── Mobile Primitives ───────────────────────────────────── */
+export * from "./components/mobile/BottomSheet";
+export * from "./components/mobile/ResponsiveDialog";
+export * from "./components/mobile/FAB";
+
+/* ─── Mobile Primitives (Phase 1) ─────────────────────────── */
+export * from "./components/mobile/MobileShell";
+export * from "./components/mobile/AppBar";
+export * from "./components/mobile/BottomNav";
+
+/* ─── Mobile Content Primitives ───────────────────────────── */
+export * from "./components/mobile/DataCard";
+export * from "./components/mobile/MobileTabs";
+export * from "./components/mobile/MobileKanban";
+export * from "./components/mobile/MetricTile";
+
+/* ─── Mobile v2 Primitives ────────────────────────────────── */
+export * from "./components/mobile/MobileKPICard";
+export * from "./components/mobile/PropertyCard";
+export * from "./components/mobile/CustomerCard";
+export * from "./components/mobile/QuickActionRail";
+export * from "./components/mobile/ApprovalRow";
+export * from "./components/mobile/ActivityTimeline";
+
 /* ─── Hooks ────────────────────────────────────────────────── */
 export * from "./hooks/use-mobile";
 

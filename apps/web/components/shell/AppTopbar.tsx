@@ -89,7 +89,7 @@ export function AppTopbar({ onMenuClick }: { onMenuClick: () => void }) {
         {/* Mobile hamburger */}
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
           aria-label={lang === "ar" ? "فتح القائمة" : "Open menu"}
         >
           <Menu className="h-5 w-5" />
@@ -176,7 +176,7 @@ export function AppTopbar({ onMenuClick }: { onMenuClick: () => void }) {
               )}
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" sideOffset={8} className="w-96 p-0 max-h-[480px] overflow-hidden rounded-xl">
+          <PopoverContent align="start" sideOffset={8} className="w-[calc(100vw-2rem)] sm:w-96 p-0 max-h-[480px] overflow-hidden rounded-xl">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/20">
               <span className="text-sm font-bold text-foreground">{lang === "ar" ? "الإشعارات" : "Notifications"}</span>

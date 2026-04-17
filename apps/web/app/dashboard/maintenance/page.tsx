@@ -7,6 +7,7 @@ import {
   Wrench,
   Clock,
   CheckCircle,
+  CheckCircle2,
   AlertTriangle,
   Plus,
   Loader2,
@@ -18,6 +19,7 @@ import {
   UserCircle,
   Download,
   Globe,
+  Filter,
 } from "lucide-react";
 import { exportToExcel } from "../../../lib/export";
 import {
@@ -38,6 +40,11 @@ import {
   PageIntro,
   FilterBar,
   StatusBadge,
+  AppBar,
+  MobileTabs,
+  DataCard,
+  BottomSheet,
+  FAB,
 } from "@repo/ui";
 import {
   getMaintenanceRequests,
@@ -93,6 +100,9 @@ export default function MaintenancePage() {
   const [filterStatus, setFilterStatus] = React.useState("");
   const [filterPriority, setFilterPriority] = React.useState("");
   const [filterCategory, setFilterCategory] = React.useState("");
+
+  // Mobile filter sheet
+  const [showFilters, setShowFilters] = React.useState(false);
 
   // Modal
   const [showModal, setShowModal] = React.useState(false);
@@ -331,8 +341,277 @@ export default function MaintenancePage() {
   const inputClass =
     "w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors";
 
+  // ─── Mobile helpers ───────────────────────────────────────────
+  // Mobile tabs reflect status (aligned with desktop FilterBar tabs)
+  const mobileTabs = [
+    { key: "", label: lang === "ar" ? "الكل" : "All" },
+    { key: "OPEN", label: statusLabels.OPEN![lang] },
+    { key: "IN_PROGRESS", label: statusLabels.IN_PROGRESS![lang] },
+    { key: "OVERDUE", label: lang === "ar" ? "متأخرة" : "Overdue" },
+    { key: "RESOLVED", label: statusLabels.RESOLVED![lang] },
+  ];
+
+  function isTicketOverdue(t: any): boolean {
+    return Boolean(
+      t.dueDate &&
+        new Date(t.dueDate) < new Date() &&
+        !["RESOLVED", "CLOSED"].includes(t.status),
+    );
+  }
+
+  function toneForTicket(t: any): "red" | "amber" | "green" | "blue" | "default" {
+    if (isTicketOverdue(t)) return "red";
+    if (["RESOLVED", "CLOSED"].includes(t.status)) return "green";
+    if (t.priority === "URGENT") return "red";
+    if (t.priority === "HIGH") return "amber";
+    if (["ASSIGNED", "IN_PROGRESS"].includes(t.status)) return "blue";
+    if (t.status === "OPEN") return "amber";
+    return "default";
+  }
+
+  function iconForTicket(t: any) {
+    if (isTicketOverdue(t)) return AlertTriangle;
+    if (["RESOLVED", "CLOSED"].includes(t.status)) return CheckCircle2;
+    if (["ASSIGNED", "IN_PROGRESS"].includes(t.status)) return Clock;
+    return Wrench;
+  }
+
+  // Apply mobile tab filter client-side on top of server-filtered list
+  const visibleRequests = React.useMemo(() => {
+    if (!filterStatus) return requests;
+    if (filterStatus === "OVERDUE") return requests.filter(isTicketOverdue);
+    return requests.filter((r: any) => r.status === filterStatus);
+  }, [requests, filterStatus]);
+
+  function formatShortDate(d: string | Date | null | undefined): string {
+    if (!d) return lang === "ar" ? "بدون موعد" : "No date";
+    return new Date(d).toLocaleDateString(lang === "ar" ? "ar-SA" : "en-SA", {
+      month: "short",
+      day: "numeric",
+    });
+  }
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <>
+    <div className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background">
+      <AppBar
+        title={lang === "ar" ? "الصيانة" : "Maintenance"}
+        lang={lang}
+        trailing={
+          <button
+            type="button"
+            onClick={() => setShowFilters(true)}
+            aria-label={lang === "ar" ? "تصفية" : "Filter"}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+          >
+            <Filter className="h-5 w-5" aria-hidden="true" />
+          </button>
+        }
+      />
+
+      <div className="px-4 pt-3">
+        <MobileTabs
+          items={mobileTabs}
+          active={
+            filterStatus === "OVERDUE"
+              ? "OVERDUE"
+              : mobileTabs.find((t) => t.key === filterStatus)
+              ? filterStatus
+              : ""
+          }
+          onChange={(k) => setFilterStatus(k)}
+          ariaLabel={lang === "ar" ? "تصفية الحالة" : "Status filter"}
+        />
+      </div>
+
+      <div className="flex-1 px-4 py-3">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        ) : visibleRequests.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <Wrench className="h-10 w-10 mb-3" />
+            <p className="text-sm">
+              {lang === "ar" ? "لا توجد طلبات صيانة" : "No maintenance requests"}
+            </p>
+          </div>
+        ) : (
+          <div>
+            {visibleRequests.map((t: any) => {
+              const statusLabel =
+                statusLabels[t.status] ?? { ar: t.status, en: t.status };
+              const priorityLabel =
+                priorityLabels[t.priority] ?? {
+                  ar: t.priority,
+                  en: t.priority,
+                };
+              return (
+                <DataCard
+                  key={t.id}
+                  icon={iconForTicket(t)}
+                  iconTone={toneForTicket(t)}
+                  title={t.title}
+                  subtitle={[
+                    t.unit?.number,
+                    formatShortDate(t.scheduledDate ?? t.dueDate),
+                    priorityLabel[lang],
+                  ]}
+                  trailing={
+                    <StatusBadge
+                      entityType="maintenance"
+                      status={t.status}
+                      label={statusLabel[lang]}
+                      className="text-[10px]"
+                    />
+                  }
+                  href={`/dashboard/maintenance/${t.id}`}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <FAB
+        icon={Plus}
+        label={lang === "ar" ? "طلب جديد" : "New ticket"}
+        onClick={openCreate}
+      />
+
+      <BottomSheet
+        open={showFilters}
+        onOpenChange={setShowFilters}
+        title={lang === "ar" ? "تصفية الطلبات" : "Filter requests"}
+        footer={
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              style={{ display: "inline-flex" }}
+              onClick={() => {
+                setFilterPriority("");
+                setFilterCategory("");
+                setSearch("");
+              }}
+            >
+              {lang === "ar" ? "مسح الكل" : "Clear all"}
+            </Button>
+            <Button
+              size="sm"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowFilters(false)}
+            >
+              {lang === "ar" ? "تطبيق" : "Apply"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "بحث" : "Search"}
+            </label>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={inputClass}
+              placeholder={
+                lang === "ar" ? "بحث بالعنوان..." : "Search by title..."
+              }
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "الوحدة" : "Unit"}
+            </label>
+            <select
+              value={/* no unit filter in server action yet, use category proxy */ ""}
+              onChange={() => {
+                /* Unit filter is not wired to server action; kept for future */
+              }}
+              className={inputClass}
+              disabled
+            >
+              <option value="">
+                {lang === "ar" ? "كل الوحدات" : "All units"}
+              </option>
+              {units.map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.number} — {u.building?.name ?? ""}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "الأولوية" : "Priority"}
+            </label>
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">
+                {lang === "ar" ? "كل الأولويات" : "All priorities"}
+              </option>
+              {Object.entries(priorityLabels).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v[lang]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "المُعيَّن إليه" : "Assignee"}
+            </label>
+            <select
+              value=""
+              onChange={() => {
+                /* Assignee filter is not wired to server action; kept for future */
+              }}
+              className={inputClass}
+              disabled
+            >
+              <option value="">
+                {lang === "ar" ? "الجميع" : "Everyone"}
+              </option>
+              {users.map((u: any) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "التصنيف" : "Category"}
+            </label>
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">
+                {lang === "ar" ? "كل التصنيفات" : "All categories"}
+              </option>
+              {Object.entries(categoryLabels).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v[lang]}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </BottomSheet>
+    </div>
+
+    <div className="hidden md:block space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <PageIntro
         title={lang === "ar" ? "الصيانة" : "Maintenance"}
@@ -713,5 +992,6 @@ export default function MaintenancePage() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }

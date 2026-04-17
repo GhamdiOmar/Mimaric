@@ -19,7 +19,13 @@ import {
   FileDown,
   CheckCircle2,
   KeyRound,
+  Filter,
+  Store,
+  Warehouse as WarehouseIcon,
+  Car,
+  Briefcase,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import {
   Button,
   Badge,
@@ -41,6 +47,12 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  AppBar,
+  MobileTabs,
+  PropertyCard,
+  BottomSheet,
+  FAB,
+  formatSAR,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -100,6 +112,11 @@ function AdvancedUnitMatrixPage() {
   const [viewMode, setViewMode] = React.useState<"cards" | "table">("cards");
   const [unitSearch, setUnitSearch] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("");
+  // Mobile-only filter state (does not affect desktop behavior)
+  const [mobileFilterOpen, setMobileFilterOpen] = React.useState(false);
+  const [mobileTypeFilter, setMobileTypeFilter] = React.useState<string>("");
+  const [mobileMinPrice, setMobileMinPrice] = React.useState<string>("");
+  const [mobileMaxPrice, setMobileMaxPrice] = React.useState<string>("");
   const [newUnit, setNewUnit] = React.useState({
     number: "",
     type: "APARTMENT",
@@ -297,6 +314,19 @@ function AdvancedUnitMatrixPage() {
     maintenance: units.filter((u: any) => u.status === "MAINTENANCE").length,
   }), [units]);
 
+  // ─── Mobile view derived memo (must run every render, before any early return) ──
+  const mobileFilteredUnits = React.useMemo(() => {
+    return filteredUnits.filter((u: any) => {
+      if (mobileTypeFilter && u.type !== mobileTypeFilter) return false;
+      const priceNum = u.price != null ? Number(u.price) : null;
+      const min = mobileMinPrice ? parseFloat(mobileMinPrice) : null;
+      const max = mobileMaxPrice ? parseFloat(mobileMaxPrice) : null;
+      if (min !== null && (priceNum === null || priceNum < min)) return false;
+      if (max !== null && (priceNum === null || priceNum > max)) return false;
+      return true;
+    });
+  }, [filteredUnits, mobileTypeFilter, mobileMinPrice, mobileMaxPrice]);
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
@@ -305,11 +335,314 @@ function AdvancedUnitMatrixPage() {
     );
   }
 
+  // ─── Mobile view derived state ─────────────────────────────────────────
+  const mobileStatusTabs: Array<{ key: string; label: string }> = [
+    { key: "", label: lang === "ar" ? "الكل" : "All" },
+    { key: "AVAILABLE", label: unitStatusLabels.AVAILABLE?.[lang] ?? "Available" },
+    { key: "RESERVED", label: unitStatusLabels.RESERVED?.[lang] ?? "Reserved" },
+    { key: "SOLD", label: unitStatusLabels.SOLD?.[lang] ?? "Sold" },
+    { key: "RENTED", label: unitStatusLabels.RENTED?.[lang] ?? "Rented" },
+    { key: "MAINTENANCE", label: unitStatusLabels.MAINTENANCE?.[lang] ?? "Maintenance" },
+  ];
+
+  const unitTypeIcons: Record<string, LucideIcon> = {
+    APARTMENT: Building2,
+    VILLA: Home,
+    OFFICE: Briefcase,
+    RETAIL: Store,
+    WAREHOUSE: WarehouseIcon,
+    PARKING: Car,
+  };
+
+  const mobileActiveFilterCount =
+    (mobileTypeFilter ? 1 : 0) +
+    (mobileMinPrice ? 1 : 0) +
+    (mobileMaxPrice ? 1 : 0);
+
   return (
-    <div
-      className="space-y-8 animate-in fade-in duration-500"
-      dir={lang === "ar" ? "rtl" : "ltr"}
-    >
+    <>
+      {/* ═══ MOBILE LAYOUT (below md) ═══════════════════════════════════ */}
+      <div
+        className="md:hidden -m-4 sm:-m-6 min-h-dvh flex flex-col bg-background"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
+        <AppBar
+          title={lang === "ar" ? "الوحدات" : "Units"}
+          subtitle={
+            lang === "ar"
+              ? `${filteredUnits.length} وحدة`
+              : `${filteredUnits.length} units`
+          }
+          lang={lang}
+          trailing={
+            <button
+              type="button"
+              onClick={() => setMobileFilterOpen(true)}
+              aria-label={lang === "ar" ? "تصفية" : "Filter"}
+              className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-foreground hover:bg-muted/60 active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+            >
+              <Filter className="h-5 w-5" aria-hidden="true" />
+              {mobileActiveFilterCount > 0 && (
+                <span className="absolute top-1.5 end-1.5 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </button>
+          }
+        />
+
+        {/* Search input */}
+        <div className="px-4 pt-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={unitSearch}
+              onChange={(e) => setUnitSearch(e.target.value)}
+              placeholder={
+                lang === "ar"
+                  ? "ابحث برقم الوحدة أو المبنى..."
+                  : "Search unit #, building, or city..."
+              }
+              className="w-full h-11 bg-card border border-border rounded-xl ps-10 pe-4 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
+            />
+          </div>
+        </div>
+
+        {/* Status tabs */}
+        <div className="px-4 pt-3">
+          <MobileTabs
+            ariaLabel={lang === "ar" ? "تصفية الحالة" : "Status filter"}
+            items={mobileStatusTabs}
+            active={statusFilter}
+            onChange={setStatusFilter}
+          />
+        </div>
+
+        {/* List */}
+        <div className="flex-1 px-4 py-3">
+          {mobileFilteredUnits.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                <Building2 className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-semibold text-foreground">
+                {lang === "ar" ? "لا توجد وحدات" : "No units found"}
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {lang === "ar"
+                  ? "جرّب تعديل البحث أو الفلاتر"
+                  : "Try adjusting your search or filters"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {mobileFilteredUnits.map((u: any) => {
+                const Icon = unitTypeIcons[u.type] ?? Building2;
+                const buildingOrCity = u.buildingName || u.city || null;
+                const typeKey: "apartment" | "villa" | "warehouse" | "retail" | "office" | "other" =
+                  u.type === "APARTMENT"
+                    ? "apartment"
+                    : u.type === "VILLA"
+                      ? "villa"
+                      : u.type === "WAREHOUSE"
+                        ? "warehouse"
+                        : u.type === "RETAIL"
+                          ? "retail"
+                          : u.type === "OFFICE"
+                            ? "office"
+                            : "other";
+                const statusKey: "available" | "reserved" | "sold" | "rented" | "maintenance" =
+                  u.status === "AVAILABLE"
+                    ? "available"
+                    : u.status === "RESERVED"
+                      ? "reserved"
+                      : u.status === "SOLD"
+                        ? "sold"
+                        : u.status === "RENTED"
+                          ? "rented"
+                          : "maintenance";
+                const unitLabel = unitTypeLabels[u.type]?.[lang] ?? u.type;
+                const titleText = `${unitLabel} · ${u.number}`;
+                return (
+                  <PropertyCard
+                    key={u.id}
+                    title={titleText}
+                    icon={Icon}
+                    type={typeKey}
+                    status={statusKey}
+                    location={buildingOrCity}
+                    bedrooms={u.bedrooms ?? null}
+                    bathrooms={u.bathrooms ?? null}
+                    areaSqm={u.area ?? null}
+                    price={
+                      u.price != null
+                        ? `${formatSAR(Number(u.price))} ${lang === "ar" ? "ر.س" : "SAR"}`
+                        : undefined
+                    }
+                    lang={lang}
+                    onClick={() => openUnitDetail(u)}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* FAB */}
+        <FAB
+          icon={Plus}
+          label={lang === "ar" ? "وحدة جديدة" : "New unit"}
+          onClick={() => setShowAddModal(true)}
+        />
+
+        {/* Filter BottomSheet */}
+        <BottomSheet
+          open={mobileFilterOpen}
+          onOpenChange={setMobileFilterOpen}
+          title={lang === "ar" ? "تصفية الوحدات" : "Filter units"}
+          description={
+            lang === "ar"
+              ? "حدد معايير لتضييق قائمة الوحدات"
+              : "Narrow the unit list by type, status, or price"
+          }
+          footer={
+            <div className="flex items-center gap-3">
+              <Button
+                variant="secondary"
+                style={{ display: "inline-flex" }}
+                className="flex-1"
+                onClick={() => {
+                  setMobileTypeFilter("");
+                  setMobileMinPrice("");
+                  setMobileMaxPrice("");
+                  setStatusFilter("");
+                }}
+              >
+                {lang === "ar" ? "مسح الكل" : "Clear all"}
+              </Button>
+              <Button
+                style={{ display: "inline-flex" }}
+                className="flex-1"
+                onClick={() => setMobileFilterOpen(false)}
+              >
+                {lang === "ar" ? "تطبيق" : "Apply"}
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-5 py-2">
+            {/* Status */}
+            <div>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "الحالة" : "Status"}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter("")}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                    !statusFilter
+                      ? "border-transparent bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-foreground/20",
+                  )}
+                >
+                  {lang === "ar" ? "الكل" : "All"}
+                </button>
+                {Object.entries(unitStatusLabels).map(([key, label]) => {
+                  const active = statusFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() =>
+                        setStatusFilter(active ? "" : key)
+                      }
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                        active
+                          ? "border-transparent bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-foreground/20",
+                      )}
+                    >
+                      {label[lang]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Unit type */}
+            <div>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "نوع الوحدة" : "Unit type"}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMobileTypeFilter("")}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                    !mobileTypeFilter
+                      ? "border-transparent bg-primary text-primary-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-foreground/20",
+                  )}
+                >
+                  {lang === "ar" ? "الكل" : "All"}
+                </button>
+                {Object.entries(unitTypeLabels).map(([key, label]) => {
+                  const active = mobileTypeFilter === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() =>
+                        setMobileTypeFilter(active ? "" : key)
+                      }
+                      className={cn(
+                        "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                        active
+                          ? "border-transparent bg-primary text-primary-foreground"
+                          : "border-border bg-card text-muted-foreground hover:border-foreground/20",
+                      )}
+                    >
+                      {label[lang]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Price range */}
+            <div>
+              <div className="mb-2 text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "نطاق السعر (ر.س)" : "Price range (SAR)"}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={mobileMinPrice}
+                  onChange={(e) => setMobileMinPrice(e.target.value)}
+                  placeholder={lang === "ar" ? "الحد الأدنى" : "Min"}
+                />
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={mobileMaxPrice}
+                  onChange={(e) => setMobileMaxPrice(e.target.value)}
+                  placeholder={lang === "ar" ? "الحد الأعلى" : "Max"}
+                />
+              </div>
+            </div>
+          </div>
+        </BottomSheet>
+      </div>
+
+      {/* ═══ DESKTOP LAYOUT (md and up) ═══════════════════════════════ */}
+      <div
+        className="hidden md:block space-y-8 animate-in fade-in duration-500"
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
       {/* Header */}
       <PageIntro
         title={lang === "ar" ? "الوحدات" : "Units"}
@@ -1214,6 +1547,7 @@ function AdvancedUnitMatrixPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   );
 }
