@@ -1,7 +1,5 @@
 export type FAQCategory =
   | "getting_started"
-  | "offplan_development"
-  | "planning"
   | "sales_crm"
   | "property_management"
   | "finance"
@@ -25,8 +23,6 @@ export type GuideItem = {
 
 export const FAQ_CATEGORIES: { key: FAQCategory; label: { ar: string; en: string } }[] = [
   { key: "getting_started", label: { ar: "البدء", en: "Getting Started" } },
-  { key: "offplan_development", label: { ar: "التطوير على الخارطة", en: "Off-Plan Development" } },
-  { key: "planning", label: { ar: "التخطيط والتقسيم", en: "Planning & Subdivision" } },
   { key: "sales_crm", label: { ar: "المبيعات والعملاء", en: "Sales & CRM" } },
   { key: "property_management", label: { ar: "إدارة العقارات", en: "Property Management" } },
   { key: "finance", label: { ar: "المالية", en: "Finance" } },
@@ -54,104 +50,6 @@ export const FAQ_ITEMS: FAQItem[] = [
     answer: { ar: "اذهب إلى صفحة المساعدة > طلب الصلاحيات. اختر الدور المطلوب واكتب سبب الطلب. سيراجع المدير طلبك ويوافق عليه أو يرفضه.", en: "Go to Help > Request Permissions. Select the desired role and write your reason. An admin will review and approve or decline your request." },
     category: "getting_started",
   },
-  // Off-Plan Development
-  {
-    id: "op-1",
-    question: { ar: "ما هو التطوير على الخارطة (Off-Plan)؟", en: "What is Off-Plan Development?" },
-    answer: { ar: "التطوير على الخارطة هو بيع الوحدات العقارية قبل اكتمال بنائها. يمر المشروع بـ 12 مرحلة من التصميم المبدئي حتى الإطلاق، وتشمل التقسيم والموافقات والبنية التحتية وهيكلة المخزون والتسعير والإطلاق.", en: "Off-Plan development is selling real estate units before construction is complete. A project goes through 12 stages from concept design to launch, including subdivision, approvals, infrastructure, inventory structuring, pricing, and launch." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-2",
-    question: { ar: "كيف أدير البنية التحتية للمشروع؟", en: "How do I manage project infrastructure?" },
-    answer: { ar: "من تبويب 'البنية التحتية' في صفحة المشروع، يمكنك إضافة فئات (كهرباء، مياه، طرق، صرف صحي...) مع تحديد المقاول والتكلفة والتاريخ المستهدف ونسبة الجاهزية. النظام يتابع التقدم ويعرض الفئات المتأخرة.", en: "From the 'Infrastructure' tab on the project page, add categories (electricity, water, roads, sewage...) with contractor, cost, target date, and readiness percentage. The system tracks progress and highlights delayed items." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-3",
-    question: { ar: "كيف أهيكل مخزون الوحدات للبيع على الخارطة؟", en: "How do I structure inventory for off-plan sales?" },
-    answer: { ar: "من تبويب 'المخزون'، أضف عناصر يدوياً مع تحديد نوع المنتج (فيلا، تاون هاوس، دوبلكس، تجاري، شقة...)، المساحة، السعر الأساسي، ومرحلة الإطلاق. كل عنصر يمر بحالات: لم يُطلق ← متاح ← محجوز ← مباع.", en: "From the 'Inventory' tab, add items manually specifying product type (villa, townhouse, duplex, commercial, apartment...), area, base price, and release phase. Each item goes through statuses: Unreleased → Available → Reserved → Sold." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-4",
-    question: { ar: "كيف أضع قواعد التسعير؟", en: "How do I set pricing rules?" },
-    answer: { ar: "من تبويب 'التسعير'، أضف قواعد مثل سعر المتر المربع الأساسي، علاوة الزاوية، علاوة إطلالة الحديقة وغيرها. حدد نوع القاعدة والمعامل والأولوية. انقر 'حساب الأسعار' لتطبيق القواعد على جميع عناصر المخزون.", en: "From the 'Pricing' tab, add rules like base price per sqm, corner premium, park-facing premium, etc. Set rule type, factor, and priority. Click 'Calculate Prices' to apply rules across all inventory items." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-5",
-    question: { ar: "ما هي موجات الإطلاق؟", en: "What are launch waves?" },
-    answer: { ar: "موجات الإطلاق تقسّم المخزون إلى مراحل بيع متتالية. من تبويب 'الإطلاق'، أنشئ موجة جديدة بتحديد الاسم وتاريخ الإطلاق وعدد الوحدات. كل موجة تمر بحالات: مخطط ← مُطلق ← مغلق.", en: "Launch waves split inventory into sequential sales phases. From the 'Launch' tab, create a new wave with name, planned date, and inventory count. Each wave goes through statuses: Planned → Launched → Closed." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-6",
-    question: { ar: "كيف أتحقق من جاهزية المشروع للإطلاق؟", en: "How do I check launch readiness?" },
-    answer: { ar: "تبويب 'جاهزية الإطلاق' يعرض قائمة تحقق تلقائية: مخطط تقسيم معتمد، موافقات الجهات، جاهزية البنية التحتية ≥ 70%، إنشاء المخزون، تطبيق قواعد التسعير، وتخطيط موجة إطلاق. العناصر غير المستوفاة تظهر مع زر 'إصلاح' ينقلك مباشرة للتبويب المعني.", en: "The 'Launch Readiness' tab shows an automatic checklist: approved subdivision plan, authority approvals, infrastructure readiness ≥ 70%, inventory created, pricing rules applied, and launch wave planned. Failed items show a 'Fix' button linking directly to the relevant tab." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-7",
-    question: { ar: "ما هي خريطة المخزون؟", en: "What is the Inventory Map?" },
-    answer: { ar: "خريطة المخزون تعرض جميع عناصر المخزون في شبكة ملونة حسب الحالة: أخضر (متاح)، أزرق (محجوز)، أصفر (مباع)، رمادي (لم يُطلق). يمكنك النقر على أي عنصر لعرض تفاصيله أو حجزه مباشرة.", en: "The Inventory Map displays all inventory items in a color-coded grid by status: green (available), blue (reserved), yellow (sold), gray (unreleased). Click any item to view details or reserve it directly." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-8",
-    question: { ar: "كيف أتابع التحليلات والأداء؟", en: "How do I track analytics and performance?" },
-    answer: { ar: "تبويب 'التحليلات' يعرض مؤشرات الأداء: إجمالي القيمة، متوسط سعر المتر المربع، عدد عناصر المخزون، ومعدل التحويل. كما يعرض جدول أداء الموجات (متاح/محجوز/مباع لكل موجة) وجدول التسعير حسب نوع المنتج.", en: "The 'Analytics' tab shows KPIs: total value, average price per sqm, inventory count, and conversion rate. It also displays wave performance tables (available/reserved/sold per wave) and pricing breakdown by product type." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-9",
-    question: { ar: "كيف أدير التقسيم والموافقات؟", en: "How do I manage subdivision and approvals?" },
-    answer: { ar: "من تبويب 'التقسيم'، أنشئ مخططات تقسيم مع البلكات والقطع. من تبويب 'الموافقات'، قدّم طلبات للجهات الحكومية (بلدي، شركة الكهرباء، المياه...) وتابع حالتها (مقدم ← قيد المراجعة ← موافق/مرفوض).", en: "From the 'Subdivision' tab, create subdivision plans with blocks and plots. From the 'Approvals' tab, submit requests to government entities (Balady, electricity company, water...) and track their status (Submitted → Under Review → Approved/Rejected)." },
-    category: "offplan_development",
-  },
-  {
-    id: "op-10",
-    question: { ar: "ما التقارير المتاحة للمشاريع على الخارطة؟", en: "What reports are available for off-plan projects?" },
-    answer: { ar: "يتوفر 3 تقارير متخصصة: تقرير مسار التطوير (توزيع المشاريع على المراحل)، تقرير حالة الموافقات (معدلات النجاح ووقت المعالجة)، وتقرير تحليل التسعير (متوسط الأسعار حسب نوع المنتج). جميعها قابلة للتصدير PDF/Excel.", en: "3 specialized reports are available: Development Pipeline (projects by stage), Approval Status (success rates and processing time), and Pricing Analysis (average prices by product type). All exportable as PDF/Excel." },
-    category: "offplan_development",
-  },
-  // Planning & Subdivision
-  {
-    id: "pl-1",
-    question: { ar: "ما هو نظام التخطيط (Planning OS)؟", en: "What is the Planning OS?" },
-    answer: { ar: "نظام التخطيط يمكّنك من تخطيط تقسيم الأراضي بسيناريوهات متعددة. أنشئ مساحة عمل من أرض أو مشروع، ارسم القطع والشوارع على الخريطة، شغّل فحص الامتثال للتحقق من معايير البناء، واحسب الجدوى المالية تلقائياً.", en: "The Planning OS lets you plan land subdivision with multiple scenarios. Create a workspace from a land parcel or project, draw plots and roads on the map, run compliance checks against building regulations, and auto-calculate financial feasibility." },
-    category: "planning",
-  },
-  {
-    id: "pl-2",
-    question: { ar: "كيف أنشئ مساحة عمل تخطيطية؟", en: "How do I create a planning workspace?" },
-    answer: { ar: "اذهب إلى قسم التخطيط وانقر 'مساحة عمل جديدة'. حدد الاسم والموقع والمساحة واختيارياً اربطها بأرض من سجلاتك. يمكنك أيضاً الضغط على 'فتح في التخطيط' من صفحة الأرض أو المشروع مباشرة.", en: "Go to the Planning section and click 'New Workspace'. Set the name, location, area, and optionally link it to a land record. You can also click 'Open in Planning' from the Land or Project detail page." },
-    category: "planning",
-  },
-  {
-    id: "pl-3",
-    question: { ar: "كيف أقارن بين السيناريوهات؟", en: "How do I compare scenarios?" },
-    answer: { ar: "من تبويب 'المقارنة' في مساحة العمل، يعرض النظام جدولاً مقارناً لجميع السيناريوهات: عدد القطع، المساحة القابلة للبيع، الشوارع، المساحات المفتوحة، الإيرادات المتوقعة، والعائد على الاستثمار. اختر السيناريو الأفضل واعتمده كخط أساس.", en: "From the 'Comparison' tab in the workspace, the system shows a side-by-side table of all scenarios: plot count, sellable area, roads, open space, estimated revenue, and ROI. Pick the best scenario and approve it as the baseline." },
-    category: "planning",
-  },
-  {
-    id: "pl-4",
-    question: { ar: "كيف يعمل فحص الامتثال؟", en: "How does compliance checking work?" },
-    answer: { ar: "من تبويب 'الامتثال'، انقر 'تشغيل الفحص'. يقارن النظام القطع والشوارع بقواعد التخطيط السعودية (الحد الأدنى لمساحة القطعة، عرض الشارع، نسبة المساحات المفتوحة...). تظهر النتائج بألوان: أخضر (ناجح)، أحمر (فشل)، أصفر (تحذير).", en: "From the 'Compliance' tab, click 'Run Check'. The system compares plots and roads against Saudi planning rules (minimum plot area, road width, open space percentage...). Results show color-coded: green (pass), red (fail), yellow (warning)." },
-    category: "planning",
-  },
-  {
-    id: "pl-5",
-    question: { ar: "كيف أحسب الجدوى المالية للسيناريو؟", en: "How do I calculate scenario feasibility?" },
-    answer: { ar: "من تبويب 'الجدوى'، أدخل افتراضات التسعير (سعر م² للسكني والتجاري)، تكاليف البناء والبنية التحتية، ونسب التكاليف غير المباشرة. النظام يحسب تلقائياً: إجمالي الإيرادات، التكاليف، صافي الربح، والعائد على الاستثمار.", en: "From the 'Feasibility' tab, enter pricing assumptions (price/sqm for residential and commercial), construction and infrastructure costs, and soft cost percentages. The system auto-calculates: total revenue, costs, net profit, and ROI." },
-    category: "planning",
-  },
-  {
-    id: "pl-6",
-    question: { ar: "كيف أستورد بيانات مكانية؟", en: "How do I import spatial data?" },
-    answer: { ar: "من زر 'استيراد' في مساحة العمل، يمكنك رفع ملفات GeoJSON أو KML أو CSV (مع أعمدة lat/lng). الملفات تُضاف كطبقات مكانية على الخريطة يمكنك التحكم بظهورها.", en: "From the 'Import' button in the workspace, upload GeoJSON, KML, or CSV files (with lat/lng columns). Files are added as spatial layers on the map with visibility toggles." },
-    category: "planning",
-  },
   // Sales & CRM
   {
     id: "sc-1",
@@ -167,8 +65,8 @@ export const FAQ_ITEMS: FAQItem[] = [
   },
   {
     id: "sc-3",
-    question: { ar: "كيف أنشئ حجزاً لعميل؟", en: "How do I create a reservation for a customer?" },
-    answer: { ar: "من قسم الحجوزات، انقر على 'حجز جديد'. اختر مصدر الحجز: 'من الوحدات' للوحدات التقليدية أو 'من المخزون' لعناصر البيع على الخارطة. اختر العميل ثم الوحدة/العنصر وأكمل خطوات المعالج الرباعي.", en: "From Reservations, click 'New Reservation'. Choose the source: 'From Units' for traditional units or 'From Inventory' for off-plan items. Select the customer, then the unit/item, and complete the 4-step wizard." },
+    question: { ar: "كيف أنشئ صفقة لعميل؟", en: "How do I create a deal for a customer?" },
+    answer: { ar: "من قسم الصفقات، انقر 'صفقة جديدة'. اختر العميل، ثم اختر العقار والوحدة المناسبة. أكمل خطوات المعالج لتأكيد الحجز — ستتحدث حالة الوحدة تلقائياً إلى 'محجوز'.", en: "From the Deals section, click 'New Deal'. Select the customer, then choose the property and unit. Complete the wizard steps to confirm the reservation — the unit status will automatically update to 'Reserved'." },
     category: "sales_crm",
   },
   // Property Management
@@ -204,12 +102,6 @@ export const FAQ_ITEMS: FAQItem[] = [
     category: "finance",
   },
   {
-    id: "fi-9",
-    question: { ar: "كيف يعمل حساب الضمان (Escrow)؟", en: "How does the escrow account work?" },
-    answer: { ar: "حساب الضمان يُنشأ لكل مشروع وفقاً لنظام وافي. عند توقيع عقد بيع، يتم تلقائياً تسجيل إيداع (BUYER_DEPOSIT) بمبلغ العقد في حساب الضمان. عند إبطال عقد موقّع، يتم تسجيل عكس (REVERSAL) تلقائياً. يمكن للمسؤول المالي متابعة جميع حركات الضمان من قسم وافي.", en: "An escrow account is created per project per Wafi regulations. When a sale contract is signed, a deposit (BUYER_DEPOSIT) for the contract amount is auto-recorded in the escrow account. When a signed contract is voided, a reversal is auto-recorded. The Finance Officer can track all escrow transactions from the Wafi section." },
-    category: "finance",
-  },
-  {
     id: "fi-2",
     question: { ar: "هل النظام متوافق مع متطلبات هيئة الزكاة والضريبة (ZATCA)؟", en: "Is the system ZATCA compliant?" },
     answer: { ar: "نعم، يدعم ميماريك حساب ضريبة القيمة المضافة (15%) وفقاً لمتطلبات هيئة الزكاة والضريبة والجمارك. الفوترة الإلكترونية قيد التطوير.", en: "Yes, Mimaric supports VAT calculation (15%) per ZATCA requirements. E-invoicing integration is under development." },
@@ -218,7 +110,7 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "fi-3",
     question: { ar: "كيف أصدر تقارير مالية؟", en: "How do I generate financial reports?" },
-    answer: { ar: "من قسم التقارير، اختر نوع التقرير (مالي، إشغال، صيانة، مسار التطوير، حالة الموافقات، تحليل التسعير...) وحدد نطاق التاريخ. يمكنك التصدير بصيغة Excel أو PDF. يتوفر 10 أنواع من التقارير تشمل التقارير التشغيلية والمالية والتطويرية والتنظيمية.", en: "From Reports, select the report type (financial, occupancy, maintenance, development pipeline, approval status, pricing analysis...) and date range. Export as Excel or PDF. 10 report types are available covering operational, financial, development, and regulatory categories." },
+    answer: { ar: "من قسم التقارير، اختر نوع التقرير (مالي، إشغال، صيانة، إيجارات، عملاء...) وحدد نطاق التاريخ. يمكنك التصدير بصيغة Excel أو PDF.", en: "From Reports, select the report type (financial, occupancy, maintenance, leases, customers...) and date range. Export as Excel or PDF." },
     category: "finance",
   },
   // Security & Privacy
@@ -264,19 +156,6 @@ export const FAQ_ITEMS: FAQItem[] = [
     question: { ar: "هل يدعم النظام التاريخ الهجري؟", en: "Does the system support Hijri dates?" },
     answer: { ar: "نعم، يعرض النظام التاريخ الهجري والميلادي معاً في جميع الأقسام.", en: "Yes, the system displays both Hijri and Gregorian dates across all sections." },
     category: "technical",
-  },
-  // Land Management
-  {
-    id: "pm-4",
-    question: { ar: "كيف أضيف أرضاً جديدة؟", en: "How do I add a new land parcel?" },
-    answer: { ar: "من قسم الأراضي، انقر على 'إضافة أرض'. أدخل اسم الأرض، رقم القطعة، رقم الصك، المساحة، نوع الاستخدام (سكني، تجاري، صناعي، زراعي، متعدد)، الموقع (المنطقة، المدينة، الحي)، وحدد الموقع على الخريطة. يمكنك أيضاً إضافة اسم المالك والقيمة التقديرية.", en: "From the Lands section, click 'Add Land'. Enter the land name, parcel number, deed number, area, land use type (residential, commercial, industrial, agricultural, mixed-use), location (region, city, district), and pin the location on the map. You can also add the owner name and estimated value." },
-    category: "property_management",
-  },
-  {
-    id: "pm-5",
-    question: { ar: "ما هو مؤشر ملاءمة الأرض؟", en: "What is the land suitability score?" },
-    answer: { ar: "مؤشر الملاءمة هو تقييم من 0 إلى 100 يعكس مدى مناسبة الأرض للتطوير. النتيجة 70% وأعلى تظهر باللون الأخضر (ممتازة)، 40-69% باللون البرتقالي (متوسطة)، وأقل من 40% باللون الأحمر (ضعيفة). تمر الأرض بحالات: تم تحديدها ← قيد المراجعة ← تم الاستحواذ.", en: "The suitability score is a 0-100 rating reflecting how suitable the land is for development. Scores of 70%+ appear green (excellent), 40-69% amber (moderate), and below 40% red (poor). Land parcels go through statuses: Identified → Under Review → Acquired." },
-    category: "property_management",
   },
   // Document Vault
   {
@@ -371,13 +250,6 @@ export const FAQ_ITEMS: FAQItem[] = [
     answer: { ar: "من صفحة تفاصيل العقد (نوع بيع)، ستجد: القسم الأول — بيانات الأطراف (البائع والمشتري)، القسم الثاني — بيانات الوحدة، القسم الثالث — القيمة المالية، والقسم الرابع — شروط البيع (تاريخ التسليم، رخصة وافي، مرجع حساب الضمان). الشريط الجانبي يعرض رقم العقد والقيمة ومراجع وافي.", en: "From the contract detail page (sale type), you'll find: Section 1 — party details (seller and buyer), Section 2 — unit details, Section 3 — financial value, and Section 4 — sale terms (delivery date, Wafi license, escrow account reference). The sidebar shows the contract number, value, and Wafi references." },
     category: "sales_crm",
   },
-  // Site Logs
-  {
-    id: "op-11",
-    question: { ar: "كيف أستخدم سجلات الموقع؟", en: "How do I use site logs?" },
-    answer: { ar: "من صفحة المشروع > سجلات الموقع، يمكنك تسجيل ومتابعة الأحداث اليومية للموقع. أنواع السجلات: سجل يومي، تفتيش، ملاحظة فنية، سلامة، وطقس. كل سجل له مستوى خطورة (منخفض، متوسط، عالي، حرج) وحالة (مفتوح أو محلول). يمكنك تصفية السجلات حسب النوع والخطورة، وحل أي سجل مفتوح بنقرة واحدة.", en: "From the Project page > Site Logs, you can record and track daily site events. Log types: Daily Log, Inspection, Snag, Safety, and Weather. Each log has a severity level (Low, Medium, High, Critical) and status (Open or Resolved). Filter logs by type and severity, and resolve any open log with one click." },
-    category: "offplan_development",
-  },
   // Onboarding / Getting Started
   {
     id: "gs-4",
@@ -401,19 +273,6 @@ export const FAQ_ITEMS: FAQItem[] = [
 ];
 
 export const GUIDE_ITEMS: GuideItem[] = [
-  {
-    id: "guide-1",
-    title: { ar: "إضافة مشروع جديد", en: "Add a New Project" },
-    description: { ar: "تعلم كيفية إنشاء مشروع عقاري جديد مع البيانات الأساسية", en: "Learn how to create a new real estate project with basic data" },
-    module: "projects",
-    steps: [
-      { ar: "اذهب إلى قسم المشاريع من القائمة الجانبية", en: "Go to the Projects section from the sidebar" },
-      { ar: "انقر على زر 'مشروع جديد'", en: "Click the 'New Project' button" },
-      { ar: "أدخل اسم المشروع، النوع (سكني، تجاري، متعدد الاستخدام)، والموقع", en: "Enter the project name, type (residential, commercial, mixed-use), and location" },
-      { ar: "أضف بيانات الصك وأرقام القطعة والمخطط", en: "Add deed data, plot number, and plan information" },
-      { ar: "انقر 'حفظ' لإنشاء المشروع", en: "Click 'Save' to create the project" },
-    ],
-  },
   {
     id: "guide-2",
     title: { ar: "إدارة العقارات والوحدات", en: "Manage Properties & Units" },
@@ -477,7 +336,7 @@ export const GUIDE_ITEMS: GuideItem[] = [
     module: "reports",
     steps: [
       { ar: "اذهب إلى قسم التقارير", en: "Go to the Reports section" },
-      { ar: "اختر نوع التقرير (إشغال، مالي، صيانة، إيجارات، عملاء، مسار التطوير، حالة الموافقات، تحليل التسعير)", en: "Select report type (occupancy, financial, maintenance, leases, customers, development pipeline, approval status, pricing analysis)" },
+      { ar: "اختر نوع التقرير (إشغال، مالي، صيانة، إيجارات، عملاء)", en: "Select report type (occupancy, financial, maintenance, leases, customers)" },
       { ar: "حدد نطاق التاريخ المطلوب", en: "Set the desired date range" },
       { ar: "انقر زر Excel (أخضر) أو PDF (أحمر) للتصدير", en: "Click Excel (green) or PDF (red) button to export" },
     ],
@@ -507,78 +366,6 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "اكتب سبب الطلب بالتفصيل", en: "Write a detailed reason for the request" },
       { ar: "انقر 'إرسال الطلب' — سيتم إشعار المدير", en: "Click 'Submit Request' — the admin will be notified" },
       { ar: "تابع حالة طلبك من نفس الصفحة", en: "Track your request status from the same page" },
-    ],
-  },
-  // Off-Plan Development Guides
-  {
-    id: "guide-9",
-    title: { ar: "إعداد مشروع بيع على الخارطة", en: "Set Up an Off-Plan Project" },
-    description: { ar: "الخطوات الكاملة لإعداد مشروع تطوير على الخارطة من البداية", en: "Complete steps to set up an off-plan development project from scratch" },
-    module: "offplan",
-    steps: [
-      { ar: "أنشئ مشروعاً جديداً من قسم المشاريع واختر النوع (سكني/تجاري)", en: "Create a new project from the Projects section and select type (residential/commercial)" },
-      { ar: "من تبويب 'المخطط المبدئي'، أضف بدائل التصميم للمقارنة", en: "From the 'Concept Plan' tab, add design alternatives for comparison" },
-      { ar: "من تبويب 'التقسيم'، أنشئ مخطط تقسيم مع البلكات والقطع", en: "From the 'Subdivision' tab, create a subdivision plan with blocks and plots" },
-      { ar: "من تبويب 'الموافقات'، قدّم طلبات للجهات الحكومية المعنية", en: "From the 'Approvals' tab, submit requests to relevant government entities" },
-      { ar: "من تبويب 'البنية التحتية'، أضف فئات البنية التحتية وعيّن المقاولين", en: "From the 'Infrastructure' tab, add infrastructure categories and assign contractors" },
-      { ar: "تابع تبويب 'جاهزية الإطلاق' حتى تستوفي جميع المتطلبات", en: "Monitor the 'Launch Readiness' tab until all requirements are met" },
-    ],
-  },
-  {
-    id: "guide-10",
-    title: { ar: "هيكلة المخزون وإطلاق البيع", en: "Structure Inventory & Launch Sales" },
-    description: { ar: "كيفية إعداد المخزون وتسعيره وإطلاق موجات البيع", en: "How to set up inventory, price it, and launch sales waves" },
-    module: "offplan",
-    steps: [
-      { ar: "من تبويب 'المخزون'، أضف عناصر المخزون (فيلا، تاون هاوس، شقة، تجاري...)", en: "From the 'Inventory' tab, add inventory items (villa, townhouse, apartment, commercial...)" },
-      { ar: "حدد لكل عنصر: المساحة، السعر الأساسي، مرحلة الإطلاق، وقناة البيع", en: "For each item set: area, base price, release phase, and sales channel" },
-      { ar: "من تبويب 'التسعير'، أضف قواعد التسعير (سعر أساسي، علاوات، خصومات)", en: "From the 'Pricing' tab, add pricing rules (base price, premiums, discounts)" },
-      { ar: "انقر 'حساب الأسعار' لتطبيق القواعد على المخزون", en: "Click 'Calculate Prices' to apply rules to inventory" },
-      { ar: "من تبويب 'الإطلاق'، أنشئ موجة إطلاق جديدة بتاريخ وعدد وحدات", en: "From the 'Launch' tab, create a new launch wave with date and unit count" },
-      { ar: "راجع 'خريطة المخزون' لمتابعة الحالة المرئية لكل عنصر", en: "Review the 'Inventory Map' for a visual status overview of each item" },
-    ],
-  },
-  {
-    id: "guide-11",
-    title: { ar: "حجز من المخزون (البيع على الخارطة)", en: "Reserve from Inventory (Off-Plan Sales)" },
-    description: { ar: "كيفية إنشاء حجز لعميل من مخزون البيع على الخارطة", en: "How to create a reservation for a customer from off-plan inventory" },
-    module: "offplan",
-    steps: [
-      { ar: "اذهب إلى قسم الصفقات وانقر 'حجز جديد'", en: "Go to the Deals section and click 'New Reservation'" },
-      { ar: "انقر 'من المخزون' في أعلى الصفحة لتغيير المصدر", en: "Click 'From Inventory' at the top of the page to switch source" },
-      { ar: "اختر العميل من القائمة أو ابحث باسمه أو رقمه", en: "Select the customer from the list or search by name or number" },
-      { ar: "اختر المشروع ثم اختر عنصر المخزون المتاح", en: "Select the project then choose an available inventory item" },
-      { ar: "أكمل بيانات الدفع في الخطوة الثانية", en: "Complete payment details in the second step" },
-      { ar: "راجع الملخص وأكد الحجز — سيتم تحديث حالة العنصر تلقائياً إلى 'محجوز'", en: "Review the summary and confirm — the item status will automatically update to 'Reserved'" },
-    ],
-  },
-  {
-    id: "guide-12",
-    title: { ar: "متابعة تحليلات المشروع", en: "Track Project Analytics" },
-    description: { ar: "كيفية استخدام لوحة التحليلات لمتابعة أداء المشروع", en: "How to use the analytics dashboard to monitor project performance" },
-    module: "offplan",
-    steps: [
-      { ar: "افتح المشروع واذهب إلى تبويب 'التحليلات'", en: "Open the project and go to the 'Analytics' tab" },
-      { ar: "راجع بطاقات المؤشرات: إجمالي القيمة، متوسط السعر، المخزون، معدل التحويل", en: "Review KPI cards: total value, average price, inventory count, conversion rate" },
-      { ar: "استعرض جدول أداء الموجات لمقارنة المتاح والمحجوز والمباع", en: "Review the wave performance table to compare available, reserved, and sold" },
-      { ar: "استعرض جدول التسعير حسب النوع لتحليل الأسعار بحسب فئة المنتج", en: "Review the pricing by type table to analyze prices by product category" },
-      { ar: "استخدم مؤشرات لوحة التحكم الرئيسية لمتابعة إجمالي المخزون ونشاط الإطلاق", en: "Use the main dashboard KPIs to track total inventory and launch activity" },
-    ],
-  },
-  // Land Management Guide
-  {
-    id: "guide-13",
-    title: { ar: "إضافة وإدارة الأراضي", en: "Add & Manage Land Parcels" },
-    description: { ar: "كيفية إضافة أراضي جديدة وتتبع حالتها وملاءمتها للتطوير", en: "How to add new land parcels and track their status and development suitability" },
-    module: "lands",
-    steps: [
-      { ar: "اذهب إلى قسم الأراضي من القائمة الجانبية", en: "Go to the Lands section from the sidebar" },
-      { ar: "انقر زر 'إضافة أرض' لفتح نموذج الإضافة", en: "Click the 'Add Land' button to open the form" },
-      { ar: "أدخل اسم الأرض، رقم القطعة، ورقم الصك", en: "Enter the land name, parcel number, and deed number" },
-      { ar: "حدد المساحة (م²) ونوع الاستخدام (سكني، تجاري، صناعي، زراعي، أو متعدد)", en: "Set the area (sqm) and land use (residential, commercial, industrial, agricultural, or mixed-use)" },
-      { ar: "أدخل الموقع (المنطقة، المدينة، الحي) وحدد الموقع على الخريطة", en: "Enter the location (region, city, district) and pin the location on the map" },
-      { ar: "اختيارياً: أضف اسم المالك والقيمة التقديرية بالريال", en: "Optionally: add the owner name and estimated value in SAR" },
-      { ar: "انقر 'حفظ' — ستظهر الأرض في الجدول مع مؤشر الملاءمة والحالة", en: "Click 'Save' — the land appears in the table with suitability score and status" },
     ],
   },
   // Document Vault Guide
@@ -684,51 +471,6 @@ export const GUIDE_ITEMS: GuideItem[] = [
       { ar: "اختيارياً: أدخل كود خصم في حقل الكوبون وانقر 'تطبيق'", en: "Optionally: enter a discount code in the coupon field and click 'Apply'" },
       { ar: "انقر 'اختر الخطة' أو 'ابدأ التجربة المجانية' للاشتراك", en: "Click 'Choose Plan' or 'Start Free Trial' to subscribe" },
       { ar: "راجع فواتيرك من صفحة الفواتير (رقم الفاتورة، التاريخ، الحالة، المبلغ مع الضريبة)", en: "Review your invoices from the Invoices page (invoice number, date, status, amount with VAT)" },
-    ],
-  },
-  // Site Logs Guide
-  {
-    id: "guide-18",
-    title: { ar: "تسجيل سجلات الموقع", en: "Add Site Logs to a Project" },
-    description: { ar: "كيفية تسجيل أحداث الموقع اليومية (تفتيش، ملاحظات، سلامة، طقس)", en: "How to log daily site events (inspections, snags, safety, weather)" },
-    module: "projects",
-    steps: [
-      { ar: "افتح المشروع المطلوب واذهب إلى 'سجلات الموقع'", en: "Open the desired project and go to 'Site Logs'" },
-      { ar: "انقر زر 'إضافة سجل' لفتح نموذج الإدخال", en: "Click 'Add Log' to open the entry form" },
-      { ar: "حدد التاريخ ونوع السجل (يومي، تفتيش، ملاحظة فنية، سلامة، أو طقس)", en: "Select the date and log type (daily, inspection, snag, safety, or weather)" },
-      { ar: "اكتب وصفاً تفصيلياً للحدث أو الملاحظة", en: "Write a detailed description of the event or observation" },
-      { ar: "اختيارياً: حدد مستوى الخطورة (منخفض، متوسط، عالي، حرج) واسم المُبلّغ", en: "Optionally: set the severity level (low, medium, high, critical) and reporter name" },
-      { ar: "انقر 'حفظ' — يمكنك لاحقاً تصفية السجلات حسب النوع والخطورة، وحل المفتوح منها", en: "Click 'Save' — you can later filter logs by type and severity, and resolve open ones" },
-    ],
-  },
-  // Planning OS Guides
-  {
-    id: "guide-20",
-    title: { ar: "تخطيط تقسيم أرض جديدة", en: "Plan a New Land Subdivision" },
-    description: { ar: "الخطوات الكاملة لتخطيط تقسيم أرض باستخدام نظام التخطيط", en: "Complete steps to plan a land subdivision using the Planning OS" },
-    module: "planning",
-    steps: [
-      { ar: "اذهب إلى قسم التخطيط من القائمة الجانبية", en: "Go to the Planning section from the sidebar" },
-      { ar: "انقر 'مساحة عمل جديدة' أو اضغط 'فتح في التخطيط' من صفحة الأرض", en: "Click 'New Workspace' or press 'Open in Planning' from the Land page" },
-      { ar: "أنشئ سيناريو جديد — سيتم إنشاء مخطط تقسيم فارغ تلقائياً", en: "Create a new scenario — an empty subdivision plan is auto-created" },
-      { ar: "استخدم أدوات الرسم على الخريطة لإضافة حدود الموقع والقطع والشوارع", en: "Use the map drawing tools to add site boundary, plots, and roads" },
-      { ar: "شغّل فحص الامتثال للتحقق من مطابقة المعايير السعودية", en: "Run compliance check to verify Saudi regulation compliance" },
-      { ar: "أدخل افتراضات الجدوى واحسب العائد المتوقع", en: "Enter feasibility assumptions and calculate expected returns" },
-      { ar: "كرر العملية لسيناريوهات بديلة وقارن بينها", en: "Repeat for alternative scenarios and compare them" },
-      { ar: "اعتمد السيناريو الأفضل كخط أساس", en: "Approve the best scenario as baseline" },
-    ],
-  },
-  {
-    id: "guide-21",
-    title: { ar: "تصدير تقارير التخطيط", en: "Export Planning Reports" },
-    description: { ar: "كيفية تصدير جدول القطع وتقرير المقارنة والجدوى", en: "How to export parcel schedules, comparison, and feasibility reports" },
-    module: "planning",
-    steps: [
-      { ar: "افتح مساحة العمل واختر السيناريو المطلوب", en: "Open the workspace and select the desired scenario" },
-      { ar: "لتصدير جدول القطع: من تبويب 'السيناريوهات' اختر 'تصدير جدول القطع'", en: "To export parcel schedule: from 'Scenarios' tab choose 'Export Parcel Schedule'" },
-      { ar: "لتصدير تقرير المقارنة: من تبويب 'المقارنة' اختر 'تصدير'", en: "To export comparison: from 'Comparison' tab choose 'Export'" },
-      { ar: "لتصدير الجدوى: من تبويب 'الجدوى' اختر 'تصدير الجدوى'", en: "To export feasibility: from 'Feasibility' tab choose 'Export Feasibility'" },
-      { ar: "التقارير متاحة بصيغة Excel مع جداول مفصلة", en: "Reports are available as Excel files with detailed tables" },
     ],
   },
   // Onboarding Guide
