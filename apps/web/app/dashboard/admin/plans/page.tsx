@@ -9,14 +9,13 @@ import {
   Pencil,
   Eye,
   EyeOff,
-  X,
   Save,
   CircleDollarSign,
   ArrowUpDown,
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import { Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@repo/ui";
+import { Button, Card, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ResponsiveDialog } from "@repo/ui";
 import Link from "next/link";
 import { adminGetAllPlans, adminUpsertPlan } from "../../../actions/billing";
 
@@ -489,271 +488,251 @@ export default function AdminPlansPage() {
         </Card>
       )}
 
-      {/* ── Modal Overlay ─────────────────────────────────────────────── */}
-      {modalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+      {/* ── Plan Form Modal ──────────────────────────────────────────── */}
+      <ResponsiveDialog
+        open={modalOpen}
+        onOpenChange={(open) => !open && closeModal()}
+        title={form.id ? t.editPlan : t.createPlan}
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              size="md"
+              onClick={closeModal}
+              disabled={saving}
+            >
+              {t.cancel}
+            </Button>
+            <Button
+              type="submit"
+              form="plan-form"
+              variant="primary"
+              size="md"
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  <span className="ms-2">{t.saving}</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span className="ms-1.5">{t.save}</span>
+                </>
+              )}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="plan-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+          className="space-y-5"
           dir={lang === "ar" ? "rtl" : "ltr"}
         >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={closeModal}
-          />
-
-          {/* Dialog */}
-          <div className="relative z-10 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-card border border-border rounded-xl shadow-2xl">
-            {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-card border-b border-border px-6 py-4 rounded-t-xl">
-              <h2 className="text-lg font-bold text-foreground">
-                {form.id ? t.editPlan : t.createPlan}
-              </h2>
-              <button
-                onClick={closeModal}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="px-6 py-5 space-y-5">
-              {/* Feedback inside modal */}
-              {feedback && (
-                <div
-                  className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium border ${
-                    feedback.type === "success"
-                      ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800"
-                      : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
-                  }`}
-                >
-                  {feedback.type === "success" ? (
-                    <CheckCircle2
-                      className="w-4 h-4 flex-shrink-0"
-                    />
-                  ) : (
-                    <AlertTriangle
-                      className="w-4 h-4 flex-shrink-0"
-                    />
-                  )}
-                  {feedback.message}
-                </div>
+          {/* Feedback inside modal */}
+          {feedback && (
+            <div
+              className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium border ${
+                feedback.type === "success"
+                  ? "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800"
+                  : "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800"
+              }`}
+            >
+              {feedback.type === "success" ? (
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              ) : (
+                <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               )}
+              {feedback.message}
+            </div>
+          )}
 
-              {/* Row: Name EN / Name AR */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FieldGroup label={t.nameEn} required>
-                  <input
-                    type="text"
-                    value={form.nameEn}
-                    onChange={(e) => updateField("nameEn", e.target.value)}
-                    placeholder="e.g. Professional"
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                    dir="ltr"
-                  />
-                </FieldGroup>
-                <FieldGroup label={t.nameAr} required>
-                  <input
-                    type="text"
-                    value={form.nameAr}
-                    onChange={(e) => updateField("nameAr", e.target.value)}
-                    placeholder="مثال: احترافية"
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                    dir="rtl"
-                  />
-                </FieldGroup>
-              </div>
+          {/* Row: Name EN / Name AR */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldGroup label={t.nameEn} required>
+              <input
+                type="text"
+                value={form.nameEn}
+                onChange={(e) => updateField("nameEn", e.target.value)}
+                placeholder="e.g. Professional"
+                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                dir="ltr"
+              />
+            </FieldGroup>
+            <FieldGroup label={t.nameAr} required>
+              <input
+                type="text"
+                value={form.nameAr}
+                onChange={(e) => updateField("nameAr", e.target.value)}
+                placeholder="مثال: احترافية"
+                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                dir="rtl"
+              />
+            </FieldGroup>
+          </div>
 
-              {/* Slug */}
-              <FieldGroup label={t.slug} required>
+          {/* Slug */}
+          <FieldGroup label={t.slug} required>
+            <input
+              type="text"
+              value={form.slug}
+              onChange={(e) =>
+                updateField(
+                  "slug",
+                  e.target.value
+                    .toLowerCase()
+                    .replace(/[^a-z0-9-]/g, "-")
+                    .replace(/-+/g, "-")
+                )
+              }
+              placeholder="e.g. professional"
+              className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono transition-colors"
+              dir="ltr"
+            />
+          </FieldGroup>
+
+          {/* Row: Description EN / Description AR */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldGroup label={t.descriptionEn}>
+              <textarea
+                value={form.descriptionEn}
+                onChange={(e) =>
+                  updateField("descriptionEn", e.target.value)
+                }
+                rows={3}
+                placeholder="Brief plan description..."
+                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
+                dir="ltr"
+              />
+            </FieldGroup>
+            <FieldGroup label={t.descriptionAr}>
+              <textarea
+                value={form.descriptionAr}
+                onChange={(e) =>
+                  updateField("descriptionAr", e.target.value)
+                }
+                rows={3}
+                placeholder="وصف مختصر للخطة..."
+                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
+                dir="rtl"
+              />
+            </FieldGroup>
+          </div>
+
+          {/* Row: Monthly / Annual Price */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldGroup label={`${t.monthlyPrice} (${t.sar})`}>
+              <div className="relative">
+                <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
-                  type="text"
-                  value={form.slug}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.priceMonthly}
                   onChange={(e) =>
-                    updateField(
-                      "slug",
-                      e.target.value
-                        .toLowerCase()
-                        .replace(/[^a-z0-9-]/g, "-")
-                        .replace(/-+/g, "-")
-                    )
+                    updateField("priceMonthly", e.target.value)
                   }
-                  placeholder="e.g. professional"
-                  className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono transition-colors"
+                  className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   dir="ltr"
                 />
-              </FieldGroup>
-
-              {/* Row: Description EN / Description AR */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FieldGroup label={t.descriptionEn}>
-                  <textarea
-                    value={form.descriptionEn}
-                    onChange={(e) =>
-                      updateField("descriptionEn", e.target.value)
-                    }
-                    rows={3}
-                    placeholder="Brief plan description..."
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
-                    dir="ltr"
-                  />
-                </FieldGroup>
-                <FieldGroup label={t.descriptionAr}>
-                  <textarea
-                    value={form.descriptionAr}
-                    onChange={(e) =>
-                      updateField("descriptionAr", e.target.value)
-                    }
-                    rows={3}
-                    placeholder="وصف مختصر للخطة..."
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none transition-colors"
-                    dir="rtl"
-                  />
-                </FieldGroup>
               </div>
-
-              {/* Row: Monthly / Annual Price */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FieldGroup label={`${t.monthlyPrice} (${t.sar})`}>
-                  <div className="relative">
-                    <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.priceMonthly}
-                      onChange={(e) =>
-                        updateField("priceMonthly", e.target.value)
-                      }
-                      className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      dir="ltr"
-                    />
-                  </div>
-                </FieldGroup>
-                <FieldGroup label={`${t.annualPrice} (${t.sar})`}>
-                  <div className="relative">
-                    <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={form.priceAnnual}
-                      onChange={(e) =>
-                        updateField("priceAnnual", e.target.value)
-                      }
-                      className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      dir="ltr"
-                    />
-                  </div>
-                </FieldGroup>
+            </FieldGroup>
+            <FieldGroup label={`${t.annualPrice} (${t.sar})`}>
+              <div className="relative">
+                <CircleDollarSign className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.priceAnnual}
+                  onChange={(e) =>
+                    updateField("priceAnnual", e.target.value)
+                  }
+                  className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  dir="ltr"
+                />
               </div>
-
-              {/* Row: Trial Days / Sort Order */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FieldGroup label={t.trialDays}>
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.trialDays}
-                    onChange={(e) => updateField("trialDays", e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                    dir="ltr"
-                  />
-                </FieldGroup>
-                <FieldGroup label={t.sortOrder}>
-                  <div className="relative">
-                    <ArrowUpDown className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <input
-                      type="number"
-                      min="0"
-                      value={form.sortOrder}
-                      onChange={(e) =>
-                        updateField("sortOrder", e.target.value)
-                      }
-                      className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                      dir="ltr"
-                    />
-                  </div>
-                </FieldGroup>
-              </div>
-
-              {/* Is Public Toggle */}
-              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  {form.isPublic ? (
-                    <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  ) : (
-                    <EyeOff className="w-5 h-5 text-muted-foreground" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {t.isPublic}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {lang === "ar"
-                        ? "سيتمكن العملاء من رؤية هذه الخطة واختيارها"
-                        : "Customers will be able to see and select this plan"}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={form.isPublic}
-                  onClick={() => updateField("isPublic", !form.isPublic)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-                    form.isPublic
-                      ? "bg-green-600 dark:bg-green-500"
-                      : "bg-muted-foreground/30"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                      form.isPublic
-                        ? lang === "ar"
-                          ? "-translate-x-5"
-                          : "translate-x-5"
-                        : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 bg-card border-t border-border px-6 py-4 rounded-b-xl">
-              <Button
-                variant="ghost"
-                size="md"
-                onClick={closeModal}
-                disabled={saving}
-               
-              >
-                {t.cancel}
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={handleSave}
-                disabled={saving}
-               
-              >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-                    <span className="ms-2">{t.saving}</span>
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    <span className="ms-1.5">{t.save}</span>
-                  </>
-                )}
-              </Button>
-            </div>
+            </FieldGroup>
           </div>
-        </div>
-      )}
+
+          {/* Row: Trial Days / Sort Order */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FieldGroup label={t.trialDays}>
+              <input
+                type="number"
+                min="0"
+                value={form.trialDays}
+                onChange={(e) => updateField("trialDays", e.target.value)}
+                className="w-full px-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                dir="ltr"
+              />
+            </FieldGroup>
+            <FieldGroup label={t.sortOrder}>
+              <div className="relative">
+                <ArrowUpDown className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="number"
+                  min="0"
+                  value={form.sortOrder}
+                  onChange={(e) =>
+                    updateField("sortOrder", e.target.value)
+                  }
+                  className="w-full ps-9 pe-3 py-2.5 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  dir="ltr"
+                />
+              </div>
+            </FieldGroup>
+          </div>
+
+          {/* Is Public Toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3">
+            <div className="flex items-center gap-3">
+              {form.isPublic ? (
+                <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <EyeOff className="w-5 h-5 text-muted-foreground" />
+              )}
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  {t.isPublic}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {lang === "ar"
+                    ? "سيتمكن العملاء من رؤية هذه الخطة واختيارها"
+                    : "Customers will be able to see and select this plan"}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.isPublic}
+              onClick={() => updateField("isPublic", !form.isPublic)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                form.isPublic
+                  ? "bg-green-600 dark:bg-green-500"
+                  : "bg-muted-foreground/30"
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                  form.isPublic
+                    ? lang === "ar"
+                      ? "-translate-x-5"
+                      : "translate-x-5"
+                    : "translate-x-0"
+                }`}
+              />
+            </button>
+          </div>
+        </form>
+      </ResponsiveDialog>
     </div>
   );
 }

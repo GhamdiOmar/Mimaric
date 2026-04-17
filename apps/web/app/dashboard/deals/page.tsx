@@ -25,11 +25,7 @@ import {
   TableCell,
   PageIntro,
   KPICard,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  ResponsiveDialog,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -439,13 +435,42 @@ export default function DealsPage() {
       </Card>
 
       {/* Create Deal Modal */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "إنشاء صفقة جديدة" : "Create New Deal"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Customer search */}
+      <ResponsiveDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title={lang === "ar" ? "إنشاء صفقة جديدة" : "Create New Deal"}
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setCreateOpen(false)}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              type="submit"
+              form="create-deal-form"
+              disabled={submitting}
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+            >
+              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {lang === "ar" ? "إنشاء الصفقة" : "Create Deal"}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="create-deal-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreate();
+          }}
+          className="space-y-4 py-2"
+        >
+          {/* Customer search */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">
                 {lang === "ar" ? "العميل" : "Customer"} *
@@ -551,36 +576,28 @@ export default function DealsPage() {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setCreateOpen(false)}
-              style={{ display: "inline-flex" }}
-            >
-              {lang === "ar" ? "إلغاء" : "Cancel"}
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={submitting}
-              style={{ display: "inline-flex" }}
-              className="gap-2"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {lang === "ar" ? "إنشاء الصفقة" : "Create Deal"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </form>
+      </ResponsiveDialog>
 
       {/* Deal Details Modal */}
-      <Dialog open={!!detailDeal} onOpenChange={(open) => !open && setDetailDeal(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "تفاصيل الصفقة" : "Deal Details"}</DialogTitle>
-          </DialogHeader>
-          {detailDeal && (
-            <div className="space-y-3 py-2 text-sm">
+      <ResponsiveDialog
+        open={!!detailDeal}
+        onOpenChange={(open) => !open && setDetailDeal(null)}
+        title={lang === "ar" ? "تفاصيل الصفقة" : "Deal Details"}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setDetailDeal(null)}
+              style={{ display: "inline-flex" }}
+            >
+              {lang === "ar" ? "إغلاق" : "Close"}
+            </Button>
+          </div>
+        }
+      >
+        {detailDeal && (
+          <div className="space-y-3 py-2 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-gray-500 text-xs">{lang === "ar" ? "العميل" : "Client"}</p>
@@ -623,32 +640,17 @@ export default function DealsPage() {
                   </p>
                 </div>
               </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDetailDeal(null)}
-              style={{ display: "inline-flex" }}
-            >
-              {lang === "ar" ? "إغلاق" : "Close"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        )}
+      </ResponsiveDialog>
 
       {/* Cancel Confirmation Modal */}
-      <Dialog open={!!cancelDeal} onOpenChange={(open) => !open && setCancelDeal(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "تأكيد الإلغاء" : "Confirm Cancellation"}</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-gray-600 py-2">
-            {lang === "ar"
-              ? `هل أنت متأكد من إلغاء الصفقة الخاصة بـ ${cancelDeal?.customer.name}؟ سيتم تحرير الوحدة وإتاحتها مجدداً.`
-              : `Are you sure you want to cancel the deal for ${cancelDeal?.customer.name}? The unit will be released and made available again.`}
-          </p>
-          <DialogFooter className="gap-2">
+      <ResponsiveDialog
+        open={!!cancelDeal}
+        onOpenChange={(open) => !open && setCancelDeal(null)}
+        title={lang === "ar" ? "تأكيد الإلغاء" : "Confirm Cancellation"}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => setCancelDeal(null)}
@@ -666,9 +668,15 @@ export default function DealsPage() {
               {cancelling && <Loader2 className="w-4 h-4 animate-spin" />}
               {lang === "ar" ? "إلغاء الصفقة" : "Cancel Deal"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600 py-2">
+          {lang === "ar"
+            ? `هل أنت متأكد من إلغاء الصفقة الخاصة بـ ${cancelDeal?.customer.name}؟ سيتم تحرير الوحدة وإتاحتها مجدداً.`
+            : `Are you sure you want to cancel the deal for ${cancelDeal?.customer.name}? The unit will be released and made available again.`}
+        </p>
+      </ResponsiveDialog>
     </div>
   );
 }

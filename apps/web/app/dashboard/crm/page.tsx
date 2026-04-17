@@ -39,12 +39,7 @@ import {
   Card,
   PageIntro,
   KPICard,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  ResponsiveDialog,
   AppBar,
   MobileTabs,
   MobileKanban,
@@ -972,19 +967,47 @@ function CustomerDrawer({
       </div>
 
       {/* ── Feature A: Edit Profile Modal ── */}
-      <Dialog open={showEditModal} onOpenChange={(open) => { if (!open) setShowEditModal(false); }}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"} className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تعديل الملف الشخصي" : "Edit Profile"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? `تعديل بيانات ${customer.name}`
-                : `Update details for ${customer.name}`}
-            </DialogDescription>
-          </DialogHeader>
-
+      <ResponsiveDialog
+        open={showEditModal}
+        onOpenChange={(open) => { if (!open) setShowEditModal(false); }}
+        title={lang === "ar" ? "تعديل الملف الشخصي" : "Edit Profile"}
+        description={
+          lang === "ar"
+            ? `تعديل بيانات ${customer.name}`
+            : `Update details for ${customer.name}`
+        }
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowEditModal(false)}
+              disabled={savingEdit}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              type="submit"
+              form="crm-edit-profile-form"
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              disabled={savingEdit}
+            >
+              {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "حفظ التغييرات" : "Save Changes"}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="crm-edit-profile-form"
+          dir={lang === "ar" ? "rtl" : "ltr"}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleEditSubmit();
+          }}
+        >
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1">
               <label className="text-xs font-bold text-muted-foreground">
@@ -1102,44 +1125,43 @@ function CustomerDrawer({
               {lang === "ar" ? "تم الحفظ بنجاح" : "Saved successfully"}
             </p>
           )}
+        </form>
+      </ResponsiveDialog>
 
-          <DialogFooter>
+      {/* ── Feature B: Link Property Modal ── */}
+      <ResponsiveDialog
+        open={showLinkModal}
+        onOpenChange={(open) => { if (!open) setShowLinkModal(false); }}
+        title={lang === "ar" ? "ربط عقار / Link Property" : "Link Property / ربط عقار"}
+        description={
+          lang === "ar"
+            ? "اختر عقاراً متاحاً وحدد نية العميل (شراء أو إيجار)"
+            : "Select an available property and set the client's intent (buy or rent)"
+        }
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
-              onClick={() => setShowEditModal(false)}
-              disabled={savingEdit}
+              onClick={() => setShowLinkModal(false)}
+              disabled={savingLink}
             >
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
             <Button
               style={{ display: "inline-flex" }}
               className="gap-2"
-              onClick={handleEditSubmit}
-              disabled={savingEdit}
+              onClick={handleConfirmLink}
+              disabled={!linkSelectedUnit || !linkIntent || savingLink}
             >
-              {savingEdit && <Loader2 className="h-4 w-4 animate-spin" />}
-              {lang === "ar" ? "حفظ التغييرات" : "Save Changes"}
+              {savingLink && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "ربط العقار" : "Link Property"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Feature B: Link Property Modal ── */}
-      <Dialog open={showLinkModal} onOpenChange={(open) => { if (!open) setShowLinkModal(false); }}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"} className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "ربط عقار / Link Property" : "Link Property / ربط عقار"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? "اختر عقاراً متاحاً وحدد نية العميل (شراء أو إيجار)"
-                : "Select an available property and set the client's intent (buy or rent)"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
+          </div>
+        }
+      >
+        <div dir={lang === "ar" ? "rtl" : "ltr"} className="space-y-4 py-2">
             {/* Search */}
             <div className="relative">
               <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1241,44 +1263,21 @@ function CustomerDrawer({
                 {linkError}
               </p>
             )}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              style={{ display: "inline-flex" }}
-              onClick={() => setShowLinkModal(false)}
-              disabled={savingLink}
-            >
-              {lang === "ar" ? "إلغاء" : "Cancel"}
-            </Button>
-            <Button
-              style={{ display: "inline-flex" }}
-              className="gap-2"
-              onClick={handleConfirmLink}
-              disabled={!linkSelectedUnit || !linkIntent || savingLink}
-            >
-              {savingLink && <Loader2 className="h-4 w-4 animate-spin" />}
-              {lang === "ar" ? "ربط العقار" : "Link Property"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+      </ResponsiveDialog>
 
       {/* ── Feature B: Drop Interest Confirm ── */}
-      <Dialog open={showDropConfirm} onOpenChange={(open) => { if (!open) setShowDropConfirm(false); }}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "إسقاط الاهتمام" : "Drop Interest"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? "هل تريد إسقاط هذا الاهتمام؟ / Drop this interest?"
-                : "Drop this interest? / هل تريد إسقاط هذا الاهتمام؟"}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showDropConfirm}
+        onOpenChange={(open) => { if (!open) setShowDropConfirm(false); }}
+        title={lang === "ar" ? "إسقاط الاهتمام" : "Drop Interest"}
+        description={
+          lang === "ar"
+            ? "هل تريد إسقاط هذا الاهتمام؟ / Drop this interest?"
+            : "Drop this interest? / هل تريد إسقاط هذا الاهتمام؟"
+        }
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
@@ -1297,27 +1296,55 @@ function CustomerDrawer({
               {droppingLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               {lang === "ar" ? "إسقاط" : "Drop"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        {null}
+      </ResponsiveDialog>
 
       {/* ── Feature B: Convert to Deal Modal ── */}
-      <Dialog open={showConvertDealModal} onOpenChange={(open) => { if (!open) setShowConvertDealModal(false); }}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تحويل لصفقة / Convert to Deal" : "Convert to Deal / تحويل لصفقة"}
-            </DialogTitle>
-            <DialogDescription>
-              {convertingInterest && (
-                <>
-                  {lang === "ar" ? "وحدة: " : "Unit: "}
-                  <strong>{convertingInterest.unit?.number}</strong>
-                  {convertingInterest.unit?.city ? ` — ${convertingInterest.unit.city}` : ""}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog
+        open={showConvertDealModal}
+        onOpenChange={(open) => { if (!open) setShowConvertDealModal(false); }}
+        title={lang === "ar" ? "تحويل لصفقة / Convert to Deal" : "Convert to Deal / تحويل لصفقة"}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="secondary"
+              style={{ display: "inline-flex" }}
+              onClick={() => setShowConvertDealModal(false)}
+              disabled={savingConvert}
+            >
+              {lang === "ar" ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              type="submit"
+              form="crm-convert-deal-form"
+              style={{ display: "inline-flex" }}
+              className="gap-2"
+              disabled={!convertAmount || !convertExpiry || savingConvert}
+            >
+              {savingConvert && <Loader2 className="h-4 w-4 animate-spin" />}
+              {lang === "ar" ? "إنشاء الصفقة" : "Create Deal"}
+            </Button>
+          </div>
+        }
+      >
+        <form
+          id="crm-convert-deal-form"
+          dir={lang === "ar" ? "rtl" : "ltr"}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleConvertInterest();
+          }}
+        >
+          {convertingInterest && (
+            <p className="text-sm text-muted-foreground mb-2">
+              {lang === "ar" ? "وحدة: " : "Unit: "}
+              <strong>{convertingInterest.unit?.number}</strong>
+              {convertingInterest.unit?.city ? ` — ${convertingInterest.unit.city}` : ""}
+            </p>
+          )}
 
           <div className="space-y-4 py-2">
             <div className="space-y-1">
@@ -1351,28 +1378,8 @@ function CustomerDrawer({
               </p>
             )}
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="secondary"
-              style={{ display: "inline-flex" }}
-              onClick={() => setShowConvertDealModal(false)}
-              disabled={savingConvert}
-            >
-              {lang === "ar" ? "إلغاء" : "Cancel"}
-            </Button>
-            <Button
-              style={{ display: "inline-flex" }}
-              className="gap-2"
-              onClick={handleConvertInterest}
-              disabled={!convertAmount || !convertExpiry || savingConvert}
-            >
-              {savingConvert && <Loader2 className="h-4 w-4 animate-spin" />}
-              {lang === "ar" ? "إنشاء الصفقة" : "Create Deal"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </form>
+      </ResponsiveDialog>
     </>
   );
 }
@@ -3007,39 +3014,17 @@ export default function CRMPage() {
       )}
 
       {/* ── Lost Reason Modal ── */}
-      <Dialog open={showLostModal} onOpenChange={(open) => { if (!open) setShowLostModal(false); }}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تحديد سبب الخسارة" : "Mark as Lost"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? `الرجاء تحديد سبب خسارة العميل "${lostTarget?.name}"`
-                : `Please select why "${lostTarget?.name}" was lost`}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2 py-2">
-            {LOST_REASONS.map((reason) => (
-              <button
-                key={reason.key}
-                type="button"
-                onClick={() => setLostReason(reason.key)}
-                className={cn(
-                  "w-full text-start px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
-                  lostReason === reason.key
-                    ? "border-red-400/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
-                    : "border-border bg-card text-foreground hover:bg-muted/30"
-                )}
-                style={{ display: "block" }}
-              >
-                {reason.label[lang]}
-              </button>
-            ))}
-          </div>
-
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showLostModal}
+        onOpenChange={(open) => { if (!open) setShowLostModal(false); }}
+        title={lang === "ar" ? "تحديد سبب الخسارة" : "Mark as Lost"}
+        description={
+          lang === "ar"
+            ? `الرجاء تحديد سبب خسارة العميل "${lostTarget?.name}"`
+            : `Please select why "${lostTarget?.name}" was lost`
+        }
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
@@ -3058,25 +3043,41 @@ export default function CRMPage() {
               {savingLost && <Loader2 className="h-4 w-4 animate-spin" />}
               {lang === "ar" ? "تأكيد الخسارة" : "Confirm Lost"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <div dir={lang === "ar" ? "rtl" : "ltr"} className="space-y-2 py-2">
+            {LOST_REASONS.map((reason) => (
+              <button
+                key={reason.key}
+                type="button"
+                onClick={() => setLostReason(reason.key)}
+                className={cn(
+                  "w-full text-start px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
+                  lostReason === reason.key
+                    ? "border-red-400/50 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                    : "border-border bg-card text-foreground hover:bg-muted/30"
+                )}
+                style={{ display: "block" }}
+              >
+                {reason.label[lang]}
+              </button>
+            ))}
+        </div>
+      </ResponsiveDialog>
 
       {/* ── Delete Dialog ── */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? `هل أنت متأكد من حذف "${deleteTarget?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
-                : `Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-            </DialogDescription>
-          </DialogHeader>
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
+        description={
+          lang === "ar"
+            ? `هل أنت متأكد من حذف "${deleteTarget?.name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`
+        }
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
@@ -3095,9 +3096,11 @@ export default function CRMPage() {
               {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               {lang === "ar" ? "حذف" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      </ResponsiveDialog>
     </div>
     </div>
 

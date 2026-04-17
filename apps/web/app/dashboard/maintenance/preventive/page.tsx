@@ -13,9 +13,8 @@ import {
   Pencil,
   Trash2,
   Zap,
-  X,
 } from "lucide-react";
-import { Button, Badge, SARAmount, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui";
+import { Button, Badge, SARAmount, ResponsiveDialog } from "@repo/ui";
 import {
   getPreventivePlans,
   createPreventivePlan,
@@ -355,115 +354,122 @@ export default function PreventiveMaintenancePage() {
         </div>
       )}
 
-      {/* Create/Edit Modal — using shared Dialog */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingId
-                ? (lang === "ar" ? "تعديل خطة وقائية" : "Edit Plan")
-                : (lang === "ar" ? "خطة وقائية جديدة" : "New Preventive Plan")}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "العنوان *" : "Title *"}</label>
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مثال: فحص التكييف الشهري" : "e.g. Monthly HVAC Inspection"} />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوصف" : "Description"}</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${inputClass} h-16 py-2`} />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التصنيف" : "Category"}</label>
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputClass}>
-                    {Object.entries(categoryLabels).map(([k, v]) => (
-                      <option key={k} value={k}>{v[lang]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الأولوية" : "Priority"}</label>
-                  <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className={inputClass}>
-                    {Object.entries(priorityLabels).map(([k, v]) => (
-                      <option key={k} value={k}>{v[lang]}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التكرار" : "Recurrence"}</label>
-                  <select value={form.recurrenceType} onChange={(e) => setForm({ ...form, recurrenceType: e.target.value })} className={inputClass}>
-                    {Object.entries(recurrenceLabels).map(([k, v]) => (
-                      <option key={k} value={k}>{v[lang]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "فترة التكرار" : "Interval"}</label>
-                  <input type="number" min="1" value={form.recurrenceInterval} onChange={(e) => setForm({ ...form, recurrenceInterval: e.target.value })} className={inputClass} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تاريخ البدء *" : "Start Date *"}</label>
-                  <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تاريخ الانتهاء" : "End Date"}</label>
-                  <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</label>
-                <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
-                  <option value="">{lang === "ar" ? "— الكل —" : "— All —"}</option>
-                  {units.map((u: any) => (
-                    <option key={u.id} value={u.id}>{u.number}{u.buildingName ? ` — ${u.buildingName}` : ""}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تعيين إلى" : "Default Assignee"}</label>
-                <select value={form.assignToId} onChange={(e) => setForm({ ...form, assignToId: e.target.value })} className={inputClass}>
-                  <option value="">{lang === "ar" ? "— بدون —" : "— None —"}</option>
-                  {users.map((u: any) => (
-                    <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</label>
-                  <input type="number" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} className={inputClass} placeholder="0.00" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الساعات التقديرية" : "Est. Hours"}</label>
-                  <input type="number" value={form.estimatedHours} onChange={(e) => setForm({ ...form, estimatedHours: e.target.value })} className={inputClass} placeholder="0" />
-                </div>
-              </div>
-            </div>
-
-          <DialogFooter>
+      {/* Create/Edit Modal — using shared ResponsiveDialog */}
+      <ResponsiveDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        title={
+          editingId
+            ? (lang === "ar" ? "تعديل خطة وقائية" : "Edit Plan")
+            : (lang === "ar" ? "خطة وقائية جديدة" : "New Preventive Plan")
+        }
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving}>
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving || !form.title || !form.startDate} loading={saving}>
+            <Button type="submit" form="preventive-plan-form" size="sm" disabled={saving || !form.title || !form.startDate} loading={saving}>
               {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <form
+          id="preventive-plan-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+          className="space-y-4 py-4"
+        >
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "العنوان *" : "Title *"}</label>
+            <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={inputClass} placeholder={lang === "ar" ? "مثال: فحص التكييف الشهري" : "e.g. Monthly HVAC Inspection"} />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوصف" : "Description"}</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${inputClass} h-16 py-2`} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التصنيف" : "Category"}</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputClass}>
+                {Object.entries(categoryLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v[lang]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الأولوية" : "Priority"}</label>
+              <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className={inputClass}>
+                {Object.entries(priorityLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v[lang]}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التكرار" : "Recurrence"}</label>
+              <select value={form.recurrenceType} onChange={(e) => setForm({ ...form, recurrenceType: e.target.value })} className={inputClass}>
+                {Object.entries(recurrenceLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v[lang]}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "فترة التكرار" : "Interval"}</label>
+              <input type="number" min="1" value={form.recurrenceInterval} onChange={(e) => setForm({ ...form, recurrenceInterval: e.target.value })} className={inputClass} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تاريخ البدء *" : "Start Date *"}</label>
+              <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className={inputClass} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تاريخ الانتهاء" : "End Date"}</label>
+              <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className={inputClass} />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الوحدة" : "Unit"}</label>
+            <select value={form.unitId} onChange={(e) => setForm({ ...form, unitId: e.target.value })} className={inputClass}>
+              <option value="">{lang === "ar" ? "— الكل —" : "— All —"}</option>
+              {units.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.number}{u.buildingName ? ` — ${u.buildingName}` : ""}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "تعيين إلى" : "Default Assignee"}</label>
+            <select value={form.assignToId} onChange={(e) => setForm({ ...form, assignToId: e.target.value })} className={inputClass}>
+              <option value="">{lang === "ar" ? "— بدون —" : "— None —"}</option>
+              {users.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}</label>
+              <input type="number" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} className={inputClass} placeholder="0.00" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-muted-foreground">{lang === "ar" ? "الساعات التقديرية" : "Est. Hours"}</label>
+              <input type="number" value={form.estimatedHours} onChange={(e) => setForm({ ...form, estimatedHours: e.target.value })} className={inputClass} placeholder="0" />
+            </div>
+          </div>
+        </form>
+      </ResponsiveDialog>
     </div>
   );
 }

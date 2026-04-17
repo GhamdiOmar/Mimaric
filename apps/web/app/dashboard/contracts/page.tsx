@@ -22,11 +22,7 @@ import {
   TableCell,
   PageIntro,
   KPICard,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  ResponsiveDialog,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -508,257 +504,278 @@ export default function ContractsPage() {
       </Card>
 
       {/* New Sale Contract Modal */}
-      <Dialog open={saleModalOpen} onOpenChange={setSaleModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "عقد بيع جديد" : "New Sale Contract"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Customer */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "العميل" : "Customer"} *
-              </label>
-              <div className="relative">
-                <Input
-                  value={saleForm.customerName || saleForm.customerSearch}
-                  onChange={(e) => {
-                    setSaleForm((f) => ({ ...f, customerSearch: e.target.value, customerId: "", customerName: "" }));
-                  }}
-                  placeholder={lang === "ar" ? "ابحث عن العميل..." : "Search customer..."}
-                />
-                {saleForm.customerSearch && !saleForm.customerId && saleCustomerOptions.length > 0 && (
-                  <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {saleCustomerOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setSaleForm((f) => ({ ...f, customerId: c.id, customerName: c.name, customerSearch: c.name }))}
-                        className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
-                      >
-                        {c.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Unit */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "الوحدة" : "Unit"} *
-              </label>
-              <div className="relative">
-                <Input
-                  value={saleForm.unitNumber || saleForm.unitSearch}
-                  onChange={(e) => {
-                    setSaleForm((f) => ({ ...f, unitSearch: e.target.value, unitId: "", unitNumber: "" }));
-                  }}
-                  placeholder={lang === "ar" ? "ابحث عن وحدة..." : "Search unit..."}
-                />
-                {saleForm.unitSearch && !saleForm.unitId && saleUnitOptions.length > 0 && (
-                  <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {saleUnitOptions.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => setSaleForm((f) => ({ ...f, unitId: u.id, unitNumber: u.number, unitSearch: u.number }))}
-                        className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
-                      >
-                        {lang === "ar" ? "وحدة" : "Unit"} {u.number}
-                        <span className="ms-2 text-xs text-gray-400">{u.status}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Amount */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "مبلغ العقد (ريال)" : "Contract Amount (SAR)"} *
-              </label>
-              <Input
-                type="number"
-                min={0}
-                value={saleForm.amount}
-                onChange={(e) => setSaleForm((f) => ({ ...f, amount: e.target.value }))}
-                placeholder="0.00"
-              />
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "ملاحظات" : "Notes"}
-              </label>
-              <textarea
-                value={saleForm.notes}
-                onChange={(e) => setSaleForm((f) => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
+      <ResponsiveDialog
+        open={saleModalOpen}
+        onOpenChange={setSaleModalOpen}
+        title={lang === "ar" ? "عقد بيع جديد" : "New Sale Contract"}
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setSaleModalOpen(false)} style={{ display: "inline-flex" }}>
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
-            <Button onClick={handleCreateSale} disabled={submitting} style={{ display: "inline-flex" }} className="gap-2">
+            <Button type="submit" form="sale-contract-form" disabled={submitting} style={{ display: "inline-flex" }} className="gap-2">
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {lang === "ar" ? "إنشاء العقد" : "Create Contract"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* New Lease Contract Modal */}
-      <Dialog open={leaseModalOpen} onOpenChange={setLeaseModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "عقد إيجار جديد" : "New Lease Contract"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Tenant */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "المستأجر" : "Tenant/Customer"} *
-              </label>
-              <div className="relative">
-                <Input
-                  value={leaseForm.customerName || leaseForm.customerSearch}
-                  onChange={(e) => {
-                    setLeaseForm((f) => ({ ...f, customerSearch: e.target.value, customerId: "", customerName: "" }));
-                  }}
-                  placeholder={lang === "ar" ? "ابحث عن المستأجر..." : "Search tenant..."}
-                />
-                {leaseForm.customerSearch && !leaseForm.customerId && leaseCustomerOptions.length > 0 && (
-                  <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {leaseCustomerOptions.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setLeaseForm((f) => ({ ...f, customerId: c.id, customerName: c.name, customerSearch: c.name }))}
-                        className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
-                      >
-                        {c.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Unit */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "الوحدة" : "Unit"} *
-              </label>
-              <div className="relative">
-                <Input
-                  value={leaseForm.unitNumber || leaseForm.unitSearch}
-                  onChange={(e) => {
-                    setLeaseForm((f) => ({ ...f, unitSearch: e.target.value, unitId: "", unitNumber: "" }));
-                  }}
-                  placeholder={lang === "ar" ? "ابحث عن وحدة متاحة..." : "Search available unit..."}
-                />
-                {leaseForm.unitSearch && !leaseForm.unitId && leaseUnitOptions.length > 0 && (
-                  <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {leaseForm.unitSearch && !leaseForm.unitId && leaseUnitOptions.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => setLeaseForm((f) => ({ ...f, unitId: u.id, unitNumber: u.number, unitSearch: u.number }))}
-                        className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
-                      >
-                        {lang === "ar" ? "وحدة" : "Unit"} {u.number}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "تاريخ البداية" : "Start Date"} *
-                </label>
-                <Input
-                  type="date"
-                  value={leaseForm.startDate}
-                  onChange={(e) => setLeaseForm((f) => ({ ...f, startDate: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "تاريخ النهاية" : "End Date"} *
-                </label>
-                <Input
-                  type="date"
-                  value={leaseForm.endDate}
-                  min={leaseForm.startDate}
-                  onChange={(e) => setLeaseForm((f) => ({ ...f, endDate: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            {/* Amount */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "إجمالي الإيجار (ريال)" : "Total Amount (SAR)"} *
-              </label>
+          </div>
+        }
+      >
+        <form
+          id="sale-contract-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateSale();
+          }}
+          className="space-y-4 py-2"
+        >
+          {/* Customer */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "العميل" : "Customer"} *
+            </label>
+            <div className="relative">
               <Input
-                type="number"
-                min={0}
-                value={leaseForm.amount}
-                onChange={(e) => setLeaseForm((f) => ({ ...f, amount: e.target.value }))}
-                placeholder="0.00"
+                value={saleForm.customerName || saleForm.customerSearch}
+                onChange={(e) => {
+                  setSaleForm((f) => ({ ...f, customerSearch: e.target.value, customerId: "", customerName: "" }));
+                }}
+                placeholder={lang === "ar" ? "ابحث عن العميل..." : "Search customer..."}
               />
-            </div>
-
-            {/* Payment Frequency */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "دورية الدفع" : "Payment Frequency"}
-              </label>
-              <select
-                value={leaseForm.paymentFrequency}
-                onChange={(e) => setLeaseForm((f) => ({ ...f, paymentFrequency: e.target.value }))}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="MONTHLY">{lang === "ar" ? "شهري" : "Monthly"}</option>
-                <option value="QUARTERLY">{lang === "ar" ? "ربع سنوي" : "Quarterly"}</option>
-                <option value="SEMI_ANNUAL">{lang === "ar" ? "نصف سنوي" : "Semi-Annual"}</option>
-                <option value="ANNUAL">{lang === "ar" ? "سنوي" : "Annual"}</option>
-              </select>
-            </div>
-
-            {/* Notes */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-gray-700">
-                {lang === "ar" ? "ملاحظات" : "Notes"}
-              </label>
-              <textarea
-                value={leaseForm.notes}
-                onChange={(e) => setLeaseForm((f) => ({ ...f, notes: e.target.value }))}
-                rows={3}
-                placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
+              {saleForm.customerSearch && !saleForm.customerId && saleCustomerOptions.length > 0 && (
+                <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {saleCustomerOptions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setSaleForm((f) => ({ ...f, customerId: c.id, customerName: c.name, customerSearch: c.name }))}
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-          <DialogFooter className="gap-2">
+
+          {/* Unit */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "الوحدة" : "Unit"} *
+            </label>
+            <div className="relative">
+              <Input
+                value={saleForm.unitNumber || saleForm.unitSearch}
+                onChange={(e) => {
+                  setSaleForm((f) => ({ ...f, unitSearch: e.target.value, unitId: "", unitNumber: "" }));
+                }}
+                placeholder={lang === "ar" ? "ابحث عن وحدة..." : "Search unit..."}
+              />
+              {saleForm.unitSearch && !saleForm.unitId && saleUnitOptions.length > 0 && (
+                <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {saleUnitOptions.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setSaleForm((f) => ({ ...f, unitId: u.id, unitNumber: u.number, unitSearch: u.number }))}
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      {lang === "ar" ? "وحدة" : "Unit"} {u.number}
+                      <span className="ms-2 text-xs text-gray-400">{u.status}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "مبلغ العقد (ريال)" : "Contract Amount (SAR)"} *
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={saleForm.amount}
+              onChange={(e) => setSaleForm((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "ملاحظات" : "Notes"}
+            </label>
+            <textarea
+              value={saleForm.notes}
+              onChange={(e) => setSaleForm((f) => ({ ...f, notes: e.target.value }))}
+              rows={3}
+              placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+        </form>
+      </ResponsiveDialog>
+
+      {/* New Lease Contract Modal */}
+      <ResponsiveDialog
+        open={leaseModalOpen}
+        onOpenChange={setLeaseModalOpen}
+        title={lang === "ar" ? "عقد إيجار جديد" : "New Lease Contract"}
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => setLeaseModalOpen(false)} style={{ display: "inline-flex" }}>
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
-            <Button onClick={handleCreateLease} disabled={submitting} style={{ display: "inline-flex" }} className="gap-2">
+            <Button type="submit" form="lease-contract-form" disabled={submitting} style={{ display: "inline-flex" }} className="gap-2">
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {lang === "ar" ? "إنشاء العقد" : "Create Contract"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <form
+          id="lease-contract-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateLease();
+          }}
+          className="space-y-4 py-2"
+        >
+          {/* Tenant */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "المستأجر" : "Tenant/Customer"} *
+            </label>
+            <div className="relative">
+              <Input
+                value={leaseForm.customerName || leaseForm.customerSearch}
+                onChange={(e) => {
+                  setLeaseForm((f) => ({ ...f, customerSearch: e.target.value, customerId: "", customerName: "" }));
+                }}
+                placeholder={lang === "ar" ? "ابحث عن المستأجر..." : "Search tenant..."}
+              />
+              {leaseForm.customerSearch && !leaseForm.customerId && leaseCustomerOptions.length > 0 && (
+                <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {leaseCustomerOptions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setLeaseForm((f) => ({ ...f, customerId: c.id, customerName: c.name, customerSearch: c.name }))}
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Unit */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "الوحدة" : "Unit"} *
+            </label>
+            <div className="relative">
+              <Input
+                value={leaseForm.unitNumber || leaseForm.unitSearch}
+                onChange={(e) => {
+                  setLeaseForm((f) => ({ ...f, unitSearch: e.target.value, unitId: "", unitNumber: "" }));
+                }}
+                placeholder={lang === "ar" ? "ابحث عن وحدة متاحة..." : "Search available unit..."}
+              />
+              {leaseForm.unitSearch && !leaseForm.unitId && leaseUnitOptions.length > 0 && (
+                <div className="absolute z-10 top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  {leaseForm.unitSearch && !leaseForm.unitId && leaseUnitOptions.map((u) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => setLeaseForm((f) => ({ ...f, unitId: u.id, unitNumber: u.number, unitSearch: u.number }))}
+                      className="w-full text-start px-3 py-2 text-sm hover:bg-gray-50"
+                    >
+                      {lang === "ar" ? "وحدة" : "Unit"} {u.number}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "تاريخ البداية" : "Start Date"} *
+              </label>
+              <Input
+                type="date"
+                value={leaseForm.startDate}
+                onChange={(e) => setLeaseForm((f) => ({ ...f, startDate: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "تاريخ النهاية" : "End Date"} *
+              </label>
+              <Input
+                type="date"
+                value={leaseForm.endDate}
+                min={leaseForm.startDate}
+                onChange={(e) => setLeaseForm((f) => ({ ...f, endDate: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "إجمالي الإيجار (ريال)" : "Total Amount (SAR)"} *
+            </label>
+            <Input
+              type="number"
+              min={0}
+              value={leaseForm.amount}
+              onChange={(e) => setLeaseForm((f) => ({ ...f, amount: e.target.value }))}
+              placeholder="0.00"
+            />
+          </div>
+
+          {/* Payment Frequency */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "دورية الدفع" : "Payment Frequency"}
+            </label>
+            <select
+              value={leaseForm.paymentFrequency}
+              onChange={(e) => setLeaseForm((f) => ({ ...f, paymentFrequency: e.target.value }))}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="MONTHLY">{lang === "ar" ? "شهري" : "Monthly"}</option>
+              <option value="QUARTERLY">{lang === "ar" ? "ربع سنوي" : "Quarterly"}</option>
+              <option value="SEMI_ANNUAL">{lang === "ar" ? "نصف سنوي" : "Semi-Annual"}</option>
+              <option value="ANNUAL">{lang === "ar" ? "سنوي" : "Annual"}</option>
+            </select>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">
+              {lang === "ar" ? "ملاحظات" : "Notes"}
+            </label>
+            <textarea
+              value={leaseForm.notes}
+              onChange={(e) => setLeaseForm((f) => ({ ...f, notes: e.target.value }))}
+              rows={3}
+              placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+        </form>
+      </ResponsiveDialog>
     </div>
   );
 }

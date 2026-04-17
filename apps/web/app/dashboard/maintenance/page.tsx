@@ -24,11 +24,7 @@ import {
 import { exportToExcel } from "../../../lib/export";
 import {
   Button,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  ResponsiveDialog,
   Card,
   KPICard,
   Table,
@@ -830,157 +826,24 @@ export default function MaintenancePage() {
       </Card>
 
       {/* Create/Edit Modal */}
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingId
-                ? (lang === "ar" ? "تعديل طلب الصيانة" : "Edit Request")
-                : (lang === "ar" ? "طلب صيانة جديد" : "New Request")}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar" ? "العنوان *" : "Title *"}
-              </label>
-              <input
-                value={form.title}
-                onChange={(e) => updateField("title", e.target.value)}
-                className={`${inputClass} ${formErrors.title ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
-                placeholder={lang === "ar" ? "مثال: تسريب ماء في الحمام" : "e.g. Water leak in bathroom"}
-              />
-              {formErrors.title && <p className="text-xs text-red-500">{formErrors.title}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar" ? "الوصف *" : "Description *"}
-              </label>
-              <textarea
-                value={form.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                className={`${inputClass} h-20 py-2 ${formErrors.description ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
-              />
-              {formErrors.description && <p className="text-xs text-red-500">{formErrors.description}</p>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "التصنيف *" : "Category *"}
-                </label>
-                <select
-                  value={form.category}
-                  onChange={(e) => updateField("category", e.target.value)}
-                  className={`${inputClass} ${formErrors.category ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
-                >
-                  {Object.entries(categoryLabels).map(([k, v]) => (
-                    <option key={k} value={k}>{v[lang]}</option>
-                  ))}
-                </select>
-                {formErrors.category && <p className="text-xs text-red-500">{formErrors.category}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "الأولوية *" : "Priority *"}
-                </label>
-                <select
-                  value={form.priority}
-                  onChange={(e) => updateField("priority", e.target.value)}
-                  className={`${inputClass} ${formErrors.priority ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
-                >
-                  {Object.entries(priorityLabels).map(([k, v]) => (
-                    <option key={k} value={k}>{v[lang]}</option>
-                  ))}
-                </select>
-                {formErrors.priority && <p className="text-xs text-red-500">{formErrors.priority}</p>}
-              </div>
-            </div>
-
-            {!editingId && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "الوحدة *" : "Unit *"}
-                </label>
-                <select
-                  value={form.unitId}
-                  onChange={(e) => updateField("unitId", e.target.value)}
-                  className={`${inputClass} ${formErrors.unitId ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
-                >
-                  <option value="">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</option>
-                  {units.map((u: any) => (
-                    <option key={u.id} value={u.id}>
-                      {u.number} — {u.building?.name} ({u.building?.project?.name})
-                    </option>
-                  ))}
-                </select>
-                {formErrors.unitId && <p className="text-xs text-red-500">{formErrors.unitId}</p>}
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar" ? "تعيين إلى" : "Assign To"}
-              </label>
-              <select
-                value={form.assignedToId}
-                onChange={(e) => updateField("assignedToId", e.target.value)}
-                className={inputClass}
-              >
-                <option value="">{lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}</option>
-                {users.map((u: any) => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "تاريخ مجدول" : "Scheduled Date"}
-                </label>
-                <input
-                  type="date"
-                  value={form.scheduledDate}
-                  onChange={(e) => updateField("scheduledDate", e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground">
-                  {lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}
-                </label>
-                <input
-                  type="number"
-                  value={form.estimatedCost}
-                  onChange={(e) => updateField("estimatedCost", e.target.value)}
-                  className={inputClass}
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-muted-foreground">
-                {lang === "ar" ? "ملاحظات" : "Notes"}
-              </label>
-              <textarea
-                value={form.notes}
-                onChange={(e) => updateField("notes", e.target.value)}
-                className={`${inputClass} h-16 py-2`}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        title={
+          editingId
+            ? (lang === "ar" ? "تعديل طلب الصيانة" : "Edit Request")
+            : (lang === "ar" ? "طلب صيانة جديد" : "New Request")
+        }
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="secondary" size="sm" onClick={() => setShowModal(false)} disabled={saving} style={{ display: "inline-flex" }}>
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
             <Button
+              type="submit"
+              form="maintenance-request-form"
               size="sm"
-              onClick={handleSave}
               disabled={saving}
               className="gap-2"
               style={{ display: "inline-flex" }}
@@ -988,9 +851,150 @@ export default function MaintenancePage() {
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               {editingId ? (lang === "ar" ? "تحديث" : "Update") : (lang === "ar" ? "إنشاء" : "Create")}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <form
+          id="maintenance-request-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+          className="space-y-4 py-4"
+        >
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "العنوان *" : "Title *"}
+            </label>
+            <input
+              value={form.title}
+              onChange={(e) => updateField("title", e.target.value)}
+              className={`${inputClass} ${formErrors.title ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
+              placeholder={lang === "ar" ? "مثال: تسريب ماء في الحمام" : "e.g. Water leak in bathroom"}
+            />
+            {formErrors.title && <p className="text-xs text-red-500">{formErrors.title}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "الوصف *" : "Description *"}
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => updateField("description", e.target.value)}
+              className={`${inputClass} h-20 py-2 ${formErrors.description ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
+            />
+            {formErrors.description && <p className="text-xs text-red-500">{formErrors.description}</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "التصنيف *" : "Category *"}
+              </label>
+              <select
+                value={form.category}
+                onChange={(e) => updateField("category", e.target.value)}
+                className={`${inputClass} ${formErrors.category ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
+              >
+                {Object.entries(categoryLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v[lang]}</option>
+                ))}
+              </select>
+              {formErrors.category && <p className="text-xs text-red-500">{formErrors.category}</p>}
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "الأولوية *" : "Priority *"}
+              </label>
+              <select
+                value={form.priority}
+                onChange={(e) => updateField("priority", e.target.value)}
+                className={`${inputClass} ${formErrors.priority ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
+              >
+                {Object.entries(priorityLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v[lang]}</option>
+                ))}
+              </select>
+              {formErrors.priority && <p className="text-xs text-red-500">{formErrors.priority}</p>}
+            </div>
+          </div>
+
+          {!editingId && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "الوحدة *" : "Unit *"}
+              </label>
+              <select
+                value={form.unitId}
+                onChange={(e) => updateField("unitId", e.target.value)}
+                className={`${inputClass} ${formErrors.unitId ? "border-red-500 focus-visible:ring-red-500/30" : ""}`}
+              >
+                <option value="">{lang === "ar" ? "اختر الوحدة" : "Select Unit"}</option>
+                {units.map((u: any) => (
+                  <option key={u.id} value={u.id}>
+                    {u.number} — {u.building?.name} ({u.building?.project?.name})
+                  </option>
+                ))}
+              </select>
+              {formErrors.unitId && <p className="text-xs text-red-500">{formErrors.unitId}</p>}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "تعيين إلى" : "Assign To"}
+            </label>
+            <select
+              value={form.assignedToId}
+              onChange={(e) => updateField("assignedToId", e.target.value)}
+              className={inputClass}
+            >
+              <option value="">{lang === "ar" ? "— بدون تعيين —" : "— Unassigned —"}</option>
+              {users.map((u: any) => (
+                <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "تاريخ مجدول" : "Scheduled Date"}
+              </label>
+              <input
+                type="date"
+                value={form.scheduledDate}
+                onChange={(e) => updateField("scheduledDate", e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-muted-foreground">
+                {lang === "ar" ? "التكلفة التقديرية" : "Est. Cost"}
+              </label>
+              <input
+                type="number"
+                value={form.estimatedCost}
+                onChange={(e) => updateField("estimatedCost", e.target.value)}
+                className={inputClass}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-muted-foreground">
+              {lang === "ar" ? "ملاحظات" : "Notes"}
+            </label>
+            <textarea
+              value={form.notes}
+              onChange={(e) => updateField("notes", e.target.value)}
+              className={`${inputClass} h-16 py-2`}
+            />
+          </div>
+        </form>
+      </ResponsiveDialog>
     </div>
     </>
   );

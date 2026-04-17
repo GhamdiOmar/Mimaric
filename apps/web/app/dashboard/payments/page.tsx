@@ -21,11 +21,7 @@ import {
   TableCell,
   PageIntro,
   KPICard,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  ResponsiveDialog,
 } from "@repo/ui";
 import { useLanguage } from "../../../components/LanguageProvider";
 import { usePermissions } from "../../../hooks/usePermissions";
@@ -393,93 +389,13 @@ export default function PaymentsPage() {
       </Card>
 
       {/* Record Payment Modal */}
-      <Dialog open={!!paymentTarget} onOpenChange={(open) => !open && setPaymentTarget(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{lang === "ar" ? "تسجيل دفعة" : "Record Payment"}</DialogTitle>
-          </DialogHeader>
-          {paymentTarget && (
-            <div className="space-y-4 py-2">
-              {/* Summary */}
-              <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
-                <p className="text-gray-500">{lang === "ar" ? "العميل" : "Client"}: <span className="text-gray-900 font-medium">{paymentTarget.clientName}</span></p>
-                <p className="text-gray-500">{lang === "ar" ? "العقار" : "Property"}: <span className="text-gray-900 font-medium">{paymentTarget.propertyLabel}</span></p>
-                <p className="text-gray-500">{lang === "ar" ? "المبلغ المستحق" : "Due Amount"}: <span className="text-gray-900 font-medium">{SAR(paymentTarget.amount)}</span></p>
-              </div>
-
-              {/* Amount */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "المبلغ المدفوع (ريال)" : "Payment Amount (SAR)"} *
-                </label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={paymentTarget.amount}
-                  value={payForm.amount}
-                  onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))}
-                  placeholder="0.00"
-                />
-              </div>
-
-              {/* Payment Date */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "تاريخ الدفع" : "Payment Date"} *
-                </label>
-                <Input
-                  type="date"
-                  value={payForm.paymentDate}
-                  onChange={(e) => setPayForm((f) => ({ ...f, paymentDate: e.target.value }))}
-                />
-              </div>
-
-              {/* Payment Method */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "طريقة الدفع" : "Payment Method"} *
-                </label>
-                <select
-                  value={payForm.paymentMethod}
-                  onChange={(e) => setPayForm((f) => ({ ...f, paymentMethod: e.target.value }))}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-                >
-                  {PAYMENT_METHODS.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {lang === "ar" ? m.ar : m.en}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Reference Number */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "رقم المرجع" : "Reference Number"}
-                </label>
-                <Input
-                  value={payForm.referenceNumber}
-                  onChange={(e) => setPayForm((f) => ({ ...f, referenceNumber: e.target.value }))}
-                  placeholder={lang === "ar" ? "رقم التحويل أو الشيك..." : "Transfer or check number..."}
-                />
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">
-                  {lang === "ar" ? "ملاحظات" : "Notes"}
-                </label>
-                <textarea
-                  value={payForm.notes}
-                  onChange={(e) => setPayForm((f) => ({ ...f, notes: e.target.value }))}
-                  rows={2}
-                  placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-            </div>
-          )}
-          <DialogFooter className="gap-2">
+      <ResponsiveDialog
+        open={!!paymentTarget}
+        onOpenChange={(open) => !open && setPaymentTarget(null)}
+        title={lang === "ar" ? "تسجيل دفعة" : "Record Payment"}
+        contentClassName="sm:max-w-[640px]"
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="outline"
               onClick={() => setPaymentTarget(null)}
@@ -488,7 +404,8 @@ export default function PaymentsPage() {
               {lang === "ar" ? "إلغاء" : "Cancel"}
             </Button>
             <Button
-              onClick={handleRecordPayment}
+              type="submit"
+              form="record-payment-form"
               disabled={submitting}
               style={{ display: "inline-flex" }}
               className="gap-2"
@@ -496,9 +413,98 @@ export default function PaymentsPage() {
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
               {lang === "ar" ? "تسجيل الدفعة" : "Record Payment"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        {paymentTarget && (
+          <form
+            id="record-payment-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleRecordPayment();
+            }}
+            className="space-y-4 py-2"
+          >
+            {/* Summary */}
+            <div className="bg-gray-50 rounded-lg px-4 py-3 text-sm space-y-1">
+              <p className="text-gray-500">{lang === "ar" ? "العميل" : "Client"}: <span className="text-gray-900 font-medium">{paymentTarget.clientName}</span></p>
+              <p className="text-gray-500">{lang === "ar" ? "العقار" : "Property"}: <span className="text-gray-900 font-medium">{paymentTarget.propertyLabel}</span></p>
+              <p className="text-gray-500">{lang === "ar" ? "المبلغ المستحق" : "Due Amount"}: <span className="text-gray-900 font-medium">{SAR(paymentTarget.amount)}</span></p>
+            </div>
+
+            {/* Amount */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "المبلغ المدفوع (ريال)" : "Payment Amount (SAR)"} *
+              </label>
+              <Input
+                type="number"
+                min={0}
+                max={paymentTarget.amount}
+                value={payForm.amount}
+                onChange={(e) => setPayForm((f) => ({ ...f, amount: e.target.value }))}
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Payment Date */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "تاريخ الدفع" : "Payment Date"} *
+              </label>
+              <Input
+                type="date"
+                value={payForm.paymentDate}
+                onChange={(e) => setPayForm((f) => ({ ...f, paymentDate: e.target.value }))}
+              />
+            </div>
+
+            {/* Payment Method */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "طريقة الدفع" : "Payment Method"} *
+              </label>
+              <select
+                value={payForm.paymentMethod}
+                onChange={(e) => setPayForm((f) => ({ ...f, paymentMethod: e.target.value }))}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {lang === "ar" ? m.ar : m.en}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Reference Number */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "رقم المرجع" : "Reference Number"}
+              </label>
+              <Input
+                value={payForm.referenceNumber}
+                onChange={(e) => setPayForm((f) => ({ ...f, referenceNumber: e.target.value }))}
+                placeholder={lang === "ar" ? "رقم التحويل أو الشيك..." : "Transfer or check number..."}
+              />
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">
+                {lang === "ar" ? "ملاحظات" : "Notes"}
+              </label>
+              <textarea
+                value={payForm.notes}
+                onChange={(e) => setPayForm((f) => ({ ...f, notes: e.target.value }))}
+                rows={2}
+                placeholder={lang === "ar" ? "ملاحظات اختيارية..." : "Optional notes..."}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+          </form>
+        )}
+      </ResponsiveDialog>
     </div>
   );
 }

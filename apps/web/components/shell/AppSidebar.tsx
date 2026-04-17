@@ -95,8 +95,8 @@ export function AppSidebar({ isCollapsed, setIsCollapsed, mobileOpen, setMobileO
           "md:sticky md:top-0 md:h-screen",
           isCollapsed ? "md:w-[64px]" : "md:w-[240px]",
           mobileOpen
-            ? "end-0 w-[260px] translate-x-0 md:end-auto"
-            : "end-0 w-[260px] md:translate-x-0 md:end-auto"
+            ? "end-0 w-[min(320px,88vw)] translate-x-0 md:end-auto md:w-auto"
+            : "end-0 w-[min(320px,88vw)] md:translate-x-0 md:end-auto md:w-auto"
         )}
         aria-label={lang === "ar" ? "الشريط الجانبي" : "Sidebar"}
       >

@@ -30,12 +30,7 @@ import {
   KPICard,
   SARAmount,
   StatusBadge,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  ResponsiveDialog,
 } from "@repo/ui";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -120,246 +115,225 @@ function PropertyDrawer({
   const statusCfg = getStatusCfg(unit.status);
   const typeLbl = unitTypeLabels[unit.type] ?? { ar: unit.type, en: unit.type };
 
+  const title = `${lang === "ar" ? "وحدة" : "Unit"} ${unit.number}`;
+  const description = [
+    unit.buildingName || unit.building?.name || "—",
+    unit.city,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <>
-      <div
-        className="fixed inset-0 z-[90] bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
-        onClick={onClose}
-      />
-      <div
-        className={cn(
-          "fixed top-0 bottom-0 z-[100] w-full max-w-md bg-card border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300",
-          lang === "ar" ? "left-0 border-e" : "right-0 border-s"
-        )}
-        dir={lang === "ar" ? "rtl" : "ltr"}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-foreground leading-none">
-                {lang === "ar" ? "وحدة" : "Unit"} {unit.number}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {unit.buildingName || unit.building?.name || "—"}
-                {unit.city ? ` · ${unit.city}` : ""}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="h-8 w-8 rounded-lg border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Status + Type */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border",
-                statusCfg.color
-              )}
-            >
-              <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dot)} />
-              {statusCfg.label[lang]}
-            </span>
-            <span className="text-xs text-muted-foreground border border-border rounded-full px-2.5 py-1 font-medium">
-              {typeLbl[lang]}
-            </span>
-          </div>
-
-          {/* Core specs */}
-          <div className="grid grid-cols-2 gap-3">
-            {unit.area && (
-              <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
-                <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
-                  <Maximize2 className="h-3 w-3" />
-                  {lang === "ar" ? "المساحة" : "Area"}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {unit.area} {lang === "ar" ? "م²" : "m²"}
-                </p>
-              </div>
-            )}
-            {unit.floor != null && (
-              <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
-                <p className="text-[10px] text-muted-foreground mb-0.5">
-                  {lang === "ar" ? "الطابق" : "Floor"}
-                </p>
-                <p className="text-sm font-bold text-foreground">{unit.floor}</p>
-              </div>
-            )}
-            {unit.bedrooms != null && (
-              <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
-                <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
-                  <BedDouble className="h-3 w-3" />
-                  {lang === "ar" ? "غرف النوم" : "Bedrooms"}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {unit.bedrooms}
-                </p>
-              </div>
-            )}
-            {unit.bathrooms != null && (
-              <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
-                <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
-                  <Bath className="h-3 w-3" />
-                  {lang === "ar" ? "دورات المياه" : "Bathrooms"}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {unit.bathrooms}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Location */}
-          {(unit.city || unit.district || unit.addressLine) && (
-            <div className="space-y-2">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {lang === "ar" ? "الموقع" : "Location"}
-              </h3>
-              <div className="p-3 rounded-lg bg-muted/20 border border-border/50 space-y-1 text-sm">
-                {unit.addressLine && (
-                  <p className="text-foreground">{unit.addressLine}</p>
-                )}
-                {(unit.district || unit.city) && (
-                  <p className="text-muted-foreground text-xs">
-                    {[unit.district, unit.city].filter(Boolean).join("، ")}
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Pricing */}
-          {(unit.price || unit.markupPrice || unit.rentalPrice) && (
-            <div className="space-y-2">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {lang === "ar" ? "التسعير" : "Pricing"}
-              </h3>
-              <div className="grid grid-cols-1 gap-2">
-                {unit.price && (
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/50">
-                    <span className="text-xs text-muted-foreground">
-                      {lang === "ar" ? "سعر التكلفة" : "Cost Price"}
-                    </span>
-                    <span className="font-bold text-sm text-foreground">
-                      <SARAmount value={Number(unit.price)} size={12} />
-                    </span>
-                  </div>
-                )}
-                {unit.markupPrice && (
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/5 border border-green-200 dark:border-green-900">
-                    <span className="text-xs text-muted-foreground">
-                      {lang === "ar" ? "سعر البيع" : "Sale Price"}
-                    </span>
-                    <span className="font-bold text-sm text-green-700 dark:text-green-400">
-                      <SARAmount value={Number(unit.markupPrice)} size={12} />
-                    </span>
-                  </div>
-                )}
-                {unit.rentalPrice && (
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-violet-500/5 border border-violet-200 dark:border-violet-900">
-                    <span className="text-xs text-muted-foreground">
-                      {lang === "ar" ? "سعر الإيجار / شهر" : "Rental / Month"}
-                    </span>
-                    <span className="font-bold text-sm text-violet-700 dark:text-violet-400">
-                      <SARAmount value={Number(unit.rentalPrice)} size={12} />
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Interested Customers */}
-          <div className="space-y-2">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {lang === "ar"
-                ? "العملاء المهتمون"
-                : "Interested Customers"}
-            </h3>
-            {loadingInterests ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/20 border border-border/50">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {lang === "ar" ? "جارٍ التحميل..." : "Loading..."}
-                </span>
-              </div>
-            ) : interests.length === 0 ? (
-              <p className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/20 border border-border/50">
-                {lang === "ar"
-                  ? "لا يوجد عملاء مهتمون حالياً"
-                  : "No interested customers yet"}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {interests.map((interest: any) => (
-                  <div
-                    key={interest.id}
-                    className="p-3 rounded-lg bg-muted/20 border border-border/50 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-foreground">
-                        {interest.customer?.name || "—"}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "text-[10px] px-2 py-0.5 font-semibold border",
-                          interest.intent === "BUY"
-                            ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-                            : "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800"
-                        )}
-                      >
-                        {interest.intent === "BUY"
-                          ? lang === "ar" ? "شراء" : "Buy"
-                          : lang === "ar" ? "إيجار" : "Rent"}
-                      </Badge>
-                    </div>
-                    {interest.customer?.phone && (
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {interest.customer.phone}
-                      </p>
-                    )}
-                    {interest.customer?.agent?.name && (
-                      <p className="text-[11px] text-muted-foreground">
-                        {lang === "ar" ? "المسؤول: " : "Agent: "}
-                        {interest.customer.agent.name}
-                      </p>
-                    )}
-                    <a
-                      href="/dashboard/crm"
-                      className="inline-flex items-center text-[11px] text-primary hover:underline font-medium mt-0.5"
-                    >
-                      {lang === "ar" ? "عرض في CRM" : "View in CRM"}
-                    </a>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="p-4 border-t border-border">
+    <ResponsiveDialog
+      open={true}
+      onOpenChange={(open) => !open && onClose()}
+      title={title}
+      description={description}
+      contentClassName="sm:max-w-[720px]"
+      footer={
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             variant="secondary"
             style={{ display: "inline-flex" }}
-            className="w-full"
+            className="w-full sm:w-auto"
             onClick={onClose}
           >
             {lang === "ar" ? "إغلاق" : "Close"}
           </Button>
         </div>
+      }
+    >
+      <div className="space-y-6 py-2" dir={lang === "ar" ? "rtl" : "ltr"}>
+        {/* Status + Type */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border",
+              statusCfg.color
+            )}
+          >
+            <span className={cn("h-1.5 w-1.5 rounded-full", statusCfg.dot)} />
+            {statusCfg.label[lang]}
+          </span>
+          <span className="text-xs text-muted-foreground border border-border rounded-full px-2.5 py-1 font-medium">
+            {typeLbl[lang]}
+          </span>
+        </div>
+
+        {/* Core specs */}
+        <div className="grid grid-cols-2 gap-3">
+          {unit.area && (
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                <Maximize2 className="h-3 w-3" />
+                {lang === "ar" ? "المساحة" : "Area"}
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {unit.area} {lang === "ar" ? "م²" : "m²"}
+              </p>
+            </div>
+          )}
+          {unit.floor != null && (
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-0.5">
+                {lang === "ar" ? "الطابق" : "Floor"}
+              </p>
+              <p className="text-sm font-bold text-foreground">{unit.floor}</p>
+            </div>
+          )}
+          {unit.bedrooms != null && (
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                <BedDouble className="h-3 w-3" />
+                {lang === "ar" ? "غرف النوم" : "Bedrooms"}
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {unit.bedrooms}
+              </p>
+            </div>
+          )}
+          {unit.bathrooms != null && (
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50">
+              <p className="text-[10px] text-muted-foreground mb-0.5 flex items-center gap-1">
+                <Bath className="h-3 w-3" />
+                {lang === "ar" ? "دورات المياه" : "Bathrooms"}
+              </p>
+              <p className="text-sm font-bold text-foreground">
+                {unit.bathrooms}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Location */}
+        {(unit.city || unit.district || unit.addressLine) && (
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "الموقع" : "Location"}
+            </h3>
+            <div className="p-3 rounded-lg bg-muted/20 border border-border/50 space-y-1 text-sm">
+              {unit.addressLine && (
+                <p className="text-foreground">{unit.addressLine}</p>
+              )}
+              {(unit.district || unit.city) && (
+                <p className="text-muted-foreground text-xs">
+                  {[unit.district, unit.city].filter(Boolean).join("، ")}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing */}
+        {(unit.price || unit.markupPrice || unit.rentalPrice) && (
+          <div className="space-y-2">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {lang === "ar" ? "التسعير" : "Pricing"}
+            </h3>
+            <div className="grid grid-cols-1 gap-2">
+              {unit.price && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/20 border border-border/50">
+                  <span className="text-xs text-muted-foreground">
+                    {lang === "ar" ? "سعر التكلفة" : "Cost Price"}
+                  </span>
+                  <span className="font-bold text-sm text-foreground">
+                    <SARAmount value={Number(unit.price)} size={12} />
+                  </span>
+                </div>
+              )}
+              {unit.markupPrice && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-green-500/5 border border-green-200 dark:border-green-900">
+                  <span className="text-xs text-muted-foreground">
+                    {lang === "ar" ? "سعر البيع" : "Sale Price"}
+                  </span>
+                  <span className="font-bold text-sm text-green-700 dark:text-green-400">
+                    <SARAmount value={Number(unit.markupPrice)} size={12} />
+                  </span>
+                </div>
+              )}
+              {unit.rentalPrice && (
+                <div className="flex items-center justify-between p-3 rounded-lg bg-violet-500/5 border border-violet-200 dark:border-violet-900">
+                  <span className="text-xs text-muted-foreground">
+                    {lang === "ar" ? "سعر الإيجار / شهر" : "Rental / Month"}
+                  </span>
+                  <span className="font-bold text-sm text-violet-700 dark:text-violet-400">
+                    <SARAmount value={Number(unit.rentalPrice)} size={12} />
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Interested Customers */}
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {lang === "ar"
+              ? "العملاء المهتمون"
+              : "Interested Customers"}
+          </h3>
+          {loadingInterests ? (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/20 border border-border/50">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                {lang === "ar" ? "جارٍ التحميل..." : "Loading..."}
+              </span>
+            </div>
+          ) : interests.length === 0 ? (
+            <p className="text-xs text-muted-foreground p-3 rounded-lg bg-muted/20 border border-border/50">
+              {lang === "ar"
+                ? "لا يوجد عملاء مهتمون حالياً"
+                : "No interested customers yet"}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {interests.map((interest: any) => (
+                <div
+                  key={interest.id}
+                  className="p-3 rounded-lg bg-muted/20 border border-border/50 space-y-1.5"
+                >
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-foreground">
+                      {interest.customer?.name || "—"}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 font-semibold border",
+                        interest.intent === "BUY"
+                          ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                          : "bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-200 dark:border-violet-800"
+                      )}
+                    >
+                      {interest.intent === "BUY"
+                        ? lang === "ar" ? "شراء" : "Buy"
+                        : lang === "ar" ? "إيجار" : "Rent"}
+                    </Badge>
+                  </div>
+                  {interest.customer?.phone && (
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {interest.customer.phone}
+                    </p>
+                  )}
+                  {interest.customer?.agent?.name && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {lang === "ar" ? "المسؤول: " : "Agent: "}
+                      {interest.customer.agent.name}
+                    </p>
+                  )}
+                  <a
+                    href="/dashboard/crm"
+                    className="inline-flex items-center text-[11px] text-primary hover:underline font-medium mt-0.5"
+                  >
+                    {lang === "ar" ? "عرض في CRM" : "View in CRM"}
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </>
+    </ResponsiveDialog>
   );
 }
 
@@ -1151,22 +1125,17 @@ export default function PropertiesPage() {
       )}
 
       {/* ── Delete Dialog ── */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? `هل أنت متأكد من حذف الوحدة "${deleteTarget?.number}"؟ لا يمكن التراجع عن هذا الإجراء.`
-                : `Are you sure you want to delete unit "${deleteTarget?.number}"? This action cannot be undone.`}
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title={lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
+        description={
+          lang === "ar"
+            ? `هل أنت متأكد من حذف الوحدة "${deleteTarget?.number}"؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete unit "${deleteTarget?.number}"? This action cannot be undone.`
+        }
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
@@ -1188,9 +1157,15 @@ export default function PropertiesPage() {
               {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               {lang === "ar" ? "حذف" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        <div dir={lang === "ar" ? "rtl" : "ltr"}>
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
+        </div>
+      </ResponsiveDialog>
     </div>
   );
 }

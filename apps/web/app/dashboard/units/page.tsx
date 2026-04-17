@@ -41,12 +41,7 @@ import {
   PageIntro,
   StatusBadge,
   KPICard,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  ResponsiveDialog,
   AppBar,
   MobileTabs,
   PropertyCard,
@@ -1510,22 +1505,17 @@ function AdvancedUnitMatrixPage() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <DialogContent dir={lang === "ar" ? "rtl" : "ltr"}>
-          <DialogHeader>
-            <DialogTitle>
-              {lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
-            </DialogTitle>
-            <DialogDescription>
-              {lang === "ar"
-                ? `هل أنت متأكد من حذف ${selectedUnits.length} وحدة؟ لا يمكن التراجع عن هذا الإجراء.`
-                : `Are you sure you want to delete ${selectedUnits.length} unit(s)? This action cannot be undone.`}
-            </DialogDescription>
-          </DialogHeader>
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        title={lang === "ar" ? "تأكيد الحذف" : "Confirm Deletion"}
+        description={
+          lang === "ar"
+            ? `هل أنت متأكد من حذف ${selectedUnits.length} وحدة؟ لا يمكن التراجع عن هذا الإجراء.`
+            : `Are you sure you want to delete ${selectedUnits.length} unit(s)? This action cannot be undone.`
+        }
+        footer={
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               variant="secondary"
               style={{ display: "inline-flex" }}
@@ -1544,9 +1534,13 @@ function AdvancedUnitMatrixPage() {
               {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
               {lang === "ar" ? "حذف" : "Delete"}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        }
+      >
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
+      </ResponsiveDialog>
       </div>
     </>
   );
