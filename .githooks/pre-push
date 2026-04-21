@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# .githooks/pre-push
+# Blocks pushing vX.Y.Z tags without a verification artifact.
+# Install: git config core.hooksPath .githooks   (done by `npm run prepare`)
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+while read local_ref local_sha remote_ref remote_sha; do
+  # Only gate on version tags (refs/tags/vX.Y.Z)
+  if [[ "$remote_ref" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    TAG="${remote_ref#refs/tags/}"
+    bash "${REPO_ROOT}/scripts/check-release-verification.sh" "$TAG"
+  fi
+done
+
+exit 0

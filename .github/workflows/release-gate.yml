@@ -1,0 +1,88 @@
+name: Release Gate
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  verify-release:
+    name: Verify release artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      RELEASE_BODY: ${{ github.event.release.body }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Check verification artifact exists
+        id: check_artifact
+        run: |
+          VERIFY_FILE=".release-verification/${TAG}.md"
+          echo "Checking for ${VERIFY_FILE}..."
+
+          if [ ! -f "$VERIFY_FILE" ]; then
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Verification artifact ${VERIFY_FILE} is missing."
+            echo "::error::Run the verification subagent and commit the artifact before releasing."
+            exit 1
+          fi
+
+          SCREENSHOT_COUNT=$(grep -cE '\.(png|jpg|jpeg|webp)' "$VERIFY_FILE" 2>/dev/null || echo 0)
+          echo "screenshot_count=${SCREENSHOT_COUNT}" >> "$GITHUB_OUTPUT"
+
+          if [ "$SCREENSHOT_COUNT" -lt 24 ]; then
+            echo "insufficient_screenshots=true" >> "$GITHUB_OUTPUT"
+            echo "::error::Only ${SCREENSHOT_COUNT} screenshots found in ${VERIFY_FILE} (minimum 24 required)."
+            exit 1
+          fi
+
+          echo "missing=false" >> "$GITHUB_OUTPUT"
+          echo "insufficient_screenshots=false" >> "$GITHUB_OUTPUT"
+          echo "All checks passed: ${SCREENSHOT_COUNT} screenshots."
+
+      - name: Check release body has required sections
+        run: |
+          if ! echo "$RELEASE_BODY" | grep -qi "screenshot\|verified\|preview"; then
+            echo "::warning::Release body has no screenshot/verification evidence."
+          fi
+          if ! echo "$RELEASE_BODY" | grep -qi "Full diff\|compare"; then
+            echo "::warning::Release body is missing the 'Full diff' compare link."
+          fi
+          echo "See RELEASE_PROCESS.md § 7.1 for the required release body format."
+
+      - name: Demote to draft if artifact missing
+        if: failure() && steps.check_artifact.outputs.missing == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "$TAG" --draft=true
+          echo "::error::Release ${TAG} demoted to draft — verification artifact missing."
+
+      - name: Open issue if checks failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_TITLE="Release gate failed: ${TAG}"
+          ISSUE_BODY="The release gate workflow failed for **${TAG}**.
+
+          **What happened:** \`.release-verification/${TAG}.md\` is missing or has fewer than 24 screenshots.
+
+          **What to do:**
+          1. Run the verification subagent (see \`docs/agents/verification-subagent-prompt.md\`)
+          2. Commit the output to \`.release-verification/${TAG}.md\`
+          3. Re-publish the release
+
+          See [RELEASE_PROCESS.md](../blob/main/RELEASE_PROCESS.md) § 3.9 for the full checklist."
+
+          gh issue create \
+            --title "$ISSUE_TITLE" \
+            --body "$ISSUE_BODY" 2>/dev/null || echo "Could not create issue — check release gate manually."

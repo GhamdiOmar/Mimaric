@@ -7,6 +7,13 @@ import bcrypt from "bcryptjs";
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is not defined");
 
+const SEED_DEFAULT_PASSWORD = process.env.SEED_DEFAULT_PASSWORD;
+if (!SEED_DEFAULT_PASSWORD) throw new Error("SEED_DEFAULT_PASSWORD is not defined");
+const SEED_FINANCE_PASSWORD = process.env.SEED_FINANCE_PASSWORD;
+if (!SEED_FINANCE_PASSWORD) throw new Error("SEED_FINANCE_PASSWORD is not defined");
+const SEED_SALES_PASSWORD = process.env.SEED_SALES_PASSWORD;
+if (!SEED_SALES_PASSWORD) throw new Error("SEED_SALES_PASSWORD is not defined");
+
 const pool = new pg.Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
@@ -96,7 +103,7 @@ async function main() {
   console.log("Organization:", org.name);
 
   // 2. Company Admin User (customer admin test account)
-  const hashedPassword = await bcrypt.hash("mimaric2026", 12);
+  const hashedPassword = await bcrypt.hash(SEED_DEFAULT_PASSWORD, 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@mimaric.sa" },
     update: { password: hashedPassword, role: "ADMIN" },
@@ -113,8 +120,8 @@ async function main() {
   console.log("Company Admin user:", admin.email);
 
   // 3. Team members
-  const salesPassword = await bcrypt.hash("sales2026", 12);
-  const financePassword = await bcrypt.hash("finance2026", 12);
+  const salesPassword = await bcrypt.hash(SEED_SALES_PASSWORD, 12);
+  const financePassword = await bcrypt.hash(SEED_FINANCE_PASSWORD, 12);
 
   await prisma.user.upsert({
     where: { email: "ahmed@mimaric.sa" },
@@ -159,7 +166,7 @@ async function main() {
   });
 
   // 3b. Additional role users (one per role for access testing)
-  const testPassword = await bcrypt.hash("mimaric2026", 12);
+  const testPassword = await bcrypt.hash(SEED_DEFAULT_PASSWORD, 12);
 
   await prisma.user.upsert({
     where: { email: "dev_admin@mimaric.sa" },
@@ -690,7 +697,7 @@ async function main() {
   console.log("Dummy Org:", dummyOrg.name);
 
   // Dummy Org users (4 roles)
-  const dummyPw = await bcrypt.hash("mimaric2026", 12);
+  const dummyPw = await bcrypt.hash(SEED_DEFAULT_PASSWORD, 12);
 
   await prisma.user.upsert({
     where: { email: "dummy@demo.sa" },
